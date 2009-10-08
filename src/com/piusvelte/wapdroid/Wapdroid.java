@@ -86,21 +86,6 @@ public class Wapdroid extends Activity {
 				CellLocation.requestLocationUpdate();}});
 
     	onWifiChanged();}
-    
-	@Override
-	protected void onPause() {
-		super.onPause();
-		mDbHelper.close();}
-	
-	@Override
-	protected void onResume() {
-		super.onResume();
-		mDbHelper.open();}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		mDbHelper.close();}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
