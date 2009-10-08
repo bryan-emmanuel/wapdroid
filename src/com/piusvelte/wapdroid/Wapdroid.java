@@ -78,6 +78,7 @@ public class Wapdroid extends Activity {
      	
     	button_wifiState.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
+				button_wifiState.setText("turning wifi " + (wifiManager.isWifiEnabled() ? "off" : "on"));
 				wifiManager.setWifiEnabled(wifiManager.isWifiEnabled() ? false : true);}});
     	
     	button_cellLocation.setOnClickListener(new View.OnClickListener() {
