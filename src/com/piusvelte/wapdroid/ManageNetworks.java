@@ -98,7 +98,7 @@ public class ManageNetworks extends ListActivity {
     protected void onListItemClick(ListView list, View view, int position, long id) {
     	super.onListItemClick(list, view, position, id);
     	Intent intent = new Intent(this, ManageCells.class);
-    	intent.putExtra("_id", (int) id);
+    	intent.putExtra(mDbHelper.TABLE_ID, (int) id);
     	startActivity(intent);}
 
     @Override
@@ -111,6 +111,6 @@ public class ManageNetworks extends ListActivity {
         SimpleCursorAdapter networks = new SimpleCursorAdapter(this,
         		R.layout.network_row,
         		c,
-        		new String[] {"SSID"},
+        		new String[] {mDbHelper.NETWORKS_SSID},
         		new int[] {R.id.network_row_SSID});
         setListAdapter(networks);}}

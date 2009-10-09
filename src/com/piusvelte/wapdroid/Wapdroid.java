@@ -54,6 +54,11 @@ public class Wapdroid extends Activity {
 	private TelephonyManager teleManager;
 	private CellStateListener cellStateListener;
 	private GsmCellLocation gsmCellLocation;
+	private static final String TURN = "turn";
+	private static final String TURNING = "turning";
+	private static final String WIFI = " wifi ";
+	private static final String ON = "on";
+	private static final String OFF = "off";
 		
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -78,7 +83,7 @@ public class Wapdroid extends Activity {
      	
     	button_wifiState.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				button_wifiState.setText("turning wifi " + (wifiManager.isWifiEnabled() ? "off" : "on"));
+				button_wifiState.setText(TURNING + WIFI + (wifiManager.isWifiEnabled() ? OFF : ON));
 				wifiManager.setWifiEnabled(wifiManager.isWifiEnabled() ? false : true);}});
     	
     	button_cellLocation.setOnClickListener(new View.OnClickListener() {
@@ -111,7 +116,7 @@ public class Wapdroid extends Activity {
     
     private void onWifiChanged() {
    		field_currentSSID.setText(wifiManager.getConnectionInfo().getSSID());
-		button_wifiState.setText("turn wifi " + (wifiManager.isWifiEnabled() ? "off" : "on"));
+		button_wifiState.setText(TURN + WIFI + (wifiManager.isWifiEnabled() ? OFF : ON));
 		button_wifiState.setBackgroundColor(wifiManager.isWifiEnabled() ? Color.GREEN : Color.RED);
     	CellLocation.requestLocationUpdate();}
 
