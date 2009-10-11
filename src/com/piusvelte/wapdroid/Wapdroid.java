@@ -117,7 +117,7 @@ public class Wapdroid extends Activity {
     private void onWifiChanged() {
    		field_currentSSID.setText(wifiManager.getConnectionInfo().getSSID());
 		button_wifiState.setText(TURN + WIFI + (wifiManager.isWifiEnabled() ? OFF : ON));
-		button_wifiState.setBackgroundColor(wifiManager.isWifiEnabled() ? Color.GREEN : Color.RED);
+		button_wifiState.setBackgroundResource(wifiManager.isWifiEnabled() ? R.drawable.buttongreen : R.drawable.buttonblue);
     	CellLocation.requestLocationUpdate();}
 
     public class WifiChangedReceiver extends BroadcastReceiver {
