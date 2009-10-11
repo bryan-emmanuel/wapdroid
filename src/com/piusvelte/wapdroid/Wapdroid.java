@@ -27,7 +27,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.graphics.Color;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.telephony.CellLocation;
@@ -59,6 +58,10 @@ public class Wapdroid extends Activity {
 	private static final String WIFI = " wifi ";
 	private static final String ON = "on";
 	private static final String OFF = "off";
+	private boolean wifiEnabled = false;
+	private String SSID = "";
+	private int CID = -1;
+	private int LAC = -1;
 		
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -115,9 +118,11 @@ public class Wapdroid extends Activity {
     	startActivity(intent);}
     
     private void onWifiChanged() {
-   		field_currentSSID.setText(wifiManager.getConnectionInfo().getSSID());
-		button_wifiState.setText(TURN + WIFI + (wifiManager.isWifiEnabled() ? OFF : ON));
-		button_wifiState.setBackgroundResource(wifiManager.isWifiEnabled() ? R.drawable.buttongreen : R.drawable.buttonblue);
+    	wifiEnabled = wifiManager.isWifiEnabled();
+    	SSID = wifiManager.getConnectionInfo().getSSID();
+   		field_currentSSID.setText(SSID);
+		button_wifiState.setText(TURN + WIFI + (wifiEnabled ? OFF : ON));
+		button_wifiState.setBackgroundResource(wifiEnabled ? R.drawable.buttongreen : R.drawable.buttonblue);
     	CellLocation.requestLocationUpdate();}
 
     public class WifiChangedReceiver extends BroadcastReceiver {
@@ -130,12 +135,14 @@ public class Wapdroid extends Activity {
     	public void onCellLocationChanged(CellLocation location) {
     		super.onCellLocationChanged(location);
         	gsmCellLocation = (GsmCellLocation) teleManager.getCellLocation();
-    		field_currentCID.setText((String) "" + gsmCellLocation.getCid());
-    		field_currentLAC.setText((String) "" + gsmCellLocation.getLac());
-    		if ((gsmCellLocation.getCid() > 0) && (gsmCellLocation.getLac() > 0)) {
-    			if (wifiManager.getConnectionInfo().getSSID() != null) {
-    				mDbHelper.pairCell(wifiManager.getConnectionInfo().getSSID(), gsmCellLocation.getCid(), gsmCellLocation.getLac());}
-    			else if (mDbHelper.inRange(gsmCellLocation.getCid(), gsmCellLocation.getLac()) ^ wifiManager.isWifiEnabled()) {
-    				wifiManager.setWifiEnabled(wifiManager.isWifiEnabled() ? false : true);}}
-    		else if (wifiManager.isWifiEnabled() && (wifiManager.getConnectionInfo().getSSID() == null)) {
+        	CID = gsmCellLocation.getCid();
+        	LAC = gsmCellLocation.getLac();
+    		field_currentCID.setText((String) "" + CID);
+    		field_currentLAC.setText((String) "" + LAC);
+    		if ((CID > 0) && (LAC > 0)) {
+    			if (SSID != null) {
+    				mDbHelper.pairCell(SSID, CID, LAC);}
+    			else if (mDbHelper.inRange(CID, LAC) ^ wifiEnabled) {
+    				wifiManager.setWifiEnabled(wifiEnabled ? false : true);}}
+    		else if (wifiEnabled && (SSID == null)) {
     			wifiManager.setWifiEnabled(false);}}}}
