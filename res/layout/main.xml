@@ -46,12 +46,11 @@
 	<Button android:id="@+id/button_wifiState"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:padding="8dip"
+		android:background="@drawable/buttonblue"
 		android:text="turn wifi on"/>
 	<Button android:id="@+id/button_cellLocation"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:padding="8dip"
-		android:text="request location update"
-		android:background="@drawable/buttonblue"/>
+		android:background="@drawable/buttonblue"
+		android:text="request location update"/>
 </LinearLayout>

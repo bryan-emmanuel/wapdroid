@@ -49,7 +49,7 @@ public class ManageCells extends ListActivity {
 		mDbHelper.open();
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-		    mNetwork = extras.getInt(mDbHelper.TABLE_ID);}
+		    mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);}
 		listCells();
         registerForContextMenu(getListView());}
 	
@@ -112,6 +112,6 @@ public class ManageCells extends ListActivity {
         SimpleCursorAdapter cells = new SimpleCursorAdapter(this,
         		R.layout.cell_row,
         		c,
-        		new String[]{mDbHelper.CELLS_CID, mDbHelper.CELLS_LAC},
+        		new String[]{WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.CELLS_LAC},
         		new int[]{R.id.cell_row_CID, R.id.cell_row_LAC});
         setListAdapter(cells);}}
