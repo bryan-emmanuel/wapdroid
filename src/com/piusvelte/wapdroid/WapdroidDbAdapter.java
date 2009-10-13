@@ -326,11 +326,52 @@ public class WapdroidDbAdapter {
     			mPair = c.getInt(c.getColumnIndex(TABLE_ID));
     			mCell = c.getInt(c.getColumnIndex(PAIRS_CELL));
     			deletePair(mPair);
-    			if (fetchPairsByCell(mCell).getCount() == 0) {
-    				mDb.delete(WAPDROID_CELLS, TABLE_ID + "=" + mCell, null);}
+    			cleanNetworkPairs(mCell);
     			c.moveToNext();}}
     	c.close();
         mDb.delete(WAPDROID_NETWORKS, TABLE_ID + "=" + mNetwork, null);}
+    
+    public void cleanLocation(int mLocation) {
+		Cursor c = fetchCellsByLAC(mLocation);
+		if (c.getCount() == 0) {
+			mDb.delete(WAPDROID_LOCATIONS, TABLE_ID + "=" + mLocation, null);}
+		c.close();}
+    
+    public void cleanCarrier(int mCarrier) {
+		Cursor c = fetchCellsByMNC(mCarrier);
+		if (c.getCount() == 0) {
+			mDb.delete(WAPDROID_CARRIERS, TABLE_ID + "=" + mCarrier, null);}
+		c.close();}
+    
+    public void cleanCountry(int mCountry) {
+		Cursor c = fetchCellsByMCC(mCountry);
+		if (c.getCount() == 0) {
+			mDb.delete(WAPDROID_COUNTRIES, TABLE_ID + "=" + mCountry, null);}
+		c.close();}
+    
+	public void cleanCell(int mCell) {
+    	Cursor c = fetchCellInfo(mCell);
+    	if (c.getCount() > 0) {
+    		c.moveToFirst();
+    		int mLocation = c.getInt(c.getColumnIndex(CELLS_LAC));
+    		int mCarrier = c.getInt(c.getColumnIndex(CELLS_MNC));
+    		int mCountry = c.getInt(c.getColumnIndex(CELLS_MCC));
+    		cleanLocation(mLocation);
+    		cleanCarrier(mCarrier);
+    		cleanCountry(mCountry);}}
+	
+	public void cleanNetworkPairs(int mCell) {
+		Cursor c = fetchPairsByCell(mCell);
+		if (c.getCount() == 0) {
+			mDb.delete(WAPDROID_CELLS, TABLE_ID + "=" + mCell, null);
+			cleanCell(mCell);}
+		c.close();}
+
+	public void cleanCellPairs(int mNetwork) {
+		Cursor c = fetchPairsByNetwork(mNetwork);
+		if (c.getCount() == 0) {
+			mDb.delete(WAPDROID_NETWORKS, TABLE_ID + "=" + mNetwork, null);}
+		c.close();}
 
     public void deleteCell(int mCell) {
     	Cursor c = fetchPairsByCell(mCell);
@@ -342,25 +383,11 @@ public class WapdroidDbAdapter {
     			mPair = c.getInt(c.getColumnIndex(TABLE_ID));
     			mNetwork = c.getInt(c.getColumnIndex(PAIRS_NETWORK));
     			deletePair(mPair);
-    			if (fetchPairsByNetwork(mNetwork).getCount() == 0) {
-    				mDb.delete(WAPDROID_NETWORKS, TABLE_ID + "=" + mNetwork, null);}
+    			cleanCellPairs(mNetwork);
     			c.moveToNext();}}
-		c = fetchCellInfo(mCell);
-		c.moveToFirst();
-		int mLocation = c.getInt(c.getColumnIndex(CELLS_LAC));
-		int mCarrier = c.getInt(c.getColumnIndex(CELLS_MNC));
-		int mCountry = c.getInt(c.getColumnIndex(CELLS_MCC));
-   		mDb.delete(WAPDROID_CELLS, TABLE_ID + "=" + mCell, null);
-		c = fetchCellsByLAC(mLocation);
-		if (c.getCount() == 0) {
-			mDb.delete(WAPDROID_LOCATIONS, TABLE_ID + "=" + mLocation, null);}
-		c = fetchCellsByMNC(mCarrier);
-		if (c.getCount() == 0) {
-			mDb.delete(WAPDROID_CARRIERS, TABLE_ID + "=" + mCarrier, null);}
-		c = fetchCellsByMCC(mCountry);
-		if (c.getCount() == 0) {
-			mDb.delete(WAPDROID_COUNTRIES, TABLE_ID + "=" + mCountry, null);}
-		c.close();}
+    	c.close();
+		mDb.delete(WAPDROID_CELLS, TABLE_ID + "=" + mCell, null);
+    	cleanCell(mCell);}
     
     public void deletePair(int mPair) {
     	mDb.delete(WAPDROID_PAIRS, TABLE_ID + "=" + mPair, null);}}
