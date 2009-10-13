@@ -3,4 +3,5 @@
 	android:id="@+id/network_row_SSID"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
+	android:textSize="16dip"
 	android:padding="8dip"/>

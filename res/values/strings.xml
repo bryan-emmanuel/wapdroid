@@ -3,6 +3,8 @@
     <string name="app_name">Wapdroid</string>
     <string name="label_currentCID">Cell ID:</string>
     <string name="label_currentLAC">Location Area Code:</string>
+    <string name="label_currentMNC">Carrier ID:</string>
+    <string name="label_currentMCC">Country Code:</string>
     <string name="label_currentSSID">Network:</string>
     <string name="no_networks">no networks</string>
     <string name="no_cells">no cells</string>

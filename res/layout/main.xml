@@ -11,11 +11,13 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:padding="8dip"
+				android:textSize="16dip"
 				android:text="@string/label_currentCID"/>
 			<TextView android:id="@+id/field_currentCID"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:padding="8dip"
+				android:textSize="16dip"
 				android:text=""/>
 	    </TableRow>
 		<TableRow>
@@ -23,11 +25,13 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:padding="8dip"
+				android:textSize="16dip"
 				android:text="@string/label_currentLAC"/>
 			<TextView android:id="@+id/field_currentLAC"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:padding="8dip"
+				android:textSize="16dip"
 				android:text=""/>
 	    </TableRow>
 		<TableRow>
@@ -35,11 +39,41 @@
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:padding="8dip"
+				android:textSize="16dip"
+				android:text="@string/label_currentMNC"/>
+			<TextView android:id="@+id/field_currentMNC"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:padding="8dip"
+				android:textSize="16dip"
+				android:text=""/>
+	    </TableRow>
+		<TableRow>
+			<TextView android:textStyle="bold"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:padding="8dip"
+				android:textSize="16dip"
+				android:text="@string/label_currentMCC"/>
+			<TextView android:id="@+id/field_currentMCC"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:padding="8dip"
+				android:textSize="16dip"
+				android:text=""/>
+	    </TableRow>
+		<TableRow>
+			<TextView android:textStyle="bold"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:padding="8dip"
+				android:textSize="16dip"
 				android:text="@string/label_currentSSID"/>
 			<TextView android:id="@+id/field_currentSSID"
 				android:layout_width="wrap_content"
 				android:layout_height="wrap_content"
 				android:padding="8dip"
+				android:textSize="16dip"
 				android:text=""/>
 	    </TableRow>
 	</TableLayout>
@@ -47,10 +81,12 @@
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:background="@drawable/buttonblue"
+		android:textSize="16dip"
 		android:text="turn wifi on"/>
 	<Button android:id="@+id/button_cellLocation"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:background="@drawable/buttonblue"
+		android:textSize="16dip"
 		android:text="request location update"/>
 </LinearLayout>

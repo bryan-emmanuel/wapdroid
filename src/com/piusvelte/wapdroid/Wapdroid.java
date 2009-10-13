@@ -47,6 +47,8 @@ public class Wapdroid extends Activity {
 	public static final int RESET_ID = Menu.FIRST + 1;
 	private TextView field_currentCID;
 	private TextView field_currentLAC;
+	private TextView field_currentMNC;
+	private TextView field_currentMCC;
 	private TextView field_currentSSID;
 	private Button button_wifiState;
 	private Button button_cellLocation;
@@ -62,6 +64,8 @@ public class Wapdroid extends Activity {
 	private String SSID = "";
 	private int CID = -1;
 	private int LAC = -1;
+	private String MNC = "";
+	private String MCC = "";
 		
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -94,6 +98,8 @@ public class Wapdroid extends Activity {
     private void init() {
     	field_currentCID = (TextView) findViewById(R.id.field_currentCID);
     	field_currentLAC = (TextView) findViewById(R.id.field_currentLAC);
+    	field_currentMNC = (TextView) findViewById(R.id.field_currentMNC);
+    	field_currentMCC = (TextView) findViewById(R.id.field_currentMCC);
     	field_currentSSID = (TextView) findViewById(R.id.field_currentSSID);
     	button_wifiState = (Button) findViewById(R.id.button_wifiState);
     	button_cellLocation = (Button) findViewById(R.id.button_cellLocation);
@@ -114,15 +120,19 @@ public class Wapdroid extends Activity {
 				CellLocation.requestLocationUpdate();}});
     	initCell();
     	initWifi();
-    	if (mDbHelper.inRange(CID, LAC) ^ wifiEnabled) {
+    	if (mDbHelper.inRange(CID, LAC, MNC, MCC) ^ wifiEnabled) {
 			wifiManager.setWifiEnabled(wifiEnabled ? false : true);}}
     
     private void initCell() {
     	gsmCellLocation = (GsmCellLocation) teleManager.getCellLocation();
     	CID = gsmCellLocation.getCid();
     	LAC = gsmCellLocation.getLac();
+    	MNC = teleManager.getNetworkOperatorName();
+    	MCC = teleManager.getNetworkCountryIso();
 		field_currentCID.setText((String) "" + CID);
-		field_currentLAC.setText((String) "" + LAC);}
+		field_currentLAC.setText((String) "" + LAC);
+		field_currentMNC.setText((String) "" + MNC);
+		field_currentMCC.setText((String) "" + MCC);}
     
     private void initWifi() {
     	wifiEnabled = wifiManager.isWifiEnabled();
@@ -133,8 +143,8 @@ public class Wapdroid extends Activity {
         
     private void onWifiChanged() {
     	initWifi();
-		if ((SSID != null) && (CID > 0) && (LAC > 0)) {
-			mDbHelper.pairCell(SSID, CID, LAC);}}
+		if ((SSID != null) && (CID > 0) && (LAC > 0) && (MNC != null) && (MCC != null)) {
+			mDbHelper.pairCell(SSID, CID, LAC, MNC, MCC);}}
 
     public class WifiChangedReceiver extends BroadcastReceiver {
     	@Override
@@ -148,8 +158,8 @@ public class Wapdroid extends Activity {
     		initCell();
     		if ((CID > 0) && (LAC > 0)) {
     			if (SSID != null) {
-    				mDbHelper.pairCell(SSID, CID, LAC);}
-    			else if (mDbHelper.inRange(CID, LAC) ^ wifiEnabled) {
+    				mDbHelper.pairCell(SSID, CID, LAC, MNC, MCC);}
+    			else if (mDbHelper.inRange(CID, LAC, MNC, MCC) ^ wifiEnabled) {
     				wifiManager.setWifiEnabled(wifiEnabled ? false : true);}}
     		else if (wifiEnabled && (SSID == null)) {
     			wifiManager.setWifiEnabled(false);}}}}
