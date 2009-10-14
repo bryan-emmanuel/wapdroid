@@ -16,7 +16,8 @@ public final class R {
         public static final int icon=0x7f020002;
     }
     public static final class id {
-        public static final int button_cellLocation=0x7f05000a;
+        public static final int button_cellLocation=0x7f05000b;
+        public static final int button_wapdroidState=0x7f05000a;
         public static final int button_wifiState=0x7f050009;
         public static final int cell_row_CID=0x7f050000;
         public static final int cell_row_LAC=0x7f050001;
@@ -27,7 +28,7 @@ public final class R {
         public static final int field_currentMCC=0x7f050007;
         public static final int field_currentMNC=0x7f050006;
         public static final int field_currentSSID=0x7f050008;
-        public static final int network_row_SSID=0x7f05000b;
+        public static final int network_row_SSID=0x7f05000c;
     }
     public static final class layout {
         public static final int cell_row=0x7f030000;

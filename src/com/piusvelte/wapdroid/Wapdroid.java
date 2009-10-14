@@ -51,16 +51,22 @@ public class Wapdroid extends Activity {
 	private TextView field_currentMCC;
 	private TextView field_currentSSID;
 	private Button button_wifiState;
+	private Button button_wapdroidState;
 	private Button button_cellLocation;
 	private TelephonyManager teleManager;
 	private CellStateListener cellStateListener;
 	private GsmCellLocation gsmCellLocation;
-	private static final String TURN = "turn";
-	private static final String TURNING = "turning";
-	private static final String WIFI = " wifi ";
-	private static final String ON = "on";
-	private static final String OFF = "off";
-	private boolean wifiEnabled = false;
+	private static final String ENABLE = "enable";
+	private static final String ENABLING = "enabling";
+	private static final String DISABLE = "disable";
+	private static final String DISABLING = "disabling";
+	private static final String WAPDROID = " Wapdroid";
+	private static final String WIFI = " WiFi";
+	private boolean wapdroidEnabled = true;
+	private int wifiState;
+	private int wifiEnabled;
+	private int wifiEnabling;
+	private int wifiDisabling;
 	private String SSID = "";
 	private int CID = -1;
 	private int LAC = -1;
@@ -102,6 +108,7 @@ public class Wapdroid extends Activity {
     	field_currentMCC = (TextView) findViewById(R.id.field_currentMCC);
     	field_currentSSID = (TextView) findViewById(R.id.field_currentSSID);
     	button_wifiState = (Button) findViewById(R.id.button_wifiState);
+    	button_wapdroidState = (Button) findViewById(R.id.button_wapdroidState);
     	button_cellLocation = (Button) findViewById(R.id.button_cellLocation);
     	mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
@@ -113,15 +120,22 @@ public class Wapdroid extends Activity {
     	teleManager.listen(cellStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);
      	button_wifiState.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
-				button_wifiState.setText(TURNING + WIFI + (wifiEnabled ? OFF : ON));
-				wifiManager.setWifiEnabled(wifiEnabled ? false : true);}});
+				wifiManager.setWifiEnabled((wifiState == wifiEnabled) ? false : true);}});
+     	button_wapdroidState.setOnClickListener(new View.OnClickListener() {
+			public void onClick(View v) {
+				wapdroidEnabled = wapdroidEnabled ? false : true;
+				wapdroidStatusChanged();}});
     	button_cellLocation.setOnClickListener(new View.OnClickListener() {
 			public void onClick(View v) {
 				CellLocation.requestLocationUpdate();}});
+    	wifiEnabled = WifiManager.WIFI_STATE_ENABLED;
+    	wifiEnabling = WifiManager.WIFI_STATE_ENABLING;
+    	wifiDisabling = WifiManager.WIFI_STATE_DISABLING;
+    	wapdroidStatusChanged();
     	initCell();
     	initWifi();
-    	if (mDbHelper.inRange(CID, LAC, MNC, MCC) ^ wifiEnabled) {
-			wifiManager.setWifiEnabled(wifiEnabled ? false : true);}}
+    	if (mDbHelper.inRange(CID, LAC, MNC, MCC) ^ (wifiState == wifiEnabled)) {
+			wifiManager.setWifiEnabled((wifiState == wifiEnabled) ? false : true);}}
     
     private void initCell() {
     	gsmCellLocation = (GsmCellLocation) teleManager.getCellLocation();
@@ -135,21 +149,28 @@ public class Wapdroid extends Activity {
 		field_currentMCC.setText((String) "" + MCC);}
     
     private void initWifi() {
-    	wifiEnabled = wifiManager.isWifiEnabled();
-    	SSID = wifiManager.getConnectionInfo().getSSID();
+    	wifiState = wifiManager.getWifiState();
+    	if (wifiState == wifiEnabled) {
+    		SSID = wifiManager.getConnectionInfo().getSSID();}
+    	else {
+    		SSID = null;}
    		field_currentSSID.setText(SSID);
-		button_wifiState.setText(TURN + WIFI + (wifiEnabled ? OFF : ON));
-		button_wifiState.setBackgroundResource(wifiEnabled ? R.drawable.buttongreen : R.drawable.buttonblue);}
-        
-    private void onWifiChanged() {
-    	initWifi();
-		if ((SSID != null) && (CID > 0) && (LAC > 0) && (MNC != null) && (MCC != null)) {
-			mDbHelper.pairCell(SSID, CID, LAC, MNC, MCC);}}
-
+		button_wifiState.setText(
+				(wifiState == wifiEnabled ? DISABLE : 
+					(wifiState == wifiEnabling ? ENABLING :
+						(wifiState == wifiDisabling ? DISABLING : ENABLE))) + WIFI);
+		button_wifiState.setBackgroundResource((wifiState == wifiEnabled) ? R.drawable.buttongreen : R.drawable.buttonblue);}
+    
+    private void wapdroidStatusChanged() {
+		button_wapdroidState.setText((wapdroidEnabled ? DISABLE : ENABLE) + WAPDROID);
+		button_wapdroidState.setBackgroundResource(wapdroidEnabled ? R.drawable.buttongreen : R.drawable.buttonblue);}
+    
     public class WifiChangedReceiver extends BroadcastReceiver {
     	@Override
     	public void onReceive(Context context, Intent intent) {
-  			onWifiChanged();}}
+        	initWifi();
+    		if ((SSID != null) && (CID > 0) && (LAC > 0) && (MNC != null) && (MCC != null)) {
+    			mDbHelper.pairCell(SSID, CID, LAC, MNC, MCC);}}}
     
     public class CellStateListener extends PhoneStateListener {
     	@Override
@@ -159,7 +180,7 @@ public class Wapdroid extends Activity {
     		if ((CID > 0) && (LAC > 0)) {
     			if (SSID != null) {
     				mDbHelper.pairCell(SSID, CID, LAC, MNC, MCC);}
-    			else if (mDbHelper.inRange(CID, LAC, MNC, MCC) ^ wifiEnabled) {
-    				wifiManager.setWifiEnabled(wifiEnabled ? false : true);}}
-    		else if (wifiEnabled && (SSID == null)) {
+    			else if (wapdroidEnabled && (mDbHelper.inRange(CID, LAC, MNC, MCC) ^ (wifiState == wifiEnabled))) {
+    				wifiManager.setWifiEnabled((wifiState == wifiEnabled) ? false : true);}}
+    		else if (wapdroidEnabled && (wifiState == wifiEnabled) && (SSID == null)) {
     			wifiManager.setWifiEnabled(false);}}}}
