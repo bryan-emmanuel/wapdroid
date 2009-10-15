@@ -112,6 +112,6 @@ public class ManageCells extends ListActivity {
         SimpleCursorAdapter cells = new SimpleCursorAdapter(this,
         		R.layout.cell_row,
         		c,
-        		new String[]{WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.CELLS_LAC, WapdroidDbAdapter.CELLS_MNC, WapdroidDbAdapter.CELLS_MCC},
-        		new int[]{R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_MNC, R.id.cell_row_MCC});
+        		new String[]{WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.CELLS_MNC, WapdroidDbAdapter.CELLS_MCC, WapdroidDbAdapter.CELLS_LAC, WapdroidDbAdapter.CELLS_RSSI},
+        		new int[]{R.id.cell_row_CID, R.id.cell_row_MNC, R.id.cell_row_MCC, R.id.cell_row_LAC, R.id.cell_row_RSSI});
         setListAdapter(cells);}}

@@ -1,31 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:padding="8dip">
-	<TextView android:id="@+id/cell_row_CID"
-			xmlns:android="http://schemas.android.com/apk/res/android"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+	android:stretchColumns="0">
+	<TableRow>
+		<TextView android:textStyle="bold"
+			android:paddingTop="8dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="8dip"
+			android:textSize="16dip"
+			android:text="@string/label_CID"/>
+		<TextView android:id="@+id/cell_row_CID"
+			android:paddingTop="8dip"
+			android:paddingBottom="2dip"
 			android:paddingRight="8dip"
+			android:gravity="right"
 			android:textSize="16dip"/>
-	<TextView android:id="@+id/cell_row_LAC"
-  			xmlns:android="http://schemas.android.com/apk/res/android"
-  			android:layout_width="wrap_content"
-  			android:layout_height="wrap_content"
+    </TableRow>
+	<TableRow>
+		<TextView android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="16dip"
+			android:textSize="12dip"
+			android:text="@string/label_MNC"/>
+		<TextView android:id="@+id/cell_row_MNC"
+			android:paddingTop="2dip"
+			android:paddingBottom="2dip"
 			android:paddingRight="8dip"
-			android:textSize="16dip"/>
-	<TextView android:id="@+id/cell_row_MNC"
-  			xmlns:android="http://schemas.android.com/apk/res/android"
-  			android:layout_width="wrap_content"
-  			android:layout_height="wrap_content"
+			android:gravity="right"
+			android:textSize="12dip"/>
+    </TableRow>
+	<TableRow>
+		<TextView android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="16dip"
+			android:textSize="12dip"
+			android:text="@string/label_MCC"/>
+		<TextView android:id="@+id/cell_row_MCC"
+			android:paddingTop="2dip"
+			android:paddingBottom="2dip"
 			android:paddingRight="8dip"
-			android:textSize="16dip"/>
-	<TextView android:id="@+id/cell_row_MCC"
-  			xmlns:android="http://schemas.android.com/apk/res/android"
-  			android:layout_width="wrap_content"
-  			android:layout_height="wrap_content"
+			android:gravity="right"
+			android:textSize="12dip"/>
+    </TableRow>
+	<TableRow>
+		<TextView android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="16dip"
+			android:textSize="12dip"
+			android:text="@string/label_LAC"/>
+		<TextView android:id="@+id/cell_row_LAC"
+			android:paddingTop="2dip"
+			android:paddingBottom="2dip"
 			android:paddingRight="8dip"
-			android:textSize="16dip"/>
-</LinearLayout>
+			android:gravity="right"
+			android:textSize="12dip"/>
+    </TableRow>
+	<TableRow>
+		<TextView android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="16dip"
+			android:textSize="12dip"
+			android:text="@string/label_RSSI"/>
+		<TextView android:id="@+id/cell_row_RSSI"
+			android:paddingTop="2dip"
+			android:paddingBottom="8dip"
+			android:paddingRight="8dip"
+			android:gravity="right"
+			android:textSize="12dip"/>
+    </TableRow>
+</TableLayout>
 

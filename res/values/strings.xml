@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Wapdroid</string>
-    <string name="label_currentCID">Cell:</string>
-    <string name="label_currentLAC">Location:</string>
-    <string name="label_currentMNC">Carrier:</string>
-    <string name="label_currentMCC">Country:</string>
+    <string name="label_CID">Cell:</string>
+    <string name="label_LAC">Location:</string>
+    <string name="label_MNC">Carrier:</string>
+    <string name="label_MCC">Country:</string>
+    <string name="label_RSSI">Signal:</string>
     <string name="label_WIFI">WiFi</string>
     <string name="label_wapdroidState">Manage WiFi</string>
     <string name="no_networks">no networks</string>

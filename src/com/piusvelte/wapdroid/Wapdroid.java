@@ -43,19 +43,18 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 public class Wapdroid extends Activity {
 	private WapdroidDbAdapter mDbHelper;
 	private WifiManager wifiManager;
-	private WifiChangedReceiver wifiChangedReceiver;
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int LOCATE_ID = Menu.FIRST + 1;
 	public static final int RESET_ID = Menu.FIRST + 2;
-	private TextView field_currentCID;
-	private TextView field_currentLAC;
-	private TextView field_currentMNC;
-	private TextView field_currentMCC;
+	private TextView field_CID;
+	private TextView field_LAC;
+	private TextView field_MNC;
+	private TextView field_MCC;
+	private TextView field_RSSI;
 	private TextView field_wifiState;
 	private CheckBox checkbox_wifiState;
 	private CheckBox checkbox_wapdroidState;
 	private TelephonyManager teleManager;
-	private CellStateListener cellStateListener;
 	private GsmCellLocation gsmCellLocation;
 	private static final String CONNECTEDTO = "connected to ";
 	private static final String ENABLED = "enabled";
@@ -67,11 +66,12 @@ public class Wapdroid extends Activity {
 	private int wifiEnabled;
 	private int wifiEnabling;
 	private int wifiDisabling;
-	private String SSID = "";
-	private int CID = -1;
-	private int LAC = -1;
-	private String MNC = "";
-	private String MCC = "";
+	private String mSSID = null;
+	private int mCID = -1;
+	private int mLAC = -1;
+	private String mMNC = null;
+	private String mMCC = null;
+	private int mRSSI = -1;
 		
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -106,10 +106,11 @@ public class Wapdroid extends Activity {
     	startActivity(intent);}
     
     private void init() {
-    	field_currentCID = (TextView) findViewById(R.id.field_currentCID);
-    	field_currentLAC = (TextView) findViewById(R.id.field_currentLAC);
-    	field_currentMNC = (TextView) findViewById(R.id.field_currentMNC);
-    	field_currentMCC = (TextView) findViewById(R.id.field_currentMCC);
+    	field_CID = (TextView) findViewById(R.id.field_CID);
+    	field_LAC = (TextView) findViewById(R.id.field_LAC);
+    	field_MNC = (TextView) findViewById(R.id.field_MNC);
+    	field_MCC = (TextView) findViewById(R.id.field_MCC);
+    	field_RSSI = (TextView) findViewById(R.id.field_RSSI);
     	field_wifiState = (TextView) findViewById(R.id.field_wifiState);
     	checkbox_wifiState = (CheckBox) findViewById(R.id.checkbox_wifiState);
     	checkbox_wapdroidState = (CheckBox) findViewById(R.id.checkbox_wapdroidState);
@@ -118,12 +119,11 @@ public class Wapdroid extends Activity {
     	wifiDisabling = WifiManager.WIFI_STATE_DISABLING;
     	mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
+    	mDbHelper.upgradeAddRSSI();
     	wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-    	wifiChangedReceiver = new WifiChangedReceiver();
-    	registerReceiver(wifiChangedReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+    	registerReceiver(new WifiChangedReceiver(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
 		teleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-    	cellStateListener = new CellStateListener();
-    	teleManager.listen(cellStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);
+    	teleManager.listen(new PhoneStateChangedListener(), PhoneStateListener.LISTEN_CELL_LOCATION ^ PhoneStateListener.LISTEN_SIGNAL_STRENGTH);
     	checkbox_wifiState.setChecked(wifiManager.getWifiState() == wifiEnabled);
     	checkbox_wifiState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -132,50 +132,59 @@ public class Wapdroid extends Activity {
     	checkbox_wapdroidState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				wapdroidEnabled = isChecked;}});
-    	initCell();
     	initWifi();
-    	if (mDbHelper.inRange(CID, LAC, MNC, MCC) ^ (wifiState == wifiEnabled)) {
-    		checkbox_wifiState.setChecked((wifiState == wifiEnabled) ? false : true);}}
-    
-    private void initCell() {
-    	gsmCellLocation = (GsmCellLocation) teleManager.getCellLocation();
-    	CID = gsmCellLocation.getCid();
-    	LAC = gsmCellLocation.getLac();
-    	MNC = teleManager.getNetworkOperatorName();
-    	MCC = teleManager.getNetworkCountryIso();
-		field_currentCID.setText((String) "" + CID);
-		field_currentLAC.setText((String) "" + LAC);
-		field_currentMNC.setText((String) "" + MNC);
-		field_currentMCC.setText((String) "" + MCC);}
-    
+		CellLocation.requestLocationUpdate();}
+        
     private void initWifi() {
     	wifiState = wifiManager.getWifiState();
     	if (wifiState == wifiEnabled) {
-    		SSID = wifiManager.getConnectionInfo().getSSID();}
+    		mSSID = wifiManager.getConnectionInfo().getSSID();}
     	else {
-    		SSID = null;}
+    		mSSID = null;}
 		field_wifiState.setText(
-				(SSID != null ? CONNECTEDTO + SSID :
+				(mSSID != null ? CONNECTEDTO + mSSID :
 					(wifiState == wifiEnabled ? ENABLED :
 						(wifiState == wifiEnabling ? ENABLING :
 							(wifiState == wifiDisabling ? DISABLING : DISABLED)))));}
-        
+    
+    public boolean hasCell() {
+    	return ((mCID > 0) && (mLAC > 0) && (mMNC != null) && (mMCC != null));}
+    
+    public boolean hasPair() {
+    	return ((mSSID != null) && hasCell());}
+    
     public class WifiChangedReceiver extends BroadcastReceiver {
     	@Override
     	public void onReceive(Context context, Intent intent) {
         	initWifi();
-    		if ((SSID != null) && (CID > 0) && (LAC > 0) && (MNC != null) && (MCC != null)) {
-    			mDbHelper.pairCell(SSID, CID, LAC, MNC, MCC);}}}
+    		if (hasPair()) {
+    			mDbHelper.pairCell(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}}}
     
-    public class CellStateListener extends PhoneStateListener {
+    public class PhoneStateChangedListener extends PhoneStateListener {
+    	@Override
+    	public void onSignalStrengthChanged(int asu) {
+    		super.onSignalStrengthChanged(asu);
+    		mRSSI = asu;
+    		//phonestateintentreciever: 0-31, for GSM, dBm=-113+2*asu
+    		field_RSSI.setText((String) "" + (-113 + 2 * mRSSI) + "dBm");
+    		if (hasPair()) {
+				mDbHelper.pairCell(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}}
     	@Override
     	public void onCellLocationChanged(CellLocation location) {
     		super.onCellLocationChanged(location);
-    		initCell();
-    		if ((CID > 0) && (LAC > 0)) {
-    			if (SSID != null) {
-    				mDbHelper.pairCell(SSID, CID, LAC, MNC, MCC);}
-    			else if (wapdroidEnabled && (mDbHelper.inRange(CID, LAC, MNC, MCC) ^ (wifiState == wifiEnabled))) {
+        	gsmCellLocation = (GsmCellLocation) teleManager.getCellLocation();
+        	mCID = gsmCellLocation.getCid();
+        	mLAC = gsmCellLocation.getLac();
+        	mMNC = teleManager.getNetworkOperatorName();
+        	mMCC = teleManager.getNetworkCountryIso();
+    		field_CID.setText((String) "" + mCID);
+    		field_LAC.setText((String) "" + mLAC);
+    		field_MNC.setText((String) "" + mMNC);
+    		field_MCC.setText((String) "" + mMCC);
+    		if (hasCell()) {
+    			if (mSSID != null) {
+    				mDbHelper.pairCell(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}
+    			else if (wapdroidEnabled && (mDbHelper.inRange(mCID, mLAC, mMNC, mMCC, mRSSI) ^ (wifiState == wifiEnabled))) {
     				checkbox_wifiState.setChecked((wifiState == wifiEnabled) ? false : true);}}
-    		else if (wapdroidEnabled && (wifiState == wifiEnabled) && (SSID == null)) {
+    		else if (wapdroidEnabled && (wifiState == wifiEnabled) && (mSSID == null)) {
     			checkbox_wifiState.setChecked(false);}}}}

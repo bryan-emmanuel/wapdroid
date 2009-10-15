@@ -41,6 +41,7 @@ public class WapdroidDbAdapter {
 	public static final String CELLS_LAC = "LAC";
 	public static final String CELLS_MNC = "MNC";
 	public static final String CELLS_MCC = "MCC";
+	public static final String CELLS_RSSI = "RSSI";
 	public static final String WAPDROID_LOCATIONS = "locations";
 	public static final String WAPDROID_CARRIERS = "carriers";
 	public static final String WAPDROID_COUNTRIES = "countries";
@@ -58,7 +59,8 @@ public class WapdroidDbAdapter {
 		+ CELLS_CID + " integer, "
 		+ CELLS_LAC + " integer, "
 		+ CELLS_MNC + " integer, "
-		+ CELLS_MCC + " integer);";
+		+ CELLS_MCC + " integer, "
+		+ CELLS_RSSI + " integer);";
 	private static final String CREATE_LOCATIONS = "create table "
 		+ WAPDROID_LOCATIONS + " ("
 		+ TABLE_ID + ID_TYPE
@@ -115,6 +117,24 @@ public class WapdroidDbAdapter {
     public void close() {
         mDbHelper.close();}
     
+    public void upgradeAddRSSI() {
+    	Cursor c = mDb.rawQuery("SELECT tbl_name FROM sqlite_master WHERE tbl_name=\"" + WAPDROID_CELLS + "\" AND sql LIKE \"%RSSI%\"", null);
+    	if (c.getCount() == 0) {
+    		mDb.execSQL(DROP + WAPDROID_CELLS + "_bkp;");
+    		mDb.execSQL("create temporary table "
+    			+ WAPDROID_CELLS + "_bkp AS SELECT * FROM " + WAPDROID_CELLS + ";");
+    		mDb.execSQL(DROP + WAPDROID_CELLS + ";");
+    		mDb.execSQL(CREATE_CELLS);
+    		mDb.execSQL("INSERT INTO " + WAPDROID_CELLS + " SELECT "
+    				+ TABLE_ID + ", "
+    				+ CELLS_CID + ", "
+    				+ CELLS_LAC + ", "
+    				+ CELLS_MNC + ", "
+    				+ CELLS_MCC + ", -1"
+    				+ " FROM " + WAPDROID_CELLS + "_bkp;");
+    		mDb.execSQL(DROP + WAPDROID_CELLS + "_bkp;");}
+    	c.close();}
+    
     public void createTables() {
         mDb.execSQL(CREATE_NETWORKS);
         mDb.execSQL(CREATE_CELLS);
@@ -151,8 +171,9 @@ public class WapdroidDbAdapter {
     	return mDb.rawQuery("SELECT " + TABLE_ID + ", " + NETWORKS_SSID
     			+ " FROM " + WAPDROID_NETWORKS, null);}
     
-    public Cursor fetchCell(int mCID, int mLAC, String mMNC, String mMCC) {
-    	return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID
+    public int fetchCell(int mCID, int mLAC, String mMNC, String mMCC) {
+    	int mCell = -1;
+    	Cursor c = mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID
     			+ " FROM " + WAPDROID_CELLS
     			+ " JOIN " + WAPDROID_LOCATIONS + " ON (" + WAPDROID_CELLS + "." + CELLS_LAC + "=" + WAPDROID_LOCATIONS + "." + TABLE_ID
     			+ ") JOIN " + WAPDROID_CARRIERS + " ON (" + WAPDROID_CELLS + "." + CELLS_MNC + "=" + WAPDROID_CARRIERS + "." + TABLE_ID
@@ -160,10 +181,26 @@ public class WapdroidDbAdapter {
     			+ ") WHERE " + CELLS_CID + "=" + mCID
     			+ " AND " + WAPDROID_LOCATIONS + "." + TABLE_CODE + "=" + mLAC
     			+ " AND " + WAPDROID_CARRIERS + "." + TABLE_CODE + "=\"" + mMNC
-    			+ "\" AND " + WAPDROID_COUNTRIES + "." + TABLE_CODE + "=\"" + mMCC + "\"", null);}
+    			+ "\" AND " + WAPDROID_COUNTRIES + "." + TABLE_CODE + "=\"" + mMCC + "\"", null);
+    	if (c.getCount() > 0) {
+    		c.moveToFirst();
+    		mCell = c.getInt(c.getColumnIndex(TABLE_ID));}
+    	c.close();
+    	return mCell;}
+    
+    public int fetchRSSI(int mCell) {
+    	int mRSSI = -1;
+    	Cursor c = mDb.rawQuery("SELECT " + CELLS_RSSI
+    			+ " FROM " + WAPDROID_CELLS
+    			+ " WHERE " + TABLE_ID + "=" + mCell, null);
+    	if (c.getCount() > 0) {
+    		c.moveToFirst();
+    		mRSSI = c.getInt(c.getColumnIndex(CELLS_RSSI));}
+    	c.close();
+    	return mRSSI;}
     
     public Cursor fetchCellInfo(int mCell) {
-    	return mDb.rawQuery("SELECT " + CELLS_LAC + ", " + CELLS_MNC + ", " + CELLS_MCC
+    	return mDb.rawQuery("SELECT " + CELLS_LAC + ", " + CELLS_MNC + ", " + CELLS_MCC + ", " + CELLS_RSSI
     			+ " FROM " + WAPDROID_CELLS
     			+ " WHERE " + TABLE_ID + "=" + mCell, null);}
     
@@ -221,16 +258,12 @@ public class WapdroidDbAdapter {
     	c.close();
     	return (int) mCountry;}
     
-    public int fetchCellOrCreate(int mCID, int mLAC, String mMNC, String mMCC) {
-    	long mCell;
+    public int fetchCellOrCreate(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
     	int mLocation;
     	int mCarrier;
-    	int mCountry;    	
-    	Cursor c = fetchCell(mCID, mLAC, mMNC, mMCC);
-    	if (c.getCount() > 0) {
-    		c.moveToFirst();
-    		mCell = c.getInt(c.getColumnIndex(TABLE_ID));}
-    	else {
+    	int mCountry;
+    	int mCell = fetchCell(mCID, mLAC, mMNC, mMCC);
+    	if (mCell < 1) {
         	mLocation = fetchLocationOrCreate(mLAC);
         	mCarrier = fetchCarrierOrCreate(mMNC);
         	mCountry = fetchCountryOrCreate(mMCC); 
@@ -239,20 +272,22 @@ public class WapdroidDbAdapter {
         	initialValues.put(CELLS_LAC, mLocation);
         	initialValues.put(CELLS_MNC, mCarrier);
         	initialValues.put(CELLS_MCC, mCountry);
-    		mCell = mDb.insert(WAPDROID_CELLS, null, initialValues);}
-    	c.close();
-    	return (int) mCell;}
+        	initialValues.put(CELLS_RSSI, mRSSI);
+    		mCell = (int) mDb.insert(WAPDROID_CELLS, null, initialValues);}
+    	return mCell;}
     
     public Cursor fetchCellsByNetwork(int mNetwork) {
     	return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID + ", " + CELLS_CID + ", "
-    			+ WAPDROID_LOCATIONS + "." + TABLE_CODE + " AS " + CELLS_LAC + ", "
     			+ WAPDROID_CARRIERS + "." + TABLE_CODE + " AS " + CELLS_MNC + ", "
-    			+ WAPDROID_COUNTRIES + "." + TABLE_CODE + " AS " + CELLS_MCC + " FROM " + WAPDROID_CELLS
+    			+ WAPDROID_COUNTRIES + "." + TABLE_CODE + " AS " + CELLS_MCC + ", "
+    			+ WAPDROID_LOCATIONS + "." + TABLE_CODE + " AS " + CELLS_LAC + ", "
+    			+ CELLS_RSSI + " FROM " + WAPDROID_CELLS
     			+ " JOIN " + WAPDROID_PAIRS + " ON (" + WAPDROID_CELLS + "." + TABLE_ID + "=" + WAPDROID_PAIRS + "." + PAIRS_CELL
-    			+ ") JOIN " + WAPDROID_LOCATIONS + " ON (" + WAPDROID_CELLS + "." + CELLS_LAC + "=" + WAPDROID_LOCATIONS + "." + TABLE_ID
     			+ ") JOIN " + WAPDROID_CARRIERS + " ON (" + WAPDROID_CELLS + "." + CELLS_MNC + "=" + WAPDROID_CARRIERS + "." + TABLE_ID
     			+ ") JOIN " + WAPDROID_COUNTRIES + " ON (" + WAPDROID_CELLS + "." + CELLS_MCC + "=" + WAPDROID_COUNTRIES + "." + TABLE_ID
-    			+ ") WHERE " + WAPDROID_PAIRS + "." + PAIRS_NETWORK + "=" + mNetwork, null);}
+    			+ ") JOIN " + WAPDROID_LOCATIONS + " ON (" + WAPDROID_CELLS + "." + CELLS_LAC + "=" + WAPDROID_LOCATIONS + "." + TABLE_ID
+    			+ ") WHERE " + WAPDROID_PAIRS + "." + PAIRS_NETWORK + "=" + mNetwork
+    			+ " ORDER BY " + CELLS_RSSI + " DESC", null);}
 
     public Cursor fetchCellById(int mCell) {
     	return mDb.rawQuery("SELECT " + TABLE_ID + ", " + CELLS_CID + ", " + CELLS_LAC + ", " + CELLS_MNC + ", " + CELLS_MCC
@@ -297,22 +332,24 @@ public class WapdroidDbAdapter {
     			+ " FROM " + WAPDROID_PAIRS
     			+ " WHERE " + PAIRS_NETWORK + "=" + mNetwork + " AND " + PAIRS_CELL + "=" + mCell, null);}
     
-    public void pairCell(String mSSID, int mCID, int mLAC, String mMNC, String mMCC) {
+    public void pairCell(String mSSID, int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
     	int mNetwork = fetchNetworkOrCreate(mSSID);
-    	int mCell = fetchCellOrCreate(mCID, mLAC, mMNC, mMCC);
+    	int mCell = fetchCellOrCreate(mCID, mLAC, mMNC, mMCC, mRSSI);
     	Cursor c = fetchPairsByNetworkCell(mNetwork, mCell);
     	if (c.getCount() <= 0) {
     		ContentValues initialValues = new ContentValues();
     		initialValues.put(PAIRS_NETWORK, mNetwork);
     		initialValues.put(PAIRS_CELL, mCell);
     		mDb.insert(WAPDROID_PAIRS, null, initialValues);}
+    	else if (mRSSI > fetchRSSI(mCell)) {
+    		ContentValues updateValues = new ContentValues();
+    		updateValues.put(CELLS_RSSI, mRSSI);
+    		mDb.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);}
     	c.close();}
     
-    public boolean inRange(int mCID, int mLAC, String mMNC, String mMCC) {
-    	Cursor c = fetchCell(mCID, mLAC, mMNC, mMCC);
-    	boolean range = c.getCount() > 0 ? true : false;
-    	c.close();
-    	return range;}
+    public boolean inRange(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
+    	int range = fetchRSSI(fetchCell(mCID, mLAC, mMNC, mMCC));
+    	return ((range < 0) || (mRSSI <= range));}
     
     public void deleteNetwork(int mNetwork) {
     	Cursor c = fetchPairsByNetwork(mNetwork);
