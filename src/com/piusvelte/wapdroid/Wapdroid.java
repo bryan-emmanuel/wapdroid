@@ -153,6 +153,15 @@ public class Wapdroid extends Activity {
     public boolean hasPair() {
     	return ((mSSID != null) && hasCell());}
     
+    public void manageWifi() {
+		if (hasCell()) {
+			if (mSSID != null) {
+				mDbHelper.pairCell(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}
+			else if (wapdroidEnabled && (mDbHelper.inRange(mCID, mLAC, mMNC, mMCC, mRSSI) ^ (wifiState == wifiEnabled))) {
+				checkbox_wifiState.setChecked((wifiState == wifiEnabled) ? false : true);}}
+		else if (wapdroidEnabled && (wifiState == wifiEnabled) && (mSSID == null)) {
+			checkbox_wifiState.setChecked(false);}}
+    
     public class WifiChangedReceiver extends BroadcastReceiver {
     	@Override
     	public void onReceive(Context context, Intent intent) {
@@ -167,8 +176,7 @@ public class Wapdroid extends Activity {
     		mRSSI = asu;
     		//phonestateintentreciever: 0-31, for GSM, dBm=-113+2*asu
     		field_RSSI.setText((String) "" + (-113 + 2 * mRSSI) + "dBm");
-    		if (hasPair()) {
-				mDbHelper.pairCell(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}}
+    		manageWifi();}
     	@Override
     	public void onCellLocationChanged(CellLocation location) {
     		super.onCellLocationChanged(location);
@@ -181,10 +189,4 @@ public class Wapdroid extends Activity {
     		field_LAC.setText((String) "" + mLAC);
     		field_MNC.setText((String) "" + mMNC);
     		field_MCC.setText((String) "" + mMCC);
-    		if (hasCell()) {
-    			if (mSSID != null) {
-    				mDbHelper.pairCell(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}
-    			else if (wapdroidEnabled && (mDbHelper.inRange(mCID, mLAC, mMNC, mMCC, mRSSI) ^ (wifiState == wifiEnabled))) {
-    				checkbox_wifiState.setChecked((wifiState == wifiEnabled) ? false : true);}}
-    		else if (wapdroidEnabled && (wifiState == wifiEnabled) && (mSSID == null)) {
-    			checkbox_wifiState.setChecked(false);}}}}
+    		manageWifi();}}}
