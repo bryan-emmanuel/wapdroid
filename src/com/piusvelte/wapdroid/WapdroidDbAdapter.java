@@ -309,10 +309,8 @@ public class WapdroidDbAdapter {
     	c.close();}
     
     public boolean inRange(int mCID, int mLAC, String mMNC, String mMCC) {
-    	boolean range = false;
     	Cursor c = fetchCell(mCID, mLAC, mMNC, mMCC);
-    	if (c.getCount() > 0) {
-    		range = true;}
+    	boolean range = c.getCount() > 0 ? true : false;
     	c.close();
     	return range;}
     
