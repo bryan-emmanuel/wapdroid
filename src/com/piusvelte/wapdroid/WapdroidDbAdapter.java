@@ -353,8 +353,8 @@ public class WapdroidDbAdapter {
     	int mCarrier = fetchCarrier(mMNC);
     	int mCountry = fetchCountry(mMCC);
     	if ((mLocation > 0) && (mCarrier > 0) && (mCountry > 0)) {
-    		Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + "), MIN(" + CELLS_MINRSSI
-    				+ ") FROM " + WAPDROID_CELLS
+    		Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + ") AS " + CELLS_MAXRSSI + ", MIN(" + CELLS_MINRSSI + ") AS " + CELLS_MINRSSI
+    				+ " FROM " + WAPDROID_CELLS
     				+ " WHERE " + CELLS_CID + "=" + mCID
     				+ " AND " + CELLS_LAC + "=" + mLocation
     				+ " AND " + CELLS_MNC + "=" + mCarrier
