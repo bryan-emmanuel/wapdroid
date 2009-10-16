@@ -93,7 +93,7 @@ public class ManageCells extends ListActivity {
 		switch(item.getItemId()) {
 		case DELETE_ID:
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
-			mDbHelper.deleteCell((int) info.id);
+			mDbHelper.deleteCell(mNetwork, (int) info.id);
 			listCells();
 			return true;}
 		return super.onContextItemSelected(item);}
@@ -112,6 +112,6 @@ public class ManageCells extends ListActivity {
         SimpleCursorAdapter cells = new SimpleCursorAdapter(this,
         		R.layout.cell_row,
         		c,
-        		new String[]{WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.CELLS_MNC, WapdroidDbAdapter.CELLS_MCC, WapdroidDbAdapter.CELLS_LAC, WapdroidDbAdapter.CELLS_RSSI},
-        		new int[]{R.id.cell_row_CID, R.id.cell_row_MNC, R.id.cell_row_MCC, R.id.cell_row_LAC, R.id.cell_row_RSSI});
+        		new String[]{WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.CELLS_MNC, WapdroidDbAdapter.CELLS_MCC, WapdroidDbAdapter.CELLS_LAC, WapdroidDbAdapter.CELLS_MINRSSI, WapdroidDbAdapter.CELLS_MAXRSSI},
+        		new int[]{R.id.cell_row_CID, R.id.cell_row_MNC, R.id.cell_row_MCC, R.id.cell_row_LAC, R.id.cell_row_minRSSI, R.id.cell_row_maxRSSI});
         setListAdapter(cells);}}

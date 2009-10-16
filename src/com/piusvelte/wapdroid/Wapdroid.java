@@ -119,9 +119,10 @@ public class Wapdroid extends Activity {
     	wifiDisabling = WifiManager.WIFI_STATE_DISABLING;
     	mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
-    	mDbHelper.upgradeAddRSSI();
+    	mDbHelper.upgradeDatabase();
     	wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
     	registerReceiver(new WifiChangedReceiver(), new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+    	registerReceiver(new WifiChangedReceiver(), new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));
 		teleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
     	teleManager.listen(new PhoneStateChangedListener(), PhoneStateListener.LISTEN_CELL_LOCATION ^ PhoneStateListener.LISTEN_SIGNAL_STRENGTH);
     	checkbox_wifiState.setChecked(wifiManager.getWifiState() == wifiEnabled);
@@ -156,7 +157,7 @@ public class Wapdroid extends Activity {
     public void manageWifi() {
 		if (hasCell()) {
 			if (mSSID != null) {
-				mDbHelper.pairCell(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}
+				mDbHelper.fetchCellOrCreate(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}
 			else if (wapdroidEnabled && (mDbHelper.inRange(mCID, mLAC, mMNC, mMCC, mRSSI) ^ (wifiState == wifiEnabled))) {
 				checkbox_wifiState.setChecked((wifiState == wifiEnabled) ? false : true);}}
 		else if (wapdroidEnabled && (wifiState == wifiEnabled) && (mSSID == null)) {
@@ -167,7 +168,7 @@ public class Wapdroid extends Activity {
     	public void onReceive(Context context, Intent intent) {
         	initWifi();
     		if (hasPair()) {
-    			mDbHelper.pairCell(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}}}
+    			mDbHelper.fetchCellOrCreate(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}}}
     
     public class PhoneStateChangedListener extends PhoneStateListener {
     	@Override

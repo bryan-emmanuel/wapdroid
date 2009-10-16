@@ -61,8 +61,21 @@
 			android:paddingBottom="2dip"
 			android:paddingLeft="16dip"
 			android:textSize="12dip"
-			android:text="@string/label_RSSI"/>
-		<TextView android:id="@+id/cell_row_RSSI"
+			android:text="@string/label_minRSSI"/>
+		<TextView android:id="@+id/cell_row_minRSSI"
+			android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingRight="8dip"
+			android:gravity="right"
+			android:textSize="12dip"/>
+    </TableRow>
+	<TableRow>
+		<TextView android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="16dip"
+			android:textSize="12dip"
+			android:text="@string/label_maxRSSI"/>
+		<TextView android:id="@+id/cell_row_maxRSSI"
 			android:paddingTop="2dip"
 			android:paddingBottom="8dip"
 			android:paddingRight="8dip"
