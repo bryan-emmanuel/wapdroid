@@ -295,8 +295,7 @@ public class WapdroidDbAdapter {
     			+ " JOIN " + WAPDROID_CARRIERS + " ON (" + WAPDROID_CELLS + "." + CELLS_MNC + "=" + WAPDROID_CARRIERS + "." + TABLE_ID
     			+ ") JOIN " + WAPDROID_COUNTRIES + " ON (" + WAPDROID_CELLS + "." + CELLS_MCC + "=" + WAPDROID_COUNTRIES + "." + TABLE_ID
     			+ ") JOIN " + WAPDROID_LOCATIONS + " ON (" + WAPDROID_CELLS + "." + CELLS_LAC + "=" + WAPDROID_LOCATIONS + "." + TABLE_ID
-    			+ ") WHERE " + WAPDROID_CELLS + "." + CELLS_NETWORK + "=" + mNetwork
-    			+ " ORDER BY " + CELLS_MAXRSSI + " DESC", null);}
+    			+ ") WHERE " + WAPDROID_CELLS + "." + CELLS_NETWORK + "=" + mNetwork, null);}
     
     public Cursor fetchCellsByLAC(int mLAC) {
     	return mDb.rawQuery("SELECT " + TABLE_ID
@@ -354,18 +353,19 @@ public class WapdroidDbAdapter {
     	int mCarrier = fetchCarrier(mMNC);
     	int mCountry = fetchCountry(mMCC);
     	if ((mLocation > 0) && (mCarrier > 0) && (mCountry > 0)) {
-    		Cursor c = mDb.rawQuery("SELECT " + TABLE_ID
-    				+ " FROM " + WAPDROID_CELLS
+    		Cursor c = mDb.rawQuery("SELECT MAX(" + CELLS_MAXRSSI + "), MIN(" + CELLS_MINRSSI
+    				+ ") FROM " + WAPDROID_CELLS
     				+ " WHERE " + CELLS_CID + "=" + mCID
     				+ " AND " + CELLS_LAC + "=" + mLocation
     				+ " AND " + CELLS_MNC + "=" + mCarrier
     				+ " AND " + CELLS_MCC + "=" + mCountry
-    				+ " AND ((" + CELLS_MAXRSSI
-    				+ "=-1 OR " + CELLS_MAXRSSI + ">=" + mRSSI
-   					+ ") AND (" + CELLS_MINRSSI
-   					+ "=-1 OR " + CELLS_MINRSSI + "<=" + mRSSI + "))", null);
+    				+ " AND " + CELLS_MAXRSSI + ">=" + mRSSI
+   					+ " AND " + CELLS_MINRSSI + "<=" + mRSSI, null);
     		if (c.getCount() > 0) {
-    			range = true;}
+    			c.moveToFirst();
+    			int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
+    			int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
+    			range = ((mMaxRSSI == -1) || ((mMaxRSSI >= mRSSI) && (mMinRSSI <= mRSSI)));}
     		c.close();}
     	return range;}
     
