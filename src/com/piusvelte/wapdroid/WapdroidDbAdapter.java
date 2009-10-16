@@ -299,22 +299,19 @@ public class WapdroidDbAdapter {
     			+ " ORDER BY " + CELLS_MAXRSSI + " DESC", null);}
     
     public Cursor fetchCellsByLAC(int mLAC) {
-    	return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID
+    	return mDb.rawQuery("SELECT " + TABLE_ID
     			+ " FROM " + WAPDROID_CELLS
-    			+ " JOIN " + WAPDROID_LOCATIONS + " ON (" + WAPDROID_CELLS + "." + CELLS_LAC + "=" + WAPDROID_LOCATIONS + "." + TABLE_ID
-    			+ ") WHERE " + WAPDROID_LOCATIONS + "." + TABLE_CODE + "=" + mLAC, null);}
+    			+ " WHERE " + CELLS_LAC + "=" + mLAC, null);}
     
     public Cursor fetchCellsByMNC(int mMNC) {
-    	return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID
+    	return mDb.rawQuery("SELECT " + TABLE_ID
     			+ " FROM " + WAPDROID_CELLS
-    			+ " JOIN " + WAPDROID_CARRIERS + " ON (" + WAPDROID_CELLS + "." + CELLS_MNC + "=" + WAPDROID_CARRIERS + "." + TABLE_ID
-    			+ ") WHERE " + WAPDROID_CARRIERS + "." + TABLE_CODE + "=" + mMNC, null);}
+    			+ " WHERE " + CELLS_MNC + "=" + mMNC, null);}
     
     public Cursor fetchCellsByMCC(int mMCC) {
-    	return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID
+    	return mDb.rawQuery("SELECT " + TABLE_ID
     			+ " FROM " + WAPDROID_CELLS
-    			+ " JOIN " + WAPDROID_COUNTRIES + " ON (" + WAPDROID_CELLS + "." + CELLS_MCC + "=" + WAPDROID_COUNTRIES + "." + TABLE_ID
-    			+ ") WHERE " + WAPDROID_COUNTRIES + "." + TABLE_CODE + "=" + mMCC, null);}
+    			+ " WHERE " + CELLS_MCC + "=" + mMCC, null);}
     
     public void fetchCellOrCreate(String mSSID, int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
     	int mLocation = fetchLocationOrCreate(mLAC);
