@@ -329,7 +329,7 @@ public class WapdroidDbAdapter {
         	initialValues.put(CELLS_NETWORK, mNetwork);
     		mCell = (int) mDb.insert(WAPDROID_CELLS, null, initialValues);}
     	else {
-   	    	Cursor c = mDb.rawQuery("SELECT " + CELLS_MAXRSSI + ", " + CELLS_MINRSSI
+   	    	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", " + CELLS_MAXRSSI + ", " + CELLS_MINRSSI
    	    			+ " FROM " + WAPDROID_CELLS
    	    			+ " WHERE " + TABLE_ID + "=" + mCell
     				+ " AND (" + CELLS_MAXRSSI + "<" + mRSSI
@@ -353,7 +353,7 @@ public class WapdroidDbAdapter {
     	int mCarrier = fetchCarrier(mMNC);
     	int mCountry = fetchCountry(mMCC);
     	if ((mLocation > 0) && (mCarrier > 0) && (mCountry > 0)) {
-    		Cursor c = mDb.rawQuery("SELECT MAX(" + CELLS_MAXRSSI + "), MIN(" + CELLS_MINRSSI
+    		Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + "), MIN(" + CELLS_MINRSSI
     				+ ") FROM " + WAPDROID_CELLS
     				+ " WHERE " + CELLS_CID + "=" + mCID
     				+ " AND " + CELLS_LAC + "=" + mLocation
