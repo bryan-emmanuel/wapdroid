@@ -20,12 +20,15 @@
 
 package com.piusvelte.wapdroid;
 
+import java.util.List;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.telephony.NeighboringCellInfo;
 
 public class WapdroidDbAdapter {	
 	public static final String TAG = "WapdroidDbAdapter";
@@ -347,8 +350,16 @@ public class WapdroidDbAdapter {
     			mDb.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);}
    	    	c.close();}}
     
-    public boolean inRange(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
-    	boolean range = false;
+    public void updateRange(String mSSID, int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
+    	fetchCellOrCreate(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);
+    	for (NeighboringCellInfo n : mNeighboringCells) {
+    		mCID = n.getCid();
+    		mRSSI = n.getRssi();
+    		if ((mCID > 0) && (mRSSI > 0)) {
+        	fetchCellOrCreate(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}}}
+    
+    public boolean isCellInRange(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
+    	boolean mInRange = false;
     	int mLocation = fetchLocation(mLAC);
     	int mCarrier = fetchCarrier(mMNC);
     	int mCountry = fetchCountry(mMCC);
@@ -365,9 +376,19 @@ public class WapdroidDbAdapter {
     			c.moveToFirst();
     			int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
     			int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
-    			range = ((mMaxRSSI == -1) || ((mMaxRSSI >= mRSSI) && (mMinRSSI <= mRSSI)));}
+    			mInRange = ((mMaxRSSI == -1) || ((mMaxRSSI >= mRSSI) && (mMinRSSI <= mRSSI)));}
     		c.close();}
-    	return range;}
+    	return mInRange;}
+    
+    public boolean inRange(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
+    	boolean mInRange = isCellInRange(mCID, mLAC, mMNC, mMCC, mRSSI);
+    	if (mInRange) {
+    		for (NeighboringCellInfo n : mNeighboringCells) {
+    			mCID = n.getCid();
+    			mRSSI = n.getRssi();
+    			if (mInRange && (mCID > 0) && (mRSSI > 0)) {
+    				mInRange = isCellInRange(mCID, mLAC, mMNC, mMCC, mRSSI);}}}
+    	return mInRange;}
     
     public void cleanLocation(int mLocation) {
 		Cursor c = fetchCellsByLAC(mLocation);

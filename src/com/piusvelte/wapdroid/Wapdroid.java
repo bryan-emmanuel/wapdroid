@@ -20,6 +20,8 @@
 
 package com.piusvelte.wapdroid;
 
+import java.util.List;
+
 import com.piusvelte.wapdroid.R;
 
 import android.app.Activity;
@@ -27,6 +29,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.telephony.CellLocation;
+import android.telephony.NeighboringCellInfo;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CheckBox;
@@ -120,7 +123,7 @@ public class Wapdroid extends Activity {
     	return (mWifiHelper.isConnected() && mLocationHelper.hasCell());}
     
     public void recordCell(String mSSID) {
-		mDbHelper.fetchCellOrCreate(mSSID, mLocationHelper.getCID(), mLocationHelper.getLAC(), mLocationHelper.getMNC(), mLocationHelper.getMCC(), mLocationHelper.getRSSI());}
+		mDbHelper.updateRange(mSSID, mLocationHelper.getCID(), mLocationHelper.getLAC(), mLocationHelper.getMNC(), mLocationHelper.getMCC(), mLocationHelper.getRSSI(), mLocationHelper.getNeighboringCells());}
     
     public void updateLocation(int mCID, int mLAC, String mMNC, String mMCC) {
 		field_CID.setText((String) "" + mCID);
@@ -135,13 +138,13 @@ public class Wapdroid extends Activity {
 	public void updateWifiState(String mState) {
 		field_wifiState.setText(mState);}
 	
-    public void manageWifi(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
+    public void manageWifi(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
 		boolean mWifiEnabled = mWifiHelper.isEnabled();
 		if (mLocationHelper.hasCell()) {
 			String mSSID = mWifiHelper.getSSID();
 			if (mSSID != null) {
-				mDbHelper.fetchCellOrCreate(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);}
-			else if (mManageWifi && (mDbHelper.inRange(mCID, mLAC, mMNC, mMCC, mRSSI) ^ mWifiEnabled)) {
+				mDbHelper.updateRange(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI, mNeighboringCells);}
+			else if (mManageWifi && (mDbHelper.inRange(mCID, mLAC, mMNC, mMCC, mRSSI, mNeighboringCells) ^ mWifiEnabled)) {
 				checkbox_wifiState.setChecked(mWifiEnabled ? false : true);}}
 		else if (mManageWifi && mWifiEnabled && !mWifiHelper.isConnected()) {
 			checkbox_wifiState.setChecked(false);}}}
