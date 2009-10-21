@@ -104,7 +104,6 @@ public class Wapdroid extends Activity {
     	mManageWifi = mPreferences.getBoolean(mPreferenceManageWifi, true);
     	mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
-    	mDbHelper.upgradeDatabase();
     	mWifiHelper = new ManageWifi(this);
     	mLocationHelper = new ManageLocation(this);
     	checkbox_wifiState.setChecked(mWifiHelper.isEnabled());
