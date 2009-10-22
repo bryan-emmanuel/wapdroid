@@ -117,12 +117,15 @@ public class Wapdroid extends Activity {
 				mEditor.putBoolean(mPreferenceManageWifi, mManageWifi);
 				mEditor.commit();}});
 		CellLocation.requestLocationUpdate();}
-        
-    public boolean hasCellAndConnection() {
-    	return (mWifiHelper.isConnected() && mLocationHelper.hasCell());}
     
-    public void recordCell(String mSSID) {
-		mDbHelper.updateRange(mSSID, mLocationHelper.getCID(), mLocationHelper.getLAC(), mLocationHelper.getMNC(), mLocationHelper.getMCC(), mLocationHelper.getRSSI(), mLocationHelper.getNeighboringCells());}
+    public void recordNetwork(String mSSID) {
+    	int mCID = mLocationHelper.getCID();
+    	int mLAC = mLocationHelper.getLAC();
+    	String mMNC = mLocationHelper.getMNC();
+    	String mMCC = mLocationHelper.getMCC();
+    	int mRSSI = mLocationHelper.getRSSI();
+    	if ((mCID > 0) && (mLAC > 0) && (mMNC != null) && (mMCC != null)) {
+    		mDbHelper.updateRange(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI, mLocationHelper.getNeighboringCells());}}
     
     public void updateLocation(int mCID, int mLAC, String mMNC, String mMCC) {
 		field_CID.setText((String) "" + mCID);
@@ -139,7 +142,7 @@ public class Wapdroid extends Activity {
 	
     public void manageWifi(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
 		boolean mWifiEnabled = mWifiHelper.isEnabled();
-		if (mLocationHelper.hasCell()) {
+		if ((mCID > 0) && (mLAC > 0) && (mMNC != null) && (mMCC != null)) {
 			String mSSID = mWifiHelper.getSSID();
 			if (mSSID != null) {
 				mDbHelper.updateRange(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI, mNeighboringCells);}

@@ -32,7 +32,7 @@ import android.telephony.NeighboringCellInfo;
 
 public class WapdroidDbAdapter {
 	private static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 3;
+	private static final int DATABASE_VERSION = 4;
 	private static final String DROP = "DROP TABLE IF EXISTS ";
 	public static final String TABLE_ID = "_id";
 	public static final String TABLE_CODE = "code";
@@ -96,76 +96,78 @@ public class WapdroidDbAdapter {
         
         @Override
         public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
-        	boolean pass = false;
-        	Cursor c = database.rawQuery("SELECT tbl_name FROM sqlite_master WHERE tbl_name=\"" + WAPDROID_CELLS + "\" AND sql LIKE \"%RSSI%\"", null);
-        	if (c.getCount() > 0) {
-        		pass = true;}        	
-        	if (pass) {
-        		pass = false;
-            	c = database.rawQuery("SELECT tbl_name FROM sqlite_master WHERE tbl_name=\"" + WAPDROID_CELLS + "\" AND sql LIKE \"%" + CELLS_MAXRSSI + "%\"", null);
-            	if (c.getCount() > 0) {
-            		pass = true;}        
-        		if (!pass) {
-        			database.execSQL(DROP + WAPDROID_CELLS + "_bkp;");
-        			database.execSQL("create temporary table " + WAPDROID_CELLS + "_bkp AS SELECT * FROM " + WAPDROID_CELLS + ";");
-        			database.execSQL(DROP + WAPDROID_CELLS + ";");
-        			database.execSQL(CREATE_CELLS);
-        			database.execSQL("INSERT INTO " + WAPDROID_CELLS + " SELECT "
-    	    				+ TABLE_ID + ", " + CELLS_CID + ", " + CELLS_LAC + ", " + CELLS_MNC + ", " + CELLS_MCC + ", RSSI, RSSI, -1"
-    	    				+ " FROM " + WAPDROID_CELLS + "_bkp;");
-        			database.execSQL(DROP + WAPDROID_CELLS + "_bkp;");}}
-        	else {
-    			database.execSQL(DROP + WAPDROID_CELLS + "_bkp;");
-    			database.execSQL("create temporary table " + WAPDROID_CELLS + "_bkp AS SELECT * FROM " + WAPDROID_CELLS + ";");
-    			database.execSQL(DROP + WAPDROID_CELLS + ";");
-    			database.execSQL(CREATE_CELLS);
-    			database.execSQL("INSERT INTO " + WAPDROID_CELLS + " SELECT "
-        				+ TABLE_ID + ", " + CELLS_CID + ", " + CELLS_LAC + ", " + CELLS_MNC + ", " + CELLS_MCC + ", -1, -1, -1"
-        				+ " FROM " + WAPDROID_CELLS + "_bkp;");
-    			database.execSQL(DROP + WAPDROID_CELLS + "_bkp;");}
-        	/*
-        	 * merge the pairs into cells
-        	 * cells to network is now a one to one relationship, due to the use of RSSI
-        	 */
-    		pass = false;
-        	c = database.rawQuery("SELECT tbl_name FROM sqlite_master WHERE tbl_name=\"pairs\"", null);
-        	if (c.getCount() > 0) {
-        		pass = true;}    
-        	if (pass) {
-        		Cursor n = database.rawQuery("SELECT " + TABLE_ID + " FROM " + WAPDROID_NETWORKS, null);
-    	    	if (n.getCount() > 0) {
-    	    		n.moveToFirst();
-    	    		int mNetwork;
-        			ContentValues cellValues;
-    	    		while (!n.isAfterLast()) {
-    	    			// for each network, get paired cells
-    	    			mNetwork = n.getInt(n.getColumnIndex(TABLE_ID));
-    	    			c = database.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID + " AS " + TABLE_ID + ", " + CELLS_CID + ", " + CELLS_LAC + ", " + CELLS_MNC + ", " + CELLS_MCC + ", " + CELLS_MAXRSSI + ", " + CELLS_MINRSSI + ", " + WAPDROID_CELLS + "." + CELLS_NETWORK + " AS " + CELLS_NETWORK
-    	    					+ " FROM " + WAPDROID_CELLS
-    	    					+ " JOIN pairs ON (" + WAPDROID_CELLS + "." + TABLE_ID + "=pairs.cell)"
-    	    					+ " WHERE pairs.network=" + mNetwork, null);
-    	    			if (c.getCount() > 0) {
-    	    				c.moveToFirst();
-    	    				while (!c.isAfterLast()) {
-    	        				cellValues = new ContentValues();
-    	        				if (c.getInt(c.getColumnIndex(CELLS_NETWORK)) > 0) {
-    	        					cellValues.put(CELLS_CID, c.getInt(c.getColumnIndex(CELLS_CID)));
-    	        					cellValues.put(CELLS_LAC, c.getInt(c.getColumnIndex(CELLS_LAC)));
-    	        					cellValues.put(CELLS_MNC, c.getInt(c.getColumnIndex(CELLS_MNC)));
-    	        					cellValues.put(CELLS_MCC, c.getInt(c.getColumnIndex(CELLS_MCC)));
-    	        					cellValues.put(CELLS_MAXRSSI, c.getInt(c.getColumnIndex(CELLS_MAXRSSI)));
-    	        		        	cellValues.put(CELLS_MINRSSI, c.getInt(c.getColumnIndex(CELLS_MINRSSI)));
-    		        				cellValues.put(CELLS_NETWORK, mNetwork);
-    		        				database.insert(WAPDROID_CELLS, null, cellValues);}
-    	        				else {
-    		        				cellValues.put(CELLS_NETWORK, mNetwork);
-    		        				database.update(WAPDROID_CELLS, cellValues, TABLE_ID + "=" + c.getInt(c.getColumnIndex(TABLE_ID)), null);}
-    	    					c.moveToNext();}}
-    	    			n.moveToNext();}
-    	    		if (c != null) {
-    	    		c.close();}}
-    	    	n.close();
-    	    	database.execSQL(DROP + "pairs;");}
+        	Cursor c;
+        	if (oldVersion < 4) {
+	        	boolean pass = false;
+	        	c = database.rawQuery("SELECT tbl_name FROM sqlite_master WHERE tbl_name=\"" + WAPDROID_CELLS + "\" AND sql LIKE \"%RSSI%\"", null);
+	        	if (c.getCount() > 0) {
+	        		pass = true;}        	
+	        	if (pass) {
+	        		pass = false;
+	            	c = database.rawQuery("SELECT tbl_name FROM sqlite_master WHERE tbl_name=\"" + WAPDROID_CELLS + "\" AND sql LIKE \"%" + CELLS_MAXRSSI + "%\"", null);
+	            	if (c.getCount() > 0) {
+	            		pass = true;}        
+	        		if (!pass) {
+	        			database.execSQL(DROP + WAPDROID_CELLS + "_bkp;");
+	        			database.execSQL("create temporary table " + WAPDROID_CELLS + "_bkp AS SELECT * FROM " + WAPDROID_CELLS + ";");
+	        			database.execSQL(DROP + WAPDROID_CELLS + ";");
+	        			database.execSQL(CREATE_CELLS);
+	        			database.execSQL("INSERT INTO " + WAPDROID_CELLS + " SELECT "
+	    	    				+ TABLE_ID + ", " + CELLS_CID + ", " + CELLS_LAC + ", " + CELLS_MNC + ", " + CELLS_MCC + ", RSSI, RSSI, -1"
+	    	    				+ " FROM " + WAPDROID_CELLS + "_bkp;");
+	        			database.execSQL(DROP + WAPDROID_CELLS + "_bkp;");}}
+	        	else {
+	    			database.execSQL(DROP + WAPDROID_CELLS + "_bkp;");
+	    			database.execSQL("create temporary table " + WAPDROID_CELLS + "_bkp AS SELECT * FROM " + WAPDROID_CELLS + ";");
+	    			database.execSQL(DROP + WAPDROID_CELLS + ";");
+	    			database.execSQL(CREATE_CELLS);
+	    			database.execSQL("INSERT INTO " + WAPDROID_CELLS + " SELECT "
+	        				+ TABLE_ID + ", " + CELLS_CID + ", " + CELLS_LAC + ", " + CELLS_MNC + ", " + CELLS_MCC + ", -1, -1, -1"
+	        				+ " FROM " + WAPDROID_CELLS + "_bkp;");
+	    			database.execSQL(DROP + WAPDROID_CELLS + "_bkp;");}
+	        	/*
+	        	 * merge the pairs into cells
+	        	 * cells to network is now a one to one relationship, due to the use of RSSI
+	        	 */
+	    		pass = false;
+	        	c = database.rawQuery("SELECT tbl_name FROM sqlite_master WHERE tbl_name=\"pairs\"", null);
+	        	if (c.getCount() > 0) {
+	        		pass = true;}    
+	        	if (pass) {
+	        		Cursor n = database.rawQuery("SELECT " + TABLE_ID + " FROM " + WAPDROID_NETWORKS, null);
+	    	    	if (n.getCount() > 0) {
+	    	    		n.moveToFirst();
+	    	    		int mNetwork;
+	        			ContentValues cellValues;
+	    	    		while (!n.isAfterLast()) {
+	    	    			// for each network, get paired cells
+	    	    			mNetwork = n.getInt(n.getColumnIndex(TABLE_ID));
+	    	    			c = database.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID + " AS " + TABLE_ID + ", " + CELLS_CID + ", " + CELLS_LAC + ", " + CELLS_MNC + ", " + CELLS_MCC + ", " + CELLS_MAXRSSI + ", " + CELLS_MINRSSI + ", " + WAPDROID_CELLS + "." + CELLS_NETWORK + " AS " + CELLS_NETWORK
+	    	    					+ " FROM " + WAPDROID_CELLS
+	    	    					+ " JOIN pairs ON (" + WAPDROID_CELLS + "." + TABLE_ID + "=pairs.cell)"
+	    	    					+ " WHERE pairs.network=" + mNetwork, null);
+	    	    			if (c.getCount() > 0) {
+	    	    				c.moveToFirst();
+	    	    				while (!c.isAfterLast()) {
+	    	        				cellValues = new ContentValues();
+	    	        				if (c.getInt(c.getColumnIndex(CELLS_NETWORK)) > 0) {
+	    	        					cellValues.put(CELLS_CID, c.getInt(c.getColumnIndex(CELLS_CID)));
+	    	        					cellValues.put(CELLS_LAC, c.getInt(c.getColumnIndex(CELLS_LAC)));
+	    	        					cellValues.put(CELLS_MNC, c.getInt(c.getColumnIndex(CELLS_MNC)));
+	    	        					cellValues.put(CELLS_MCC, c.getInt(c.getColumnIndex(CELLS_MCC)));
+	    	        					cellValues.put(CELLS_MAXRSSI, c.getInt(c.getColumnIndex(CELLS_MAXRSSI)));
+	    	        		        	cellValues.put(CELLS_MINRSSI, c.getInt(c.getColumnIndex(CELLS_MINRSSI)));
+	    		        				cellValues.put(CELLS_NETWORK, mNetwork);
+	    		        				database.insert(WAPDROID_CELLS, null, cellValues);}
+	    	        				else {
+	    		        				cellValues.put(CELLS_NETWORK, mNetwork);
+	    		        				database.update(WAPDROID_CELLS, cellValues, TABLE_ID + "=" + c.getInt(c.getColumnIndex(TABLE_ID)), null);}
+	    	    					c.moveToNext();}}
+	    	    			n.moveToNext();}
+	    	    		if (c != null) {
+	    	    		c.close();}}
+	    	    	n.close();
+	    	    	database.execSQL(DROP + "pairs;");}}
         	// clean up junk data from 1.2.2
         	c = database.query(WAPDROID_CARRIERS, new String[] {TABLE_ID}, TABLE_CODE + "=\"\"", null, null, null, null);
         	if (c.getCount() > 0) {
@@ -332,51 +334,46 @@ public class WapdroidDbAdapter {
     	return mDb.rawQuery("SELECT " + TABLE_ID
     			+ " FROM " + WAPDROID_CELLS
     			+ " WHERE " + CELLS_MCC + "=" + mMCC, null);}
-
-    public boolean hasCell(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
-    	return ((mCID > 0) && (mLAC > 0) && (mMNC != null) && (mMCC != null));}
     
-    public void fetchCellOrCreate(String mSSID, int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
-    	if ((mSSID != null) && hasCell(mCID, mLAC, mMNC, mMCC, mRSSI)) {
-	    	int mLocation = fetchLocationOrCreate(mLAC);
-	    	int mCarrier = fetchCarrierOrCreate(mMNC);
-	    	int mCountry = fetchCountryOrCreate(mMCC); 
-	    	int mNetwork = fetchNetworkOrCreate(mSSID);
-	    	int mCell = fetchCell(mCID, mLocation, mCarrier, mCountry, mNetwork);
-	    	if (mCell < 0) {
-	    		ContentValues initialValues = new ContentValues();
-	        	initialValues.put(CELLS_CID, mCID);
-	        	initialValues.put(CELLS_LAC, mLocation);
-	        	initialValues.put(CELLS_MNC, mCarrier);
-	        	initialValues.put(CELLS_MCC, mCountry);
-	        	initialValues.put(CELLS_MAXRSSI, mRSSI);
-	        	initialValues.put(CELLS_MINRSSI, mRSSI);
-	        	initialValues.put(CELLS_NETWORK, mNetwork);
-	    		mCell = (int) mDb.insert(WAPDROID_CELLS, null, initialValues);}
-	    	else {
-	   	    	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", " + CELLS_MAXRSSI + ", " + CELLS_MINRSSI
-	   	    			+ " FROM " + WAPDROID_CELLS
-	   	    			+ " WHERE " + TABLE_ID + "=" + mCell
-	    				+ " AND (" + CELLS_MAXRSSI + "<" + mRSSI
-	    				+ " OR (" + CELLS_MINRSSI
-	    				+ "=-1 OR " + CELLS_MINRSSI + ">" + mRSSI + "))", null);
-	   	    	if (c.getCount() > 0) {
-	   	    		c.moveToFirst();
-	    	    	int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
-	    	    	int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
-	    			ContentValues updateValues = new ContentValues();
-	    			if (mMaxRSSI < mRSSI) {
-	    				updateValues.put(CELLS_MAXRSSI, mRSSI);}
-	    			if ((mMinRSSI == -1) || (mMinRSSI > mRSSI)) {
-	    				updateValues.put(CELLS_MINRSSI, mRSSI);}
-	    			mDb.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);}
-   	    	c.close();}}}
-    
-    public void updateNeighbor(String mSSID, int mCID, int mRSSI) {
-    	if ((mSSID != null) && (mCID > 0) && (mRSSI > 0)) {
-	    	int mNetwork = fetchNetwork(mSSID);
-	    	if ((mNetwork > 0) && (mCID > 0)) {
-	   	    	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", " + CELLS_MAXRSSI + ", " + CELLS_MINRSSI
+    public void updateRange(String mSSID, int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
+    	int mLocation = fetchLocationOrCreate(mLAC);
+    	int mCarrier = fetchCarrierOrCreate(mMNC);
+    	int mCountry = fetchCountryOrCreate(mMCC); 
+    	int mNetwork = fetchNetworkOrCreate(mSSID);
+    	int mCell = fetchCell(mCID, mLocation, mCarrier, mCountry, mNetwork);
+    	Cursor c = null;
+    	if (mCell < 0) {
+    		ContentValues initialValues = new ContentValues();
+        	initialValues.put(CELLS_CID, mCID);
+        	initialValues.put(CELLS_LAC, mLocation);
+        	initialValues.put(CELLS_MNC, mCarrier);
+        	initialValues.put(CELLS_MCC, mCountry);
+        	initialValues.put(CELLS_MAXRSSI, mRSSI);
+        	initialValues.put(CELLS_MINRSSI, mRSSI);
+        	initialValues.put(CELLS_NETWORK, mNetwork);
+    		mCell = (int) mDb.insert(WAPDROID_CELLS, null, initialValues);}
+    	else {
+   	    	c = mDb.rawQuery("SELECT " + TABLE_ID + ", " + CELLS_MAXRSSI + ", " + CELLS_MINRSSI
+   	    			+ " FROM " + WAPDROID_CELLS
+   	    			+ " WHERE " + TABLE_ID + "=" + mCell
+    				+ " AND (" + CELLS_MAXRSSI + "<" + mRSSI
+    				+ " OR (" + CELLS_MINRSSI
+    				+ "=-1 OR " + CELLS_MINRSSI + ">" + mRSSI + "))", null);
+   	    	if (c.getCount() > 0) {
+   	    		c.moveToFirst();
+    	    	int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
+    	    	int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
+    			ContentValues updateValues = new ContentValues();
+    			if (mMaxRSSI < mRSSI) {
+    				updateValues.put(CELLS_MAXRSSI, mRSSI);}
+    			if ((mMinRSSI == -1) || (mMinRSSI > mRSSI)) {
+    				updateValues.put(CELLS_MINRSSI, mRSSI);}
+    			mDb.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);}}
+    	for (NeighboringCellInfo n : mNeighboringCells) {
+    		mCID = n.getCid();
+    		mRSSI = n.getRssi();
+        	if ((mCID > 0) && (mRSSI > 0)) {
+	   	    	c = mDb.rawQuery("SELECT " + TABLE_ID + ", " + CELLS_MAXRSSI + ", " + CELLS_MINRSSI
 	   	    			+ " FROM " + WAPDROID_CELLS
 	   	    			+ " WHERE " + CELLS_CID + "=" + mCID
 	   	    			+ " AND " + CELLS_NETWORK + "=" + mNetwork
@@ -385,7 +382,7 @@ public class WapdroidDbAdapter {
 	    				+ "=-1 OR " + CELLS_MINRSSI + ">" + mRSSI + "))", null);
 	   	    	if (c.getCount() > 0) {
 	   	    		c.moveToFirst();
-	   	    		int mCell = c.getInt(c.getColumnIndex(TABLE_ID));
+	   	    		mCell = c.getInt(c.getColumnIndex(TABLE_ID));
 	    	    	int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
 	    	    	int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
 	    			ContentValues updateValues = new ContentValues();
@@ -393,23 +390,17 @@ public class WapdroidDbAdapter {
 	    				updateValues.put(CELLS_MAXRSSI, mRSSI);}
 	    			if ((mMinRSSI == -1) || (mMinRSSI > mRSSI)) {
 	    				updateValues.put(CELLS_MINRSSI, mRSSI);}
-	    			mDb.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);}
-	   	    	c.close();}}}
+	    			mDb.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);}}}
+    	c.close();}
     
-    public void updateRange(String mSSID, int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
-    	fetchCellOrCreate(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI);
-    	for (NeighboringCellInfo n : mNeighboringCells) {
-    		mCID = n.getCid();
-    		mRSSI = n.getRssi();
-    		updateNeighbor(mSSID, mCID, mRSSI);}}
-    
-    public boolean isCellInRange(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
+    public boolean inRange(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
     	boolean mInRange = false;
     	int mLocation = fetchLocation(mLAC);
     	int mCarrier = fetchCarrier(mMNC);
     	int mCountry = fetchCountry(mMCC);
+    	Cursor c = null;
     	if ((mLocation > 0) && (mCarrier > 0) && (mCountry > 0)) {
-    		Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + ") AS " + CELLS_MAXRSSI + ", MIN(" + CELLS_MINRSSI + ") AS " + CELLS_MINRSSI
+    		c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + ") AS " + CELLS_MAXRSSI + ", MIN(" + CELLS_MINRSSI + ") AS " + CELLS_MINRSSI
     				+ " FROM " + WAPDROID_CELLS
     				+ " WHERE " + CELLS_CID + "=" + mCID
     				+ " AND " + CELLS_LAC + "=" + mLocation
@@ -421,33 +412,23 @@ public class WapdroidDbAdapter {
     			c.moveToFirst();
     			int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
     			int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
-    			mInRange = ((mMaxRSSI == -1) || ((mMaxRSSI >= mRSSI) && (mMinRSSI <= mRSSI)));}
-    		c.close();}
-    	return mInRange;}
-    
-    public boolean isNeighborInRange(int mCID, int mRSSI) {
-    	boolean mInRange = false;
-		Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + ") AS " + CELLS_MAXRSSI + ", MIN(" + CELLS_MINRSSI + ") AS " + CELLS_MINRSSI
-				+ " FROM " + WAPDROID_CELLS
-				+ " WHERE " + CELLS_CID + "=" + mCID
-				+ " AND " + CELLS_MAXRSSI + ">=" + mRSSI
-				+ " AND " + CELLS_MINRSSI + "<=" + mRSSI, null);
-		if (c.getCount() > 0) {
-			c.moveToFirst();
-			int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
-			int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
-			mInRange = ((mMaxRSSI == -1) || ((mMaxRSSI >= mRSSI) && (mMinRSSI <= mRSSI)));}
-		c.close();
-    	return mInRange;}
-    
-    public boolean inRange(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
-    	boolean mInRange = isCellInRange(mCID, mLAC, mMNC, mMCC, mRSSI);
+    			mInRange = ((mMaxRSSI == -1) || ((mMaxRSSI >= mRSSI) && (mMinRSSI <= mRSSI)));}}
     	if (mInRange) {
     		for (NeighboringCellInfo n : mNeighboringCells) {
     			mCID = n.getCid();
     			mRSSI = n.getRssi();
     	    	if (mInRange && (mCID > 0) && (mRSSI > 0)) {
-    				mInRange = isNeighborInRange(mCID, mRSSI);}}}
+    				c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + ") AS " + CELLS_MAXRSSI + ", MIN(" + CELLS_MINRSSI + ") AS " + CELLS_MINRSSI
+    						+ " FROM " + WAPDROID_CELLS
+    						+ " WHERE " + CELLS_CID + "=" + mCID
+    						+ " AND " + CELLS_MAXRSSI + ">=" + mRSSI
+    						+ " AND " + CELLS_MINRSSI + "<=" + mRSSI, null);
+    				if (c.getCount() > 0) {
+    					c.moveToFirst();
+    					int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
+    					int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
+    					mInRange = ((mMaxRSSI == -1) || ((mMaxRSSI >= mRSSI) && (mMinRSSI <= mRSSI)));}}}}
+    	c.close();
     	return mInRange;}
     
     public void cleanLocation(int mLocation) {
