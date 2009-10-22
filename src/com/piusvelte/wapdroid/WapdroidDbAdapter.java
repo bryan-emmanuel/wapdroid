@@ -32,7 +32,7 @@ import android.telephony.NeighboringCellInfo;
 
 public class WapdroidDbAdapter {
 	private static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 8;
+	private static final int DATABASE_VERSION = 9;
 	private static final String DROP = "DROP TABLE IF EXISTS ";
 	public static final String TABLE_ID = "_id";
 	public static final String TABLE_CODE = "code";
@@ -197,7 +197,7 @@ public class WapdroidDbAdapter {
             				updateValues.put(CELLS_MAXRSSI, (mMaxRSSI < mMinRSSI ? mMinRSSI : mMaxRSSI));}
             			database.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);
         				c.moveToNext();}}}
-        	if (oldVersion < 9) {
+        	if (oldVersion < 10) {
             	// clean up junk data
 	        	c = database.query(WAPDROID_CARRIERS, new String[] {TABLE_ID}, TABLE_CODE + "=\"\"", null, null, null, null);
 	        	if (c.getCount() > 0) {
@@ -397,8 +397,7 @@ public class WapdroidDbAdapter {
    	    			+ " FROM " + WAPDROID_CELLS
    	    			+ " WHERE " + TABLE_ID + "=" + mCell
     				+ " AND (" + CELLS_MAXRSSI + "<" + mRSSI
-    				+ " OR (" + CELLS_MINRSSI
-    				+ "=-1 OR " + CELLS_MINRSSI + ">" + mRSSI + "))", null);
+    				+ " OR " + CELLS_MINRSSI + ">" + mRSSI + ")", null);
    	    	if (c.getCount() > 0) {
    	    		c.moveToFirst();
     	    	int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
@@ -406,7 +405,7 @@ public class WapdroidDbAdapter {
     			ContentValues updateValues = new ContentValues();
     			if (mMaxRSSI < mRSSI) {
     				updateValues.put(CELLS_MAXRSSI, mRSSI);}
-    			if ((mMinRSSI == -1) || (mMinRSSI > mRSSI)) {
+    			if (mMinRSSI > mRSSI) {
     				updateValues.put(CELLS_MINRSSI, mRSSI);}
     			mDb.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);}}
     	for (NeighboringCellInfo n : mNeighboringCells) {
@@ -418,8 +417,7 @@ public class WapdroidDbAdapter {
 	   	    			+ " WHERE " + CELLS_CID + "=" + mCID
 	   	    			+ " AND " + CELLS_NETWORK + "=" + mNetwork
 	    				+ " AND (" + CELLS_MAXRSSI + "<" + mRSSI
-	    				+ " OR (" + CELLS_MINRSSI
-	    				+ "=-1 OR " + CELLS_MINRSSI + ">" + mRSSI + "))", null);
+	    				+ " OR " + CELLS_MINRSSI + ">" + mRSSI + ")", null);
 	   	    	if (c.getCount() > 0) {
 	   	    		c.moveToFirst();
 	   	    		mCell = c.getInt(c.getColumnIndex(TABLE_ID));
@@ -428,7 +426,7 @@ public class WapdroidDbAdapter {
 	    			ContentValues updateValues = new ContentValues();
 	    			if (mMaxRSSI < mRSSI) {
 	    				updateValues.put(CELLS_MAXRSSI, mRSSI);}
-	    			if ((mMinRSSI == -1) || (mMinRSSI > mRSSI)) {
+	    			if (mMinRSSI > mRSSI) {
 	    				updateValues.put(CELLS_MINRSSI, mRSSI);}
 	    			mDb.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);}}}
     	c.close();}
@@ -440,7 +438,7 @@ public class WapdroidDbAdapter {
     	int mCountry = fetchCountry(mMCC);
     	Cursor c = null;
     	if ((mLocation > 0) && (mCarrier > 0) && (mCountry > 0)) {
-    		c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + ") AS " + CELLS_MAXRSSI + ", MIN(" + CELLS_MINRSSI + ") AS " + CELLS_MINRSSI
+    		c = mDb.rawQuery("SELECT " + TABLE_ID
     				+ " FROM " + WAPDROID_CELLS
     				+ " WHERE " + CELLS_CID + "=" + mCID
     				+ " AND " + CELLS_LAC + "=" + mLocation
@@ -448,26 +446,18 @@ public class WapdroidDbAdapter {
     				+ " AND " + CELLS_MCC + "=" + mCountry
     				+ " AND " + CELLS_MAXRSSI + ">=" + mRSSI
    					+ " AND " + CELLS_MINRSSI + "<=" + mRSSI, null);
-    		if (c.getCount() > 0) {
-    			c.moveToFirst();
-    			int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
-    			int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
-    			mInRange = ((mMaxRSSI == -1) || ((mMaxRSSI >= mRSSI) && (mMinRSSI <= mRSSI)));}}
+    		mInRange = c.getCount() > 0 ? true : false;}
     	if (mInRange) {
     		for (NeighboringCellInfo n : mNeighboringCells) {
     			mCID = n.getCid();
     			mRSSI = convertRSSIToASU(n.getRssi());
     	    	if (mInRange && (mCID > 0) && (mRSSI > 0)) {
-    				c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + ") AS " + CELLS_MAXRSSI + ", MIN(" + CELLS_MINRSSI + ") AS " + CELLS_MINRSSI
+    				c = mDb.rawQuery("SELECT " + TABLE_ID
     						+ " FROM " + WAPDROID_CELLS
     						+ " WHERE " + CELLS_CID + "=" + mCID
     						+ " AND " + CELLS_MAXRSSI + ">=" + mRSSI
     						+ " AND " + CELLS_MINRSSI + "<=" + mRSSI, null);
-    				if (c.getCount() > 0) {
-    					c.moveToFirst();
-    					int mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
-    					int mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
-    					mInRange = ((mMaxRSSI == -1) || ((mMaxRSSI >= mRSSI) && (mMinRSSI <= mRSSI)));}}}}
+    	    		mInRange = c.getCount() > 0 ? true : false;}}}
     	c.close();
     	return mInRange;}
     

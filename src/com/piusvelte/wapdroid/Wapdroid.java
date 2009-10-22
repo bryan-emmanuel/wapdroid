@@ -124,7 +124,7 @@ public class Wapdroid extends Activity {
     	String mMNC = mLocationHelper.getMNC();
     	String mMCC = mLocationHelper.getMCC();
     	int mRSSI = mLocationHelper.getRSSI();
-    	if ((mCID > 0) && (mLAC > 0) && (mMNC != null) && (mMCC != null)) {
+    	if ((mCID > 0) && (mLAC > 0) && ((mMNC != null) && (mMNC != "")) && ((mMCC != null) && (mMCC != ""))) {
     		mDbHelper.updateRange(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI, mLocationHelper.getNeighboringCells());}}
     
     public void updateLocation(int mCID, int mLAC, String mMNC, String mMCC) {
@@ -142,7 +142,7 @@ public class Wapdroid extends Activity {
 	
     public void manageWifi(int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
 		boolean mWifiEnabled = mWifiHelper.isEnabled();
-		if ((mCID > 0) && (mLAC > 0) && (mMNC != null) && (mMCC != null)) {
+		if ((mCID > 0) && (mLAC > 0) && ((mMNC != null) && (mMNC != "")) && ((mMCC != null) && (mMCC != ""))) {
 			String mSSID = mWifiHelper.getSSID();
 			if (mSSID != null) {
 				mDbHelper.updateRange(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI, mNeighboringCells);}
