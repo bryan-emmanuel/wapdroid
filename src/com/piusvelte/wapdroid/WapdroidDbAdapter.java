@@ -32,7 +32,7 @@ import android.telephony.NeighboringCellInfo;
 
 public class WapdroidDbAdapter {
 	private static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 4;
+	private static final int DATABASE_VERSION = 8;
 	private static final String DROP = "DROP TABLE IF EXISTS ";
 	public static final String TABLE_ID = "_id";
 	public static final String TABLE_CODE = "code";
@@ -96,7 +96,7 @@ public class WapdroidDbAdapter {
         
         @Override
         public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
-        	Cursor c;
+        	Cursor c = null;
         	if (oldVersion < 4) {
 	        	boolean pass = false;
 	        	c = database.rawQuery("SELECT tbl_name FROM sqlite_master WHERE tbl_name=\"" + WAPDROID_CELLS + "\" AND sql LIKE \"%RSSI%\"", null);
@@ -168,25 +168,55 @@ public class WapdroidDbAdapter {
 	    	    		c.close();}}
 	    	    	n.close();
 	    	    	database.execSQL(DROP + "pairs;");}}
-        	// clean up junk data from 1.2.2
-        	c = database.query(WAPDROID_CARRIERS, new String[] {TABLE_ID}, TABLE_CODE + "=\"\"", null, null, null, null);
-        	if (c.getCount() > 0) {
-        		int mCarrier;
-        		c.moveToFirst();
-        		while (!c.isAfterLast()) {
-        			mCarrier = c.getInt(c.getColumnIndex(TABLE_ID));
-        			database.delete(WAPDROID_CELLS, CELLS_MNC + "=" + mCarrier, null);
-            		database.delete(WAPDROID_CARRIERS, TABLE_ID + "=" + mCarrier, null);
-        			c.moveToNext();}}
-        	c = database.query(WAPDROID_COUNTRIES, new String[] {TABLE_ID}, TABLE_CODE + "=\"\"", null, null, null, null);
-        	if (c.getCount() > 0) {
-        		int mCountry;
-        		c.moveToFirst();
-        		while (!c.isAfterLast()) {
-        			mCountry = c.getInt(c.getColumnIndex(TABLE_ID));
-        			database.delete(WAPDROID_CELLS, CELLS_MCC + "=" + mCountry, null);
-            		database.delete(WAPDROID_COUNTRIES, TABLE_ID + "=" + mCountry, null);
-        			c.moveToNext();}}
+        	if (oldVersion < 8) {
+            	// fix the RSSI values from neighboring cell info
+        		c = database.query(WAPDROID_CELLS, new String[] {TABLE_ID, CELLS_MAXRSSI, CELLS_MINRSSI}, CELLS_MAXRSSI + ">31 OR " + CELLS_MINRSSI + ">31", null, null, null, null);
+        		if (c.getCount() > 0) {
+        			int mCell;
+        			int mMaxRSSI;
+        			int mMinRSSI;
+        			c.moveToFirst();
+        			while (!c.isAfterLast()) {
+            	    	mCell = c.getInt(c.getColumnIndex(TABLE_ID));
+            	    	mMaxRSSI = c.getInt(c.getColumnIndex(CELLS_MAXRSSI));
+            	    	mMinRSSI = c.getInt(c.getColumnIndex(CELLS_MINRSSI));
+            			ContentValues updateValues = new ContentValues();
+            			/*
+            			 * ASU is reported by the signal strength with a range of 0-31
+            			 * RSSI = -113 + 2 * ASU
+            			 * NeighboringCellInfo reports a positive RSSI
+            			 * and needs to be converted to ASU
+            			 * ASU = ((-1 * RSSI) + 113) / 2
+            			 */
+            			if (mMinRSSI > 31) {
+            				mMinRSSI = Math.round(((-1 * mMaxRSSI) + 113) / 2);
+            				updateValues.put(CELLS_MINRSSI, mMinRSSI);}
+            			if (mMaxRSSI > 31) {
+            				mMaxRSSI = Math.round(((-1 * mMaxRSSI) + 113) / 2);
+            				// of course, it's likely that the max is now smaller than the min
+            				updateValues.put(CELLS_MAXRSSI, (mMaxRSSI < mMinRSSI ? mMinRSSI : mMaxRSSI));}
+            			database.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);
+        				c.moveToNext();}}}
+        	if (oldVersion < 9) {
+            	// clean up junk data
+	        	c = database.query(WAPDROID_CARRIERS, new String[] {TABLE_ID}, TABLE_CODE + "=\"\"", null, null, null, null);
+	        	if (c.getCount() > 0) {
+	        		int mCarrier;
+	        		c.moveToFirst();
+	        		while (!c.isAfterLast()) {
+	        			mCarrier = c.getInt(c.getColumnIndex(TABLE_ID));
+	        			database.delete(WAPDROID_CELLS, CELLS_MNC + "=" + mCarrier, null);
+	            		database.delete(WAPDROID_CARRIERS, TABLE_ID + "=" + mCarrier, null);
+	        			c.moveToNext();}}
+	        	c = database.query(WAPDROID_COUNTRIES, new String[] {TABLE_ID}, TABLE_CODE + "=\"\"", null, null, null, null);
+	        	if (c.getCount() > 0) {
+	        		int mCountry;
+	        		c.moveToFirst();
+	        		while (!c.isAfterLast()) {
+	        			mCountry = c.getInt(c.getColumnIndex(TABLE_ID));
+	        			database.delete(WAPDROID_CELLS, CELLS_MCC + "=" + mCountry, null);
+	            		database.delete(WAPDROID_COUNTRIES, TABLE_ID + "=" + mCountry, null);
+	        			c.moveToNext();}}}
         	c.close();}}
     
     public WapdroidDbAdapter(Context context) {
@@ -335,6 +365,16 @@ public class WapdroidDbAdapter {
     			+ " FROM " + WAPDROID_CELLS
     			+ " WHERE " + CELLS_MCC + "=" + mMCC, null);}
     
+    public int convertRSSIToASU(int mRSSI) {
+		/*
+		 * ASU is reported by the signal strength with a range of 0-31
+		 * RSSI = -113 + 2 * ASU
+		 * NeighboringCellInfo reports a positive RSSI
+		 * and needs to be converted to ASU
+		 * ASU = ((-1 * RSSI) + 113) / 2
+		 */
+    	return mRSSI > 31 ? Math.round(((-1 * mRSSI) + 113) / 2) : mRSSI;}
+    
     public void updateRange(String mSSID, int mCID, int mLAC, String mMNC, String mMCC, int mRSSI, List<NeighboringCellInfo> mNeighboringCells) {
     	int mLocation = fetchLocationOrCreate(mLAC);
     	int mCarrier = fetchCarrierOrCreate(mMNC);
@@ -371,7 +411,7 @@ public class WapdroidDbAdapter {
     			mDb.update(WAPDROID_CELLS, updateValues, TABLE_ID + "=" + mCell, null);}}
     	for (NeighboringCellInfo n : mNeighboringCells) {
     		mCID = n.getCid();
-    		mRSSI = n.getRssi();
+    		mRSSI = convertRSSIToASU(n.getRssi());
         	if ((mCID > 0) && (mRSSI > 0)) {
 	   	    	c = mDb.rawQuery("SELECT " + TABLE_ID + ", " + CELLS_MAXRSSI + ", " + CELLS_MINRSSI
 	   	    			+ " FROM " + WAPDROID_CELLS
@@ -416,7 +456,7 @@ public class WapdroidDbAdapter {
     	if (mInRange) {
     		for (NeighboringCellInfo n : mNeighboringCells) {
     			mCID = n.getCid();
-    			mRSSI = n.getRssi();
+    			mRSSI = convertRSSIToASU(n.getRssi());
     	    	if (mInRange && (mCID > 0) && (mRSSI > 0)) {
     				c = mDb.rawQuery("SELECT " + TABLE_ID + ", MAX(" + CELLS_MAXRSSI + ") AS " + CELLS_MAXRSSI + ", MIN(" + CELLS_MINRSSI + ") AS " + CELLS_MINRSSI
     						+ " FROM " + WAPDROID_CELLS
