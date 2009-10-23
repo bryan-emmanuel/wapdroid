@@ -144,7 +144,7 @@ public class Wapdroid extends Activity {
 		boolean mWifiEnabled = mWifiHelper.isEnabled();
 		if ((mCID > 0) && (mLAC > 0) && ((mMNC != null) && (mMNC != "")) && ((mMCC != null) && (mMCC != ""))) {
 			String mSSID = mWifiHelper.getSSID();
-			if (mSSID != null) {
+			if ((mSSID != null) && (mSSID != "")) {
 				mDbHelper.updateRange(mSSID, mCID, mLAC, mMNC, mMCC, mRSSI, mNeighboringCells);}
 			else if (mManageWifi && (mDbHelper.inRange(mCID, mLAC, mMNC, mMCC, mRSSI, mNeighboringCells) ^ mWifiEnabled)) {
 				checkbox_wifiState.setChecked(mWifiEnabled ? false : true);}}

@@ -33,26 +33,23 @@ public class ManageWifi extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		initWifi();
-		if (mSSID != null) {
+		if ((mSSID != null) && (mSSID != "")) {
 			mWapdroid.recordNetwork(mSSID);}}
 
     public void initWifi() {
     	wifiState = wifiManager.getWifiState();
-    	if (wifiState == wifiEnabled) {
-    		mSSID = wifiManager.getConnectionInfo().getSSID();}
-    	else {
-    		mSSID = null;}
+    	mSSID = wifiManager.getConnectionInfo().getSSID();
 		mWapdroid.updateWifiState(
-				(mSSID != null ? CONNECTEDTO + mSSID :
+				((mSSID != null) && (mSSID != "") ? CONNECTEDTO + mSSID :
 					(wifiState == wifiEnabled ? ENABLED :
 						(wifiState == wifiEnabling ? ENABLING :
 							(wifiState == wifiDisabling ? DISABLING : DISABLED)))));}
 	
 	public boolean isEnabled() {
-		return wifiManager.getWifiState() == wifiEnabled;}
+		return wifiManager.isWifiEnabled();}
 	
 	public boolean isConnected() {
-		return mSSID != null;}
+		return (mSSID != null) && (mSSID != "");}
 	
 	public void setEnabled(boolean mEnable) {
 		wifiManager.setWifiEnabled(mEnable);}
