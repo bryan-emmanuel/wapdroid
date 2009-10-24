@@ -48,14 +48,13 @@ public final class R {
         public static final int label_maxRSSI=0x7f040007;
         public static final int label_minRSSI=0x7f040006;
         public static final int label_wapdroidState=0x7f040009;
-        public static final int menu_deleteCell=0x7f040011;
-        public static final int menu_deleteNetwork=0x7f040010;
-        public static final int menu_manageCells=0x7f04000f;
-        public static final int menu_manageNetworks=0x7f04000e;
-        public static final int menu_refreshCells=0x7f040013;
-        public static final int menu_refreshNetworks=0x7f040012;
+        public static final int menu_deleteCell=0x7f040010;
+        public static final int menu_deleteNetwork=0x7f04000f;
+        public static final int menu_manageCells=0x7f04000e;
+        public static final int menu_manageNetworks=0x7f04000d;
+        public static final int menu_refreshCells=0x7f040012;
+        public static final int menu_refreshNetworks=0x7f040011;
         public static final int menu_resetPeregrine=0x7f04000c;
-        public static final int menu_updateLocation=0x7f04000d;
         public static final int no_cells=0x7f04000b;
         public static final int no_networks=0x7f04000a;
     }
