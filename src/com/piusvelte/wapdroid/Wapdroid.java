@@ -151,6 +151,7 @@ public class Wapdroid extends Activity {
 		mGsmCellLocation = (GsmCellLocation) mTeleManager.getCellLocation();
 		mCID = mGsmCellLocation.getCid();
 		mLAC = mGsmCellLocation.getLac();
+    	mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 		field_CID.setText((String) "" + mCID);
 		field_LAC.setText((String) "" + mLAC);
 		field_MNC.setText((String) "" + mMNC);
@@ -170,12 +171,14 @@ public class Wapdroid extends Activity {
 		field_LAC.setText((String) "" + mLAC);
 		field_MNC.setText((String) "" + mMNC);
 		field_MCC.setText((String) "" + mMCC);
+    	mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 		manageWifi();}
     
     public void signalChanged(int mASU) {
 		//phone state intent receiver: 0-31, for GSM, dBm = -113 + 2 * asu
     	mRSSI = mASU;
 		field_RSSI.setText((String) "" + (-113 + 2 * mRSSI) + "dBm");
+    	mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 		manageWifi();}
     
     public void updateRange() {
@@ -206,7 +209,6 @@ public class Wapdroid extends Activity {
 			if (mSSID != null) {
 				field_wifiState.setText(CONNECTEDTO + mSSID);
 				if (hasCell()) {
-			    	mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 			    	updateRange();}}
 			else {
 				field_wifiState.setText(ENABLED);}}
@@ -229,7 +231,6 @@ public class Wapdroid extends Activity {
     
     public void manageWifi() {
 		if (hasCell()) {
-	    	mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 			if ((mWifiState==mWifiEnabled) && (mSSID != null)) {
 				updateRange();}
 			else if (mManageWifi) {
@@ -237,14 +238,11 @@ public class Wapdroid extends Activity {
 				if (mInRange) {
 					int mNeighborCID;
 					int mNeighborRSSI;
-					int mCell;
 		    		for (NeighboringCellInfo n : mNeighboringCells) {
 		    			mNeighborCID = n.getCid();
 		    			mNeighborRSSI = convertRSSIToASU(n.getRssi());
 		    			if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
-		    				mCell = mDbHelper.fetchNeighbor(mCID);
-		    				if (mCID > 0) {
-		    					mInRange = mDbHelper.neighborInRange(mCell, mNeighborRSSI);}}}}
+	    					mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}
 				if (mInRange ^ (mWifiState == mWifiEnabled)) {
 					checkbox_wifiState.setChecked(mWifiState == mWifiEnabled ?
 							false
