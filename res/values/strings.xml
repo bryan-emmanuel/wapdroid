@@ -12,11 +12,16 @@
     <string name="label_wapdroidState">Manage WiFi</string>
     <string name="no_networks">no networks</string>
     <string name="no_cells">no cells</string>
-    <string name="menu_resetPeregrine">reset Wapdroid</string>
+    <string name="menu_resetWapdroid">reset Wapdroid</string>
     <string name="menu_manageNetworks">manage networks</string>
     <string name="menu_manageCells">manage cells</string>
     <string name="menu_deleteNetwork">forget network</string>
     <string name="menu_deleteCell">forget cell</string>
     <string name="menu_refreshNetworks">refresh networks</string>
     <string name="menu_refreshCells">refresh cells</string>
+    <string name="label_disabling">disabling</string>
+    <string name="label_disabled">disabled</string>
+    <string name="label_enabling">enabling</string>
+    <string name="label_enabled">enabled</string>
+    <string name="label_connectedto">connected to </string>
 </resources>

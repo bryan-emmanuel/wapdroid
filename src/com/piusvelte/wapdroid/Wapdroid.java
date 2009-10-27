@@ -38,6 +38,7 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CheckBox;
@@ -67,11 +68,6 @@ public class Wapdroid extends Activity {
 	private WifiInfo mWifiInfo;
 	private int mWifiState, mWifiDisabling, mWifiEnabling, mWifiEnabled, mWifiUnknown;
 	private String mSSID = null;
-	private static final String CONNECTEDTO = "connected to ";
-	private static final String ENABLED = "enabled";
-	private static final String ENABLING = "enabling";
-	private static final String DISABLED = "disabled";
-	private static final String DISABLING = "disabling";
 		
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -83,7 +79,7 @@ public class Wapdroid extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
     	boolean result = super.onCreateOptionsMenu(menu);
     	menu.add(0, MANAGE_ID, 0, R.string.menu_manageNetworks);
-    	menu.add(0, RESET_ID, 0, R.string.menu_resetPeregrine);
+    	menu.add(0, RESET_ID, 0, R.string.menu_resetWapdroid);
     	return result;}
 
     @Override
@@ -128,14 +124,14 @@ public class Wapdroid extends Activity {
 		mWifiInfo = mWifiManager.getConnectionInfo();
 		mSSID = mWifiInfo.getSSID();
 		field_wifiState.setText(mSSID != null ?
-				CONNECTEDTO + mSSID
+				getString(R.string.label_connectedto) + mSSID
 				: (mWifiState == mWifiEnabled ?
-						ENABLED
+						getString(R.string.label_enabled)
 						: (mWifiState == mWifiEnabling ?
-								ENABLING
+								getString(R.string.label_enabling)
 								: (mWifiState == mWifiDisabling ?
-										DISABLING
-										: DISABLED))));
+										getString(R.string.label_disabling)
+										: getString(R.string.label_disabled)))));
     	checkbox_wifiState.setChecked(mWifiState == mWifiEnabled);
     	checkbox_wifiState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -208,17 +204,17 @@ public class Wapdroid extends Activity {
 	public void wifiChanged() {
 		if (mWifiState == mWifiEnabled) {
 			if (mSSID != null) {
-				field_wifiState.setText(CONNECTEDTO + mSSID);
+				field_wifiState.setText(getString(R.string.label_connectedto) + mSSID);
 				if (hasCell()) {
 			    	updateRange();}}
 			else {
-				field_wifiState.setText(ENABLED);}}
+				field_wifiState.setText(getString(R.string.label_enabled));}}
 		else {
 			field_wifiState.setText((mWifiState == mWifiEnabling ?
-					ENABLING
+					getString(R.string.label_enabling)
 					: (mWifiState == mWifiDisabling ?
-							DISABLING
-							: DISABLED)));}}
+							getString(R.string.label_disabling)
+							: getString(R.string.label_disabled))));}}
 
     public int convertRSSIToASU(int mSignal) {
 		/*
@@ -231,13 +227,16 @@ public class Wapdroid extends Activity {
     	return mSignal > 31 ? Math.round(((-1 * mSignal) + 113) / 2) : mSignal;}
     
     public void manageWifi() {
+    	Log.v("WAPDROID","manageWifi;CID="+mCID+";RSSI="+mRSSI);
 		if (hasCell()) {
+	    	Log.v("WAPDROID","hasCell");
 			if ((mWifiState == mWifiEnabled) && (mSSID != null)) {
 				updateRange();}
 			else if (mManageWifi) {
 				boolean mInRange = false;
 				// coarse range check
 				Cursor c = mDbHelper.cellsInRange(mCID, mRSSI);
+		    	Log.v("WAPDROID","got "+c.getCount()+" cells");
 				if (c.getCount() > 0) {
 					mInRange = true;
 					boolean mCheckNeighbors = true;
@@ -246,16 +245,23 @@ public class Wapdroid extends Activity {
 					while (mCheckNeighbors && !c.isAfterLast()) {
 						mCheckNeighbors = mDbHelper.hasNeighbors(c.getInt(c.getColumnIndex(mNetworkColIdx)));
 						c.moveToNext();}
+			    	Log.v("WAPDROID","check neighbors="+mCheckNeighbors);
 					// if there are neighbors for all networks in range, then perform fine range checking
 					if (mCheckNeighbors) {
 						int mNeighborCID, mNeighborRSSI;
 						for (NeighboringCellInfo n : mNeighboringCells) {
 							mNeighborCID = n.getCid();
 							mNeighborRSSI = convertRSSIToASU(n.getRssi());
+					    	Log.v("WAPDROID","neighbor;CID="+mNeighborCID+";RSSI="+mNeighborRSSI);
 							if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
-								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
+								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}
+							Log.v("WAPDROID","inrange?"+mInRange);
+							}}}
+
+				Log.v("WAPDROID","inrange="+mInRange+"^wifiEnabled="+(mWifiState == mWifiEnabled));
 				c.close();
 				if (mInRange ^ (mWifiState == mWifiEnabled)) {
+					Log.v("WAPDROID","enable wifi="+(mWifiState != mWifiEnabled));
 					checkbox_wifiState.setChecked((mWifiState != mWifiEnabled));}}}
 		else if (mManageWifi && (mWifiState == mWifiEnabled) && (mSSID == null)) {
 			checkbox_wifiState.setChecked(false);}}}

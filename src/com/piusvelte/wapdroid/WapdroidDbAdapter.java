@@ -409,11 +409,7 @@ public class WapdroidDbAdapter {
     
     public void updateNeighborRange(String mSSID, int mCID, int mRSSI) {
     	int mNetwork = fetchNetwork(mSSID);
-    	String mTable = WAPDROID_CELLS;
-    	int mNeighbor = fetchCell(mNetwork, mCID);
-    	if (mNeighbor < 0) {
-    		mTable = WAPDROID_NEIGHBORS;
-        	mNeighbor = fetchNeighbor(mNetwork, mCID);}
+       	int mNeighbor = fetchNeighbor(mNetwork, mCID);
     	if (mNeighbor < 0) {
     		ContentValues initialValues = new ContentValues();
         	initialValues.put(CELLS_CID, mCID);
@@ -422,7 +418,7 @@ public class WapdroidDbAdapter {
         	initialValues.put(CELLS_NETWORK, mNetwork);
     		mNeighbor = (int) mDb.insert(WAPDROID_NEIGHBORS, null, initialValues);}
     	else {
-    		updateRange(mTable, mNeighbor, mRSSI);}}
+    		updateRange(WAPDROID_NEIGHBORS, mNeighbor, mRSSI);}}
     
     public void updateCellRange(String mSSID, int mCID, int mLAC, String mMNC, String mMCC, int mRSSI) {
     	int mLocation = fetchLocationOrCreate(mLAC);
@@ -445,18 +441,11 @@ public class WapdroidDbAdapter {
     
     public boolean neighborInRange(int mCID, int mRSSI) {
     	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID
-				+ " FROM " + WAPDROID_CELLS
+				+ " FROM " + WAPDROID_NEIGHBORS
     			+ " WHERE " + CELLS_CID + "=" + mCID
     			+ " AND " + CELLS_MAXRSSI + ">=" + mRSSI
     			+ " AND " + CELLS_MINRSSI + "<=" + mRSSI, null);
     	boolean mInRange = (c.getCount() > 0);
-    	if (!mInRange) {
-			c = mDb.rawQuery("SELECT " + TABLE_ID
-					+ " FROM " + WAPDROID_NEIGHBORS
-	    			+ " WHERE " + CELLS_CID + "=" + mCID
-	    			+ " AND " + CELLS_MAXRSSI + ">=" + mRSSI
-	    			+ " AND " + CELLS_MINRSSI + "<=" + mRSSI, null);
-	    	mInRange = (c.getCount() > 0);}
 	    c.close();
     	return mInRange;}
     

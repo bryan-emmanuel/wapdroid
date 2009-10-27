@@ -45,6 +45,11 @@ public final class R {
         public static final int label_MNC=0x7f040003;
         public static final int label_RSSI=0x7f040005;
         public static final int label_WIFI=0x7f040008;
+        public static final int label_connectedto=0x7f040017;
+        public static final int label_disabled=0x7f040014;
+        public static final int label_disabling=0x7f040013;
+        public static final int label_enabled=0x7f040016;
+        public static final int label_enabling=0x7f040015;
         public static final int label_maxRSSI=0x7f040007;
         public static final int label_minRSSI=0x7f040006;
         public static final int label_wapdroidState=0x7f040009;
@@ -54,7 +59,7 @@ public final class R {
         public static final int menu_manageNetworks=0x7f04000d;
         public static final int menu_refreshCells=0x7f040012;
         public static final int menu_refreshNetworks=0x7f040011;
-        public static final int menu_resetPeregrine=0x7f04000c;
+        public static final int menu_resetWapdroid=0x7f04000c;
         public static final int no_cells=0x7f04000b;
         public static final int no_networks=0x7f04000a;
     }
