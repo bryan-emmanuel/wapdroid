@@ -45,6 +45,10 @@ public final class R {
         public static final int label_MNC=0x7f040003;
         public static final int label_RSSI=0x7f040005;
         public static final int label_WIFI=0x7f040008;
+        /** <string name="label_connectedto">connected to\u0020</string>
+<string name="label_connectedto">已连接到\u0020</string>
+<string name="label_connectedto">已連線到\u0020</string>
+         */
         public static final int label_connectedto=0x7f040017;
         public static final int label_disabled=0x7f040014;
         public static final int label_disabling=0x7f040013;

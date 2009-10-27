@@ -443,8 +443,9 @@ public class WapdroidDbAdapter {
     	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID
 				+ " FROM " + WAPDROID_NEIGHBORS
     			+ " WHERE " + CELLS_CID + "=" + mCID
-    			+ " AND " + CELLS_MAXRSSI + ">=" + mRSSI
-    			+ " AND " + CELLS_MINRSSI + "<=" + mRSSI, null);
+				+ " AND ((" + CELLS_MAXRSSI + ">=" + mRSSI
+				+ " AND " + CELLS_MINRSSI + "<=" + mRSSI + ") OR ("
+				+ CELLS_MAXRSSI + "=" + CELLS_MINRSSI + "))", null);
     	boolean mInRange = (c.getCount() > 0);
 	    c.close();
     	return mInRange;}
@@ -463,8 +464,9 @@ public class WapdroidDbAdapter {
 				+ ", " + CELLS_NETWORK
 				+ " FROM " + WAPDROID_CELLS
 				+ " WHERE " + CELLS_CID + "=" + mCID
-				+ " AND " + CELLS_MAXRSSI + ">=" + mRSSI
-				+ " AND " + CELLS_MINRSSI + "<=" + mRSSI, null);}
+				+ " AND ((" + CELLS_MAXRSSI + ">=" + mRSSI
+				+ " AND " + CELLS_MINRSSI + "<=" + mRSSI + ") OR ("
+				+ CELLS_MAXRSSI + "=" + CELLS_MINRSSI + "))", null);}
     
     public void cleanLocation(int mLocation) {
 		Cursor c = fetchCellsByLAC(mLocation);

@@ -23,5 +23,6 @@
     <string name="label_disabled">disabled</string>
     <string name="label_enabling">enabling</string>
     <string name="label_enabled">enabled</string>
-    <string name="label_connectedto">connected to </string>
+    <!--<string name="label_connectedto">connected to\u0020</string>-->
+    <string name="label_connectedto">connected to</string>
 </resources>

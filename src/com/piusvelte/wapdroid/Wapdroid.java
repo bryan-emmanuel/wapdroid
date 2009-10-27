@@ -124,7 +124,7 @@ public class Wapdroid extends Activity {
 		mWifiInfo = mWifiManager.getConnectionInfo();
 		mSSID = mWifiInfo.getSSID();
 		field_wifiState.setText(mSSID != null ?
-				getString(R.string.label_connectedto) + mSSID
+				getString(R.string.label_connectedto) + " " + mSSID
 				: (mWifiState == mWifiEnabled ?
 						getString(R.string.label_enabled)
 						: (mWifiState == mWifiEnabling ?
@@ -204,7 +204,7 @@ public class Wapdroid extends Activity {
 	public void wifiChanged() {
 		if (mWifiState == mWifiEnabled) {
 			if (mSSID != null) {
-				field_wifiState.setText(getString(R.string.label_connectedto) + mSSID);
+				field_wifiState.setText(getString(R.string.label_connectedto) + " " + mSSID);
 				if (hasCell()) {
 			    	updateRange();}}
 			else {
