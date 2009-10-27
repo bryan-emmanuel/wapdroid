@@ -29,6 +29,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -37,6 +38,7 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CheckBox;
@@ -230,22 +232,39 @@ public class Wapdroid extends Activity {
     	return mSignal > 31 ? Math.round(((-1 * mSignal) + 113) / 2) : mSignal;}
     
     public void manageWifi() {
+    	Log.v("WAPDROID","manageWifi");
 		if (hasCell()) {
-			if ((mWifiState==mWifiEnabled) && (mSSID != null)) {
+	    	Log.v("WAPDROID","hasCell");
+			if ((mWifiState == mWifiEnabled) && (mSSID != null)) {
+		    	Log.v("WAPDROID","updateRange");
 				updateRange();}
 			else if (mManageWifi) {
-				boolean mInRange = mDbHelper.cellInRange(mCID, mLAC, mMNC, mMCC, mRSSI);
-				if (mInRange) {
-					int mNeighborCID;
-					int mNeighborRSSI;
-		    		for (NeighboringCellInfo n : mNeighboringCells) {
-		    			mNeighborCID = n.getCid();
-		    			mNeighborRSSI = convertRSSIToASU(n.getRssi());
-		    			if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
-	    					mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}
+		    	Log.v("WAPDROID","checkRange");
+				boolean mInRange = false;
+				// coarse range check
+				Cursor c = mDbHelper.cellsInRange(mCID, mRSSI);
+				if (c.getCount() > 0) {
+			    	Log.v("WAPDROID","passed coarse check");
+					mInRange = true;
+					boolean mCheckNeighbors = true;
+					String mNetworkColIdx = WapdroidDbAdapter.CELLS_NETWORK;
+					c.moveToFirst();
+					while (mCheckNeighbors && !c.isAfterLast()) {
+						mCheckNeighbors = mDbHelper.hasNeighbors(c.getInt(c.getColumnIndex(mNetworkColIdx)));
+						c.moveToNext();}
+			    	Log.v("WAPDROID","has neighbors="+mCheckNeighbors);
+					// if there are neighbors for all networks in range, then perform fine range checking
+					if (mCheckNeighbors) {
+				    	Log.v("WAPDROID","checking neighbors");
+						int mNeighborCID, mNeighborRSSI;
+						for (NeighboringCellInfo n : mNeighboringCells) {
+							mNeighborCID = n.getCid();
+							mNeighborRSSI = convertRSSIToASU(n.getRssi());
+							if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
+								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
+		    	Log.v("WAPDROID","inrange="+mInRange);
 				if (mInRange ^ (mWifiState == mWifiEnabled)) {
-					checkbox_wifiState.setChecked(mWifiState == mWifiEnabled ?
-							false
-							: true);}}}
+			    	Log.v("WAPDROID","enabling="+(mWifiState != mWifiEnabled));
+					checkbox_wifiState.setChecked((mWifiState != mWifiEnabled));}}}
 		else if (mManageWifi && (mWifiState == mWifiEnabled) && (mSSID == null)) {
 			checkbox_wifiState.setChecked(false);}}}
