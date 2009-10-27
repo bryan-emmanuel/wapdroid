@@ -254,6 +254,7 @@ public class Wapdroid extends Activity {
 							mNeighborRSSI = convertRSSIToASU(n.getRssi());
 							if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
 								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
+				c.close();
 				if (mInRange ^ (mWifiState == mWifiEnabled)) {
 					checkbox_wifiState.setChecked((mWifiState != mWifiEnabled));}}}
 		else if (mManageWifi && (mWifiState == mWifiEnabled) && (mSSID == null)) {
