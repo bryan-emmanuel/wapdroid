@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Wapdroid</string>
+    <string name="label_CID">網路:</string>
+    <string name="label_LAC">位置:</string>
+    <string name="label_MNC">運營商:</string>
+    <string name="label_MCC">國家:</string>
+    <string name="label_RSSI">信號:</string>
+    <string name="label_minRSSI">最低信號:</string>
+    <string name="label_maxRSSI">最高信號:</string>
+    <string name="label_WIFI">WiFi</string>
+    <string name="label_wapdroidState">管理 WiFi</string>
+    <string name="no_networks">沒有網路連線</string>
+    <string name="no_cells">沒有通信網路</string>
+    <string name="menu_resetWapdroid">重設 Wapdroid</string>
+    <string name="menu_manageNetworks">管理網路連線</string>
+    <string name="menu_manageCells">管理通信網路</string>
+    <string name="menu_deleteNetwork">忘記網路連線</string>
+    <string name="menu_deleteCell">忘記通信網路</string>
+    <string name="menu_refreshNetworks">重新整理網路連線</string>
+    <string name="menu_refreshCells">重新整理通信網路</string>
+    <string name="label_disabling">禁用中</string>
+    <string name="label_disabled">已禁用</string>
+    <string name="label_enabling">啟用中</string>
+    <string name="label_enabled">已啟用</string>
+    <string name="label_connectedto">已連線到\u0020</string>
+</resources>

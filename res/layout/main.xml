@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:stretchColumns="0">
+	<TableRow>
+		<TextView android:textStyle="bold"
+			android:padding="8dip"
+			android:textSize="16dip"
+			android:text="@string/label_wapdroidState"/>
+		<CheckBox android:id="@+id/checkbox_wapdroidState"
+			android:padding="8dip"
+			android:gravity="right"/>
+	</TableRow>
+    <View android:layout_height="2dip"
+    	android:background="#FF909090"/>
+	<TableRow>
+		<TextView android:id="@+id/label_MNC"
+			 android:textStyle="bold"
+			android:paddingTop="8dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="8dip"
+			android:textSize="16dip"
+			android:text="@string/label_MNC"/>
+		<TextView android:id="@+id/field_MNC"
+			android:paddingTop="4dip"
+			android:paddingBottom="2dip"
+			android:paddingRight="8dip"
+			android:gravity="right"
+			android:textSize="16dip"/>
+    </TableRow>
+	<TableRow>
+		<TextView android:id="@+id/label_MCC"
+			 android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="16dip"
+			android:textSize="12dip"
+			android:text="@string/label_MCC"/>
+		<TextView android:id="@+id/field_MCC"
+			android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingRight="8dip"
+			android:gravity="right"
+			android:textSize="12dip"/>
+    </TableRow>
+	<TableRow>
+		<TextView android:id="@+id/label_LAC"
+			 android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="16dip"
+			android:textSize="12dip"
+			android:text="@string/label_LAC"/>
+		<TextView android:id="@+id/field_LAC"
+			android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingRight="8dip"
+			android:gravity="right"
+			android:textSize="12dip"/>
+    </TableRow>
+	<TableRow>
+		<TextView android:id="@+id/label_CID"
+			 android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingLeft="16dip"
+			android:textSize="12dip"
+			android:text="@string/label_CID"/>
+		<TextView android:id="@+id/field_CID"
+			android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingRight="8dip"
+			android:gravity="right"
+			android:textSize="12dip"/>
+    </TableRow>
+	<TableRow>
+		<TextView android:id="@+id/label_RSSI"
+			 android:paddingTop="2dip"
+			android:paddingBottom="8dip"
+			android:paddingLeft="16dip"
+			android:textSize="12dip"
+			android:text="@string/label_RSSI"/>
+		<TextView android:id="@+id/field_RSSI"
+			android:paddingTop="2dip"
+			android:paddingBottom="8dip"
+			android:paddingRight="8dip"
+			android:gravity="right"
+			android:textSize="12dip"/>
+    </TableRow>
+    <View android:layout_height="2dip"
+    	android:background="#FF909090"/>
+	<TableRow>
+		<TableLayout android:layout_width="wrap_content"
+			android:layout_height="wrap_content">
+			<TableRow>
+				<TextView android:textStyle="bold"
+					android:paddingTop="8dip"
+					android:paddingBottom="2dip"
+					android:paddingLeft="8dip"
+					android:textSize="16dip"
+					android:text="@string/label_WIFI"/>
+    		</TableRow>
+			<TableRow>
+				<TextView android:id="@+id/field_wifiState"
+					android:paddingTop="2dip"
+					android:paddingBottom="8dip"
+					android:paddingLeft="16dip"
+					android:textSize="12dip"/>
+    		</TableRow>
+		</TableLayout>
+		<CheckBox android:id="@+id/checkbox_wifiState"
+			android:padding="8dip"
+			android:gravity="right"/>
+    </TableRow>
+</TableLayout>
