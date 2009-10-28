@@ -20,15 +20,20 @@ public final class R {
         public static final int cell_row_MNC=0x7f050001;
         public static final int cell_row_maxRSSI=0x7f050005;
         public static final int cell_row_minRSSI=0x7f050004;
-        public static final int checkbox_wapdroidState=0x7f05000d;
-        public static final int checkbox_wifiState=0x7f05000c;
-        public static final int field_CID=0x7f050009;
-        public static final int field_LAC=0x7f050008;
-        public static final int field_MCC=0x7f050007;
-        public static final int field_MNC=0x7f050006;
-        public static final int field_RSSI=0x7f05000a;
-        public static final int field_wifiState=0x7f05000b;
-        public static final int network_row_SSID=0x7f05000e;
+        public static final int checkbox_wapdroidState=0x7f050006;
+        public static final int checkbox_wifiState=0x7f050012;
+        public static final int field_CID=0x7f05000e;
+        public static final int field_LAC=0x7f05000c;
+        public static final int field_MCC=0x7f05000a;
+        public static final int field_MNC=0x7f050008;
+        public static final int field_RSSI=0x7f050010;
+        public static final int field_wifiState=0x7f050011;
+        public static final int label_CID=0x7f05000d;
+        public static final int label_LAC=0x7f05000b;
+        public static final int label_MCC=0x7f050009;
+        public static final int label_MNC=0x7f050007;
+        public static final int label_RSSI=0x7f05000f;
+        public static final int network_row_SSID=0x7f050013;
     }
     public static final class layout {
         public static final int cell_row=0x7f030000;
@@ -45,10 +50,6 @@ public final class R {
         public static final int label_MNC=0x7f040003;
         public static final int label_RSSI=0x7f040005;
         public static final int label_WIFI=0x7f040008;
-        /** <string name="label_connectedto">connected to\u0020</string>
-<string name="label_connectedto">已连接到\u0020</string>
-<string name="label_connectedto">已連線到\u0020</string>
-         */
         public static final int label_connectedto=0x7f040017;
         public static final int label_disabled=0x7f040014;
         public static final int label_disabling=0x7f040013;
