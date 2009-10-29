@@ -130,7 +130,7 @@ public class WapdroidService extends Service {
 							if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
 								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
 				c.close();
-				if ((mInRange && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!mInRange && (mWifiIsEnabled || (mWifiState == mWifiEnabling)))) {
+				if ((mInRange && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!mInRange && mWifiIsEnabled)) {
 					mWifiManager.setWifiEnabled(mInRange);}}}
 		else if (mWifiIsEnabled && (mSSID == null)) {
 			mWifiManager.setWifiEnabled(false);}}
@@ -165,8 +165,7 @@ public class WapdroidService extends Service {
         			mWapdroidUI.signalChanged((String) "" + (-113 + 2 * asu) + "dBm");}
         		catch (RemoteException e) {}}
         	mNeighboringCells = mTeleManager.getNeighboringCellInfo();
-    		manageWifi();}
-    	
+    		manageWifi();}    	
     	@Override
     	public void onCellLocationChanged(CellLocation location) {
     		super.onCellLocationChanged(location);
