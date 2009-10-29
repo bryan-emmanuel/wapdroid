@@ -13,36 +13,25 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.RemoteException;
-/* shouldn't need WakeLock as a Service
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
-*/
 import android.telephony.CellLocation;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 
 public class WapdroidService extends Service {
-	private static final String TAG = "WapdroidService";
 	private WapdroidDbAdapter mDbHelper;
 	private WapdroidWifiReceiver mWifiReceiver;
 	private WapdroidPhoneStateListener mPhoneStateListener;
 	private TelephonyManager mTeleManager;
 	private GsmCellLocation mGsmCellLocation;
-	private int mCID = -1, mLAC = -1, mRSSI = -1;
 	private String mMNC = null, mMCC = null, mSSID = null;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
 	private WifiInfo mWifiInfo;
-	private int mWifiEnabled, mWifiUnknown;
+	private int mCID = -1, mLAC = -1, mRSSI = -1, mWifiState, mWifiEnabling, mWifiEnabled, mWifiUnknown;
 	private boolean mWifiIsEnabled = false;
 	private IWapdroidUI mWapdroidUI;
-	/* shouldn't need WakeLock as a Service
-	private PowerManager mPowerManager;
-	private WakeLock mWakeLock;
-	*/
 
 	@Override
 	public IBinder onBind(Intent arg0) {
@@ -56,12 +45,8 @@ public class WapdroidService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-    	/* shouldn't need WakeLock as a Service
-		mPowerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
-		mWakeLock = mPowerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-		mWakeLock.acquire();
-		*/
 		mWifiEnabled = WifiManager.WIFI_STATE_ENABLED;
+		mWifiEnabling = WifiManager.WIFI_STATE_ENABLING;
 		mWifiUnknown = WifiManager.WIFI_STATE_UNKNOWN;
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mWifiInfo = mWifiManager.getConnectionInfo();
@@ -85,14 +70,12 @@ public class WapdroidService extends Service {
 		public void setCallback(IBinder mWapdroidUIBinder) throws RemoteException {
 			// UI started or stopped
 			if (mWapdroidUIBinder != null) {
-	    		Log.v(TAG,"callBack set");
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
         		try {
         			mWapdroidUI.locationChanged((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);
         			mWapdroidUI.signalChanged((String) "" + (-113 + 2 * mRSSI) + "dBm");}
         		catch (RemoteException e) {}}
 			else {
-	    		Log.v(TAG,"callBack released");
 				mWapdroidUI = null;}}};
     
     private boolean hasCell() {
@@ -140,16 +123,14 @@ public class WapdroidService extends Service {
 						c.moveToNext();}
 					// if there are neighbors for all networks in range, then perform fine range checking
 					if (mCheckNeighbors) {
-						Log.v(TAG,"check neighbors");
 						int mNeighborCID, mNeighborRSSI;
 						for (NeighboringCellInfo n : mNeighboringCells) {
 							mNeighborCID = n.getCid();
 							mNeighborRSSI = convertRSSIToASU(n.getRssi());
 							if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
-								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}
-							}}}
+								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
 				c.close();
-				if (mInRange ^ mWifiIsEnabled) {
+				if (mInRange ^ (mWifiIsEnabled || (mWifiState == mWifiEnabling))) {
 					mWifiManager.setWifiEnabled(!mWifiIsEnabled);}}}
 		else if (mWifiIsEnabled && (mSSID == null)) {
 			mWifiManager.setWifiEnabled(false);}}
@@ -158,13 +139,13 @@ public class WapdroidService extends Service {
     	@Override
     	public void onReceive(Context context, Intent intent) {
     		if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)){
-    			int mState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
-        		Log.v(TAG,"WIFI_STATE_CHANGED_ACTION="+mState);
-    	    	if (mState != mWifiUnknown) {
-    	    		mWifiIsEnabled = (mState == mWifiEnabled);}
+    			int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
+    	    	if (mWifiState != mWifiUnknown) {
+    	    		mWifiIsEnabled = (mWifiState == mWifiEnabled);
+    	    		if (!mWifiIsEnabled) {
+    	    			mSSID = null;}}
     			wifiChanged();}
     		else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-        		Log.v(TAG,"NETWORK_STATE_CHANGED_ACTION");
     			NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
     	    	if (mNetworkInfo.isConnected()) {
     	    		mWifiInfo = mWifiManager.getConnectionInfo();
@@ -177,7 +158,6 @@ public class WapdroidService extends Service {
     	@Override
     	public void onSignalStrengthChanged(int asu) {
     		super.onSignalStrengthChanged(asu);
-    		Log.v(TAG,"onSignalStrengthChanged="+asu);
     		//phone state intent receiver: 0-31, for GSM, dBm = -113 + 2 * asu
         	mRSSI = asu;
         	if (mWapdroidUI != null) {
@@ -190,7 +170,6 @@ public class WapdroidService extends Service {
     	@Override
     	public void onCellLocationChanged(CellLocation location) {
     		super.onCellLocationChanged(location);
-    		Log.v(TAG,"onCellLocationChanged");
     		mGsmCellLocation = (GsmCellLocation) location;
         	mCID = mGsmCellLocation.getCid();
         	mLAC = mGsmCellLocation.getLac();

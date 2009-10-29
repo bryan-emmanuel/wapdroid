@@ -36,7 +36,6 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.CheckBox;
@@ -45,7 +44,6 @@ import android.widget.TextView;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class WapdroidUI extends Activity {
-	private static final String TAG = "WapdroidUI";
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int RESET_ID = Menu.FIRST + 1;
 	private TextView field_CID, field_LAC, field_MNC, field_MCC, field_RSSI, label_CID, label_LAC, label_MNC, label_MCC, label_RSSI, field_wifiState;
@@ -92,7 +90,7 @@ public class WapdroidUI extends Activity {
     	checkbox_wapdroidState.setChecked(mWapdroidEnabled);
     	checkbox_wifiState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				if (isChecked ^ mWifiIsEnabled) {
+				if (isChecked ^ (mWifiIsEnabled || (mWifiState == mWifiEnabling))) {
 					mWifiManager.setWifiEnabled(isChecked);}}});
     	checkbox_wifiState.setChecked(mWifiIsEnabled);
 		mWifiDisabling = WifiManager.WIFI_STATE_DISABLING;
@@ -158,7 +156,6 @@ public class WapdroidUI extends Activity {
     	if (mWapdroidServiceConnection != null) {
 			if (mWapdroidService != null) {
 				try {
-					Log.v(TAG,"announcing UI");
 					mWapdroidService.setCallback(null);}
 				catch (RemoteException e) {}
 				mWapdroidService = null;}
@@ -185,23 +182,19 @@ public class WapdroidUI extends Activity {
 							: getString(R.string.label_disabled))));}}
     
     private void manageService() {
-		Log.v(TAG,"manage service");
     	int mColor = 0xFF909090;
 		Intent i = new Intent();
 		i.setClassName(this.getPackageName(), WapdroidService.class.getName());
 		if (mWapdroidEnabled) {
-			Log.v(TAG,"service enabled");
     		startService(i);
 			if (mWapdroidServiceConnection == null) {
 				mWapdroidServiceConnection = new WapdroidServiceConnection();
 				bindService(i, mWapdroidServiceConnection, Context.BIND_AUTO_CREATE);}}
 		else {
-			Log.v(TAG,"service disabled");
         	mColor = 0xFF606060;
 			if (mWapdroidServiceConnection != null) {
 				if (mWapdroidService != null) {
 					try {
-						Log.v(TAG,"announcing UI");
 						mWapdroidService.setCallback(null);}
 					catch (RemoteException e) {}
 					mWapdroidService = null;}
@@ -231,7 +224,9 @@ public class WapdroidUI extends Activity {
     			int mState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
     	    	if (mState != mWifiUnknown) {
     	    		mWifiState = mState;
-    	    		mWifiIsEnabled = (mState == mWifiEnabled);}
+    	    		mWifiIsEnabled = (mState == mWifiEnabled);
+    	    		if (!mWifiIsEnabled) {
+    	    			mSSID = null;}}
     			wifiChanged();}
     		else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
     			NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
@@ -255,7 +250,6 @@ public class WapdroidUI extends Activity {
 		public void onServiceConnected(ComponentName className, IBinder boundService) {
 			mWapdroidService = IWapdroidService.Stub.asInterface((IBinder) boundService);
 			try {
-				Log.v(TAG,"announcing UI");
 				mWapdroidService.setCallback(mWapdroidUI.asBinder());}
 			catch (RemoteException e) {}}
 		public void onServiceDisconnected(ComponentName className) {
