@@ -130,8 +130,8 @@ public class WapdroidService extends Service {
 							if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
 								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
 				c.close();
-				if (mInRange ^ (mWifiIsEnabled || (mWifiState == mWifiEnabling))) {
-					mWifiManager.setWifiEnabled(!mWifiIsEnabled);}}}
+				if ((mInRange && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!mInRange && (mWifiIsEnabled || (mWifiState == mWifiEnabling)))) {
+					mWifiManager.setWifiEnabled(mInRange);}}}
 		else if (mWifiIsEnabled && (mSSID == null)) {
 			mWifiManager.setWifiEnabled(false);}}
     

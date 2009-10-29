@@ -90,7 +90,7 @@ public class WapdroidUI extends Activity {
     	checkbox_wapdroidState.setChecked(mWapdroidEnabled);
     	checkbox_wifiState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				if (isChecked ^ (mWifiIsEnabled || (mWifiState == mWifiEnabling))) {
+				if ((isChecked && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!isChecked && (mWifiIsEnabled || (mWifiState == mWifiEnabling)))) {
 					mWifiManager.setWifiEnabled(isChecked);}}});
     	checkbox_wifiState.setChecked(mWifiIsEnabled);
 		mWifiDisabling = WifiManager.WIFI_STATE_DISABLING;
