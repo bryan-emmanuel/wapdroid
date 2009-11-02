@@ -80,28 +80,33 @@ public class WapdroidUI extends Activity {
     	label_RSSI = (TextView) findViewById(R.id.label_RSSI);
     	field_RSSI = (TextView) findViewById(R.id.field_RSSI);
     	field_wifiState = (TextView) findViewById(R.id.field_wifiState);
-    	checkbox_wifiState = (CheckBox) findViewById(R.id.checkbox_wifiState);
     	checkbox_wapdroidState = (CheckBox) findViewById(R.id.checkbox_wapdroidState);
+    	checkbox_wapdroidState.setChecked(mWapdroidEnabled);
     	checkbox_wapdroidState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				mWapdroidEnabled = isChecked;
 				mEditor.putBoolean(mPreferenceManageWifi, isChecked);
+				mEditor.commit();
 				manageService();}});
-    	checkbox_wapdroidState.setChecked(mWapdroidEnabled);
-    	checkbox_wifiState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
-			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-				if ((isChecked && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!isChecked && mWifiIsEnabled)) {
-					mWifiManager.setWifiEnabled(isChecked);}}});
-    	checkbox_wifiState.setChecked(mWifiIsEnabled);
 		mWifiDisabling = WifiManager.WIFI_STATE_DISABLING;
 		mWifiEnabling = WifiManager.WIFI_STATE_ENABLING;
 		mWifiEnabled = WifiManager.WIFI_STATE_ENABLED;
 		mWifiUnknown = WifiManager.WIFI_STATE_UNKNOWN;
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+		mWifiIsEnabled = mWifiManager.isWifiEnabled();
+		checkbox_wifiState = (CheckBox) findViewById(R.id.checkbox_wifiState);
+    	checkbox_wifiState.setChecked(mWifiIsEnabled);
+    	checkbox_wifiState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+				if ((isChecked && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!isChecked && mWifiIsEnabled)) {
+					mWifiManager.setWifiEnabled(isChecked);}}});
+    	/*
     	mWifiReceiver = new WapdroidWifiReceiver();
 		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
 		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));
-		manageService();}
+		manageService();
+		*/
+		}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -132,19 +137,16 @@ public class WapdroidUI extends Activity {
     @Override
     public void onResume() {
     	super.onResume();
-    	acquireResources();}
-    
-    @Override
-    public void onDestroy() {
-    	super.onDestroy();
-    	releaseResources();}
-    
-    private void acquireResources() {
     	if (mWifiReceiver == null) {
     		mWifiReceiver = new WapdroidWifiReceiver();
     		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
     		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));}
     	manageService();}
+    
+    @Override
+    public void onDestroy() {
+    	super.onDestroy();
+    	releaseResources();}
     
     private void releaseResources() {
     	if (mDbHelper != null) {
