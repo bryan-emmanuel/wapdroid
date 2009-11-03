@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:stretchColumns="0">
+	<TableRow>
+		<TextView android:textStyle="bold"
+			android:paddingLeft="8dip"
+			android:textSize="16dip"
+			android:text="@string/label_notify"/>
+		<CheckBox android:id="@+id/checkbox_notify"
+			android:padding="8dip"
+			android:gravity="right"/>
+	</TableRow>
+    <View android:layout_height="2dip"
+    	android:background="#FFBEBEBE"/>
+	<TableRow>
+		<TextView android:paddingLeft="8dip"
+			android:textSize="16dip"
+			android:text="@string/label_vibrate"/>
+		<CheckBox android:id="@+id/checkbox_vibrate"
+			android:paddingTop="8dip"
+			android:paddingBottom="2dip"
+			android:paddingRight="8dip"
+			android:gravity="right"/>
+	</TableRow>
+	<TableRow>
+		<TextView android:paddingLeft="8dip"
+			android:textSize="16dip"
+			android:text="@string/label_led"/>
+		<CheckBox android:id="@+id/checkbox_led"
+			android:paddingTop="2dip"
+			android:paddingBottom="2dip"
+			android:paddingRight="8dip"
+			android:gravity="right"/>
+	</TableRow>
+	<TableRow>
+		<TextView android:paddingLeft="8dip"
+			android:textSize="16dip"
+			android:text="@string/label_ringtone"/>
+		<CheckBox android:id="@+id/checkbox_ringtone"
+			android:paddingTop="2dip"
+			android:paddingBottom="8dip"
+			android:paddingRight="8dip"
+			android:gravity="right"/>
+	</TableRow>
+    <View android:layout_height="2dip"
+    	android:background="#FFBEBEBE"/>
+	<Button android:id="@+id/button_save"
+		android:padding="8dip"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+		android:text="@string/label_save"/>
+</TableLayout>
