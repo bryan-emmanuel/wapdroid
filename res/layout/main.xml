@@ -5,7 +5,7 @@
 	android:stretchColumns="0">
 	<TableRow>
 		<TextView android:textStyle="bold"
-			android:padding="8dip"
+			android:paddingLeft="8dip"
 			android:textSize="16dip"
 			android:text="@string/label_wapdroidState"/>
 		<CheckBox android:id="@+id/checkbox_wapdroidState"
@@ -13,17 +13,17 @@
 			android:gravity="right"/>
 	</TableRow>
     <View android:layout_height="2dip"
-    	android:background="#FF909090"/>
+    	android:background="#FFBEBEBE"/>
 	<TableRow>
 		<TextView android:id="@+id/label_MNC"
-			 android:textStyle="bold"
+			android:textStyle="bold"
 			android:paddingTop="8dip"
 			android:paddingBottom="2dip"
 			android:paddingLeft="8dip"
 			android:textSize="16dip"
 			android:text="@string/label_MNC"/>
 		<TextView android:id="@+id/field_MNC"
-			android:paddingTop="4dip"
+			android:paddingTop="8dip"
 			android:paddingBottom="2dip"
 			android:paddingRight="8dip"
 			android:gravity="right"
@@ -31,7 +31,7 @@
     </TableRow>
 	<TableRow>
 		<TextView android:id="@+id/label_MCC"
-			 android:paddingTop="2dip"
+			android:paddingTop="2dip"
 			android:paddingBottom="2dip"
 			android:paddingLeft="16dip"
 			android:textSize="12dip"
@@ -45,7 +45,7 @@
     </TableRow>
 	<TableRow>
 		<TextView android:id="@+id/label_LAC"
-			 android:paddingTop="2dip"
+			android:paddingTop="2dip"
 			android:paddingBottom="2dip"
 			android:paddingLeft="16dip"
 			android:textSize="12dip"
@@ -59,7 +59,7 @@
     </TableRow>
 	<TableRow>
 		<TextView android:id="@+id/label_CID"
-			 android:paddingTop="2dip"
+			android:paddingTop="2dip"
 			android:paddingBottom="2dip"
 			android:paddingLeft="16dip"
 			android:textSize="12dip"
@@ -86,7 +86,7 @@
 			android:textSize="12dip"/>
     </TableRow>
     <View android:layout_height="2dip"
-    	android:background="#FF909090"/>
+    	android:background="#FFBEBEBE"/>
 	<TableRow>
 		<TableLayout android:layout_width="wrap_content"
 			android:layout_height="wrap_content">

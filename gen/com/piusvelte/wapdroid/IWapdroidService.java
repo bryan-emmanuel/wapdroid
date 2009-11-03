@@ -48,6 +48,21 @@ case INTERFACE_TRANSACTION:
 reply.writeString(DESCRIPTOR);
 return true;
 }
+case TRANSACTION_setNotify:
+{
+data.enforceInterface(DESCRIPTOR);
+boolean _arg0;
+_arg0 = (0!=data.readInt());
+boolean _arg1;
+_arg1 = (0!=data.readInt());
+boolean _arg2;
+_arg2 = (0!=data.readInt());
+boolean _arg3;
+_arg3 = (0!=data.readInt());
+this.setNotify(_arg0, _arg1, _arg2, _arg3);
+reply.writeNoException();
+return true;
+}
 case TRANSACTION_setCallback:
 {
 data.enforceInterface(DESCRIPTOR);
@@ -75,6 +90,24 @@ public java.lang.String getInterfaceDescriptor()
 {
 return DESCRIPTOR;
 }
+public void setNotify(boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeInt(((notify)?(1):(0)));
+_data.writeInt(((vibrate)?(1):(0)));
+_data.writeInt(((led)?(1):(0)));
+_data.writeInt(((ringtone)?(1):(0)));
+mRemote.transact(Stub.TRANSACTION_setNotify, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
 public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
@@ -91,7 +124,9 @@ _data.recycle();
 }
 }
 }
-static final int TRANSACTION_setCallback = (IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_setNotify = (IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_setCallback = (IBinder.FIRST_CALL_TRANSACTION + 1);
 }
+public void setNotify(boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException;
 public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException;
 }

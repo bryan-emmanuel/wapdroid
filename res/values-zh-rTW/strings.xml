@@ -24,4 +24,10 @@
     <string name="label_enabling">啟用中</string>
     <string name="label_enabled">已啟用</string>
     <string name="label_connectedto">已連線到\u0020</string>
+    <string name="label_notify">Notifications</string>
+    <string name="menu_settings">Settings</string>
+    <string name="label_vibrate">Vibrate</string>
+    <string name="label_led">LED</string>
+    <string name="label_ringtone">Ringtone</string>
+    <string name="label_save">Save</string>
 </resources>

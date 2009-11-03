@@ -45,14 +45,20 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class WapdroidUI extends Activity {
 	public static final int MANAGE_ID = Menu.FIRST;
-	public static final int RESET_ID = Menu.FIRST + 1;
+	public static final int SETTINGS_ID = Menu.FIRST + 1;
+	public static final int RESET_ID = Menu.FIRST + 2;
+	private static final int SETTINGS_REQUEST_ID = 0;
 	private TextView field_CID, field_LAC, field_MNC, field_MCC, field_RSSI, label_CID, label_LAC, label_MNC, label_MCC, label_RSSI, field_wifiState;
 	private CheckBox checkbox_wifiState, checkbox_wapdroidState;
 	private static final String mPreferenceManageWifi = "manageWifi";
+	public static final String PREFERENCE_NOTIFY = "notify";
+	public static final String PREFERENCE_VIBRATE = "vibrate";
+	public static final String PREFERENCE_LED = "led";
+	public static final String PREFERENCE_RINGTONE = "ringtone";
 	private static final String PREF_FILE_NAME = "wapdroid";
 	private SharedPreferences mPreferences;
 	private SharedPreferences.Editor mEditor;
-	private boolean mWapdroidEnabled = true, mWifiIsEnabled = false;
+	private boolean mWapdroidEnabled = true, mWifiIsEnabled = false;//, mNotify = true, mVibrate = false, mLed = false, mRingtone = false;
 	private WapdroidWifiReceiver mWifiReceiver = null;
 	private WapdroidDbAdapter mDbHelper = null;
 	private WifiManager mWifiManager;
@@ -88,6 +94,12 @@ public class WapdroidUI extends Activity {
 				mEditor.putBoolean(mPreferenceManageWifi, isChecked);
 				mEditor.commit();
 				manageService();}});
+    	/*
+		mNotify = mPreferences.getBoolean(PREFERENCE_NOTIFY, true);
+		mVibrate = mPreferences.getBoolean(PREFERENCE_VIBRATE, false);
+		mLed = mPreferences.getBoolean(PREFERENCE_LED, false);
+		mRingtone = mPreferences.getBoolean(PREFERENCE_RINGTONE, false);
+		*/
 		mWifiDisabling = WifiManager.WIFI_STATE_DISABLING;
 		mWifiEnabling = WifiManager.WIFI_STATE_ENABLING;
 		mWifiEnabled = WifiManager.WIFI_STATE_ENABLED;
@@ -99,27 +111,31 @@ public class WapdroidUI extends Activity {
     	checkbox_wifiState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
 			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 				if ((isChecked && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!isChecked && mWifiIsEnabled)) {
-					mWifiManager.setWifiEnabled(isChecked);}}});
-    	/*
-    	mWifiReceiver = new WapdroidWifiReceiver();
-		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
-		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));
-		manageService();
-		*/
-		}
+					mWifiManager.setWifiEnabled(isChecked);}}});}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	boolean result = super.onCreateOptionsMenu(menu);
     	menu.add(0, MANAGE_ID, 0, R.string.menu_manageNetworks);
+    	menu.add(0, SETTINGS_ID, 0, R.string.menu_settings);
     	menu.add(0, RESET_ID, 0, R.string.menu_resetWapdroid);
     	return result;}
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+    	Intent intent;
     	switch (item.getItemId()) {
     	case MANAGE_ID:
-    		manageNetworks();
+        	intent = new Intent(this, ManageNetworks.class);
+        	startActivity(intent);
+    		return true;
+    	case SETTINGS_ID:
+        	intent = new Intent(this, Settings.class);
+        	intent.putExtra(PREFERENCE_NOTIFY, mPreferences.getBoolean(PREFERENCE_NOTIFY, true));
+        	intent.putExtra(PREFERENCE_VIBRATE, mPreferences.getBoolean(PREFERENCE_VIBRATE, false));
+        	intent.putExtra(PREFERENCE_LED, mPreferences.getBoolean(PREFERENCE_LED, false));
+        	intent.putExtra(PREFERENCE_RINGTONE, mPreferences.getBoolean(PREFERENCE_RINGTONE, false));
+        	startActivityForResult(intent, SETTINGS_REQUEST_ID);
     		return true;
     	case RESET_ID:
     		if (mDbHelper == null) {
@@ -130,25 +146,27 @@ public class WapdroidUI extends Activity {
         return super.onOptionsItemSelected(item);}
     
     @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    	super.onActivityResult(requestCode, resultCode, data);
+		switch(requestCode) {
+		case SETTINGS_REQUEST_ID:
+	    	if (resultCode == RESULT_OK) {
+	    		Bundle extras = data.getExtras();
+				boolean notify = extras.getBoolean(PREFERENCE_NOTIFY);
+				boolean vibrate = extras.getBoolean(PREFERENCE_VIBRATE);
+				boolean led = extras.getBoolean(PREFERENCE_LED);
+				boolean ringtone = extras.getBoolean(PREFERENCE_RINGTONE);
+				mEditor.putBoolean(PREFERENCE_NOTIFY, notify);
+				mEditor.putBoolean(PREFERENCE_VIBRATE, vibrate);
+				mEditor.putBoolean(PREFERENCE_LED, led);
+				mEditor.putBoolean(PREFERENCE_RINGTONE, ringtone);
+				mEditor.commit();
+				setNotify(notify, vibrate, led, ringtone);
+				break;}}}
+    
+    @Override
     public void onPause() {
     	super.onPause();
-    	releaseResources();}
-    
-    @Override
-    public void onResume() {
-    	super.onResume();
-    	if (mWifiReceiver == null) {
-    		mWifiReceiver = new WapdroidWifiReceiver();
-    		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
-    		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));}
-    	manageService();}
-    
-    @Override
-    public void onDestroy() {
-    	super.onDestroy();
-    	releaseResources();}
-    
-    private void releaseResources() {
     	if (mDbHelper != null) {
     		mDbHelper.close();
     		mDbHelper = null;}
@@ -164,9 +182,20 @@ public class WapdroidUI extends Activity {
     		unbindService(mWapdroidServiceConnection);
     		mWapdroidServiceConnection = null;}}
     
-    private void manageNetworks() {
-    	Intent intent = new Intent(this, ManageNetworks.class);
-    	startActivity(intent);}
+    @Override
+    public void onResume() {
+    	super.onResume();
+    	if (mWifiReceiver == null) {
+    		mWifiReceiver = new WapdroidWifiReceiver();
+    		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.WIFI_STATE_CHANGED_ACTION));
+    		registerReceiver(mWifiReceiver, new IntentFilter(WifiManager.NETWORK_STATE_CHANGED_ACTION));}
+    	manageService();}
+    
+    private void setNotify(boolean notify, boolean vibrate, boolean led, boolean ringtone) {
+		if ((mWapdroidServiceConnection != null) && (mWapdroidService != null)) {
+			try {
+				mWapdroidService.setNotify(notify, vibrate, led, ringtone);}
+			catch (RemoteException e) {}}}
     
 	private void wifiChanged() {
 		if (mWifiIsEnabled) {
@@ -184,7 +213,7 @@ public class WapdroidUI extends Activity {
 							: getString(R.string.label_disabled))));}}
     
     private void manageService() {
-    	int mColor = 0xFF909090;
+    	int mColor = 0xFFBEBEBE;
 		Intent i = new Intent();
 		i.setClassName(this.getPackageName(), WapdroidService.class.getName());
 		if (mWapdroidEnabled) {
@@ -193,7 +222,7 @@ public class WapdroidUI extends Activity {
 				mWapdroidServiceConnection = new WapdroidServiceConnection();
 				bindService(i, mWapdroidServiceConnection, Context.BIND_AUTO_CREATE);}}
 		else {
-        	mColor = 0xFF606060;
+        	mColor = 0xFF737373;
 			if (mWapdroidServiceConnection != null) {
 				if (mWapdroidService != null) {
 					try {

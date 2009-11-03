@@ -44,25 +44,22 @@ public class ManageNetworks extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.networks_list);
-		mDbHelper = new WapdroidDbAdapter(this);
-		mDbHelper.open();
-		listNetworks();
         registerForContextMenu(getListView());}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		mDbHelper.close();}
+    	if (mDbHelper != null) {
+    		mDbHelper.close();
+    		mDbHelper = null;}}
 	
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mDbHelper.open();}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		mDbHelper.close();}
+		if (mDbHelper == null) {
+			mDbHelper = new WapdroidDbAdapter(this);
+			mDbHelper.open();}
+		listNetworks();}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -100,10 +97,6 @@ public class ManageNetworks extends ListActivity {
     	Intent intent = new Intent(this, ManageCells.class);
     	intent.putExtra(WapdroidDbAdapter.TABLE_ID, (int) id);
     	startActivity(intent);}
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-    	super.onActivityResult(requestCode, resultCode, intent);}
     
     public void listNetworks() {
         Cursor c = mDbHelper.fetchNetworks();

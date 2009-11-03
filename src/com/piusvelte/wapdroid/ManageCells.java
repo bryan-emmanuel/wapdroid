@@ -23,7 +23,6 @@ package com.piusvelte.wapdroid;
 import com.piusvelte.wapdroid.R;
 
 import android.app.ListActivity;
-import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.ContextMenu;
@@ -45,28 +44,25 @@ public class ManageCells extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.cells_list);
-		mDbHelper = new WapdroidDbAdapter(this);
-		mDbHelper.open();
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 		    mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);}
-		listCells();
         registerForContextMenu(getListView());}
 	
 	@Override
 	protected void onPause() {
 		super.onPause();
-		mDbHelper.close();}
+    	if (mDbHelper != null) {
+    		mDbHelper.close();
+    		mDbHelper = null;}}
 	
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mDbHelper.open();}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
-		mDbHelper.close();}
+		if (mDbHelper == null) {
+			mDbHelper = new WapdroidDbAdapter(this);
+			mDbHelper.open();}
+		listCells();}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -101,10 +97,6 @@ public class ManageCells extends ListActivity {
     @Override
     protected void onListItemClick(ListView list, View view, int position, long id) {
     	super.onListItemClick(list, view, position, id);}
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
-    	super.onActivityResult(requestCode, resultCode, intent);}
    
    public void listCells() {
         Cursor c = mDbHelper.fetchCellsByNetwork(mNetwork);
