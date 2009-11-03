@@ -59,7 +59,7 @@ public class WapdroidService extends Service {
 	private WifiManager mWifiManager;
 	private WifiInfo mWifiInfo;
 	private int mCID = -1, mLAC = -1, mRSSI = -1, mWifiState, mWifiEnabling, mWifiEnabled, mWifiUnknown;
-	private boolean mWifiIsEnabled = false, mNotify = true, mVibrate = false, mLed = false, mRingtone = false;
+	private boolean mWifiIsEnabled = false, mNotify = true, mVibrate = false, mLed = false, mRingtone = false, mSetWifi = false;
 	private IWapdroidUI mWapdroidUI;
 	private NotificationManager mNotificationManager;
 	private SharedPreferences mPreferences;
@@ -198,8 +198,10 @@ public class WapdroidService extends Service {
 								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
 				c.close();
 				if ((mInRange && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!mInRange && mWifiIsEnabled)) {
+					mSetWifi = true;
 					mWifiManager.setWifiEnabled(mInRange);}}}
 		else if (mWifiIsEnabled && (mSSID == null)) {
+			mSetWifi = true;
 			mWifiManager.setWifiEnabled(false);}}
     
     public class WapdroidWifiReceiver extends BroadcastReceiver {
@@ -212,7 +214,12 @@ public class WapdroidService extends Service {
     	    		mWifiIsEnabled = (mWifiState == mWifiEnabled);
     	    		// notify if a change
     	    		if (notify) {
-   	    	    		notification(mVibrate, mLed, mRingtone);}
+    	    			// only vibrate/led/ringtone if wapdroid made the change
+    	    			if (mSetWifi) {
+    	    				mSetWifi = false;
+    	    				notification(mVibrate, mLed, mRingtone);}
+    	    			else {
+    	    				notification(false, false, false);}}
     	    		if (!mWifiIsEnabled) {
     	    			mSSID = null;}}
     			wifiChanged();}
