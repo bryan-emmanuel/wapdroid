@@ -59,9 +59,16 @@ java.lang.String _arg2;
 _arg2 = data.readString();
 java.lang.String _arg3;
 _arg3 = data.readString();
-java.lang.String _arg4;
-_arg4 = data.readString();
-this.setCellLocation(_arg0, _arg1, _arg2, _arg3, _arg4);
+this.setCellLocation(_arg0, _arg1, _arg2, _arg3);
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_setSignalStrength:
+{
+data.enforceInterface(DESCRIPTOR);
+java.lang.String _arg0;
+_arg0 = data.readString();
+this.setSignalStrength(_arg0);
 reply.writeNoException();
 return true;
 }
@@ -83,7 +90,7 @@ public java.lang.String getInterfaceDescriptor()
 {
 return DESCRIPTOR;
 }
-public void setCellLocation(java.lang.String mCID, java.lang.String mLAC, java.lang.String mMNC, java.lang.String mMCC, java.lang.String mRSSI) throws android.os.RemoteException
+public void setCellLocation(java.lang.String mCID, java.lang.String mLAC, java.lang.String mMNC, java.lang.String mMCC) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -93,8 +100,22 @@ _data.writeString(mCID);
 _data.writeString(mLAC);
 _data.writeString(mMNC);
 _data.writeString(mMCC);
-_data.writeString(mRSSI);
 mRemote.transact(Stub.TRANSACTION_setCellLocation, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void setSignalStrength(java.lang.String mRSSI) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeString(mRSSI);
+mRemote.transact(Stub.TRANSACTION_setSignalStrength, _data, _reply, 0);
 _reply.readException();
 }
 finally {
@@ -104,6 +125,8 @@ _data.recycle();
 }
 }
 static final int TRANSACTION_setCellLocation = (IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_setSignalStrength = (IBinder.FIRST_CALL_TRANSACTION + 1);
 }
-public void setCellLocation(java.lang.String mCID, java.lang.String mLAC, java.lang.String mMNC, java.lang.String mMCC, java.lang.String mRSSI) throws android.os.RemoteException;
+public void setCellLocation(java.lang.String mCID, java.lang.String mLAC, java.lang.String mMNC, java.lang.String mMCC) throws android.os.RemoteException;
+public void setSignalStrength(java.lang.String mRSSI) throws android.os.RemoteException;
 }

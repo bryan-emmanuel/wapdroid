@@ -37,20 +37,17 @@ import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.telephony.NeighboringCellInfo;
-/*
 import android.telephony.CellLocation;
+import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
-*/
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 
 public class WapdroidService extends Service {
 	private WapdroidDbAdapter mDbHelper;
 	private WifiChangedReceiver mWifiChangedReceiver;
-	private SignalChangedReceiver mSignalChangedReceiver;
 	private TelephonyManager mTeleManager;
+	private WapdroidPhoneStateListener mWapdroidPhoneStateListener;
 	public static final String PREF_FILE_NAME = "wapdroid";
 	public static final String PREFERENCE_NOTIFY = "notify";
 	public static final String PREFERENCE_VIBRATE = "vibrate";
@@ -69,7 +66,6 @@ public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
 	private static final String WIFI_CHANGE = WifiManager.WIFI_STATE_CHANGED_ACTION;
 	private static final String NETWORK_CHANGE = WifiManager.NETWORK_STATE_CHANGED_ACTION;
-	private static final String SIGNAL_CHANGE = "android.intent.action.SIG_STR";
 	private static final int mWifiEnabling = WifiManager.WIFI_STATE_ENABLING;
 	private static final int mWifiEnabled = WifiManager.WIFI_STATE_ENABLED;
 	private static final int mWifiUnknown = WifiManager.WIFI_STATE_UNKNOWN;
@@ -98,16 +94,14 @@ public class WapdroidService extends Service {
 		intentfilter.addAction(NETWORK_CHANGE);
 		registerReceiver(mWifiChangedReceiver = new WifiChangedReceiver(), intentfilter);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		intentfilter = new IntentFilter();
-		intentfilter.addAction(SIGNAL_CHANGE);
-		registerReceiver(mSignalChangedReceiver = new SignalChangedReceiver(), intentfilter);}
+		mTeleManager.listen(mWapdroidPhoneStateListener = new WapdroidPhoneStateListener(), PhoneStateListener.LISTEN_CELL_LOCATION ^ PhoneStateListener.LISTEN_SIGNAL_STRENGTH);}
     
     @Override
     public void onDestroy() {
     	super.onDestroy();
     	mNotificationManager.cancel(NOTIFY_ID);
     	unregisterReceiver(mWifiChangedReceiver);
-    	unregisterReceiver(mSignalChangedReceiver);}
+    	mTeleManager.listen(mWapdroidPhoneStateListener, PhoneStateListener.LISTEN_NONE);}
     
     private void notification(boolean vibrate, boolean led, boolean ringtone) {
 		int icon = mWifiIsEnabled ? R.drawable.statuson : R.drawable.status;
@@ -133,7 +127,8 @@ public class WapdroidService extends Service {
 			if (mWapdroidUIBinder != null) {
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 	        	try {
-	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC, (String) "" + (-113 + 2 * mASU) + "dBm");}
+	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);
+	        		mWapdroidUI.setSignalStrength((String) "" + (-113 + 2 * mASU) + "dBm");}
 	        	catch (RemoteException e) {}}
 			else {
 				mWapdroidUI = null;}}};
@@ -192,50 +187,54 @@ public class WapdroidService extends Service {
     	    	else {
     	    		mSSID = null;}
     	    	wifiChanged();}}}
-
-    public class SignalChangedReceiver extends BroadcastReceiver {
-    	@Override
-    	public void onReceive(Context context, Intent intent) {
-    		if (intent.getAction().equals(SIGNAL_CHANGE)) {
-	        	mASU = intent.getIntExtra("asu", 0);
-	    		GsmCellLocation cell = (GsmCellLocation) mTeleManager.getCellLocation();
-	    		mCID = cell.getCid();
-	    		mLAC = cell.getLac();
-	    		mMNC = mTeleManager.getNetworkOperatorName();
-	    		mMCC = mTeleManager.getNetworkCountryIso();
-	    		Log.v("WapdroidService","Signal="+mASU+","+mCID+","+mLAC+","+mMNC+","+mMCC);
-	    		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
-	    		if (hasCell()) {
-	    			if (mWifiIsEnabled && (mSSID != null)) {
-	    				updateRange();}
-	    			else {
-	    				boolean mInRange = false;
-	    				// coarse range check
-	    				Cursor c = mDbHelper.cellsInRange(mCID, mASU);
-	    				if (c.getCount() > 0) {
-	    					mInRange = true;
-	    					boolean mCheckNeighbors = true;
-	    					String mNetworkColIdx = WapdroidDbAdapter.CELLS_NETWORK;
-	    					c.moveToFirst();
-	    					while (mCheckNeighbors && !c.isAfterLast()) {
-	    						mCheckNeighbors = mDbHelper.hasNeighbors(c.getInt(c.getColumnIndex(mNetworkColIdx)));
-	    						c.moveToNext();}
-	    					// if there are neighbors for all networks in range, then perform fine range checking
-	    					if (mCheckNeighbors) {
-	    						int mNeighborCID, mNeighborRSSI;
-	    						for (NeighboringCellInfo n : mNeighboringCells) {
-	    							mNeighborCID = n.getCid();
-	    							mNeighborRSSI = convertRSSIToASU(n.getRssi());
-	    							if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
-	    								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
-	    				c.close();
-	    				if ((mInRange && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!mInRange && mWifiIsEnabled)) {
-	    					mSetWifi = true;
-	    					mWifiManager.setWifiEnabled(mInRange);}}}
-	    		else if (mWifiIsEnabled && (mSSID == null)) {
-	    			mSetWifi = true;
-	    			mWifiManager.setWifiEnabled(false);}
-	        	if (mWapdroidUI != null) {
-	        		try {
-		        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC, (String) "" + (-113 + 2 * mASU) + "dBm");}
-	        		catch (RemoteException e) {}}}}}}
+    
+    public class WapdroidPhoneStateListener extends PhoneStateListener {
+    	public void onCellLocationChanged(CellLocation location) {
+    		GsmCellLocation cell = (GsmCellLocation) location;
+    		mCID = cell.getCid();
+    		mLAC = cell.getLac();
+    		mMNC = mTeleManager.getNetworkOperatorName();
+    		mMCC = mTeleManager.getNetworkCountryIso();
+    		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
+    		mASU = -1;
+        	if (mWapdroidUI != null) {
+        		try {
+	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);
+	        		mWapdroidUI.setSignalStrength((String) "" + (-113 + 2 * mASU) + "dBm");}
+        		catch (RemoteException e) {}}}
+    	public void  onSignalStrengthChanged(int asu) {
+    		mASU = asu;
+    		if (hasCell()) {
+    			if (mWifiIsEnabled && (mSSID != null)) {
+    				updateRange();}
+    			else {
+    				boolean mInRange = false;
+    				// coarse range check
+    				Cursor c = mDbHelper.cellsInRange(mCID, mASU);
+    				if (c.getCount() > 0) {
+    					mInRange = true;
+    					boolean mCheckNeighbors = true;
+    					String mNetworkColIdx = WapdroidDbAdapter.CELLS_NETWORK;
+    					c.moveToFirst();
+    					while (mCheckNeighbors && !c.isAfterLast()) {
+    						mCheckNeighbors = mDbHelper.hasNeighbors(c.getInt(c.getColumnIndex(mNetworkColIdx)));
+    						c.moveToNext();}
+    					// if there are neighbors for all networks in range, then perform fine range checking
+    					if (mCheckNeighbors) {
+    						int mNeighborCID, mNeighborRSSI;
+    						for (NeighboringCellInfo n : mNeighboringCells) {
+    							mNeighborCID = n.getCid();
+    							mNeighborRSSI = convertRSSIToASU(n.getRssi());
+    							if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
+    								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
+    				c.close();
+    				if ((mInRange && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!mInRange && mWifiIsEnabled)) {
+    					mSetWifi = true;
+    					mWifiManager.setWifiEnabled(mInRange);}}}
+    		else if (mWifiIsEnabled && (mSSID == null)) {
+    			mSetWifi = true;
+    			mWifiManager.setWifiEnabled(false);}
+        	if (mWapdroidUI != null) {
+        		try {
+	        		mWapdroidUI.setSignalStrength((String) "" + (-113 + 2 * mASU) + "dBm");}
+        		catch (RemoteException e) {}}}}}
