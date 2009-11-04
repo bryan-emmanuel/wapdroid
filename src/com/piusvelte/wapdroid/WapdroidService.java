@@ -50,10 +50,6 @@ public class WapdroidService extends Service {
 	private WapdroidDbAdapter mDbHelper;
 	private WifiChangedReceiver mWifiChangedReceiver;
 	private SignalChangedReceiver mSignalChangedReceiver;
-	/*
-	private WapdroidPhoneStateListener mPhoneStateListener;
-	private GsmCellLocation mGsmCellLocation;
-	*/
 	private TelephonyManager mTeleManager;
 	public static final String PREF_FILE_NAME = "wapdroid";
 	public static final String PREFERENCE_NOTIFY = "notify";
@@ -102,11 +98,6 @@ public class WapdroidService extends Service {
 		intentfilter.addAction(NETWORK_CHANGE);
 		registerReceiver(mWifiChangedReceiver = new WifiChangedReceiver(), intentfilter);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		/*
-		mGsmCellLocation = (GsmCellLocation) mTeleManager.getCellLocation();
-		mPhoneStateListener = new WapdroidPhoneStateListener();
-		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION ^ PhoneStateListener.LISTEN_SIGNAL_STRENGTH);
-		*/
 		intentfilter = new IntentFilter();
 		intentfilter.addAction(SIGNAL_CHANGE);
 		registerReceiver(mSignalChangedReceiver = new SignalChangedReceiver(), intentfilter);}
@@ -116,9 +107,6 @@ public class WapdroidService extends Service {
     	super.onDestroy();
     	mNotificationManager.cancel(NOTIFY_ID);
     	unregisterReceiver(mWifiChangedReceiver);
-    	/*
-    	mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-    	*/
     	unregisterReceiver(mSignalChangedReceiver);}
     
     private void notification(boolean vibrate, boolean led, boolean ringtone) {
@@ -145,8 +133,7 @@ public class WapdroidService extends Service {
 			if (mWapdroidUIBinder != null) {
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 	        	try {
-	        		mWapdroidUI.locationChanged((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);
-	        		mWapdroidUI.signalChanged((String) "" + (-113 + 2 * mASU) + "dBm");}
+	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC, (String) "" + (-113 + 2 * mASU) + "dBm");}
 	        	catch (RemoteException e) {}}
 			else {
 				mWapdroidUI = null;}}};
@@ -250,71 +237,5 @@ public class WapdroidService extends Service {
 	    			mWifiManager.setWifiEnabled(false);}
 	        	if (mWapdroidUI != null) {
 	        		try {
-	        			mWapdroidUI.locationChanged((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);
-	    	    		//phone state intent receiver: 0-31, for GSM, dBm = -113 + 2 * asu
-	        			mWapdroidUI.signalChanged((String) "" + (-113 + 2 * mASU) + "dBm");}
-	        		catch (RemoteException e) {}}}}}
-    
-    /*
-    private void manageWifi() {
-		if (hasCell()) {
-			if (mWifiIsEnabled && (mSSID != null)) {
-				updateRange();}
-			else {
-				boolean mInRange = false;
-				// coarse range check
-				Cursor c = mDbHelper.cellsInRange(mCID, mASU);
-				if (c.getCount() > 0) {
-					mInRange = true;
-					boolean mCheckNeighbors = true;
-					String mNetworkColIdx = WapdroidDbAdapter.CELLS_NETWORK;
-					c.moveToFirst();
-					while (mCheckNeighbors && !c.isAfterLast()) {
-						mCheckNeighbors = mDbHelper.hasNeighbors(c.getInt(c.getColumnIndex(mNetworkColIdx)));
-						c.moveToNext();}
-					// if there are neighbors for all networks in range, then perform fine range checking
-					if (mCheckNeighbors) {
-						int mNeighborCID, mNeighborRSSI;
-						for (NeighboringCellInfo n : mNeighboringCells) {
-							mNeighborCID = n.getCid();
-							mNeighborRSSI = convertRSSIToASU(n.getRssi());
-							if (mInRange && (mNeighborCID > 0) && (mNeighborRSSI > 0)) {
-								mInRange = mDbHelper.neighborInRange(mNeighborCID, mNeighborRSSI);}}}}
-				c.close();
-				if ((mInRange && !mWifiIsEnabled && (mWifiState != mWifiEnabling)) || (!mInRange && mWifiIsEnabled)) {
-					mSetWifi = true;
-					mWifiManager.setWifiEnabled(mInRange);}}}
-		else if (mWifiIsEnabled && (mSSID == null)) {
-			mSetWifi = true;
-			mWifiManager.setWifiEnabled(false);}}
-	
-    public class WapdroidPhoneStateListener extends PhoneStateListener {
-    	@Override
-    	public void onSignalStrengthChanged(int asu) {
-    		super.onSignalStrengthChanged(asu);
-    		//phone state intent receiver: 0-31, for GSM, dBm = -113 + 2 * asu
-        	mASU = asu;
-        	if (mWapdroidUI != null) {
-        		try {
-        			mWapdroidUI.signalChanged((String) "" + (-113 + 2 * asu) + "dBm");}
-        		catch (RemoteException e) {}}
-        	mNeighboringCells = mTeleManager.getNeighboringCellInfo();
-    		manageWifi();}    	
-    	@Override
-    	public void onCellLocationChanged(CellLocation location) {
-    		super.onCellLocationChanged(location);
-    		mGsmCellLocation = (GsmCellLocation) location;
-        	mCID = mGsmCellLocation.getCid();
-        	mLAC = mGsmCellLocation.getLac();
-    		mMNC = mTeleManager.getNetworkOperatorName();
-    		mMCC = mTeleManager.getNetworkCountryIso();
-        	mNeighboringCells = mTeleManager.getNeighboringCellInfo();
-        	if (mWapdroidUI != null) {
-        		try {
-        			mWapdroidUI.locationChanged((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);}
-        		catch (RemoteException e) {}}
-        	// the cell location should be followed by a signal strength
-    		//manageWifi();
-        	mASU = -1;}}
-    */
-    }
+		        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC, (String) "" + (-113 + 2 * mASU) + "dBm");}
+	        		catch (RemoteException e) {}}}}}}

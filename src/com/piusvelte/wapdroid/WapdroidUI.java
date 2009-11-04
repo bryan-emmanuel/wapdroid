@@ -255,12 +255,11 @@ public class WapdroidUI extends Activity {
     			wifiChanged();}}}
     
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void locationChanged(String mCID, String mLAC, String mMNC, String mMCC) throws RemoteException {
+		public void setCellLocation(String mCID, String mLAC, String mMNC, String mMCC, String mRSSI) throws RemoteException {
 	    	field_CID.setText(mCID);
 	    	field_LAC.setText(mLAC);
 	    	field_MNC.setText(mMNC);
-	    	field_MCC.setText(mMCC);}
-		public void signalChanged(String mRSSI) throws RemoteException {
+	    	field_MCC.setText(mMCC);
 	    	field_RSSI.setText(mRSSI);}};
     
 	public class WapdroidServiceConnection implements ServiceConnection {
