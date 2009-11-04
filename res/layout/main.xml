@@ -6,10 +6,12 @@
 	<TableRow>
 		<TextView android:textStyle="bold"
 			android:paddingLeft="8dip"
+			android:layout_height="fill_parent"
+			android:gravity="center_vertical"
 			android:textSize="16dip"
 			android:text="@string/label_wapdroidState"/>
 		<CheckBox android:id="@+id/checkbox_wapdroidState"
-			android:padding="8dip"
+			android:paddingRight="8dip"
 			android:gravity="right"/>
 	</TableRow>
     <View android:layout_height="2dip"
@@ -89,25 +91,22 @@
     	android:background="#FFBEBEBE"/>
 	<TableRow>
 		<TableLayout android:layout_width="wrap_content"
-			android:layout_height="wrap_content">
+			android:paddingLeft="8dip"
+			android:layout_height="fill_parent"
+			android:gravity="center_vertical">
 			<TableRow>
 				<TextView android:textStyle="bold"
-					android:paddingTop="8dip"
-					android:paddingBottom="2dip"
-					android:paddingLeft="8dip"
 					android:textSize="16dip"
 					android:text="@string/label_WIFI"/>
     		</TableRow>
 			<TableRow>
 				<TextView android:id="@+id/field_wifiState"
-					android:paddingTop="2dip"
-					android:paddingBottom="8dip"
-					android:paddingLeft="16dip"
+					android:paddingLeft="8dip"
 					android:textSize="12dip"/>
     		</TableRow>
 		</TableLayout>
 		<CheckBox android:id="@+id/checkbox_wifiState"
-			android:padding="8dip"
+			android:paddingRight="8dip"
 			android:gravity="right"/>
     </TableRow>
 </TableLayout>

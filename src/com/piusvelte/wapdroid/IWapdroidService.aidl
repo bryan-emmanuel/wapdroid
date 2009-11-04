@@ -21,5 +21,4 @@
 package com.piusvelte.wapdroid;
 
 interface IWapdroidService {
-	void setNotify(boolean notify, boolean vibrate, boolean led, boolean ringtone);
 	void setCallback(in IBinder mWapdroidUIBinder);}
