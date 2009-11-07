@@ -196,7 +196,7 @@ public class WapdroidService extends Service {
     	mNotificationManager.cancel(NOTIFY_ID);
     	unregisterReceiver(mReceiver);
     	mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-    	if (mPreferences.getBoolean(PREFERENCE_VIBRATE, false)) {
+    	if (mPreferences.getBoolean(PREFERENCE_MANAGE, false)) {
        		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);}
 		ManageWakeLocks.release();}
     
