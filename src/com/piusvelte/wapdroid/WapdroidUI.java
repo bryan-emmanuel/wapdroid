@@ -48,13 +48,13 @@ public class WapdroidUI extends Activity {
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int RESET_ID = Menu.FIRST + 2;
 	private static final int SETTINGS_REQUEST_ID = 0;
-	private TextView field_CID, field_LAC, field_MNC, field_MCC, field_RSSI, label_CID, label_LAC, label_MNC, label_MCC, label_RSSI, field_wifiState;
+	private TextView field_CID, field_LAC, field_MNC, field_MCC, label_CID, label_LAC, label_MNC, label_MCC, field_wifiState;
 	private CheckBox checkbox_wifiState, checkbox_wapdroidState;
-	private static final String PREFERENCE_MANAGE = "manageWifi";
-	public static final String PREFERENCE_NOTIFY = WapdroidService.PREFERENCE_NOTIFY;
-	public static final String PREFERENCE_VIBRATE = WapdroidService.PREFERENCE_VIBRATE;
-	public static final String PREFERENCE_LED = WapdroidService.PREFERENCE_LED;
-	public static final String PREFERENCE_RINGTONE = WapdroidService.PREFERENCE_RINGTONE;
+	private static final String PREFERENCE_MANAGE = WapdroidService.PREFERENCE_MANAGE;
+	private static final String PREFERENCE_NOTIFY = WapdroidService.PREFERENCE_NOTIFY;
+	private static final String PREFERENCE_VIBRATE = WapdroidService.PREFERENCE_VIBRATE;
+	private static final String PREFERENCE_LED = WapdroidService.PREFERENCE_LED;
+	private static final String PREFERENCE_RINGTONE = WapdroidService.PREFERENCE_RINGTONE;
 	private static final String PREF_FILE_NAME = WapdroidService.PREF_FILE_NAME;
 	private SharedPreferences mPreferences;
 	private SharedPreferences.Editor mEditor;
@@ -89,8 +89,6 @@ public class WapdroidUI extends Activity {
     	field_MNC = (TextView) findViewById(R.id.field_MNC);
     	label_MCC = (TextView) findViewById(R.id.label_MCC);
     	field_MCC = (TextView) findViewById(R.id.field_MCC);
-    	label_RSSI = (TextView) findViewById(R.id.label_RSSI);
-    	field_RSSI = (TextView) findViewById(R.id.field_RSSI);
     	field_wifiState = (TextView) findViewById(R.id.field_wifiState);
     	checkbox_wapdroidState = (CheckBox) findViewById(R.id.checkbox_wapdroidState);
     	checkbox_wapdroidState.setChecked(mWapdroidEnabled);
@@ -164,14 +162,7 @@ public class WapdroidUI extends Activity {
     	if (mWifiReceiver != null) {
     		unregisterReceiver(mWifiReceiver);
     		mWifiReceiver = null;}
-    	if (mWapdroidServiceConnection != null) {
-			if (mWapdroidService != null) {
-				try {
-					mWapdroidService.setCallback(null);}
-				catch (RemoteException e) {}
-				mWapdroidService = null;}
-    		unbindService(mWapdroidServiceConnection);
-    		mWapdroidServiceConnection = null;}}
+    	releaseService();}
     
     @Override
     public void onResume() {
@@ -197,42 +188,37 @@ public class WapdroidUI extends Activity {
 					: (mWifiState == mWifiDisabling ?
 							getString(R.string.label_disabling)
 							: getString(R.string.label_disabled))));}}
+	
+	private void releaseService() {
+		if (mWapdroidServiceConnection != null) {
+			if (mWapdroidService != null) {
+				try {
+					mWapdroidService.setCallback(null);}
+				catch (RemoteException e) {}
+				mWapdroidService = null;}
+			unbindService(mWapdroidServiceConnection);
+			mWapdroidServiceConnection = null;}
+		stopService(new Intent(this, WapdroidService.class));}
     
     private void manageService() {
-    	int mColor = 0xFFBEBEBE;
-		Intent i = new Intent();
-		i.setClassName(this.getPackageName(), WapdroidService.class.getName());
 		if (mWapdroidEnabled) {
-    		startService(i);
 			if (mWapdroidServiceConnection == null) {
 				mWapdroidServiceConnection = new WapdroidServiceConnection();
-				bindService(i, mWapdroidServiceConnection, Context.BIND_AUTO_CREATE);}}
+				bindService(new Intent(this, WapdroidService.class), mWapdroidServiceConnection, Context.BIND_AUTO_CREATE);}}
 		else {
-        	mColor = 0xFF737373;
-			if (mWapdroidServiceConnection != null) {
-				if (mWapdroidService != null) {
-					try {
-						mWapdroidService.setCallback(null);}
-					catch (RemoteException e) {}
-					mWapdroidService = null;}
-				unbindService(mWapdroidServiceConnection);
-				mWapdroidServiceConnection = null;}
-			stopService(i);
+			releaseService();
 	    	field_CID.setText("");
 	    	field_LAC.setText("");
 	    	field_MNC.setText("");
-	    	field_MCC.setText("");
-	    	field_RSSI.setText("");}
-    	label_CID.setTextColor(mColor);
-    	field_CID.setTextColor(mColor);
-    	label_LAC.setTextColor(mColor);
-    	field_LAC.setTextColor(mColor);
-    	label_MNC.setTextColor(mColor);
-    	field_MNC.setTextColor(mColor);
-    	label_MCC.setTextColor(mColor);
-    	field_MCC.setTextColor(mColor);
-    	label_RSSI.setTextColor(mColor);
-    	field_RSSI.setTextColor(mColor);}
+	    	field_MCC.setText("");}
+    	label_CID.setEnabled(mWapdroidEnabled);
+    	field_CID.setEnabled(mWapdroidEnabled);
+    	label_LAC.setEnabled(mWapdroidEnabled);
+    	field_LAC.setEnabled(mWapdroidEnabled);
+    	label_MNC.setEnabled(mWapdroidEnabled);
+    	field_MNC.setEnabled(mWapdroidEnabled);
+    	label_MCC.setEnabled(mWapdroidEnabled);
+    	field_MCC.setEnabled(mWapdroidEnabled);}
     
     public class WapdroidWifiReceiver extends BroadcastReceiver {    	
     	@Override
@@ -259,9 +245,7 @@ public class WapdroidUI extends Activity {
 	    	field_CID.setText(mCID);
 	    	field_LAC.setText(mLAC);
 	    	field_MNC.setText(mMNC);
-	    	field_MCC.setText(mMCC);}
-		public void setSignalStrength(String mRSSI) throws RemoteException {
-	    	field_RSSI.setText(mRSSI);}};
+	    	field_MCC.setText(mMCC);}};
     
 	public class WapdroidServiceConnection implements ServiceConnection {
 		public void onServiceConnected(ComponentName className, IBinder boundService) {

@@ -5,9 +5,6 @@
     <string name="label_LAC">Location:</string>
     <string name="label_MNC">Carrier:</string>
     <string name="label_MCC">Country:</string>
-    <string name="label_RSSI">Signal:</string>
-    <string name="label_minRSSI">Minimum Signal:</string>
-    <string name="label_maxRSSI">Maximum Signal:</string>
     <string name="label_WIFI">WiFi</string>
     <string name="label_wapdroidState">Manage WiFi</string>
     <string name="no_networks">no networks</string>

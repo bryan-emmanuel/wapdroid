@@ -62,25 +62,11 @@
 	<TableRow>
 		<TextView android:id="@+id/label_CID"
 			android:paddingTop="2dip"
-			android:paddingBottom="2dip"
+			android:paddingBottom="8dip"
 			android:paddingLeft="16dip"
 			android:textSize="12dip"
 			android:text="@string/label_CID"/>
 		<TextView android:id="@+id/field_CID"
-			android:paddingTop="2dip"
-			android:paddingBottom="2dip"
-			android:paddingRight="8dip"
-			android:gravity="right"
-			android:textSize="12dip"/>
-    </TableRow>
-	<TableRow>
-		<TextView android:id="@+id/label_RSSI"
-			 android:paddingTop="2dip"
-			android:paddingBottom="8dip"
-			android:paddingLeft="16dip"
-			android:textSize="12dip"
-			android:text="@string/label_RSSI"/>
-		<TextView android:id="@+id/field_RSSI"
 			android:paddingTop="2dip"
 			android:paddingBottom="8dip"
 			android:paddingRight="8dip"

@@ -17,7 +17,8 @@
     <View android:layout_height="2dip"
     	android:background="#FFBEBEBE"/>
 	<TableRow>
-		<TextView android:textSize="16dip"
+		<TextView android:id="@+id/text_vibrate"
+			android:textSize="16dip"
 			android:paddingLeft="8dip"
 			android:layout_height="fill_parent"
 			android:gravity="center_vertical"
@@ -29,7 +30,8 @@
     <View android:layout_height="1dip"
     	android:background="#FFBEBEBE"/>
 	<TableRow>
-		<TextView android:textSize="16dip"
+		<TextView android:id="@+id/text_led"
+			android:textSize="16dip"
 			android:paddingLeft="8dip"
 			android:layout_height="fill_parent"
 			android:gravity="center_vertical"
@@ -41,7 +43,8 @@
     <View android:layout_height="1dip"
     	android:background="#FFBEBEBE"/>
 	<TableRow>
-		<TextView android:textSize="16dip"
+		<TextView android:id="@+id/text_ringtone"
+			android:textSize="16dip"
 			android:paddingLeft="8dip"
 			android:layout_height="fill_parent"
 			android:gravity="center_vertical"

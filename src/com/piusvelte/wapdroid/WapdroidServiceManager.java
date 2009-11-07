@@ -21,20 +21,15 @@
 package com.piusvelte.wapdroid;
 
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
-public class WapdroidServiceManager extends BroadcastReceiver {
-	private static final String mPreferenceManageWifi = "manageWifi";
-	private static final String PREF_FILE_NAME = "wapdroid";
-	private SharedPreferences mPreferences;
-
+public class WapdroidServiceManager extends BroadcastReceiver {	
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if ("android.intent.action.BOOT_COMPLETED".equals(intent.getAction())) {
-			// check if Wapdroid is enabled, and start the service
-			mPreferences = context.getSharedPreferences(PREF_FILE_NAME, WapdroidUI.MODE_PRIVATE);
-			if (mPreferences.getBoolean(mPreferenceManageWifi, true)) {
-				context.startService(new Intent().setComponent(new ComponentName(context.getPackageName(), WapdroidService.class.getName())));}}}}
+		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED") || intent.getAction().equals(WapdroidService.WAKE_SERVICE)) {
+			SharedPreferences sp = context.getSharedPreferences("wapdroid", WapdroidUI.MODE_PRIVATE);
+			if (sp.getBoolean(WapdroidService.PREFERENCE_MANAGE, true)) {
+				ManageWakeLocks.acquire(context);
+				context.startService(new Intent(context, WapdroidService.class));}}}}
