@@ -42,7 +42,6 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
@@ -54,7 +53,6 @@ public class WapdroidService extends Service {
 	public static final String PREFERENCE_VIBRATE = "vibrate";
 	public static final String PREFERENCE_LED = "led";
 	public static final String PREFERENCE_RINGTONE = "ringtone";
-	private static final String TAG = "WapdroidService";
 	private WapdroidDbAdapter mDbHelper;
 	private NotificationManager mNotificationManager;
 	private TelephonyManager mTeleManager;
@@ -83,7 +81,6 @@ public class WapdroidService extends Service {
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
-    		Log.v(TAG,"onCellLocationChanged, wifi currently "+(mWifiIsEnabled?"on":"off"));
     		GsmCellLocation cell = (GsmCellLocation) location;
     		mCID = cell.getCid();
     		mLAC = cell.getLac();
@@ -96,7 +93,6 @@ public class WapdroidService extends Service {
         		catch (RemoteException e) {}}
     		if (mCID > 0) {
     			if (mWifiIsEnabled && (mSSID != null)) {
-	        		Log.v(TAG,"update range and stop");
     				updateRange();
     				checkForUIBeforeStopping();}
     			else {
@@ -110,10 +106,8 @@ public class WapdroidService extends Service {
    								mInRange = mDbHelper.cellInRange(mNeighborCID);}}}
     				if ((mInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
     					mNotify =  mPreferences.getBoolean(PREFERENCE_NOTIFY, true);
-    	        		Log.v(TAG,"wifi "+(mInRange?"on":"off"));
     					mWifiManager.setWifiEnabled(mInRange);}
     				else {
-    	        		Log.v(TAG,"no wifi change, stop");
     	    			checkForUIBeforeStopping();}}}}};
     
 	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -121,21 +115,18 @@ public class WapdroidService extends Service {
 		public void onReceive(Context context, Intent intent) {
     		if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
     			// the wake lock should be held until wifi completes the change to enabled or disabled
-        		Log.v(TAG,"wifi state=");
         		// save the state as it's checked elsewhere, like the phonestatelistener
     			int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
    	    		switch (mWifiState) {
    	    			case WifiManager.WIFI_STATE_UNKNOWN:
    	    				break;
    	    			case WifiManager.WIFI_STATE_ENABLED:
-   	    				Log.v(TAG,"wifi state enabled");
    	    				mWifiIsEnabled = true;
        	    			wifiChanged();
       	    			notification(context);
        	   				checkForUIBeforeStopping();
    	    				break;
    	    			case WifiManager.WIFI_STATE_DISABLED:
-   	    				Log.v(TAG,"wifi state disabled");
    	    				mWifiIsEnabled = false;
        	    			notification(context);
        	    			mSSID = null;
@@ -158,7 +149,6 @@ public class WapdroidService extends Service {
 	@Override
 	public IBinder onBind(Intent intent) {
 		// stop the Alarm if UI binds, it'll be reset in onDestroy, if appropriate
-		Log.v(TAG,"bound to UI");
 		mUI = true;
 		mAlarmManager.cancel(mPendingIntent);
 		return mWapdroidService;}
@@ -200,12 +190,10 @@ public class WapdroidService extends Service {
     	unregisterReceiver(mReceiver);
     	mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
     	if (mPreferences.getBoolean(PREFERENCE_MANAGE, false)) {
-    		Log.v(TAG,"set the alarm");
        		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);}
 		ManageWakeLocks.release();}
     
     private void notification(Context context) {
-    	Log.v(TAG,"notify");
     	if (mNotify) {
         	mNotify = false;
 			int icon = mWifiIsEnabled ? R.drawable.statuson : R.drawable.status;
@@ -216,13 +204,10 @@ public class WapdroidService extends Service {
 			PendingIntent contentIntent = PendingIntent.getActivity(context, 0, i, 0);
 		   	notification.setLatestEventInfo(context, contentTitle, getString(R.string.app_name), contentIntent);
 		   	if (mPreferences.getBoolean(PREFERENCE_VIBRATE, false)) {
-		   		Log.v(TAG,"vibrate");
 		   		notification.defaults |= Notification.DEFAULT_VIBRATE;}
 		   	if (mPreferences.getBoolean(PREFERENCE_LED, false)) {
-		   		Log.v(TAG,"led");
 		   		notification.defaults |= Notification.DEFAULT_LIGHTS;}
 		   	if (mPreferences.getBoolean(PREFERENCE_RINGTONE, false)) {
-		   		Log.v(TAG,"ringtone");
 		   		notification.defaults |= Notification.DEFAULT_SOUND;}
 			mNotificationManager.notify(NOTIFY_ID, notification);}}
     
