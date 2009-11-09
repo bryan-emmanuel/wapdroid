@@ -46,7 +46,6 @@ import android.widget.CompoundButton.OnCheckedChangeListener;
 public class WapdroidUI extends Activity {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
-	public static final int RESET_ID = Menu.FIRST + 2;
 	private static final int SETTINGS_REQUEST_ID = 0;
 	private TextView field_CID, field_LAC, field_MNC, field_MCC, label_CID, label_LAC, label_MNC, label_MCC, field_wifiState;
 	private CheckBox checkbox_wifiState, checkbox_wapdroidState;
@@ -112,7 +111,6 @@ public class WapdroidUI extends Activity {
     	boolean result = super.onCreateOptionsMenu(menu);
     	menu.add(0, MANAGE_ID, 0, R.string.menu_manageNetworks);
     	menu.add(0, SETTINGS_ID, 0, R.string.menu_settings);
-    	menu.add(0, RESET_ID, 0, R.string.menu_resetWapdroid);
     	return result;}
 
     @Override
@@ -130,12 +128,6 @@ public class WapdroidUI extends Activity {
         	intent.putExtra(PREFERENCE_LED, mPreferences.getBoolean(PREFERENCE_LED, false));
         	intent.putExtra(PREFERENCE_RINGTONE, mPreferences.getBoolean(PREFERENCE_RINGTONE, false));
         	startActivityForResult(intent, SETTINGS_REQUEST_ID);
-    		return true;
-    	case RESET_ID:
-    		if (mDbHelper == null) {
-    			mDbHelper = new WapdroidDbAdapter(this);
-    			mDbHelper.open();}
-    		mDbHelper.resetDatabase();
     		return true;}
         return super.onOptionsItemSelected(item);}
     

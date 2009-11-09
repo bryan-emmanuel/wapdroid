@@ -9,7 +9,6 @@
     <string name="label_wapdroidState">管理 WiFi</string>
     <string name="no_networks">沒有網路連線</string>
     <string name="no_cells">沒有通信網路</string>
-    <string name="menu_resetWapdroid">重設 Wapdroid</string>
     <string name="menu_manageNetworks">管理網路連線</string>
     <string name="menu_manageCells">管理通信網路</string>
     <string name="menu_deleteNetwork">忘記網路連線</string>

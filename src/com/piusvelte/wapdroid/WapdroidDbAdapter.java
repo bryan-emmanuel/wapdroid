@@ -225,11 +225,6 @@ public class WapdroidDbAdapter {
         mDb.execSQL(CREATE_NETWORKS);
         mDb.execSQL(CREATE_CELLS);}
     
-    public void resetDatabase() {
-        mDb.execSQL(DROP + WAPDROID_NETWORKS + ";");
-        mDb.execSQL(DROP + WAPDROID_CELLS + ";");
-        createTables();}
-    
     public int fetchNetwork(String mSSID) {
     	int mNetwork = -1;
     	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + " FROM " + WAPDROID_NETWORKS + " WHERE " + NETWORKS_SSID + "=\"" + mSSID + "\"", null);
