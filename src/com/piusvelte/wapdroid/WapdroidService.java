@@ -61,7 +61,7 @@ public class WapdroidService extends Service {
 	private WifiManager mWifiManager;
 	private WifiInfo mWifiInfo;
 	private int mCID = -1, mLAC = -1, mWifiState, mInterval = 300000; // 5min interval
-	private boolean mWifiIsEnabled = false, mNotify = false, mUI = false;
+	private boolean mWifiIsEnabled = false;
 	private IWapdroidUI mWapdroidUI;
 	private SharedPreferences mPreferences;
 	private AlarmManager mAlarmManager;
@@ -69,7 +69,6 @@ public class WapdroidService extends Service {
 	
     private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {		
 		public void setCallback(IBinder mWapdroidUIBinder) throws RemoteException {
-			// UI started or stopped
 			if (mWapdroidUIBinder != null) {
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 	        	if ((mWapdroidUI != null) && (mCID > 0)) {
@@ -87,14 +86,13 @@ public class WapdroidService extends Service {
     		mMNC = mTeleManager.getNetworkOperatorName();
     		mMCC = mTeleManager.getNetworkCountryIso();
     		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
-        	if ((mWapdroidUI != null) && (mCID > 0)) {
-        		try {
-	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);}
-        		catch (RemoteException e) {}}
     		if (mCID > 0) {
+            	if (mWapdroidUI != null) {
+            		try {
+    	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);}
+            		catch (RemoteException e) {}}
     			if (mWifiIsEnabled && (mSSID != null)) {
-    				updateRange();
-    				checkForUIBeforeStopping();}
+    				updateRange();}
     			else {
     				boolean mInRange = false;
     				if (mDbHelper.cellInRange(mCID)) {
@@ -105,52 +103,62 @@ public class WapdroidService extends Service {
    							if (mInRange && (mNeighborCID > 0)) {
    								mInRange = mDbHelper.cellInRange(mNeighborCID);}}}
     				if ((mInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
-    					mNotify =  mPreferences.getBoolean(PREFERENCE_NOTIFY, true);
-    					mWifiManager.setWifiEnabled(mInRange);}
-    				else {
-    	    			checkForUIBeforeStopping();}}}}};
+    					mWifiManager.setWifiEnabled(mInRange);
+    					if (mPreferences.getBoolean(PREFERENCE_NOTIFY, true)) {
+    						int icon = mInRange ? R.drawable.statuson : R.drawable.status;
+    						CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(mInRange ? R.string.label_enabled : R.string.label_disabled);
+    					  	long when = System.currentTimeMillis();
+    					   	Notification notification = new Notification(icon, contentTitle, when);
+    					   	Intent i = new Intent(getBaseContext(), WapdroidService.class);
+    						PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
+    					   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
+    					   	if (mPreferences.getBoolean(PREFERENCE_VIBRATE, false)) {
+    					   		notification.defaults |= Notification.DEFAULT_VIBRATE;}
+    					   	if (mPreferences.getBoolean(PREFERENCE_LED, false)) {
+    					   		notification.defaults |= Notification.DEFAULT_LIGHTS;}
+    					   	if (mPreferences.getBoolean(PREFERENCE_RINGTONE, false)) {
+    					   		notification.defaults |= Notification.DEFAULT_SOUND;}
+    						mNotificationManager.notify(NOTIFY_ID, notification);}}}
+   	    		checkForUIBeforeStopping();}}};
     
-	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
-		@Override
-		public void onReceive(Context context, Intent intent) {
-    		if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-    			// the wake lock should be held until wifi completes the change to enabled or disabled
-        		// save the state as it's checked elsewhere, like the phonestatelistener
-    			int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
-   	    		switch (mWifiState) {
-   	    			case WifiManager.WIFI_STATE_UNKNOWN:
-   	    				break;
-   	    			case WifiManager.WIFI_STATE_ENABLED:
-   	    				mWifiIsEnabled = true;
-       	    			wifiChanged();
-      	    			notification(context);
-       	   				checkForUIBeforeStopping();
-   	    				break;
-   	    			case WifiManager.WIFI_STATE_DISABLED:
-   	    				mWifiIsEnabled = false;
-       	    			notification(context);
-       	    			mSSID = null;
-       	   				checkForUIBeforeStopping();
-   	    				break;
-   	    			default:
-   	    				mWifiIsEnabled = false;
-       	    			mSSID = null;
-   	    				break;}}
-    		else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-    			// don't stop here, as this is only for updating UI
-    			NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-    	    	if (mNetworkInfo.isConnected()) {
-    	    		mWifiInfo = mWifiManager.getConnectionInfo();
-    	    		mSSID = mWifiInfo.getSSID();
-    	    		wifiChanged();}
-    	    	else {
-    	    		mSSID = null;}}}};
+	private BroadcastReceiver mReceiver = null;
 
 	@Override
 	public IBinder onBind(Intent intent) {
 		// stop the Alarm if UI binds, it'll be reset in onDestroy, if appropriate
-		mUI = true;
 		mAlarmManager.cancel(mPendingIntent);
+		IntentFilter intentfilter = new IntentFilter();
+		intentfilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+		intentfilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+		registerReceiver(mReceiver = new BroadcastReceiver() {
+			@Override
+			public void onReceive(Context context, Intent intent) {
+	    		if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+	        		// save the state as it's checked elsewhere, like the phonestatelistener
+	    			int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
+	   	    		switch (mWifiState) {
+	   	    			case WifiManager.WIFI_STATE_UNKNOWN:
+	   	    				break;
+	   	    			case WifiManager.WIFI_STATE_ENABLED:
+	   	    				mWifiIsEnabled = true;
+	       	    			wifiChanged();
+	   	    				break;
+	   	    			case WifiManager.WIFI_STATE_DISABLED:
+	   	    				mWifiIsEnabled = false;
+	       	    			mSSID = null;
+	   	    				break;
+	   	    			default:
+	   	    				mWifiIsEnabled = false;
+	       	    			mSSID = null;
+	   	    				break;}}
+	    		else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+	    			NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+	    	    	if (mNetworkInfo.isConnected()) {
+	    	    		mWifiInfo = mWifiManager.getConnectionInfo();
+	    	    		mSSID = mWifiInfo.getSSID();
+	    	    		wifiChanged();}
+	    	    	else {
+	    	    		mSSID = null;}}}}, intentfilter);
 		return mWapdroidService;}
 	
 	@Override
@@ -175,48 +183,25 @@ public class WapdroidService extends Service {
 		mPreferences = (SharedPreferences) getSharedPreferences(PREF_FILE_NAME, WapdroidUI.MODE_PRIVATE);
 		mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
-		IntentFilter intentfilter = new IntentFilter();
-		intentfilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-		intentfilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-		registerReceiver(mReceiver, intentfilter);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}
     
     @Override
     public void onDestroy() {
     	super.onDestroy();
-    	mUI = false;
-    	mNotificationManager.cancel(NOTIFY_ID);
-    	unregisterReceiver(mReceiver);
+    	if (mReceiver != null) {
+    		unregisterReceiver(mReceiver);}
     	mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
     	if (mPreferences.getBoolean(PREFERENCE_MANAGE, false)) {
        		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);}
 		ManageWakeLocks.release();}
     
-    private void notification(Context context) {
-    	if (mNotify) {
-        	mNotify = false;
-			int icon = mWifiIsEnabled ? R.drawable.statuson : R.drawable.status;
-			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(mWifiIsEnabled ? R.string.label_enabled : R.string.label_disabled);
-		  	long when = System.currentTimeMillis();
-		   	Notification notification = new Notification(icon, contentTitle, when);
-		   	Intent i = new Intent(context, WapdroidService.class);
-			PendingIntent contentIntent = PendingIntent.getActivity(context, 0, i, 0);
-		   	notification.setLatestEventInfo(context, contentTitle, getString(R.string.app_name), contentIntent);
-		   	if (mPreferences.getBoolean(PREFERENCE_VIBRATE, false)) {
-		   		notification.defaults |= Notification.DEFAULT_VIBRATE;}
-		   	if (mPreferences.getBoolean(PREFERENCE_LED, false)) {
-		   		notification.defaults |= Notification.DEFAULT_LIGHTS;}
-		   	if (mPreferences.getBoolean(PREFERENCE_RINGTONE, false)) {
-		   		notification.defaults |= Notification.DEFAULT_SOUND;}
-			mNotificationManager.notify(NOTIFY_ID, notification);}}
-    
     private void checkForUIBeforeStopping() {
     	/*
     	 * upon UI binding, this prevents the service from dying
-    	 * onDestroy will clear the mUI flag, since UI will stop the service
+    	 * onDestroy will unregister the receiver, since UI will stop the service
     	 */
-    	if (!mUI) {
+    	if (mReceiver == null) {
     		stopSelf();}}
     
     private void updateRange() {
