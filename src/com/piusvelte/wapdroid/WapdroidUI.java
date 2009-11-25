@@ -76,6 +76,9 @@ public class WapdroidUI extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        /*
+         * manual control of wifi is enabled through the UI, but listen for changes made by the service
+         */
         setContentView(R.layout.main);
 		mPreferences = getSharedPreferences(PREF_FILE_NAME, MODE_PRIVATE);
 		mEditor = mPreferences.edit();
