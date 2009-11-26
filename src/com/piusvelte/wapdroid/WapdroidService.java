@@ -60,7 +60,7 @@ public class WapdroidService extends Service {
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
 	private WifiInfo mWifiInfo;
-	private int mCID = -1, mLAC = -1, mWifiState, mInterval = 300000; // 5min interval
+	private int mCID = -1, mWifiState, mInterval = 300000; // 5min interval
 	private boolean mWifiIsEnabled = false;
 	private IWapdroidUI mWapdroidUI;
 	private SharedPreferences mPreferences;
@@ -73,23 +73,21 @@ public class WapdroidService extends Service {
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 	        	if ((mWapdroidUI != null) && (mCID > 0)) {
 	        		try {
-		        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);}
+		        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mMNC, (String) "" + mMCC);}
 	        		catch (RemoteException e) {}}}
 			else {
 				mWapdroidUI = null;}}};
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
-    		GsmCellLocation cell = (GsmCellLocation) location;
-    		mCID = cell.getCid();
-    		mLAC = cell.getLac();
+    		mCID = ((GsmCellLocation) location).getCid();
     		mMNC = mTeleManager.getNetworkOperatorName();
     		mMCC = mTeleManager.getNetworkCountryIso();
     		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
     		if (mCID > 0) {
             	if (mWapdroidUI != null) {
             		try {
-    	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mLAC, (String) "" + mMNC, (String) "" + mMCC);}
+    	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mMNC, (String) "" + mMCC);}
             		catch (RemoteException e) {}}
     			if (mWifiIsEnabled && (mSSID != null)) {
     				updateRange();}

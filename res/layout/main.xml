@@ -46,20 +46,6 @@
 			android:textSize="12dip"/>
     </TableRow>
 	<TableRow>
-		<TextView android:id="@+id/label_LAC"
-			android:paddingTop="2dip"
-			android:paddingBottom="2dip"
-			android:paddingLeft="16dip"
-			android:textSize="12dip"
-			android:text="@string/label_LAC"/>
-		<TextView android:id="@+id/field_LAC"
-			android:paddingTop="2dip"
-			android:paddingBottom="2dip"
-			android:paddingRight="8dip"
-			android:gravity="right"
-			android:textSize="12dip"/>
-    </TableRow>
-	<TableRow>
 		<TextView android:id="@+id/label_CID"
 			android:paddingTop="2dip"
 			android:paddingBottom="8dip"

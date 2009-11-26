@@ -47,7 +47,7 @@ public class WapdroidUI extends Activity {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	private static final int SETTINGS_REQUEST_ID = 0;
-	private TextView field_CID, field_LAC, field_MNC, field_MCC, label_CID, label_LAC, label_MNC, label_MCC, field_wifiState;
+	private TextView field_CID, field_MNC, field_MCC, label_CID, label_MNC, label_MCC, field_wifiState;
 	private CheckBox checkbox_wifiState, checkbox_wapdroidState;
 	private static final String PREFERENCE_MANAGE = WapdroidService.PREFERENCE_MANAGE;
 	private static final String PREFERENCE_NOTIFY = WapdroidService.PREFERENCE_NOTIFY;
@@ -85,8 +85,6 @@ public class WapdroidUI extends Activity {
 		mWapdroidEnabled = mPreferences.getBoolean(PREFERENCE_MANAGE, true);
 		label_CID = (TextView) findViewById(R.id.label_CID);
     	field_CID = (TextView) findViewById(R.id.field_CID);
-    	label_LAC = (TextView) findViewById(R.id.label_LAC);
-    	field_LAC = (TextView) findViewById(R.id.field_LAC);
     	label_MNC = (TextView) findViewById(R.id.label_MNC);
     	field_MNC = (TextView) findViewById(R.id.field_MNC);
     	label_MCC = (TextView) findViewById(R.id.label_MCC);
@@ -203,13 +201,10 @@ public class WapdroidUI extends Activity {
 		else {
 			releaseService();
 	    	field_CID.setText("");
-	    	field_LAC.setText("");
 	    	field_MNC.setText("");
 	    	field_MCC.setText("");}
     	label_CID.setEnabled(mWapdroidEnabled);
     	field_CID.setEnabled(mWapdroidEnabled);
-    	label_LAC.setEnabled(mWapdroidEnabled);
-    	field_LAC.setEnabled(mWapdroidEnabled);
     	label_MNC.setEnabled(mWapdroidEnabled);
     	field_MNC.setEnabled(mWapdroidEnabled);
     	label_MCC.setEnabled(mWapdroidEnabled);
@@ -236,9 +231,8 @@ public class WapdroidUI extends Activity {
     			wifiChanged();}}}
     
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void setCellLocation(String mCID, String mLAC, String mMNC, String mMCC) throws RemoteException {
+		public void setCellLocation(String mCID, String mMNC, String mMCC) throws RemoteException {
 	    	field_CID.setText(mCID);
-	    	field_LAC.setText(mLAC);
 	    	field_MNC.setText(mMNC);
 	    	field_MCC.setText(mMCC);}};
     
