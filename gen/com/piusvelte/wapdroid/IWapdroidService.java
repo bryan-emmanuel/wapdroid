@@ -3,12 +3,6 @@
  * Original file: /home/bryan/Documents/development/android/wapdroid/src/com/piusvelte/wapdroid/IWapdroidService.aidl
  */
 package com.piusvelte.wapdroid;
-import java.lang.String;
-import android.os.RemoteException;
-import android.os.IBinder;
-import android.os.IInterface;
-import android.os.Binder;
-import android.os.Parcel;
 public interface IWapdroidService extends android.os.IInterface
 {
 /** Local-side IPC implementation stub class. */
@@ -21,7 +15,7 @@ public Stub()
 this.attachInterface(this, DESCRIPTOR);
 }
 /**
- * Cast an IBinder object into an IWapdroidService interface,
+ * Cast an IBinder object into an com.piusvelte.wapdroid.IWapdroidService interface,
  * generating a proxy if needed.
  */
 public static com.piusvelte.wapdroid.IWapdroidService asInterface(android.os.IBinder obj)
@@ -39,7 +33,7 @@ public android.os.IBinder asBinder()
 {
 return this;
 }
-public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
+@Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
 {
 switch (code)
 {
@@ -91,7 +85,7 @@ _data.recycle();
 }
 }
 }
-static final int TRANSACTION_setCallback = (IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_setCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 }
 public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException;
 }

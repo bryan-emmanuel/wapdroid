@@ -3,12 +3,6 @@
  * Original file: /home/bryan/Documents/development/android/wapdroid/src/com/piusvelte/wapdroid/IWapdroidUI.aidl
  */
 package com.piusvelte.wapdroid;
-import java.lang.String;
-import android.os.RemoteException;
-import android.os.IBinder;
-import android.os.IInterface;
-import android.os.Binder;
-import android.os.Parcel;
 public interface IWapdroidUI extends android.os.IInterface
 {
 /** Local-side IPC implementation stub class. */
@@ -21,7 +15,7 @@ public Stub()
 this.attachInterface(this, DESCRIPTOR);
 }
 /**
- * Cast an IBinder object into an IWapdroidUI interface,
+ * Cast an IBinder object into an com.piusvelte.wapdroid.IWapdroidUI interface,
  * generating a proxy if needed.
  */
 public static com.piusvelte.wapdroid.IWapdroidUI asInterface(android.os.IBinder obj)
@@ -39,7 +33,7 @@ public android.os.IBinder asBinder()
 {
 return this;
 }
-public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
+@Override public boolean onTransact(int code, android.os.Parcel data, android.os.Parcel reply, int flags) throws android.os.RemoteException
 {
 switch (code)
 {
@@ -97,7 +91,7 @@ _data.recycle();
 }
 }
 }
-static final int TRANSACTION_setCellLocation = (IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_setCellLocation = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 }
 public void setCellLocation(java.lang.String mCID, java.lang.String mMNC, java.lang.String mMCC) throws android.os.RemoteException;
 }
