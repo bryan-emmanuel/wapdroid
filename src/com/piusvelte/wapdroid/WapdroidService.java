@@ -215,7 +215,7 @@ public class WapdroidService extends Service {
     	if (mDbHelper != null) {
     		mDbHelper.close();
     		mDbHelper = null;}
-    	if (mPreferences.getBoolean(PREFERENCE_MANAGE, false)) {
+    	if (mPreferences.getBoolean(PREFERENCE_MANAGE, true)) {
        		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);}
 		ManageWakeLocks.release();}
     
