@@ -48,7 +48,7 @@ public class WapdroidUI extends Activity {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	private static final int SETTINGS_REQUEST_ID = 0;
-	private TextView field_CID, field_MNC, field_MCC, label_CID, label_MNC, label_MCC, field_wifiState, field_wifiBSSID;
+	private TextView field_CID, field_MNC, field_MCC, label_CID, label_MNC, label_MCC, field_wifiState, field_wifiBSSID, label_wifiState, label_wifiBSSID;
 	private CheckBox checkbox_wifiState, checkbox_wapdroidState;
 	private static final String PREFERENCE_MANAGE = WapdroidService.PREFERENCE_MANAGE;
 	private static final String PREFERENCE_NOTIFY = WapdroidService.PREFERENCE_NOTIFY;
@@ -90,7 +90,9 @@ public class WapdroidUI extends Activity {
     	field_MNC = (TextView) findViewById(R.id.field_MNC);
     	label_MCC = (TextView) findViewById(R.id.label_MCC);
     	field_MCC = (TextView) findViewById(R.id.field_MCC);
+    	label_wifiState = (TextView) findViewById(R.id.label_wifiState);
     	field_wifiState = (TextView) findViewById(R.id.field_wifiState);
+    	label_wifiBSSID = (TextView) findViewById(R.id.label_wifiBSSID);
     	field_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
     	checkbox_wapdroidState = (CheckBox) findViewById(R.id.checkbox_wapdroidState);
     	checkbox_wapdroidState.setChecked(mWapdroidEnabled);
@@ -173,18 +175,24 @@ public class WapdroidUI extends Activity {
 		if (mWifiIsEnabled) {
 	    	checkbox_wifiState.setChecked(true);
 			if (mSSID != null) {
-				field_wifiState.setText(getString(R.string.label_connectedto) + mSSID);
-				field_wifiBSSID.setText(getString(R.string.label_BSSID) + mBSSID);}
+				label_wifiState.setText(getString(R.string.label_connectedto));
+				field_wifiState.setText(mSSID);
+				label_wifiBSSID.setText(getString(R.string.label_BSSID));
+				field_wifiBSSID.setText(mBSSID);}
 			else {
-				field_wifiState.setText(getString(R.string.label_enabled));
+				label_wifiState.setText(getString(R.string.label_enabled));
+				field_wifiState.setText("");
+				label_wifiBSSID.setText("");
 				field_wifiBSSID.setText("");}}
 		else {
 	    	checkbox_wifiState.setChecked(false);
-			field_wifiState.setText((mWifiState == mWifiEnabling ?
+			label_wifiState.setText((mWifiState == mWifiEnabling ?
 					getString(R.string.label_enabling)
 					: (mWifiState == mWifiDisabling ?
 							getString(R.string.label_disabling)
 							: getString(R.string.label_disabled))));
+			field_wifiState.setText("");
+			label_wifiBSSID.setText("");
 			field_wifiBSSID.setText("");}}
 	
 	private void releaseService() {

@@ -24,27 +24,29 @@ public final class R {
         public static final int statuson=0x7f020002;
     }
     public static final class id {
-        public static final int button_save=0x7f060014;
+        public static final int button_save=0x7f060016;
         public static final int cell_row_CID=0x7f060000;
-        public static final int checkbox_led=0x7f060011;
-        public static final int checkbox_notify=0x7f06000d;
-        public static final int checkbox_ringtone=0x7f060013;
-        public static final int checkbox_vibrate=0x7f06000f;
+        public static final int checkbox_led=0x7f060013;
+        public static final int checkbox_notify=0x7f06000f;
+        public static final int checkbox_ringtone=0x7f060015;
+        public static final int checkbox_vibrate=0x7f060011;
         public static final int checkbox_wapdroidState=0x7f060001;
-        public static final int checkbox_wifiState=0x7f06000a;
+        public static final int checkbox_wifiState=0x7f06000c;
         public static final int field_CID=0x7f060007;
         public static final int field_MCC=0x7f060005;
         public static final int field_MNC=0x7f060003;
-        public static final int field_wifiBSSID=0x7f060009;
-        public static final int field_wifiState=0x7f060008;
+        public static final int field_wifiBSSID=0x7f06000b;
+        public static final int field_wifiState=0x7f060009;
         public static final int label_CID=0x7f060006;
         public static final int label_MCC=0x7f060004;
         public static final int label_MNC=0x7f060002;
-        public static final int network_row_BSSID=0x7f06000c;
-        public static final int network_row_SSID=0x7f06000b;
-        public static final int text_led=0x7f060010;
-        public static final int text_ringtone=0x7f060012;
-        public static final int text_vibrate=0x7f06000e;
+        public static final int label_wifiBSSID=0x7f06000a;
+        public static final int label_wifiState=0x7f060008;
+        public static final int network_row_BSSID=0x7f06000e;
+        public static final int network_row_SSID=0x7f06000d;
+        public static final int text_led=0x7f060012;
+        public static final int text_ringtone=0x7f060014;
+        public static final int text_vibrate=0x7f060010;
     }
     public static final class layout {
         public static final int cell_row=0x7f030000;

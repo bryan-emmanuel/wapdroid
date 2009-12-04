@@ -75,16 +75,30 @@
 					android:text="@string/label_WIFI"/>
     		</TableRow>
 			<TableRow>
-				<TextView android:id="@+id/field_wifiState"
-	    			android:textColor="@color/green"
-					android:paddingLeft="14dip"
-					android:textSize="14dip"/>
-    		</TableRow>
-			<TableRow>
-				<TextView android:id="@+id/field_wifiBSSID"
-	    			android:textColor="@color/green"
-					android:paddingLeft="14dip"
-					android:textSize="14dip"/>
+				<TableLayout android:layout_width="wrap_content"
+					android:layout_height="wrap_content"
+					android:gravity="center_vertical">
+					<TableRow>
+						<TextView android:id="@+id/label_wifiState"
+							android:paddingLeft="14dip"
+							android:textSize="14dip"/>
+						<TextView android:id="@+id/field_wifiState"
+			    			android:textColor="@color/green"
+							android:paddingRight="14dip"
+							android:gravity="right"
+							android:textSize="14dip"/>
+		    		</TableRow>
+					<TableRow>
+						<TextView android:id="@+id/label_wifiBSSID"
+							android:paddingLeft="14dip"
+							android:textSize="14dip"/>
+						<TextView android:id="@+id/field_wifiBSSID"
+			    			android:textColor="@color/green"
+							android:paddingRight="14dip"
+							android:gravity="right"
+							android:textSize="14dip"/>
+		    		</TableRow>
+				</TableLayout>
     		</TableRow>
 		</TableLayout>
 		<CheckBox android:id="@+id/checkbox_wifiState"
