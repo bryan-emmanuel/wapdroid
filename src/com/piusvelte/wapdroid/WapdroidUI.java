@@ -114,8 +114,8 @@ public class WapdroidUI extends Activity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	boolean result = super.onCreateOptionsMenu(menu);
-    	menu.add(0, MANAGE_ID, 0, R.string.menu_manageNetworks);
-    	menu.add(0, SETTINGS_ID, 0, R.string.menu_settings);
+    	menu.add(0, MANAGE_ID, 0, R.string.menu_manageNetworks).setIcon(android.R.drawable.ic_menu_manage);
+    	menu.add(0, SETTINGS_ID, 0, R.string.menu_settings).setIcon(android.R.drawable.ic_menu_preferences);
     	return result;}
 
     @Override

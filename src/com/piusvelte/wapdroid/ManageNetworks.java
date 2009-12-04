@@ -63,7 +63,7 @@ public class ManageNetworks extends ListActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	boolean result = super.onCreateOptionsMenu(menu);
-    	menu.add(0, REFRESH_ID, 0, R.string.menu_refreshNetworks);
+    	menu.add(0, REFRESH_ID, 0, R.string.menu_refreshNetworks).setIcon(android.R.drawable.ic_menu_rotate);
     	return result;}
 
     @Override
