@@ -21,4 +21,5 @@
 package com.piusvelte.wapdroid;
 
 interface IWapdroidUI {
-	void setCellLocation(String mCID, String mLAC, String mMNC, String mMCC);}
+	void setCellLocation(String mCID, String mMNC, String mMCC);
+	void newCell(String cell);}
