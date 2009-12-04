@@ -56,7 +56,7 @@ public class WapdroidService extends Service {
 	private WapdroidDbAdapter mDbHelper;
 	private NotificationManager mNotificationManager;
 	private TelephonyManager mTeleManager;
-	private String mSSID = null, mMNC = null, mMCC = null;
+	private String mSSID = null, mBSSID, mMNC = null, mMCC = null;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
 	private WifiInfo mWifiInfo;
@@ -103,7 +103,7 @@ public class WapdroidService extends Service {
 	            		try {
 	    	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mMNC, (String) "" + mMCC);}
 	            		catch (RemoteException e) {}}
-	    			if (mWifiIsEnabled && (mSSID != null)) {
+	    			if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null)) {
 	    				updateRange();}
 	    			else {
 	    				boolean mInRange = false;
@@ -160,20 +160,20 @@ public class WapdroidService extends Service {
 	   	    				break;
 	   	    			case WifiManager.WIFI_STATE_DISABLED:
 	   	    				mWifiIsEnabled = false;
-	       	    			mSSID = null;
+		    	    		clearWifiInfo();
 	   	    				break;
 	   	    			default:
 	   	    				mWifiIsEnabled = false;
-	       	    			mSSID = null;
+		    	    		clearWifiInfo();
 	   	    				break;}}
 	    		else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 	    			NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 	    	    	if (mNetworkInfo.isConnected()) {
 	    	    		mWifiInfo = mWifiManager.getConnectionInfo();
-	    	    		mSSID = mWifiInfo.getSSID();
+	    	    		setWifiInfo();
 	    	    		wifiChanged();}
 	    	    	else {
-	    	    		mSSID = null;}}}}, intentfilter);
+	    	    		clearWifiInfo();}}}}, intentfilter);
 		return mWapdroidService;}
 	
 	@Override
@@ -199,7 +199,7 @@ public class WapdroidService extends Service {
 		// set up to record connected cells
 		if (mWifiIsEnabled) {
     		mWifiInfo = mWifiManager.getConnectionInfo();
-    		mSSID = mWifiInfo.getSSID();}
+    		setWifiInfo();}
 		mPreferences = (SharedPreferences) getSharedPreferences(PREF_FILE_NAME, WapdroidUI.MODE_PRIVATE);
 		mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
@@ -227,14 +227,26 @@ public class WapdroidService extends Service {
     	if (mReceiver == null) {
     		stopSelf();}}
     
+    private void setWifiInfo() {
+		mSSID = mWifiInfo.getSSID();
+		mBSSID = mWifiInfo.getBSSID();}
+    
+    private void clearWifiInfo() {
+		mSSID = null;
+		mBSSID = null;}
+    
     private void updateRange() {
-		mDbHelper.updateCellRange(mSSID, mCID);
+    	int network = mDbHelper.updateCellRange(mSSID, mBSSID, mCID);
 		int cid;
+    	if (mWapdroidUI != null) {
+    		try {
+        		mWapdroidUI.newCell((String) "" + mCID);}
+    		catch (RemoteException e) {}}
 		for (NeighboringCellInfo n : mNeighboringCells) {
 			cid = n.getCid();
 			if (cid > 0) {
-				mDbHelper.updateCellRange(mSSID, cid);}}}
+				mDbHelper.updateCellNeighbor(network, cid);}}}
 	
 	private void wifiChanged() {
-		if (mWifiIsEnabled && (mSSID != null) && (mCID > 0)) {
+		if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null) && (mCID > 0)) {
 	    	updateRange();}}}

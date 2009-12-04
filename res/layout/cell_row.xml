@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent"
+	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:stretchColumns="0">
 	<TableRow>
 		<TextView android:textStyle="bold"
 			android:paddingTop="8dip"
 			android:paddingBottom="2dip"
-			android:paddingLeft="8dip"
-			android:textSize="16dip"
+			android:paddingLeft="12dip"
+			android:textSize="18dip"
 			android:text="@string/label_CID"/>
 		<TextView android:id="@+id/cell_row_CID"
+			android:textColor="@color/green"
 			android:paddingTop="8dip"
+			android:paddingRight="12dip"
 			android:paddingBottom="2dip"
-			android:paddingRight="8dip"
 			android:gravity="right"
-			android:textSize="16dip"/>
+			android:textSize="18dip"/>
     </TableRow>
 </TableLayout>
 

@@ -5,80 +5,91 @@
 	android:stretchColumns="0">
 	<TableRow>
 		<TextView android:textStyle="bold"
-			android:paddingLeft="8dip"
+			android:paddingLeft="14dip"
 			android:layout_height="fill_parent"
 			android:gravity="center_vertical"
-			android:textSize="16dip"
+			android:textSize="18dip"
 			android:text="@string/label_wapdroidState"/>
 		<CheckBox android:id="@+id/checkbox_wapdroidState"
-			android:paddingRight="8dip"
-			android:gravity="right"/>
+			android:paddingRight="14dip"/>
 	</TableRow>
     <View android:layout_height="2dip"
-    	android:background="#FFBEBEBE"/>
+    	android:background="@color/blue"/>
 	<TableRow>
 		<TextView android:id="@+id/label_MNC"
 			android:textStyle="bold"
-			android:paddingTop="8dip"
+			android:paddingTop="12dip"
 			android:paddingBottom="2dip"
-			android:paddingLeft="8dip"
-			android:textSize="16dip"
+			android:paddingLeft="14dip"
+			android:textSize="18dip"
 			android:text="@string/label_MNC"/>
 		<TextView android:id="@+id/field_MNC"
-			android:paddingTop="8dip"
+	    	android:textColor="@color/green"
+			android:paddingTop="12dip"
+			android:paddingRight="14dip"
 			android:paddingBottom="2dip"
-			android:paddingRight="8dip"
 			android:gravity="right"
-			android:textSize="16dip"/>
+			android:textSize="18dip"/>
     </TableRow>
 	<TableRow>
 		<TextView android:id="@+id/label_MCC"
 			android:paddingTop="2dip"
 			android:paddingBottom="2dip"
-			android:paddingLeft="16dip"
-			android:textSize="12dip"
+			android:paddingLeft="14dip"
+			android:textSize="14dip"
 			android:text="@string/label_MCC"/>
 		<TextView android:id="@+id/field_MCC"
+	    	android:textColor="@color/green"
 			android:paddingTop="2dip"
+			android:paddingRight="14dip"
 			android:paddingBottom="2dip"
-			android:paddingRight="8dip"
 			android:gravity="right"
-			android:textSize="12dip"/>
+			android:textSize="14dip"/>
     </TableRow>
 	<TableRow>
 		<TextView android:id="@+id/label_CID"
 			android:paddingTop="2dip"
-			android:paddingBottom="8dip"
-			android:paddingLeft="16dip"
-			android:textSize="12dip"
+			android:paddingBottom="12dip"
+			android:paddingLeft="14dip"
+			android:textSize="14dip"
 			android:text="@string/label_CID"/>
 		<TextView android:id="@+id/field_CID"
+	    	android:textColor="@color/green"
 			android:paddingTop="2dip"
-			android:paddingBottom="8dip"
-			android:paddingRight="8dip"
+			android:paddingRight="14dip"
+			android:paddingBottom="12dip"
 			android:gravity="right"
-			android:textSize="12dip"/>
+			android:textSize="14dip"/>
     </TableRow>
     <View android:layout_height="2dip"
-    	android:background="#FFBEBEBE"/>
+    	android:background="@color/blue"/>
 	<TableRow>
 		<TableLayout android:layout_width="wrap_content"
-			android:paddingLeft="8dip"
-			android:layout_height="fill_parent"
+			android:layout_height="wrap_content"
 			android:gravity="center_vertical">
 			<TableRow>
 				<TextView android:textStyle="bold"
-					android:textSize="16dip"
+					android:paddingTop="12dip"
+					android:paddingLeft="14dip"
+					android:textSize="18dip"
 					android:text="@string/label_WIFI"/>
     		</TableRow>
 			<TableRow>
 				<TextView android:id="@+id/field_wifiState"
-					android:paddingLeft="8dip"
-					android:textSize="12dip"/>
+	    			android:textColor="@color/green"
+					android:paddingLeft="14dip"
+					android:textSize="14dip"/>
+    		</TableRow>
+			<TableRow>
+				<TextView android:id="@+id/field_wifiBSSID"
+	    			android:textColor="@color/green"
+					android:paddingLeft="14dip"
+					android:textSize="14dip"/>
     		</TableRow>
 		</TableLayout>
 		<CheckBox android:id="@+id/checkbox_wifiState"
-			android:paddingRight="8dip"
-			android:gravity="right"/>
+			android:paddingRight="14dip"
+			android:layout_height="fill_parent"
+			android:gravity="center_vertical|right"/>
     </TableRow>
 </TableLayout>

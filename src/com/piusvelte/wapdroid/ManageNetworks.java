@@ -103,6 +103,6 @@ public class ManageNetworks extends ListActivity {
         SimpleCursorAdapter networks = new SimpleCursorAdapter(this,
         		R.layout.network_row,
         		c,
-        		new String[] {WapdroidDbAdapter.NETWORKS_SSID},
-        		new int[] {R.id.network_row_SSID});
+        		new String[] {WapdroidDbAdapter.NETWORKS_SSID, WapdroidDbAdapter.NETWORKS_BSSID},
+        		new int[] {R.id.network_row_SSID, R.id.network_row_BSSID});
         setListAdapter(networks);}}

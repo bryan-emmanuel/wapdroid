@@ -55,6 +55,15 @@ this.setCellLocation(_arg0, _arg1, _arg2);
 reply.writeNoException();
 return true;
 }
+case TRANSACTION_newCell:
+{
+data.enforceInterface(DESCRIPTOR);
+java.lang.String _arg0;
+_arg0 = data.readString();
+this.newCell(_arg0);
+reply.writeNoException();
+return true;
+}
 }
 return super.onTransact(code, data, reply, flags);
 }
@@ -90,8 +99,25 @@ _reply.recycle();
 _data.recycle();
 }
 }
+public void newCell(java.lang.String cell) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeString(cell);
+mRemote.transact(Stub.TRANSACTION_newCell, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
 }
 static final int TRANSACTION_setCellLocation = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_newCell = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
 }
 public void setCellLocation(java.lang.String mCID, java.lang.String mMNC, java.lang.String mMCC) throws android.os.RemoteException;
+public void newCell(java.lang.String cell) throws android.os.RemoteException;
 }

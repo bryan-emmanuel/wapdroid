@@ -26,4 +26,11 @@
     <string name="label_led">LED</string>
     <string name="label_ringtone">Ringtone</string>
     <string name="label_save">Save</string>
+    <string name="label_BSSID">BSSID:\u0020</string>
+    <color name="green">#A4C639</color>
+    <color name="dk_green">#207018</color>
+    <color name="lt_green">#E2FF88</color>
+    <color name="blue">#3C78D2</color>
+    <color name="dk_blue">#320FA3</color>
+    <color name="lt_blue">#CDB6F8</color>
 </resources>

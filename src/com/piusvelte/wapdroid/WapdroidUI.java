@@ -41,13 +41,14 @@ import android.view.MenuItem;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.CompoundButton.OnCheckedChangeListener;
 
 public class WapdroidUI extends Activity {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	private static final int SETTINGS_REQUEST_ID = 0;
-	private TextView field_CID, field_MNC, field_MCC, label_CID, label_MNC, label_MCC, field_wifiState;
+	private TextView field_CID, field_MNC, field_MCC, label_CID, label_MNC, label_MCC, field_wifiState, field_wifiBSSID;
 	private CheckBox checkbox_wifiState, checkbox_wapdroidState;
 	private static final String PREFERENCE_MANAGE = WapdroidService.PREFERENCE_MANAGE;
 	private static final String PREFERENCE_NOTIFY = WapdroidService.PREFERENCE_NOTIFY;
@@ -63,7 +64,7 @@ public class WapdroidUI extends Activity {
 	private WifiManager mWifiManager;
 	private WifiInfo mWifiInfo;
 	private int mWifiState;
-	private String mSSID = null;
+	private String mSSID = null, mBSSID;
 	private WapdroidServiceConnection mWapdroidServiceConnection;
 	private IWapdroidService mWapdroidService;
 	private static final String WIFI_CHANGE = WifiManager.WIFI_STATE_CHANGED_ACTION;
@@ -90,6 +91,7 @@ public class WapdroidUI extends Activity {
     	label_MCC = (TextView) findViewById(R.id.label_MCC);
     	field_MCC = (TextView) findViewById(R.id.field_MCC);
     	field_wifiState = (TextView) findViewById(R.id.field_wifiState);
+    	field_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
     	checkbox_wapdroidState = (CheckBox) findViewById(R.id.checkbox_wapdroidState);
     	checkbox_wapdroidState.setChecked(mWapdroidEnabled);
     	checkbox_wapdroidState.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -171,16 +173,19 @@ public class WapdroidUI extends Activity {
 		if (mWifiIsEnabled) {
 	    	checkbox_wifiState.setChecked(true);
 			if (mSSID != null) {
-				field_wifiState.setText(getString(R.string.label_connectedto) + mSSID);}
+				field_wifiState.setText(getString(R.string.label_connectedto) + mSSID);
+				field_wifiBSSID.setText(getString(R.string.label_BSSID) + mBSSID);}
 			else {
-				field_wifiState.setText(getString(R.string.label_enabled));}}
+				field_wifiState.setText(getString(R.string.label_enabled));
+				field_wifiBSSID.setText("");}}
 		else {
 	    	checkbox_wifiState.setChecked(false);
 			field_wifiState.setText((mWifiState == mWifiEnabling ?
 					getString(R.string.label_enabling)
 					: (mWifiState == mWifiDisabling ?
 							getString(R.string.label_disabling)
-							: getString(R.string.label_disabled))));}}
+							: getString(R.string.label_disabled))));
+			field_wifiBSSID.setText("");}}
 	
 	private void releaseService() {
 		if (mWapdroidServiceConnection != null) {
@@ -210,6 +215,10 @@ public class WapdroidUI extends Activity {
     	label_MCC.setEnabled(mWapdroidEnabled);
     	field_MCC.setEnabled(mWapdroidEnabled);}
     
+    private void clearWifiInfo() {
+		mSSID = null;
+		mBSSID = null;}
+    
     public class WapdroidWifiReceiver extends BroadcastReceiver {    	
     	@Override
     	public void onReceive(Context context, Intent intent) {
@@ -219,22 +228,26 @@ public class WapdroidUI extends Activity {
     	    		mWifiState = mState;
     	    		mWifiIsEnabled = (mState == mWifiEnabled);
     	    		if (!mWifiIsEnabled) {
-    	    			mSSID = null;}}
+        	    		clearWifiInfo();}}
     			wifiChanged();}
     		else if (intent.getAction().equals(NETWORK_CHANGE)) {
     			NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
     	    	if (mNetworkInfo.isConnected()) {
     	    		mWifiInfo = mWifiManager.getConnectionInfo();
-    	    		mSSID = mWifiInfo.getSSID();}
+    	    		mSSID = mWifiInfo.getSSID();
+    	    		mBSSID = mWifiInfo.getBSSID();}
     	    	else {
-    	    		mSSID = null;}
+    	    		clearWifiInfo();}
     			wifiChanged();}}}
     
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellLocation(String mCID, String mMNC, String mMCC) throws RemoteException {
 	    	field_CID.setText(mCID);
 	    	field_MNC.setText(mMNC);
-	    	field_MCC.setText(mMCC);}};
+	    	field_MCC.setText(mMCC);}
+
+		public void newCell(String cell) throws RemoteException {
+			Toast.makeText(WapdroidUI.this, cell, Toast.LENGTH_SHORT).show();}};
     
 	public class WapdroidServiceConnection implements ServiceConnection {
 		public void onServiceConnected(ComponentName className, IBinder boundService) {
@@ -242,5 +255,6 @@ public class WapdroidUI extends Activity {
 			try {
 				mWapdroidService.setCallback(mWapdroidUI.asBinder());}
 			catch (RemoteException e) {}}
+		
 		public void onServiceDisconnected(ComponentName className) {
 			mWapdroidService = null;}}}
