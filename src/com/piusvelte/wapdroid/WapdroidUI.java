@@ -113,10 +113,13 @@ public class WapdroidUI extends Activity {
     @Override
     public void onResume() {
     	super.onResume();
-		mWifiIsEnabled = mWifiManager.isWifiEnabled();
+		mWifiState = mWifiManager.getWifiState();
+		mWifiIsEnabled = (mWifiState == mWifiEnabled);
 		if (mWifiIsEnabled) {
 			setWifiInfo(mWifiManager.getConnectionInfo());}
-		
+		else {
+			clearWifiInfo();}
+		wifiChanged();
     	if (mWifiReceiver == null) {
     		IntentFilter intentfilter = new IntentFilter();
     		intentfilter.addAction(WIFI_CHANGE);

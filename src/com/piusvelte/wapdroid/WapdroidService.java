@@ -141,7 +141,7 @@ public class WapdroidService extends Service {
 		mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		if (!locationReady(mTeleManager.getCellLocation())) {
+		if (!locationReady(mTeleManager.getCellLocation()) || (mReceiver != null)) {
 			mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}}
     
     @Override
