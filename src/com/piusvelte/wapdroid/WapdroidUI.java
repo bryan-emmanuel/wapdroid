@@ -150,7 +150,7 @@ public class WapdroidUI extends Activity {
 				label_wifiBSSID.setText(getString(R.string.label_BSSID));
 				field_wifiBSSID.setText(mBSSID);}
 			else {
-				field_wifiState.setText("");
+				field_wifiState.setText(getString(R.string.label_enabled));
 				label_wifiBSSID.setText("");
 				field_wifiBSSID.setText("");}}
 		else {

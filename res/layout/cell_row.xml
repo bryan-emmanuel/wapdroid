@@ -5,6 +5,7 @@
 	android:stretchColumns="0">
 	<TableRow>
 		<TextView android:textStyle="bold"
+			android:textColor="@color/green"
 			android:paddingTop="8dip"
 			android:paddingBottom="2dip"
 			android:paddingLeft="12dip"

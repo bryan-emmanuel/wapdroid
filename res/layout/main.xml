@@ -5,6 +5,7 @@
 	android:stretchColumns="0">
 	<TableRow>
 		<TextView android:textStyle="bold"
+	    	android:textColor="@color/green"
 			android:paddingTop="12dip"
 			android:paddingBottom="2dip"
 			android:paddingLeft="14dip"
@@ -20,6 +21,7 @@
     </TableRow>
 	<TableRow>
 		<TextView android:id="@+id/label_wifiBSSID"
+	    	android:textColor="@color/blue"
 			android:paddingTop="2dip"
 			android:paddingBottom="12dip"
 			android:paddingLeft="14dip"
@@ -34,9 +36,10 @@
 			android:textSize="14dip"/>
 	</TableRow>
     <View android:layout_height="2dip"
-    	android:background="@color/blue"/>
+    	android:background="@color/gray"/>
 	<TableRow>
 		<TextView android:id="@+id/label_CID"
+	    	android:textColor="@color/green"
 			android:textStyle="bold"
 			android:paddingTop="12dip"
 			android:paddingBottom="2dip"
@@ -53,6 +56,7 @@
     </TableRow>
 	<TableRow>
 		<TextView android:id="@+id/label_MNC"
+	    	android:textColor="@color/blue"
 			android:paddingTop="2dip"
 			android:paddingBottom="2dip"
 			android:paddingLeft="14dip"
@@ -68,6 +72,7 @@
     </TableRow>
 	<TableRow>
 		<TextView android:id="@+id/label_MCC"
+	    	android:textColor="@color/blue"
 			android:paddingTop="2dip"
 			android:paddingBottom="12dip"
 			android:paddingLeft="14dip"

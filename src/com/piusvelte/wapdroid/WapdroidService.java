@@ -53,7 +53,7 @@ public class WapdroidService extends Service {
 	private String mSSID = null, mBSSID, mMNC = null, mMCC = null;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
-	private int mCID = -1, mWifiState, mInterval = 300000; // 5min interval
+	private int mCID = -1, mWifiState, mInterval = 5000;//300000; // 5min interval
 	private boolean mWifiIsEnabled = false;
 	private IWapdroidUI mWapdroidUI;
 	private SharedPreferences mPreferences;
@@ -73,7 +73,8 @@ public class WapdroidService extends Service {
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
-    		if (locationReady(location)) {
+    		checkLocation(location);
+    		if (mCID > 0) {
     			checkForUIBeforeStopping();}}};
     
 	private BroadcastReceiver mReceiver = null;
@@ -141,8 +142,8 @@ public class WapdroidService extends Service {
 		mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		if (!locationReady(mTeleManager.getCellLocation()) || (mReceiver != null)) {
-			mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}}
+		checkLocation(mTeleManager.getCellLocation());
+		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}
     
     @Override
     public void onDestroy() {
@@ -165,7 +166,7 @@ public class WapdroidService extends Service {
     	if (mReceiver == null) {
     		stopSelf();}}
     
-    private boolean locationReady(CellLocation location) {
+    private void checkLocation(CellLocation location) {
        	if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
        		mCID = ((GsmCellLocation) location).getCid();}
        	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
@@ -212,10 +213,7 @@ public class WapdroidService extends Service {
 					   		notification.defaults |= Notification.DEFAULT_LIGHTS;}
 					   	if (mPreferences.getBoolean(getString(R.string.key_ringtone), false)) {
 					   		notification.defaults |= Notification.DEFAULT_SOUND;}
-						mNotificationManager.notify(NOTIFY_ID, notification);}}}
-	    	return true;}
-       	else {
-       		return false;}}
+						mNotificationManager.notify(NOTIFY_ID, notification);}}}}}
     
     private void setWifiInfo(WifiInfo info) {
 		mSSID = info.getSSID();

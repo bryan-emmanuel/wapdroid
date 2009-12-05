@@ -19,6 +19,7 @@
 			android:stretchColumns="0">
 			<TableRow>
 				<TextView android:paddingTop="2dip"
+					android:textColor="@color/blue"
 					android:paddingBottom="8dip"
 					android:paddingLeft="12dip"
 					android:textSize="14dip"
