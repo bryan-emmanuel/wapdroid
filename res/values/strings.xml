@@ -5,8 +5,8 @@
     <string name="label_LAC">Location:</string>
     <string name="label_MNC">Carrier:</string>
     <string name="label_MCC">Country:</string>
-    <string name="label_WIFI">WiFi</string>
-    <string name="label_wapdroidState">Manage WiFi</string>
+    <string name="label_WIFI">Wi-Fi</string>
+    <string name="label_wapdroidState">Manage Wi-Fi</string>
     <string name="no_networks">no networks</string>
     <string name="no_cells">no cells</string>
     <string name="menu_manageNetworks">Manage networks</string>
@@ -15,11 +15,10 @@
     <string name="menu_deleteCell">Forget cell</string>
     <string name="menu_refreshNetworks">Refresh networks</string>
     <string name="menu_refreshCells">Refresh cells</string>
-    <string name="label_disabling">disabling</string>
     <string name="label_disabled">disabled</string>
-    <string name="label_enabling">enabling</string>
     <string name="label_enabled">enabled</string>
-    <string name="label_connectedto">connected to\u0020</string>
+    <string name="label_disabling">disabling</string>
+    <string name="label_enabling">enabling</string>
     <string name="label_notify">Notifications</string>
     <string name="menu_settings">Settings</string>
     <string name="label_vibrate">Vibrate</string>
@@ -28,9 +27,11 @@
     <string name="label_save">Save</string>
     <string name="label_BSSID">BSSID:\u0020</string>
     <color name="green">#A4C639</color>
-    <color name="dk_green">#207018</color>
-    <color name="lt_green">#E2FF88</color>
     <color name="blue">#3C78D2</color>
-    <color name="dk_blue">#320FA3</color>
-    <color name="lt_blue">#CDB6F8</color>
+    <string name="key_preferences">wapdroid</string>
+    <string name="key_manageWifi">manageWifi</string>
+    <string name="key_notify">notify</string>
+    <string name="key_vibrate">vibrate</string>
+    <string name="key_led">led</string>
+    <string name="key_ringtone">ringtone</string>
 </resources>

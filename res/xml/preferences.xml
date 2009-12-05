@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+  xmlns:android="http://schemas.android.com/apk/res/android">
+        <CheckBoxPreference
+                android:key="@string/key_manageWifi"
+                android:title="@string/label_wapdroidState"
+                android:defaultValue="true"/>
+        <CheckBoxPreference
+                android:key="@+string/key_notify"
+                android:title="@string/label_notify"
+                android:defaultValue="true"/>
+        <CheckBoxPreference
+                android:key="@string/key_vibrate"
+                android:title="@string/label_vibrate"
+                android:defaultValue="false"/>
+        <CheckBoxPreference
+                android:key="@string/key_led"
+                android:title="@string/label_led"
+                android:defaultValue="false"/>
+        <CheckBoxPreference
+                android:key="@string/key_ringtone"
+                android:title="@string/label_ringtone"
+                android:defaultValue="false"/>
+</PreferenceScreen>

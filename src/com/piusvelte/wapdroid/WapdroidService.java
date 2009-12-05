@@ -47,19 +47,12 @@ public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
 	public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
 	public static final String SCREEN_ON = "com.piusvelte.wapdroid.SCREEN_ON";
-	public static final String PREF_FILE_NAME = "wapdroid";
-	public static final String PREFERENCE_MANAGE = "manageWifi";
-	public static final String PREFERENCE_NOTIFY = "notify";
-	public static final String PREFERENCE_VIBRATE = "vibrate";
-	public static final String PREFERENCE_LED = "led";
-	public static final String PREFERENCE_RINGTONE = "ringtone";
 	private WapdroidDbAdapter mDbHelper;
 	private NotificationManager mNotificationManager;
 	private TelephonyManager mTeleManager;
 	private String mSSID = null, mBSSID, mMNC = null, mMCC = null;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
-	private WifiInfo mWifiInfo;
 	private int mCID = -1, mWifiState, mInterval = 300000; // 5min interval
 	private boolean mWifiIsEnabled = false;
 	private IWapdroidUI mWapdroidUI;
@@ -80,61 +73,8 @@ public class WapdroidService extends Service {
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
-    		/*
-    		 * check the phone type, cdma is not available before API 2.0, so use a wrapper
-    		 */
-    		boolean cellAvailable = true;
-           	if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-           		mCID = ((GsmCellLocation) location).getCid();}
-           	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
-           		try {
-           			CdmaCellLocationWrapper.checkAvailable();
-           			mCID = ((CdmaCellLocationWrapper) location).getBaseStationId();}
-           		catch (Throwable t) {
-           			cellAvailable = false;}}
-           	else {
-       			cellAvailable = false;}
-           	if (cellAvailable) {
-	    		mMNC = mTeleManager.getNetworkOperatorName();
-	    		mMCC = mTeleManager.getNetworkCountryIso();
-	    		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
-	    		if (mCID > 0) {
-	            	if (mWapdroidUI != null) {
-	            		try {
-	    	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mMNC, (String) "" + mMCC);}
-	            		catch (RemoteException e) {}}
-	    			if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null)) {
-	    				updateRange();}
-	    			else {
-	    				boolean mInRange = false;
-	    				if (mDbHelper.cellInRange(mCID)) {
-	    					mInRange = true;
-	   						int mNeighborCID;
-	   						for (NeighboringCellInfo n : mNeighboringCells) {
-	   							mNeighborCID = n.getCid();
-	   							if (mInRange && (mNeighborCID > 0)) {
-	   								mInRange = mDbHelper.cellInRange(mNeighborCID);}}}
-	    				if ((mInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
-	    					mWifiManager.setWifiEnabled(mInRange);
-	    					if (mPreferences.getBoolean(PREFERENCE_NOTIFY, true)) {
-	    						int icon = mInRange ? R.drawable.statuson : R.drawable.status;
-	    						CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(mInRange ? R.string.label_enabled : R.string.label_disabled);
-	    					  	long when = System.currentTimeMillis();
-	    					   	Notification notification = new Notification(icon, contentTitle, when);
-	    					   	Intent i = new Intent(getBaseContext(), WapdroidService.class);
-	    						PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
-	    					   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-	    					   	if (mPreferences.getBoolean(PREFERENCE_VIBRATE, false)) {
-	    					   		notification.defaults |= Notification.DEFAULT_VIBRATE;}
-	    					   	if (mPreferences.getBoolean(PREFERENCE_LED, false)) {
-	    					   		notification.defaults |= Notification.DEFAULT_LIGHTS;}
-	    					   	if (mPreferences.getBoolean(PREFERENCE_RINGTONE, false)) {
-	    					   		notification.defaults |= Notification.DEFAULT_SOUND;}
-	    						mNotificationManager.notify(NOTIFY_ID, notification);}}}
-	   	    		checkForUIBeforeStopping();}}
-           	else {
-           		// cell is unavailable, die
-           		checkForUIBeforeStopping();}}};
+    		if (locationReady(location)) {
+    			checkForUIBeforeStopping();}}};
     
 	private BroadcastReceiver mReceiver = null;
 
@@ -169,8 +109,7 @@ public class WapdroidService extends Service {
 	    		else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 	    			NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 	    	    	if (mNetworkInfo.isConnected()) {
-	    	    		mWifiInfo = mWifiManager.getConnectionInfo();
-	    	    		setWifiInfo();
+	    	    		setWifiInfo(mWifiManager.getConnectionInfo());
 	    	    		wifiChanged();}
 	    	    	else {
 	    	    		clearWifiInfo();}}}}, intentfilter);
@@ -194,17 +133,16 @@ public class WapdroidService extends Service {
 		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
 		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-		mWifiInfo = mWifiManager.getConnectionInfo();
 		mWifiIsEnabled = mWifiManager.isWifiEnabled();
 		// set up to record connected cells
 		if (mWifiIsEnabled) {
-    		mWifiInfo = mWifiManager.getConnectionInfo();
-    		setWifiInfo();}
-		mPreferences = (SharedPreferences) getSharedPreferences(PREF_FILE_NAME, WapdroidUI.MODE_PRIVATE);
+    		setWifiInfo(mWifiManager.getConnectionInfo());}
+		mPreferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}
+		if (!locationReady(mTeleManager.getCellLocation())) {
+			mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}}
     
     @Override
     public void onDestroy() {
@@ -215,7 +153,7 @@ public class WapdroidService extends Service {
     	if (mDbHelper != null) {
     		mDbHelper.close();
     		mDbHelper = null;}
-    	if (mPreferences.getBoolean(PREFERENCE_MANAGE, true)) {
+    	if (mPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
        		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);}
 		ManageWakeLocks.release();}
     
@@ -227,9 +165,61 @@ public class WapdroidService extends Service {
     	if (mReceiver == null) {
     		stopSelf();}}
     
-    private void setWifiInfo() {
-		mSSID = mWifiInfo.getSSID();
-		mBSSID = mWifiInfo.getBSSID();}
+    private boolean locationReady(CellLocation location) {
+       	if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+       		mCID = ((GsmCellLocation) location).getCid();}
+       	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+    		// check the phone type, cdma is not available before API 2.0, so use a wrapper
+       		try {
+       			CdmaCellLocationWrapper.checkAvailable();
+       			mCID = ((CdmaCellLocationWrapper) location).getBaseStationId();}
+       		catch (Throwable t) {
+       			mCID = -1;}}
+       	else {
+   			mCID = -1;}
+       	if (mCID > 0) {
+    		mMNC = mTeleManager.getNetworkOperatorName();
+    		mMCC = mTeleManager.getNetworkCountryIso();
+    		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
+        	if (mWapdroidUI != null) {
+        		try {
+	        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mMNC, (String) "" + mMCC);}
+        		catch (RemoteException e) {}}
+			if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null)) {
+				updateRange();}
+			else {
+				boolean mInRange = false;
+				if (mDbHelper.cellInRange(mCID)) {
+					mInRange = true;
+						int mNeighborCID;
+						for (NeighboringCellInfo n : mNeighboringCells) {
+							mNeighborCID = n.getCid();
+							if (mInRange && (mNeighborCID > 0)) {
+								mInRange = mDbHelper.cellInRange(mNeighborCID);}}}
+				if ((mInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
+					mWifiManager.setWifiEnabled(mInRange);
+					if (mPreferences.getBoolean(getString(R.string.key_notify), true)) {
+						int icon = mInRange ? R.drawable.statuson : R.drawable.status;
+						CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(mInRange ? R.string.label_enabled : R.string.label_disabled);
+					  	long when = System.currentTimeMillis();
+					   	Notification notification = new Notification(icon, contentTitle, when);
+					   	Intent i = new Intent(getBaseContext(), WapdroidService.class);
+						PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
+					   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
+					   	if (mPreferences.getBoolean(getString(R.string.key_vibrate), false)) {
+					   		notification.defaults |= Notification.DEFAULT_VIBRATE;}
+					   	if (mPreferences.getBoolean(getString(R.string.key_led), false)) {
+					   		notification.defaults |= Notification.DEFAULT_LIGHTS;}
+					   	if (mPreferences.getBoolean(getString(R.string.key_ringtone), false)) {
+					   		notification.defaults |= Notification.DEFAULT_SOUND;}
+						mNotificationManager.notify(NOTIFY_ID, notification);}}}
+	    	return true;}
+       	else {
+       		return false;}}
+    
+    private void setWifiInfo(WifiInfo info) {
+		mSSID = info.getSSID();
+		mBSSID = info.getBSSID();}
     
     private void clearWifiInfo() {
 		mSSID = null;

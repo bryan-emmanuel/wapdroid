@@ -15,11 +15,10 @@
     <string name="menu_deleteCell">忘记通信网络</string>
     <string name="menu_refreshNetworks">刷新网络连接</string>
     <string name="menu_refreshCells">刷新通信网络</string>
-    <string name="label_disabling">禁用中</string>
     <string name="label_disabled">已禁用</string>
-    <string name="label_enabling">启用中</string>
     <string name="label_enabled">已启用</string>
-    <string name="label_connectedto">已连接到\u0020</string>
+    <string name="label_disabling">禁用中</string>
+    <string name="label_enabling">启用中</string>
     <string name="label_notify">通知</string>
     <string name="menu_settings">设置</string>
     <string name="label_vibrate">振动</string>
@@ -28,9 +27,11 @@
     <string name="label_save">保存</string>
     <string name="label_BSSID">BSSID:\u0020</string>
     <color name="green">#A4C639</color>
-    <color name="dk_green">#207018</color>
-    <color name="lt_green">#E2FF88</color>
     <color name="blue">#3C78D2</color>
-    <color name="dk_blue">#320FA3</color>
-    <color name="lt_blue">#CDB6F8</color>
+    <string name="key_preferences">wapdroid</string>
+    <string name="key_manageWifi">manageWifi</string>
+    <string name="key_notify">notify</string>
+    <string name="key_vibrate">vibrate</string>
+    <string name="key_led">led</string>
+    <string name="key_ringtone">ringtone</string>
 </resources>

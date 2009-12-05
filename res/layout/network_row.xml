@@ -24,7 +24,7 @@
 					android:textSize="14dip"
 					android:text="@string/label_BSSID"/>
 				<TextView android:id="@+id/network_row_BSSID"
-					android:textColor="@color/green"
+					android:textColor="@color/blue"
 					android:paddingTop="2dip"
 					android:paddingRight="12dip"
 					android:paddingBottom="8dip"
