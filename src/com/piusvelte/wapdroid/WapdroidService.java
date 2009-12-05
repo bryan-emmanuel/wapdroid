@@ -53,7 +53,7 @@ public class WapdroidService extends Service {
 	private String mSSID = null, mBSSID, mMNC = null, mMCC = null;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
-	private int mCID = -1, mWifiState, mInterval = 5000;//300000; // 5min interval
+	private int mCID = -1, mWifiState, mInterval = 300000; // 5min interval
 	private boolean mWifiIsEnabled = false;
 	private IWapdroidUI mWapdroidUI;
 	private SharedPreferences mPreferences;
