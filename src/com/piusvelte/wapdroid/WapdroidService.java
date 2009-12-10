@@ -172,8 +172,7 @@ public class WapdroidService extends Service {
        	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
     		// check the phone type, cdma is not available before API 2.0, so use a wrapper
        		try {
-       			CdmaCellLocationWrapper.checkAvailable();
-       			mCID = ((CdmaCellLocationWrapper) location).getBaseStationId();}
+       			mCID = (new CdmaCellLocationWrapper(location)).getBaseStationId();}
        		catch (Throwable t) {
        			mCID = -1;}}
        	else {
@@ -192,11 +191,11 @@ public class WapdroidService extends Service {
 				boolean mInRange = false;
 				if (mDbHelper.cellInRange(mCID)) {
 					mInRange = true;
-						int mNeighborCID;
+						int cid;
 						for (NeighboringCellInfo n : mNeighboringCells) {
-							mNeighborCID = n.getCid();
-							if (mInRange && (mNeighborCID > 0)) {
-								mInRange = mDbHelper.cellInRange(mNeighborCID);}}}
+							cid = n.getCid();
+							if (mInRange && (cid > 0)) {
+								mInRange = mDbHelper.cellInRange(cid);}}}
 				if ((mInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
 					mWifiManager.setWifiEnabled(mInRange);
 					if (mPreferences.getBoolean(getString(R.string.key_notify), true)) {

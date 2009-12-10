@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.piusvelte.wapdroid"
-      android:versionCode="87" android:versionName="2.1.9">
+      android:versionCode="88" android:versionName="2.2.0">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".WapdroidUI"
 			android:label="@string/app_name">
