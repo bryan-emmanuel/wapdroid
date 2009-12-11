@@ -2,7 +2,8 @@
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:stretchColumns="0">
+	android:stretchColumns="0"
+	android:background="@drawable/field">
 	<TableRow>
 		<TextView android:textStyle="bold"
 			android:textColor="@color/green"
