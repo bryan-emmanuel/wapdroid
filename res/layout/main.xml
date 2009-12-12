@@ -1,40 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent"
+	android:layout_width="wrap_content"
 	android:layout_height="fill_parent"
+	android:background="@color/green"
+	android:padding="8dip"
 	android:stretchColumns="0">
 	<TableRow>
 		<TableLayout android:background="@drawable/field"
-			android:layout_width="fill_parent">
-			<TableRow android:layout_width="fill_parent">
+			android:layout_width="wrap_content"
+			android:padding="16dip">
+			<TableRow>
 				<TextView android:textStyle="bold"
-			    	android:textColor="@color/green"
-					android:paddingTop="12dip"
-					android:paddingBottom="2dip"
-					android:paddingLeft="14dip"
+			    	android:textColor="@color/blue"
 					android:textSize="18dip"
 					android:text="@string/label_WIFI"/>
 				<TextView android:id="@+id/field_wifiState"
-			    	android:textColor="@color/green"
-					android:paddingTop="12dip"
-					android:paddingRight="14dip"
-					android:paddingBottom="2dip"
+			    	android:textColor="@color/blue"
 					android:gravity="right"
 					android:textSize="18dip"/>
 		    </TableRow>
-			<TableRow android:layout_width="fill_parent">
+			<TableRow>
 				<TextView android:id="@+id/label_wifiBSSID"
-			    	android:textColor="@color/blue"
-					android:paddingTop="2dip"
-					android:paddingBottom="12dip"
-					android:paddingLeft="14dip"
+			    	android:textColor="@color/bluedk"
 					android:textSize="14dip"
 					android:text="@string/label_CID"/>
 				<TextView android:id="@+id/field_wifiBSSID"
-			    	android:textColor="@color/blue"
-					android:paddingTop="2dip"
-					android:paddingRight="14dip"
-					android:paddingBottom="12dip"
+			    	android:textColor="@color/bluedk"
 					android:gravity="right"
 					android:textSize="14dip"/>
 			</TableRow>
@@ -42,53 +33,35 @@
 	</TableRow>
 	<TableRow>
 		<TableLayout android:background="@drawable/field"
-			android:layout_width="fill_parent">
-			<TableRow android:layout_width="fill_parent">
+			android:padding="16dip">
+			<TableRow>
 				<TextView android:id="@+id/label_CID"
-			    	android:textColor="@color/green"
+			    	android:textColor="@color/blue"
 					android:textStyle="bold"
-					android:paddingTop="12dip"
-					android:paddingBottom="2dip"
-					android:paddingLeft="14dip"
 					android:textSize="18dip"
 					android:text="@string/label_CID"/>
 				<TextView android:id="@+id/field_CID"
-			    	android:textColor="@color/green"
-					android:paddingTop="12dip"
-					android:paddingRight="14dip"
-					android:paddingBottom="2dip"
+			    	android:textColor="@color/blue"
 					android:gravity="right"
 					android:textSize="18dip"/>
 		    </TableRow>
-			<TableRow android:layout_width="fill_parent">
+			<TableRow>
 				<TextView android:id="@+id/label_MNC"
-			    	android:textColor="@color/blue"
-					android:paddingTop="2dip"
-					android:paddingBottom="2dip"
-					android:paddingLeft="14dip"
+			    	android:textColor="@color/bluedk"
 					android:textSize="14dip"
 					android:text="@string/label_MNC"/>
 				<TextView android:id="@+id/field_MNC"
-			    	android:textColor="@color/blue"
-					android:paddingTop="2dip"
-					android:paddingRight="14dip"
-					android:paddingBottom="2dip"
+			    	android:textColor="@color/bluedk"
 					android:gravity="right"
 					android:textSize="14dip"/>
 		    </TableRow>
-			<TableRow android:layout_width="fill_parent">
+			<TableRow>
 				<TextView android:id="@+id/label_MCC"
-			    	android:textColor="@color/blue"
-					android:paddingTop="2dip"
-					android:paddingBottom="12dip"
-					android:paddingLeft="14dip"
+			    	android:textColor="@color/bluedk"
 					android:textSize="14dip"
 					android:text="@string/label_MCC"/>
 				<TextView android:id="@+id/field_MCC"
-			    	android:textColor="@color/blue"
-					android:paddingTop="2dip"
-					android:paddingRight="14dip"
-					android:paddingBottom="12dip"
+			    	android:textColor="@color/bluedk"
 					android:gravity="right"
 					android:textSize="14dip"/>
 		    </TableRow>

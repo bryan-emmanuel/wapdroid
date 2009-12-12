@@ -1,38 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="fill_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:stretchColumns="0"
-	android:background="@drawable/field">
-	<TableRow>
-		<TextView android:textStyle="bold"
-			android:id="@+id/network_row_SSID"
-			android:textColor="@color/green"
-			android:textSize="18dip"
-			android:paddingTop="8dip"
-			android:paddingBottom="2dip"
-			android:paddingLeft="12dip"/>
-    </TableRow>
-	<TableRow>
-		<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
-			android:layout_width="wrap_content"
-			android:layout_height="wrap_content"
-			android:stretchColumns="0">
-			<TableRow>
-				<TextView android:paddingTop="2dip"
-					android:textColor="@color/blue"
-					android:paddingBottom="8dip"
-					android:paddingLeft="12dip"
-					android:textSize="14dip"
-					android:text="@string/label_BSSID"/>
-				<TextView android:id="@+id/network_row_BSSID"
-					android:textColor="@color/blue"
-					android:paddingTop="2dip"
-					android:paddingRight="12dip"
-					android:paddingBottom="8dip"
-					android:gravity="right"
-					android:textSize="14dip"/>
-  		  	</TableRow>
-		</TableLayout>
-    </TableRow>
-</TableLayout>
+	android:background="@color/green"
+		android:padding="8dip">
+	<TableLayout android:background="@drawable/field"
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:stretchColumns="0"
+		android:padding="16dip">
+		<TableRow>
+			<TextView android:textStyle="bold"
+				android:id="@+id/network_row_SSID"
+				android:textColor="@color/blue"
+				android:textSize="18dip"/>
+	    </TableRow>
+		<TableRow>
+			<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:stretchColumns="0">
+				<TableRow>
+					<TextView android:textColor="@color/bluedk"
+						android:textSize="14dip"
+						android:text="@string/label_BSSID"/>
+					<TextView android:id="@+id/network_row_BSSID"
+						android:textColor="@color/bluedk"
+						android:gravity="right"
+						android:textSize="14dip"/>
+	  		  	</TableRow>
+			</TableLayout>
+	    </TableRow>
+	</TableLayout>
+</LinearLayout>

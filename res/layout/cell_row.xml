@@ -3,20 +3,16 @@
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:stretchColumns="0"
-	android:background="@drawable/field">
-	<TableRow>
+	android:padding="8dip"
+	android:background="@color/green">
+	<TableRow android:background="@drawable/field"
+		android:padding="16dip">
 		<TextView android:textStyle="bold"
-			android:textColor="@color/green"
-			android:paddingTop="8dip"
-			android:paddingBottom="2dip"
-			android:paddingLeft="12dip"
+			android:textColor="@color/blue"
 			android:textSize="18dip"
 			android:text="@string/label_CID"/>
 		<TextView android:id="@+id/cell_row_CID"
-			android:textColor="@color/green"
-			android:paddingTop="8dip"
-			android:paddingRight="12dip"
-			android:paddingBottom="2dip"
+			android:textColor="@color/blue"
 			android:gravity="right"
 			android:textSize="18dip"/>
     </TableRow>
