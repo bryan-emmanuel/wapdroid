@@ -3,7 +3,10 @@
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:stretchColumns="0"
-	android:padding="8dip"
+	android:paddingTop="4dip"
+	android:paddingBottom="4dip"
+	android:paddingLeft="8dip"
+	android:paddingRight="8dip"
 	android:background="@color/green">
 	<TableRow android:background="@drawable/field"
 		android:padding="16dip">
