@@ -16,20 +16,10 @@
 				android:textSize="18dip"/>
 	    </TableRow>
 		<TableRow>
-			<TableLayout
-				android:stretchColumns="0">
-				<TableRow>
-					<TextView android:textColor="@color/bluedk"
-						android:textSize="14dip"
-						android:text="@string/label_BSSID"/>
-					<TextView android:id="@+id/network_row_BSSID"
-						android:textColor="@color/bluedk"
-						android:gravity="right"
-						android:text="00.11.22.33.44.55"
-						android:color="@color/blue"
-						android:textSize="14dip"/>
-	  		  	</TableRow>
-			</TableLayout>
+			<TextView android:id="@+id/network_row_BSSID"
+				android:textColor="@color/bluedk"
+				android:color="@color/blue"
+				android:textSize="14dip"/>
 	    </TableRow>
 	</TableLayout>
 </LinearLayout>
