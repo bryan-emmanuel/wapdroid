@@ -3,18 +3,18 @@
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	android:background="@color/green"
-	android:padding="8dip"
+	android:padding="4dip"
 	android:stretchColumns="0">
 	<TableRow>
 		<TableLayout android:background="@drawable/field"
 			android:padding="16dip"
 			android:stretchColumns="0">
 			<TableRow>
-				<TextView android:textStyle="bold"
-			    	android:textColor="@color/blue"
+				<TextView android:textColor="@color/blue"
 					android:textSize="18dip"
 					android:text="@string/label_WIFI"/>
 				<TextView android:id="@+id/field_wifiState"
+					android:textStyle="bold"
 			    	android:textColor="@color/blue"
 					android:gravity="right"
 					android:textSize="18dip"/>
@@ -38,10 +38,10 @@
 			<TableRow>
 				<TextView android:id="@+id/label_CID"
 			    	android:textColor="@color/blue"
-					android:textStyle="bold"
 					android:textSize="18dip"
 					android:text="@string/label_CID"/>
 				<TextView android:id="@+id/field_CID"
+					android:textStyle="bold"
 			    	android:textColor="@color/blue"
 					android:gravity="right"
 					android:textSize="18dip"/>

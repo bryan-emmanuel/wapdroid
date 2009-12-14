@@ -3,21 +3,24 @@
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
 	android:stretchColumns="0"
-	android:paddingTop="4dip"
-	android:paddingBottom="4dip"
-	android:paddingLeft="8dip"
-	android:paddingRight="8dip"
+	android:padding="4dip"
 	android:background="@color/green">
-	<TableRow android:background="@drawable/field"
-		android:padding="16dip">
-		<TextView android:textStyle="bold"
-			android:textColor="@color/blue"
-			android:textSize="18dip"
-			android:text="@string/label_CID"/>
-		<TextView android:id="@+id/cell_row_CID"
-			android:textColor="@color/blue"
-			android:gravity="right"
-			android:textSize="18dip"/>
+	<TableRow>
+		<TableLayout android:background="@drawable/field"
+			android:stretchColumns="0"
+			android:padding="16dip">
+			<TableRow>
+				<TextView android:textStyle="bold"
+					android:textColor="@color/blue"
+					android:textSize="18dip"
+					android:text="@string/label_CID"/>
+				<TextView android:id="@+id/cell_row_CID"
+					android:textColor="@color/blue"
+					android:gravity="right"
+					android:text="0123456789"
+					android:textSize="18dip"/>
+			</TableRow>
+		</TableLayout>
     </TableRow>
 </TableLayout>
 
