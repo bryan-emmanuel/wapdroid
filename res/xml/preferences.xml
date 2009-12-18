@@ -5,8 +5,14 @@
                 android:key="@string/key_manageWifi"
                 android:title="@string/label_wapdroidState"
                 android:defaultValue="true"/>
+        <ListPreference
+        		android:key="@string/key_interval"
+	        	android:title="@string/label_interval"
+	        	android:entries="@array/scan_interval_entries"
+	        	android:entryValues="@array/scan_interval_values"
+	        	android:defaultValue="300000"/>
         <CheckBoxPreference
-                android:key="@+string/key_notify"
+                android:key="@string/key_notify"
                 android:title="@string/label_notify"
                 android:defaultValue="true"/>
         <CheckBoxPreference

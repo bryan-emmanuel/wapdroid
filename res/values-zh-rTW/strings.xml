@@ -28,7 +28,6 @@
     <string name="label_BSSID">BSSID:\u0020</string>
     <color name="green">#A4C639</color>
     <color name="blue">#3C78D2</color>
-    <color name="gray">#BFBFBF</color>
     <color name="bluedk">#320FA3</color>
     <string name="key_preferences">wapdroid</string>
     <string name="key_manageWifi">manageWifi</string>
@@ -36,4 +35,6 @@
     <string name="key_vibrate">vibrate</string>
     <string name="key_led">led</string>
     <string name="key_ringtone">ringtone</string>
+    <string name="key_interval">interval</string>
+    <string name="label_interval">Scan Interval</string>
 </resources>

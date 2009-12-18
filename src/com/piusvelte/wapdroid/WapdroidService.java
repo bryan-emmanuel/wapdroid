@@ -42,6 +42,7 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
@@ -53,7 +54,7 @@ public class WapdroidService extends Service {
 	private String mSSID = null, mBSSID, mMNC = null, mMCC = null;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
-	private int mCID = -1, mWifiState, mInterval = 300000; // 5min interval
+	private int mCID = -1, mWifiState;
 	private boolean mWifiIsEnabled = false;
 	private IWapdroidUI mWapdroidUI;
 	private SharedPreferences mPreferences;
@@ -155,7 +156,7 @@ public class WapdroidService extends Service {
     		mDbHelper.close();
     		mDbHelper = null;}
     	if (mPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
-       		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);}
+       		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Integer.parseInt((String) mPreferences.getString(getString(R.string.key_interval), "300000")), mPendingIntent);}
 		ManageWakeLocks.release();}
     
     private void checkForUIBeforeStopping() {
