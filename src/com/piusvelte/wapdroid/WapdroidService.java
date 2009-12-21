@@ -42,7 +42,6 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
@@ -168,16 +167,20 @@ public class WapdroidService extends Service {
     		stopSelf();}}
     
     private void checkLocation(CellLocation location) {
-       	if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-       		mCID = ((GsmCellLocation) location).getCid();}
-       	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
-    		// check the phone type, cdma is not available before API 2.0, so use a wrapper
-       		try {
-       			mCID = (new CdmaCellLocationWrapper(location)).getBaseStationId();}
-       		catch (Throwable t) {
-       			mCID = -1;}}
-       	else {
-   			mCID = -1;}
+    	// check that the DB is open
+    	if (mDbHelper != null) {
+    		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+    			mCID = ((GsmCellLocation) location).getCid();}
+	       	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+	    		// check the phone type, cdma is not available before API 2.0, so use a wrapper
+	       		try {
+	       			mCID = (new CdmaCellLocationWrapper(location)).getBaseStationId();}
+	       		catch (Throwable t) {
+	       			mCID = -1;}}
+	       	else {
+	       		mCID = -1;}}
+    	else {
+    		mCID = -1;}
        	if (mCID > 0) {
     		mMNC = mTeleManager.getNetworkOperatorName();
     		mMCC = mTeleManager.getNetworkCountryIso();
