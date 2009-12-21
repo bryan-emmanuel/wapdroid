@@ -44,7 +44,8 @@
 					android:textStyle="bold"
 			    	android:textColor="@color/blue"
 					android:gravity="right"
-					android:textSize="18dip"/>
+					android:textSize="18dip"
+					android:text="@string/scanning"/>
 		    </TableRow>
 			<TableRow>
 				<TextView android:id="@+id/label_MNC"
@@ -54,7 +55,8 @@
 				<TextView android:id="@+id/field_MNC"
 			    	android:textColor="@color/bluedk"
 					android:gravity="right"
-					android:textSize="14dip"/>
+					android:textSize="14dip"
+					android:text="@string/scanning"/>
 		    </TableRow>
 			<TableRow>
 				<TextView android:id="@+id/label_MCC"
@@ -64,7 +66,8 @@
 				<TextView android:id="@+id/field_MCC"
 			    	android:textColor="@color/bluedk"
 					android:gravity="right"
-					android:textSize="14dip"/>
+					android:textSize="14dip"
+					android:text="@string/scanning"/>
 		    </TableRow>
 		</TableLayout>
 	</TableRow>

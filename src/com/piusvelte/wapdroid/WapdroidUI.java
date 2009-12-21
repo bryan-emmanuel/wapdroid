@@ -45,7 +45,7 @@ public class WapdroidUI extends Activity {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
-	private TextView field_CID, field_MNC, field_MCC, label_CID, label_MNC, label_MCC, field_wifiState, field_wifiBSSID, label_wifiBSSID;
+	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID, label_wifiBSSID;
 	private boolean mWifiIsEnabled = false;
 	private WapdroidWifiReceiver mWifiReceiver = null;
 	private WifiManager mWifiManager;
@@ -67,11 +67,8 @@ public class WapdroidUI extends Activity {
          * manual control of wifi is enabled through the UI, but listen for changes made by the service
          */
         setContentView(R.layout.main);
-		label_CID = (TextView) findViewById(R.id.label_CID);
     	field_CID = (TextView) findViewById(R.id.field_CID);
-    	label_MNC = (TextView) findViewById(R.id.label_MNC);
     	field_MNC = (TextView) findViewById(R.id.field_MNC);
-    	label_MCC = (TextView) findViewById(R.id.label_MCC);
     	field_MCC = (TextView) findViewById(R.id.field_MCC);
     	field_wifiState = (TextView) findViewById(R.id.field_wifiState);
     	label_wifiBSSID = (TextView) findViewById(R.id.label_wifiBSSID);
@@ -128,20 +125,17 @@ public class WapdroidUI extends Activity {
         SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		boolean enabled = prefs.getBoolean(getString(R.string.key_manageWifi), true);
 		if (enabled) {
+	    	field_CID.setText(getString(R.string.scanning));
+	    	field_MNC.setText(getString(R.string.scanning));
+	    	field_MCC.setText(getString(R.string.scanning));
 			if (mWapdroidServiceConnection == null) {
 				mWapdroidServiceConnection = new WapdroidServiceConnection();
 				bindService(new Intent(this, WapdroidService.class), mWapdroidServiceConnection, Context.BIND_AUTO_CREATE);}}
 		else {
 			releaseService();
-	    	field_CID.setText("");
-	    	field_MNC.setText("");
-	    	field_MCC.setText("");}
-    	label_CID.setEnabled(enabled);
-    	field_CID.setEnabled(enabled);
-    	label_MNC.setEnabled(enabled);
-    	field_MNC.setEnabled(enabled);
-    	label_MCC.setEnabled(enabled);
-    	field_MCC.setEnabled(enabled);}
+	    	field_CID.setText(getString(R.string.label_disabled));
+	    	field_MNC.setText(getString(R.string.label_disabled));
+	    	field_MCC.setText(getString(R.string.label_disabled));}}
     
 	private void wifiChanged() {
 		if (mWifiIsEnabled) {

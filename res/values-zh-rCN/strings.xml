@@ -26,9 +26,6 @@
     <string name="label_ringtone">铃声</string>
     <string name="label_save">保存</string>
     <string name="label_BSSID">BSSID:\u0020</string>
-    <color name="green">#A4C639</color>
-    <color name="blue">#3C78D2</color>
-    <color name="bluedk">#320FA3</color>
     <string name="key_preferences">wapdroid</string>
     <string name="key_manageWifi">manageWifi</string>
     <string name="key_notify">notify</string>
@@ -37,4 +34,5 @@
     <string name="key_ringtone">ringtone</string>
     <string name="key_interval">interval</string>
     <string name="label_interval">Scan Interval</string>
+    <string name="scanning">scanning</string>
 </resources>
