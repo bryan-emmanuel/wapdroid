@@ -20,6 +20,8 @@
 
 package com.piusvelte.wapdroid;
 
+import java.net.URI;
+
 import com.piusvelte.wapdroid.R;
 
 import android.app.Activity;
@@ -31,6 +33,7 @@ import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
@@ -45,6 +48,7 @@ public class WapdroidUI extends Activity {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
+	public static final int DONATE_ID = Menu.FIRST + 3;
 	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID, label_wifiBSSID;
 	private boolean mWifiIsEnabled = false;
 	private WapdroidWifiReceiver mWifiReceiver = null;
@@ -81,6 +85,7 @@ public class WapdroidUI extends Activity {
     	menu.add(0, MANAGE_ID, 0, R.string.menu_manageNetworks).setIcon(android.R.drawable.ic_menu_manage);
     	menu.add(0, SETTINGS_ID, 0, R.string.menu_settings).setIcon(android.R.drawable.ic_menu_preferences);
     	menu.add(0, WIFI_ID, 0, R.string.label_WIFI).setIcon(android.R.drawable.ic_menu_manage);
+    	menu.add(0, DONATE_ID, 0, R.string.label_donate).setIcon(android.R.drawable.ic_menu_more);
     	return result;}
 
     @Override
@@ -96,7 +101,18 @@ public class WapdroidUI extends Activity {
     		return true;
     	case WIFI_ID:
 			startActivity(new Intent().setComponent(new ComponentName("com.android.settings", "com.android.settings.wifi.WifiSettings")));
-			return true;}
+			return true;
+    	case DONATE_ID:
+    		/*
+    		<form action="https://www.paypal.com/cgi-bin/webscr" method="post">
+    		<input type="hidden" name="cmd" value="_s-xclick">
+    		<input type="hidden" name="hosted_button_id" value="8871356">
+    		<input type="image" src="https://www.paypal.com/en_US/i/btn/btn_donate_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+    		<img alt="" border="0" src="https://www.paypal.com/en_US/i/scr/pixel.gif" width="1" height="1">
+    		</form>
+    		*/
+    		startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=8871356")));
+    		return true;}
         return super.onOptionsItemSelected(item);}
     
     @Override

@@ -45,6 +45,7 @@ import android.telephony.gsm.GsmCellLocation;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
+	private static int NOTIFY_SCANNING = 2;
 	public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
 	public static final String SCREEN_ON = "com.piusvelte.wapdroid.SCREEN_ON";
 	private WapdroidDbAdapter mDbHelper;
@@ -139,6 +140,12 @@ public class WapdroidService extends Service {
 		if (mWifiIsEnabled) {
     		setWifiInfo(mWifiManager.getConnectionInfo());}
 		mPreferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+		if (mPreferences.getBoolean(getString(R.string.key_notify), true)) {
+			CharSequence contentTitle = getString(R.string.scanning);
+		   	Notification notification = new Notification(R.drawable.scanning, contentTitle, System.currentTimeMillis());
+			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
+		   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
+			mNotificationManager.notify(NOTIFY_SCANNING, notification);}
 		mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -148,6 +155,7 @@ public class WapdroidService extends Service {
     @Override
     public void onDestroy() {
     	super.onDestroy();
+    	mNotificationManager.cancel(NOTIFY_SCANNING);
     	if (mReceiver != null) {
     		unregisterReceiver(mReceiver);}
     	mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);

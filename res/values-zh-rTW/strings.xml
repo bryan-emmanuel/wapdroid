@@ -35,4 +35,5 @@
     <string name="key_interval">interval</string>
     <string name="label_interval">Scan Interval</string>
     <string name="scanning">scanning</string>
+    <string name="label_donate">Donate</string>
 </resources>

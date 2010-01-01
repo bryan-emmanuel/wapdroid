@@ -22,8 +22,9 @@ public final class R {
     public static final class drawable {
         public static final int field=0x7f020000;
         public static final int icon=0x7f020001;
-        public static final int status=0x7f020002;
-        public static final int statuson=0x7f020003;
+        public static final int scanning=0x7f020002;
+        public static final int status=0x7f020003;
+        public static final int statuson=0x7f020004;
     }
     public static final class id {
         public static final int cell_row_CID=0x7f080000;
@@ -63,6 +64,7 @@ public final class R {
         public static final int label_WIFI=0x7f070005;
         public static final int label_disabled=0x7f07000f;
         public static final int label_disabling=0x7f070011;
+        public static final int label_donate=0x7f070023;
         public static final int label_enabled=0x7f070010;
         public static final int label_enabling=0x7f070012;
         public static final int label_interval=0x7f070021;
