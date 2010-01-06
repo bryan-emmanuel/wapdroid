@@ -17,7 +17,6 @@
 				<TextView android:id="@+id/cell_row_CID"
 					android:textColor="@color/blue"
 					android:gravity="right"
-					android:text="0123456789"
 					android:textSize="18dip"/>
 			</TableRow>
 		</TableLayout>

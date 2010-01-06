@@ -75,19 +75,20 @@ public class WapdroidService extends Service {
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
     		checkLocation(location);
-    		if (mCID > 0) {
-    			checkForUIBeforeStopping();}}};
+    		// UI check isn't needed, the service will stay alive if bound
+   			//checkForUIBeforeStopping();
+   			stopSelf();}};
     
-	private BroadcastReceiver mReceiver = null;
+	private BroadcastReceiver mUIReceiver = null;
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		// stop the Alarm if UI binds, it'll be reset in onDestroy, if appropriate
-		mAlarmManager.cancel(mPendingIntent);
+		// cancel the Alarm, it'll be reset in onDestroy, if appropriate
+		releaseReceiver();
 		IntentFilter intentfilter = new IntentFilter();
 		intentfilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 		intentfilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-		registerReceiver(mReceiver = new BroadcastReceiver() {
+		registerReceiver(mUIReceiver = new BroadcastReceiver() {
 			@Override
 			public void onReceive(Context context, Intent intent) {
 	    		if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
@@ -129,6 +130,11 @@ public class WapdroidService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        /* start conditions:
+         * boot
+         * alarm
+         * ui
+         */
 		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		Intent i = new Intent(this, WapdroidServiceManager.class);
 		i.setAction(WAKE_SERVICE);
@@ -150,14 +156,18 @@ public class WapdroidService extends Service {
 		mDbHelper.open();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		checkLocation(mTeleManager.getCellLocation());
-		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}
+		if (mCID == -1) {
+			mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}
+		else {
+   			stopSelf();}}
     
     @Override
     public void onDestroy() {
     	super.onDestroy();
     	mNotificationManager.cancel(NOTIFY_SCANNING);
-    	if (mReceiver != null) {
-    		unregisterReceiver(mReceiver);}
+    	if (mUIReceiver != null) {
+    		unregisterReceiver(mUIReceiver);
+    		mUIReceiver = null;}
     	mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
     	if (mDbHelper != null) {
     		mDbHelper.close();
@@ -166,13 +176,13 @@ public class WapdroidService extends Service {
        		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Integer.parseInt((String) mPreferences.getString(getString(R.string.key_interval), "300000")), mPendingIntent);}
 		ManageWakeLocks.release();}
     
-    private void checkForUIBeforeStopping() {
+    //private void checkForUIBeforeStopping() {
     	/*
     	 * upon UI binding, this prevents the service from dying
     	 * onDestroy will unregister the receiver, since UI will stop the service
     	 */
-    	if (mReceiver == null) {
-    		stopSelf();}}
+    //	if (mUIReceiver == null) {
+    //		stopSelf();}}
     
     private void checkLocation(CellLocation location) {
     	// check that the DB is open
@@ -211,10 +221,8 @@ public class WapdroidService extends Service {
 				if ((mInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
 					mWifiManager.setWifiEnabled(mInRange);
 					if (mPreferences.getBoolean(getString(R.string.key_notify), true)) {
-						int icon = mInRange ? R.drawable.statuson : R.drawable.status;
 						CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(mInRange ? R.string.label_enabled : R.string.label_disabled);
-					  	long when = System.currentTimeMillis();
-					   	Notification notification = new Notification(icon, contentTitle, when);
+					   	Notification notification = new Notification((mInRange ? R.drawable.statuson : R.drawable.status), contentTitle, System.currentTimeMillis());
 					   	Intent i = new Intent(getBaseContext(), WapdroidService.class);
 						PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
 					   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
@@ -234,6 +242,9 @@ public class WapdroidService extends Service {
 		mSSID = null;
 		mBSSID = null;}
     
+    private void releaseReceiver() {
+    	mAlarmManager.cancel(mPendingIntent);}
+    
     private void updateRange() {
     	int network = mDbHelper.updateCellRange(mSSID, mBSSID, mCID);
 		int cid;
@@ -247,5 +258,5 @@ public class WapdroidService extends Service {
 				mDbHelper.updateCellNeighbor(network, cid);}}}
 	
 	private void wifiChanged() {
-		if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null) && (mCID > 0)) {
+		if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null) && (mCID > 0) && (mDbHelper != null)) {
 	    	updateRange();}}}

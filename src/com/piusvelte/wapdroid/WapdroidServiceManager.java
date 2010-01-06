@@ -25,10 +25,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
-public class WapdroidServiceManager extends BroadcastReceiver {	
+public class WapdroidServiceManager extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED") || intent.getAction().equals(WapdroidService.WAKE_SERVICE)) {
+		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED") || intent.getAction().equals("android.intent.action.ACTION_SCREEN_ON") || intent.getAction().equals(WapdroidService.WAKE_SERVICE)) {
 			SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 			if (sp.getBoolean(context.getString(R.string.key_manageWifi), true)) {
 				ManageWakeLocks.acquire(context);
