@@ -75,8 +75,7 @@ public class WapdroidService extends Service {
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
     		checkLocation(location);
-    		// UI check isn't needed, the service will stay alive if bound
-   			//checkForUIBeforeStopping();
+    		// if UI is bound, the service won't stop
    			stopSelf();}};
     
 	private BroadcastReceiver mUIReceiver = null;
@@ -159,6 +158,7 @@ public class WapdroidService extends Service {
 		if (mCID == -1) {
 			mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}
 		else {
+    		// if UI is bound, the service won't stop
    			stopSelf();}}
     
     @Override
@@ -175,14 +175,6 @@ public class WapdroidService extends Service {
     	if (mPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
        		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Integer.parseInt((String) mPreferences.getString(getString(R.string.key_interval), "300000")), mPendingIntent);}
 		ManageWakeLocks.release();}
-    
-    //private void checkForUIBeforeStopping() {
-    	/*
-    	 * upon UI binding, this prevents the service from dying
-    	 * onDestroy will unregister the receiver, since UI will stop the service
-    	 */
-    //	if (mUIReceiver == null) {
-    //		stopSelf();}}
     
     private void checkLocation(CellLocation location) {
     	// check that the DB is open
