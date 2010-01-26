@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.piusvelte.wapdroid"
-      android:versionCode="103" android:versionName="2.2.3">
+      android:versionCode="104" android:versionName="2.2.4">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".WapdroidUI"
 			android:label="@string/app_name">
@@ -13,10 +13,18 @@
     	<activity android:name=".Settings"></activity>
     	<activity android:name=".ManageNetworks"></activity>
 		<activity android:name=".ManageCells"></activity>
+		<!--  Crondroid support -->
+        <activity android:name=".CrondroidConfigure">
+            <intent-filter>
+                <action android:name="com.piusvelte.crondroid.intent.action.CONFIGURE" />
+            </intent-filter>
+        </activity>
 		<receiver android:name=".WapdroidServiceManager">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED"/>
 				<action android:name="com.piusvelte.wapdroid.WAKE_SERVICE"/>
+				<!-- crondroid support -->
+				<action android:name="com.piusvelte.crondroid.intent.action.TRIGGER"/>
 			</intent-filter>
 		</receiver>
 		<service android:name=".WapdroidService"/>

@@ -47,7 +47,6 @@ public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
 	private static int NOTIFY_SCANNING = 2;
 	public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
-	public static final String SCREEN_ON = "com.piusvelte.wapdroid.SCREEN_ON";
 	private WapdroidDbAdapter mDbHelper;
 	private NotificationManager mNotificationManager;
 	private TelephonyManager mTeleManager;
@@ -83,7 +82,7 @@ public class WapdroidService extends Service {
 	@Override
 	public IBinder onBind(Intent intent) {
 		// cancel the Alarm, it'll be reset in onDestroy, if appropriate
-		releaseReceiver();
+    	mAlarmManager.cancel(mPendingIntent);
 		IntentFilter intentfilter = new IntentFilter();
 		intentfilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 		intentfilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -173,7 +172,12 @@ public class WapdroidService extends Service {
     		mDbHelper.close();
     		mDbHelper = null;}
     	if (mPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
-       		mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + Integer.parseInt((String) mPreferences.getString(getString(R.string.key_interval), "300000")), mPendingIntent);}
+    		/*
+    		 * adding a "0" option which disables self triggering to support crondroid
+    		 */
+    		int i = Integer.parseInt((String) mPreferences.getString(getString(R.string.key_interval), "0"));
+    		if (i > 0) {
+    			mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + i, mPendingIntent);}}
 		ManageWakeLocks.release();}
     
     private void checkLocation(CellLocation location) {
@@ -233,9 +237,6 @@ public class WapdroidService extends Service {
     private void clearWifiInfo() {
 		mSSID = null;
 		mBSSID = null;}
-    
-    private void releaseReceiver() {
-    	mAlarmManager.cancel(mPendingIntent);}
     
     private void updateRange() {
     	int network = mDbHelper.updateCellRange(mSSID, mBSSID, mCID);

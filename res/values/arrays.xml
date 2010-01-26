@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 	<string-array name="scan_interval_entries">
+		<item>Disabled</item>
 		<item>1 minute</item>
 		<item>5 minutes (default)</item>
 		<item>10 minutes</item>
@@ -9,6 +10,7 @@
 		<item>60 minutes</item>
 	</string-array>
 	<string-array name="scan_interval_values">
+		<item>0</item>
 		<item>60000</item>
 		<item>300000</item>
 		<item>600000</item>
