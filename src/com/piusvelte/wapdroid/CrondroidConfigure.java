@@ -19,10 +19,9 @@ public class CrondroidConfigure extends Activity {
 				int interval = extras.getInt("com.piusvelte.crondroid.intent.action.INTERVAL");
 				SharedPreferences preferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 				Editor editor = preferences.edit();
-				if (interval > 0) {
-					editor.putString(getString(R.string.key_interval), "0");}
-				else {
-					editor.putString(getString(R.string.key_interval), "300000");}
+				editor.putString(getString(R.string.key_interval),
+						(interval > 0 ? "0" : "300000"));
+				editor.commit();
 				setResult(RESULT_OK);}
 			else {
 				setResult(RESULT_CANCELED);}
