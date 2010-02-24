@@ -25,13 +25,17 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 
-public class WapdroidServiceManager extends BroadcastReceiver {
+public class BootReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")
-				|| intent.getAction().equals(WapdroidService.WAKE_SERVICE)
-				|| intent.getAction().equals("com.piusvelte.crondroid.intent.action.TRIGGER")) {
+		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
 			SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 			if (sp.getBoolean(context.getString(R.string.key_manageWifi), true)) {
 				ManageWakeLocks.acquire(context);
-				context.startService(new Intent(context, WapdroidService.class));}}}}
+				context.startService(new Intent(context, WapdroidService.class));}}
+		else if (intent.getAction().equals(WapdroidService.WAKE_SERVICE)) {
+			/* 
+			 * don't check key_manageWifi, as UI will stop the alarm through the Service, if appropriate
+			 */
+			ManageWakeLocks.acquire(context);
+			context.startService(new Intent(context, WapdroidService.class));}}}

@@ -122,7 +122,7 @@ public class WapdroidUI extends Activity {
     	if (mWifiReceiver != null) {
     		unregisterReceiver(mWifiReceiver);
     		mWifiReceiver = null;}
-    	releaseService();}
+    	releaseService(false);}
     
     @Override
     public void onResume() {
@@ -142,6 +142,7 @@ public class WapdroidUI extends Activity {
         SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		boolean enabled = prefs.getBoolean(getString(R.string.key_manageWifi), true);
 		if (enabled) {
+			startService(new Intent(this, WapdroidService.class));
 	    	field_CID.setText(getString(R.string.scanning));
 	    	field_MNC.setText(getString(R.string.scanning));
 	    	field_MCC.setText(getString(R.string.scanning));
@@ -149,7 +150,7 @@ public class WapdroidUI extends Activity {
 				mWapdroidServiceConnection = new WapdroidServiceConnection();
 				bindService(new Intent(this, WapdroidService.class), mWapdroidServiceConnection, Context.BIND_AUTO_CREATE);}}
 		else {
-			releaseService();
+			releaseService(true);
 	    	field_CID.setText(getString(R.string.label_disabled));
 	    	field_MNC.setText(getString(R.string.label_disabled));
 	    	field_MCC.setText(getString(R.string.label_disabled));}}
@@ -173,7 +174,7 @@ public class WapdroidUI extends Activity {
 			label_wifiBSSID.setText("");
 			field_wifiBSSID.setText("");}}
 	
-	private void releaseService() {
+	private void releaseService(boolean kill) {
 		if (mWapdroidServiceConnection != null) {
 			if (mWapdroidService != null) {
 				try {
@@ -182,7 +183,8 @@ public class WapdroidUI extends Activity {
 				mWapdroidService = null;}
 			unbindService(mWapdroidServiceConnection);
 			mWapdroidServiceConnection = null;}
-		stopService(new Intent(this, WapdroidService.class));}
+		if (kill) {
+			stopService(new Intent(this, WapdroidService.class));}}
 	
 	private void setWifiInfo(WifiInfo info) {
 		mSSID = info.getSSID();

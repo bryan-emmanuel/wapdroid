@@ -42,6 +42,7 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
@@ -74,110 +75,113 @@ public class WapdroidService extends Service {
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
     		checkLocation(location);
-    		// if UI is bound, the service won't stop
-   			stopSelf();}};
+			// allow the device to sleep
+			releaseLock();}};
     
-	private BroadcastReceiver mUIReceiver = null;
-
+	//private BroadcastReceiver mUIReceiver = null;
+	private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+				Log.v("WAPPY","screen on received");
+				// kill the alarm while the screen is on
+		    	mAlarmManager.cancel(mPendingIntent);
+				context.startService(new Intent(context, WapdroidService.class));}
+			else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+				Log.v("WAPPY","screen off received");
+				// set the alarm
+		    	if (mPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
+		    		int i = Integer.parseInt((String) mPreferences.getString(getString(R.string.key_interval), "0"));
+		    		if (i > 0) {
+		    			mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + i, mPendingIntent);}}}
+			else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+				// save the state as it's checked elsewhere, like the phonestatelistener
+				int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
+				switch (mWifiState) {
+				case WifiManager.WIFI_STATE_UNKNOWN:
+					break;
+				case WifiManager.WIFI_STATE_ENABLED:
+					mWifiIsEnabled = true;
+					wifiChanged();
+					break;
+				case WifiManager.WIFI_STATE_DISABLED:
+					mWifiIsEnabled = false;
+					clearWifiInfo();
+					break;
+				default:
+					mWifiIsEnabled = false;
+					clearWifiInfo();
+					break;}}
+			else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+				NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+				if (mNetworkInfo.isConnected()) {
+					setWifiInfo(mWifiManager.getConnectionInfo());
+					wifiChanged();}
+				else {
+					clearWifiInfo();}}}};
+	
 	@Override
 	public IBinder onBind(Intent intent) {
 		// cancel the Alarm, it'll be reset in onDestroy, if appropriate
     	mAlarmManager.cancel(mPendingIntent);
-		IntentFilter intentfilter = new IntentFilter();
-		intentfilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-		intentfilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-		registerReceiver(mUIReceiver = new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-	    		if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-	        		// save the state as it's checked elsewhere, like the phonestatelistener
-	    			int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
-	   	    		switch (mWifiState) {
-	   	    			case WifiManager.WIFI_STATE_UNKNOWN:
-	   	    				break;
-	   	    			case WifiManager.WIFI_STATE_ENABLED:
-	   	    				mWifiIsEnabled = true;
-	       	    			wifiChanged();
-	   	    				break;
-	   	    			case WifiManager.WIFI_STATE_DISABLED:
-	   	    				mWifiIsEnabled = false;
-		    	    		clearWifiInfo();
-	   	    				break;
-	   	    			default:
-	   	    				mWifiIsEnabled = false;
-		    	    		clearWifiInfo();
-	   	    				break;}}
-	    		else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-	    			NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-	    	    	if (mNetworkInfo.isConnected()) {
-	    	    		setWifiInfo(mWifiManager.getConnectionInfo());
-	    	    		wifiChanged();}
-	    	    	else {
-	    	    		clearWifiInfo();}}}}, intentfilter);
 		return mWapdroidService;}
 	
 	@Override
 	public void onStart(Intent intent, int startId) {
-		super.onStart(intent, startId);}
+		super.onStart(intent, startId);
+		Log.v("WAPPY","on start old");
+		}
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStart(intent, startId);
-		return 0;}
-	
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        /* start conditions:
-         * boot
-         * alarm
-         * ui
-         */
-		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-		Intent i = new Intent(this, WapdroidServiceManager.class);
-		i.setAction(WAKE_SERVICE);
-		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
-		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-		mWifiIsEnabled = mWifiManager.isWifiEnabled();
-		// set up to record connected cells
+		Log.v("WAPPY","on start new");
+		mWifiState = mWifiManager.getWifiState();
+		mWifiIsEnabled = (mWifiState == WifiManager.WIFI_STATE_ENABLED ? true : false);
 		if (mWifiIsEnabled) {
     		setWifiInfo(mWifiManager.getConnectionInfo());}
-		mPreferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		if (mPreferences.getBoolean(getString(R.string.key_notify), true)) {
 			CharSequence contentTitle = getString(R.string.scanning);
 		   	Notification notification = new Notification(R.drawable.scanning, contentTitle, System.currentTimeMillis());
 			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
 		   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
 			mNotificationManager.notify(NOTIFY_SCANNING, notification);}
-		mDbHelper = new WapdroidDbAdapter(this);
-		mDbHelper.open();
-		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		checkLocation(mTeleManager.getCellLocation());
 		if (mCID == -1) {
 			mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}
 		else {
-    		// if UI is bound, the service won't stop
-   			stopSelf();}}
+			// allow the device to sleep
+			releaseLock();}
+		return 0;}
+	
+    @Override
+    public void onCreate() {
+        super.onCreate();
+		IntentFilter intentfilter = new IntentFilter();
+		intentfilter.addAction(Intent.ACTION_SCREEN_OFF);
+		intentfilter.addAction(Intent.ACTION_SCREEN_ON);
+		intentfilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+		intentfilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+		registerReceiver(mReceiver, intentfilter);
+		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		Intent i = new Intent(this, BootReceiver.class);
+		i.setAction(WAKE_SERVICE);
+		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
+		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+		mPreferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+		mDbHelper = new WapdroidDbAdapter(this);
+		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);}
     
     @Override
     public void onDestroy() {
     	super.onDestroy();
-    	mNotificationManager.cancel(NOTIFY_SCANNING);
-    	if (mUIReceiver != null) {
-    		unregisterReceiver(mUIReceiver);
-    		mUIReceiver = null;}
-    	mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-    	if (mDbHelper != null) {
-    		mDbHelper.close();
-    		mDbHelper = null;}
-    	if (mPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
-    		/*
-    		 * adding a "0" option which disables self triggering to support crondroid
-    		 */
-    		int i = Integer.parseInt((String) mPreferences.getString(getString(R.string.key_interval), "0"));
-    		if (i > 0) {
-    			mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + i, mPendingIntent);}}
+		Log.v("WAPPY","on destroy");
+    	if (mReceiver != null) {
+    		unregisterReceiver(mReceiver);
+    		mReceiver = null;}}
+    
+    private void releaseLock() {
 		ManageWakeLocks.release();}
     
     private void checkLocation(CellLocation location) {
@@ -196,6 +200,7 @@ public class WapdroidService extends Service {
     	else {
     		mCID = -1;}
        	if (mCID > 0) {
+    		mDbHelper.open();
     		mMNC = mTeleManager.getNetworkOperatorName();
     		mMCC = mTeleManager.getNetworkCountryIso();
     		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
@@ -228,7 +233,8 @@ public class WapdroidService extends Service {
 					   		notification.defaults |= Notification.DEFAULT_LIGHTS;}
 					   	if (mPreferences.getBoolean(getString(R.string.key_ringtone), false)) {
 					   		notification.defaults |= Notification.DEFAULT_SOUND;}
-						mNotificationManager.notify(NOTIFY_ID, notification);}}}}}
+						mNotificationManager.notify(NOTIFY_ID, notification);}}}
+	    	mDbHelper.close();}}
     
     private void setWifiInfo(WifiInfo info) {
 		mSSID = info.getSSID();
@@ -252,4 +258,6 @@ public class WapdroidService extends Service {
 	
 	private void wifiChanged() {
 		if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null) && (mCID > 0) && (mDbHelper != null)) {
-	    	updateRange();}}}
+			mDbHelper.open();
+	    	updateRange();
+	    	mDbHelper.close();}}}
