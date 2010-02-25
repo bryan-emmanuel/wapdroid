@@ -111,7 +111,7 @@ public class WapdroidUI extends Activity {
             Button donate = (Button) dialog.findViewById(R.id.button_donate);
             donate.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
-					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.bryanemmanuel.com?wapdroid")));}});
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.piusvelte.com?wapdroid")));}});
             dialog.show();
     		return true;}
         return super.onOptionsItemSelected(item);}
@@ -122,7 +122,7 @@ public class WapdroidUI extends Activity {
     	if (mWifiReceiver != null) {
     		unregisterReceiver(mWifiReceiver);
     		mWifiReceiver = null;}
-    	releaseService(false);}
+    	releaseService();}
     
     @Override
     public void onResume() {
@@ -142,15 +142,16 @@ public class WapdroidUI extends Activity {
         SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		boolean enabled = prefs.getBoolean(getString(R.string.key_manageWifi), true);
 		if (enabled) {
-			startService(new Intent(this, WapdroidService.class));
 	    	field_CID.setText(getString(R.string.scanning));
 	    	field_MNC.setText(getString(R.string.scanning));
 	    	field_MCC.setText(getString(R.string.scanning));
+			startService(new Intent(this, WapdroidService.class));
 			if (mWapdroidServiceConnection == null) {
 				mWapdroidServiceConnection = new WapdroidServiceConnection();
 				bindService(new Intent(this, WapdroidService.class), mWapdroidServiceConnection, Context.BIND_AUTO_CREATE);}}
 		else {
-			releaseService(true);
+			releaseService();
+			stopService(new Intent(this, WapdroidService.class));
 	    	field_CID.setText(getString(R.string.label_disabled));
 	    	field_MNC.setText(getString(R.string.label_disabled));
 	    	field_MCC.setText(getString(R.string.label_disabled));}}
@@ -174,7 +175,7 @@ public class WapdroidUI extends Activity {
 			label_wifiBSSID.setText("");
 			field_wifiBSSID.setText("");}}
 	
-	private void releaseService(boolean kill) {
+	private void releaseService() {
 		if (mWapdroidServiceConnection != null) {
 			if (mWapdroidService != null) {
 				try {
@@ -182,9 +183,7 @@ public class WapdroidUI extends Activity {
 				catch (RemoteException e) {}
 				mWapdroidService = null;}
 			unbindService(mWapdroidServiceConnection);
-			mWapdroidServiceConnection = null;}
-		if (kill) {
-			stopService(new Intent(this, WapdroidService.class));}}
+			mWapdroidServiceConnection = null;}}
 	
 	private void setWifiInfo(WifiInfo info) {
 		mSSID = info.getSSID();

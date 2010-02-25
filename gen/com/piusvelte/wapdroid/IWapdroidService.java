@@ -51,6 +51,23 @@ this.setCallback(_arg0);
 reply.writeNoException();
 return true;
 }
+case TRANSACTION_updatePreferences:
+{
+data.enforceInterface(DESCRIPTOR);
+int _arg0;
+_arg0 = data.readInt();
+boolean _arg1;
+_arg1 = (0!=data.readInt());
+boolean _arg2;
+_arg2 = (0!=data.readInt());
+boolean _arg3;
+_arg3 = (0!=data.readInt());
+boolean _arg4;
+_arg4 = (0!=data.readInt());
+this.updatePreferences(_arg0, _arg1, _arg2, _arg3, _arg4);
+reply.writeNoException();
+return true;
+}
 }
 return super.onTransact(code, data, reply, flags);
 }
@@ -84,8 +101,29 @@ _reply.recycle();
 _data.recycle();
 }
 }
+public void updatePreferences(int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeInt(interval);
+_data.writeInt(((notify)?(1):(0)));
+_data.writeInt(((vibrate)?(1):(0)));
+_data.writeInt(((led)?(1):(0)));
+_data.writeInt(((ringtone)?(1):(0)));
+mRemote.transact(Stub.TRANSACTION_updatePreferences, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
 }
 static final int TRANSACTION_setCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_updatePreferences = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
 }
 public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException;
+public void updatePreferences(int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException;
 }

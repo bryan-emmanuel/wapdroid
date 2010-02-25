@@ -42,7 +42,6 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
@@ -54,8 +53,8 @@ public class WapdroidService extends Service {
 	private String mSSID = null, mBSSID, mMNC = null, mMCC = null;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
-	private int mCID = -1, mWifiState;
-	private boolean mWifiIsEnabled = false;
+	private int mCID = -1, mWifiState, mPrefInterval = 0;
+	private boolean mWifiIsEnabled = false, mPrefNotify = false, mPrefVibrate = false, mPrefLed = false, mPrefRingtone = false;
 	private IWapdroidUI mWapdroidUI;
 	private SharedPreferences mPreferences;
 	private AlarmManager mAlarmManager;
@@ -70,7 +69,24 @@ public class WapdroidService extends Service {
 		        		mWapdroidUI.setCellLocation((String) "" + mCID, (String) "" + mMNC, (String) "" + mMCC);}
 	        		catch (RemoteException e) {}}}
 			else {
-				mWapdroidUI = null;}}};
+				mWapdroidUI = null;}}
+
+		public void updatePreferences(int interval, boolean notify,
+				boolean vibrate, boolean led, boolean ringtone)
+				throws RemoteException {
+			mPrefInterval = interval;
+			if (mPrefNotify && !notify) {
+				mNotificationManager.cancel(NOTIFY_SCANNING);}
+			else if (!mPrefNotify && notify) {
+				CharSequence contentTitle = getString(R.string.scanning);
+			   	Notification notification = new Notification(R.drawable.scanning, contentTitle, System.currentTimeMillis());
+				PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
+			   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
+				mNotificationManager.notify(NOTIFY_SCANNING, notification);}
+			mPrefNotify = notify;
+			mPrefVibrate = vibrate;
+			mPrefLed = led;
+			mPrefRingtone = ringtone;}};
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
@@ -83,17 +99,13 @@ public class WapdroidService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-				Log.v("WAPPY","screen on received");
 				// kill the alarm while the screen is on
 		    	mAlarmManager.cancel(mPendingIntent);
 				context.startService(new Intent(context, WapdroidService.class));}
 			else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-				Log.v("WAPPY","screen off received");
 				// set the alarm
-		    	if (mPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
-		    		int i = Integer.parseInt((String) mPreferences.getString(getString(R.string.key_interval), "0"));
-		    		if (i > 0) {
-		    			mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + i, mPendingIntent);}}}
+	    		if (mPrefInterval > 0) {
+	    			mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mPrefInterval, mPendingIntent);}}
 			else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 				// save the state as it's checked elsewhere, like the phonestatelistener
 				int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
@@ -129,18 +141,20 @@ public class WapdroidService extends Service {
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		Log.v("WAPPY","on start old");
-		}
+		init();}
 	
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStart(intent, startId);
-		Log.v("WAPPY","on start new");
+		init();
+		return 0;}
+	
+	private void init() {
 		mWifiState = mWifiManager.getWifiState();
 		mWifiIsEnabled = (mWifiState == WifiManager.WIFI_STATE_ENABLED ? true : false);
 		if (mWifiIsEnabled) {
     		setWifiInfo(mWifiManager.getConnectionInfo());}
-		if (mPreferences.getBoolean(getString(R.string.key_notify), true)) {
+		if (mPrefNotify) {
 			CharSequence contentTitle = getString(R.string.scanning);
 		   	Notification notification = new Notification(R.drawable.scanning, contentTitle, System.currentTimeMillis());
 			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
@@ -151,8 +165,7 @@ public class WapdroidService extends Service {
 			mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}
 		else {
 			// allow the device to sleep
-			releaseLock();}
-		return 0;}
+			releaseLock();}}
 	
     @Override
     public void onCreate() {
@@ -170,13 +183,19 @@ public class WapdroidService extends Service {
 		mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mPreferences = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+		// initialize preferences, updated by UI
+		mPrefInterval = Integer.parseInt((String) mPreferences.getString(getString(R.string.key_interval), "0"));
+		mPrefNotify = mPreferences.getBoolean(getString(R.string.key_notify), false);
+		if (mPrefNotify) {
+			mPrefVibrate = mPreferences.getBoolean(getString(R.string.key_vibrate), false);
+			mPrefLed = mPreferences.getBoolean(getString(R.string.key_led), false);
+			mPrefRingtone = mPreferences.getBoolean(getString(R.string.key_ringtone), false);}
 		mDbHelper = new WapdroidDbAdapter(this);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);}
     
     @Override
     public void onDestroy() {
     	super.onDestroy();
-		Log.v("WAPPY","on destroy");
     	if (mReceiver != null) {
     		unregisterReceiver(mReceiver);
     		mReceiver = null;}}
@@ -221,17 +240,17 @@ public class WapdroidService extends Service {
 								mInRange = mDbHelper.cellInRange(cid);}}}
 				if ((mInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
 					mWifiManager.setWifiEnabled(mInRange);
-					if (mPreferences.getBoolean(getString(R.string.key_notify), true)) {
+					if (mPrefNotify) {
 						CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(mInRange ? R.string.label_enabled : R.string.label_disabled);
 					   	Notification notification = new Notification((mInRange ? R.drawable.statuson : R.drawable.status), contentTitle, System.currentTimeMillis());
 					   	Intent i = new Intent(getBaseContext(), WapdroidService.class);
 						PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
 					   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-					   	if (mPreferences.getBoolean(getString(R.string.key_vibrate), false)) {
+					   	if (mPrefVibrate) {
 					   		notification.defaults |= Notification.DEFAULT_VIBRATE;}
-					   	if (mPreferences.getBoolean(getString(R.string.key_led), false)) {
+					   	if (mPrefLed) {
 					   		notification.defaults |= Notification.DEFAULT_LIGHTS;}
-					   	if (mPreferences.getBoolean(getString(R.string.key_ringtone), false)) {
+					   	if (mPrefRingtone) {
 					   		notification.defaults |= Notification.DEFAULT_SOUND;}
 						mNotificationManager.notify(NOTIFY_ID, notification);}}}
 	    	mDbHelper.close();}}

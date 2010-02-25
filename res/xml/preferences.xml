@@ -14,7 +14,7 @@
         <CheckBoxPreference
                 android:key="@string/key_notify"
                 android:title="@string/label_notify"
-                android:defaultValue="true"/>
+                android:defaultValue="false"/>
         <CheckBoxPreference
                 android:key="@string/key_vibrate"
                 android:title="@string/label_vibrate"
