@@ -15,9 +15,9 @@ public final class R {
     public static final class attr {
     }
     public static final class color {
-        public static final int blue=0x7f060001;
-        public static final int bluedk=0x7f060002;
-        public static final int green=0x7f060000;
+        public static final int background=0x7f060000;
+        public static final int text_primary=0x7f060001;
+        public static final int text_secondary=0x7f060002;
     }
     public static final class drawable {
         public static final int field=0x7f020000;

@@ -2,7 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:background="@color/green"
+	android:background="@color/background"
 	android:padding="4dip">
 	<TableLayout android:background="@drawable/field"
 		android:layout_width="wrap_content"
@@ -12,13 +12,12 @@
 		<TableRow>
 			<TextView android:textStyle="bold"
 				android:id="@+id/network_row_SSID"
-				android:textColor="@color/blue"
+				android:textColor="@color/text_primary"
 				android:textSize="18dip"/>
 	    </TableRow>
 		<TableRow>
 			<TextView android:id="@+id/network_row_BSSID"
-				android:textColor="@color/bluedk"
-				android:color="@color/blue"
+				android:textColor="@color/text_secondary"
 				android:textSize="14dip"/>
 	    </TableRow>
 	</TableLayout>

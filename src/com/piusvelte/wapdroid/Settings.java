@@ -22,20 +22,16 @@ package com.piusvelte.wapdroid;
 
 import com.piusvelte.wapdroid.R;
 
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceActivity;
 
 public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
-	private int mInterval = 0;
-	private boolean mManageWifi = false, mNotify = false, mVibrate = false, mLed = false, mRingtone = false;
-	SharedPreferences mSharedPreferences;
+	private SharedPreferences mSharedPreferences;
+	private ServiceConn mServiceConn;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -47,36 +43,32 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
     @Override
     public void onPause() {
     	super.onPause();
-    	mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);}
+    	mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+		if (mServiceConn != null) {
+			if (mServiceConn.mIService != null) {
+				mServiceConn.mIService = null;}
+			unbindService(mServiceConn);
+			mServiceConn = null;}}
     
 	@Override
     public void onResume() {
     	super.onResume();
-        mSharedPreferences.registerOnSharedPreferenceChangeListener(this);}
+        mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
+        if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), true) && (mServiceConn == null)) {
+			mServiceConn = new ServiceConn();
+			bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}}
 
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
-			mManageWifi = sharedPreferences.getBoolean(key, true);
-			if (mManageWifi) {
+			if (sharedPreferences.getBoolean(key, true)) {
 				startService(new Intent(this, WapdroidService.class));}
 			else {
 				stopService(new Intent(this, WapdroidService.class));}}
 		else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
-			mInterval = Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "0"));
-			mNotify = sharedPreferences.getBoolean(getString(R.string.key_notify), true);
-			mVibrate = mNotify ? sharedPreferences.getBoolean(getString(R.string.key_vibrate), false) : false;
-			mLed = mNotify ? sharedPreferences.getBoolean(getString(R.string.key_led), false) : false;
-			mRingtone = mNotify ? sharedPreferences.getBoolean(getString(R.string.key_ringtone), false) : false;
-			WapdroidServiceConnection mWapdroidServiceConnection = new WapdroidServiceConnection();
-			bindService(new Intent(this, WapdroidService.class), mWapdroidServiceConnection, BIND_AUTO_CREATE);
-			unbindService(mWapdroidServiceConnection);
-			mWapdroidServiceConnection = null;}}
-
-	public class WapdroidServiceConnection implements ServiceConnection {
-		public void onServiceConnected(ComponentName className, IBinder boundService) {
-			IWapdroidService service = IWapdroidService.Stub.asInterface((IBinder) boundService);
 			try {
-				service.updatePreferences(mInterval, mNotify, mVibrate, mLed, mRingtone);}
-			catch (RemoteException e) {}}
-		
-		public void onServiceDisconnected(ComponentName className) {}}}
+				mServiceConn.mIService.updatePreferences(Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "0")),
+						sharedPreferences.getBoolean(getString(R.string.key_notify), true),
+						sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
+						sharedPreferences.getBoolean(getString(R.string.key_led), false),
+						sharedPreferences.getBoolean(getString(R.string.key_ringtone), false));}
+			catch (RemoteException e) {}}}}

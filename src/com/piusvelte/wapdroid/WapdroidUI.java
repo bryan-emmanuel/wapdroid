@@ -29,14 +29,12 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -57,8 +55,7 @@ public class WapdroidUI extends Activity {
 	private WifiManager mWifiManager;
 	private int mWifiState;
 	private String mSSID = null, mBSSID = null;
-	private WapdroidServiceConnection mWapdroidServiceConnection;
-	private IWapdroidService mWapdroidService;
+	private ServiceConn mServiceConn;
 	private static final String WIFI_CHANGE = WifiManager.WIFI_STATE_CHANGED_ACTION;
 	private static final String NETWORK_CHANGE = WifiManager.NETWORK_STATE_CHANGED_ACTION;
 	private static final int mWifiDisabling = WifiManager.WIFI_STATE_DISABLING;
@@ -79,7 +76,7 @@ public class WapdroidUI extends Activity {
     	field_wifiState = (TextView) findViewById(R.id.field_wifiState);
     	label_wifiBSSID = (TextView) findViewById(R.id.label_wifiBSSID);
     	field_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
-		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);}
+		mWifiManager = (WifiManager) getSystemService(WIFI_SERVICE);}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -146,9 +143,10 @@ public class WapdroidUI extends Activity {
 	    	field_MNC.setText(getString(R.string.scanning));
 	    	field_MCC.setText(getString(R.string.scanning));
 			startService(new Intent(this, WapdroidService.class));
-			if (mWapdroidServiceConnection == null) {
-				mWapdroidServiceConnection = new WapdroidServiceConnection();
-				bindService(new Intent(this, WapdroidService.class), mWapdroidServiceConnection, Context.BIND_AUTO_CREATE);}}
+			if (mServiceConn == null) {
+				mServiceConn = new ServiceConn();
+				mServiceConn.setUIStub(mWapdroidUI);
+				bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}}
 		else {
 			releaseService();
 			stopService(new Intent(this, WapdroidService.class));
@@ -176,14 +174,14 @@ public class WapdroidUI extends Activity {
 			field_wifiBSSID.setText("");}}
 	
 	private void releaseService() {
-		if (mWapdroidServiceConnection != null) {
-			if (mWapdroidService != null) {
+		if (mServiceConn != null) {
+			if (mServiceConn.mIService != null) {
 				try {
-					mWapdroidService.setCallback(null);}
+					mServiceConn.mIService.setCallback(null);}
 				catch (RemoteException e) {}
-				mWapdroidService = null;}
-			unbindService(mWapdroidServiceConnection);
-			mWapdroidServiceConnection = null;}}
+				mServiceConn.mIService = null;}
+			unbindService(mServiceConn);
+			mServiceConn = null;}}
 	
 	private void setWifiInfo(WifiInfo info) {
 		mSSID = info.getSSID();
@@ -219,14 +217,4 @@ public class WapdroidUI extends Activity {
 	    	field_MCC.setText(mMCC);}
 
 		public void newCell(String cell) throws RemoteException {
-			Toast.makeText(WapdroidUI.this, cell, Toast.LENGTH_SHORT).show();}};
-    
-	public class WapdroidServiceConnection implements ServiceConnection {
-		public void onServiceConnected(ComponentName className, IBinder boundService) {
-			mWapdroidService = IWapdroidService.Stub.asInterface((IBinder) boundService);
-			try {
-				mWapdroidService.setCallback(mWapdroidUI.asBinder());}
-			catch (RemoteException e) {}}
-		
-		public void onServiceDisconnected(ComponentName className) {
-			mWapdroidService = null;}}}
+			Toast.makeText(WapdroidUI.this, cell, Toast.LENGTH_SHORT).show();}};}

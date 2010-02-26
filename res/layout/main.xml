@@ -2,7 +2,7 @@
 <TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
-	android:background="@color/green"
+	android:background="@color/background"
 	android:padding="4dip"
 	android:stretchColumns="0">
 	<TableRow>
@@ -10,22 +10,22 @@
 			android:padding="16dip"
 			android:stretchColumns="0">
 			<TableRow>
-				<TextView android:textColor="@color/blue"
+				<TextView android:textColor="@color/text_primary"
 					android:textSize="18dip"
 					android:text="@string/label_WIFI"/>
 				<TextView android:id="@+id/field_wifiState"
 					android:textStyle="bold"
-			    	android:textColor="@color/blue"
+			    	android:textColor="@color/text_primary"
 					android:gravity="right"
 					android:textSize="18dip"/>
 		    </TableRow>
 			<TableRow>
 				<TextView android:id="@+id/label_wifiBSSID"
-			    	android:textColor="@color/bluedk"
+			    	android:textColor="@color/text_secondary"
 					android:textSize="14dip"
 					android:text="@string/label_CID"/>
 				<TextView android:id="@+id/field_wifiBSSID"
-			    	android:textColor="@color/bluedk"
+			    	android:textColor="@color/text_secondary"
 					android:gravity="right"
 					android:textSize="14dip"/>
 			</TableRow>
@@ -37,34 +37,34 @@
 			android:stretchColumns="0">
 			<TableRow>
 				<TextView android:id="@+id/label_CID"
-			    	android:textColor="@color/blue"
+			    	android:textColor="@color/text_primary"
 					android:textSize="18dip"
 					android:text="@string/label_CID"/>
 				<TextView android:id="@+id/field_CID"
 					android:textStyle="bold"
-			    	android:textColor="@color/blue"
+			    	android:textColor="@color/text_primary"
 					android:gravity="right"
 					android:textSize="18dip"
 					android:text="@string/scanning"/>
 		    </TableRow>
 			<TableRow>
 				<TextView android:id="@+id/label_MNC"
-			    	android:textColor="@color/bluedk"
+			    	android:textColor="@color/text_secondary"
 					android:textSize="14dip"
 					android:text="@string/label_MNC"/>
 				<TextView android:id="@+id/field_MNC"
-			    	android:textColor="@color/bluedk"
+			    	android:textColor="@color/text_secondary"
 					android:gravity="right"
 					android:textSize="14dip"
 					android:text="@string/scanning"/>
 		    </TableRow>
 			<TableRow>
 				<TextView android:id="@+id/label_MCC"
-			    	android:textColor="@color/bluedk"
+			    	android:textColor="@color/text_secondary"
 					android:textSize="14dip"
 					android:text="@string/label_MCC"/>
 				<TextView android:id="@+id/field_MCC"
-			    	android:textColor="@color/bluedk"
+			    	android:textColor="@color/text_secondary"
 					android:gravity="right"
 					android:textSize="14dip"
 					android:text="@string/scanning"/>

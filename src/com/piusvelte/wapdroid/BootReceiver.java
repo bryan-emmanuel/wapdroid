@@ -34,8 +34,5 @@ public class BootReceiver extends BroadcastReceiver {
 				ManageWakeLocks.acquire(context);
 				context.startService(new Intent(context, WapdroidService.class));}}
 		else if (intent.getAction().equals(WapdroidService.WAKE_SERVICE)) {
-			/* 
-			 * don't check key_manageWifi, as UI will stop the alarm through the Service, if appropriate
-			 */
 			ManageWakeLocks.acquire(context);
 			context.startService(new Intent(context, WapdroidService.class));}}}
