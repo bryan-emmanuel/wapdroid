@@ -8,13 +8,15 @@ public class ManageWakeLocks {
 	private static final String TAG = "WapdroidWakeLock";
 	private static final String POWER_SERVICE = Context.POWER_SERVICE;
 	private static WakeLock sWakeLock;
+	static boolean hasLock() {
+		return (sWakeLock != null);}
 	static void acquire(Context context) {
-		if (sWakeLock != null) {
+		if (hasLock()) {
 			sWakeLock.release();}
 		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
 		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
 		sWakeLock.acquire();}
 	static void release() {
-		if (sWakeLock != null) {
+		if (hasLock()) {
 			sWakeLock.release();
 			sWakeLock = null;}}}

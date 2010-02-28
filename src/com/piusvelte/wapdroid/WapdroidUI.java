@@ -51,10 +51,10 @@ public class WapdroidUI extends Activity {
 	public static final int ABOUT_ID = Menu.FIRST + 3;
 	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID, label_wifiBSSID;
 	private boolean mWifiIsEnabled = false;
-	private WapdroidWifiReceiver mWifiReceiver = null;
+	private WapdroidWifiReceiver mWifiReceiver;
 	private WifiManager mWifiManager;
 	private int mWifiState;
-	private String mSSID = null, mBSSID = null;
+	private String mSSID, mBSSID;
 	private ServiceConn mServiceConn;
 	private static final String WIFI_CHANGE = WifiManager.WIFI_STATE_CHANGED_ACTION;
 	private static final String NETWORK_CHANGE = WifiManager.NETWORK_STATE_CHANGED_ACTION;
