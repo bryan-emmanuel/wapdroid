@@ -141,7 +141,7 @@ public class WapdroidService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		super.onStart(intent, startId);
 		init();
-		return 0;}
+		return START_STICKY;}
 	
 	private void init() {
 		/*
