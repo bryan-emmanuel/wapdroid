@@ -87,7 +87,14 @@ public class WapdroidService extends Service {
 			mNotify = notify;
 			mVibrate = vibrate;
 			mLed = led;
-			mRingtone = ringtone;}};
+			mRingtone = ringtone;}
+		
+		public int[] getCells() {
+			int[] cells = new int[mNeighboringCells.size() + 1];
+			cells[0] = mCID;
+			for (NeighboringCellInfo n : mNeighboringCells) {
+				cells[cells.length] = n.getCid();}
+			return cells;}};
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {

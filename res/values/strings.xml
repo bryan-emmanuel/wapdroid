@@ -33,6 +33,10 @@
     <string name="menu_deleteNetwork">Forget network</string>
     <string name="menu_deleteCell">Forget cell</string>
     <string name="menu_refreshNetworks">Refresh networks</string>
+    <string name="menu_filter">Filter</string>
+    <string name="label_status">Status</string>
+    <string name="label_inrange">in range</string>
+    <string name="label_outrange">out of range</string>
     <string name="menu_refreshCells">Refresh cells</string>
     <string name="label_disabled">disabled</string>
     <string name="label_enabled">enabled</string>

@@ -68,6 +68,14 @@ this.updatePreferences(_arg0, _arg1, _arg2, _arg3, _arg4);
 reply.writeNoException();
 return true;
 }
+case TRANSACTION_getCells:
+{
+data.enforceInterface(DESCRIPTOR);
+int[] _result = this.getCells();
+reply.writeNoException();
+reply.writeIntArray(_result);
+return true;
+}
 }
 return super.onTransact(code, data, reply, flags);
 }
@@ -120,10 +128,29 @@ _reply.recycle();
 _data.recycle();
 }
 }
+public int[] getCells() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+int[] _result;
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_getCells, _data, _reply, 0);
+_reply.readException();
+_result = _reply.createIntArray();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+return _result;
+}
 }
 static final int TRANSACTION_setCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 static final int TRANSACTION_updatePreferences = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+static final int TRANSACTION_getCells = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
 }
 public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException;
 public void updatePreferences(int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException;
+public int[] getCells() throws android.os.RemoteException;
 }

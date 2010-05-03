@@ -22,9 +22,14 @@ package com.piusvelte.wapdroid;
 
 import com.piusvelte.wapdroid.R;
 
+import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.app.AlertDialog.Builder;
+import android.content.DialogInterface;
+import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,6 +44,10 @@ public class ManageCells extends ListActivity {
 	private int mNetwork;
     private static final int REFRESH_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
+    private static final int FILTER_ID = Menu.FIRST + 2;
+    private static int mFilter = 0;// default is All
+    private AlertDialog mAlertDialog;
+	private ServiceConn mServiceConn;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -50,30 +59,72 @@ public class ManageCells extends ListActivity {
         registerForContextMenu(getListView());
 		mDbHelper = new WapdroidDbAdapter(this);
 		mDbHelper.open();}
-	
-	@Override
-	protected void onDestroy() {
-		super.onDestroy();
+
+    @Override
+    public void onPause() {
+    	super.onPause();
     	if (mDbHelper != null) {
     		mDbHelper.close();
-    		mDbHelper = null;}}
+    		mDbHelper = null;}
+		if (mServiceConn != null) {
+			if (mServiceConn.mIService != null) {
+				mServiceConn.mIService = null;}
+			unbindService(mServiceConn);
+			mServiceConn = null;}}
 	
 	@Override
 	protected void onResume() {
 		super.onResume();
-		listCells();}
+		if (mServiceConn == null) {
+			mServiceConn = new ServiceConn();
+			bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}
+		try {
+			listCells();}
+		catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();}}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
     	boolean result = super.onCreateOptionsMenu(menu);
     	menu.add(0, REFRESH_ID, 0, R.string.menu_refreshCells).setIcon(android.R.drawable.ic_menu_rotate);
+    	menu.add(0, FILTER_ID, 0, R.string.menu_filter).setIcon(android.R.drawable.ic_menu_agenda);
     	return result;}
     
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
     	switch (item.getItemId()) {
     	case REFRESH_ID:
-    		listCells();
+    		try {
+				listCells();}
+    		catch (RemoteException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();}
+    		return true;
+    	case FILTER_ID:
+    		/* filter options */
+    		String[] filters = getResources().getStringArray(R.array.filter_values);
+    		int which = 0;
+    		for (int f = 0; f < filters.length; f++) {
+    			if (mFilter == Integer.parseInt(filters[f])) {
+    				which = f;
+    				break;}}
+    		Builder b = new AlertDialog.Builder(this);
+    		b.setSingleChoiceItems(
+    				R.array.filter_entries,
+    				which,
+    				new DialogInterface.OnClickListener() {
+    					@Override
+    					public void onClick(DialogInterface dialog, int which) {
+    						mAlertDialog.dismiss();
+    						mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
+    						try {
+								listCells();}
+    						catch (RemoteException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();}}});
+    		mAlertDialog = b.create();
+    		mAlertDialog.show();
     		return true;}
         return super.onOptionsItemSelected(item);}
     
@@ -89,7 +140,11 @@ public class ManageCells extends ListActivity {
 		case DELETE_ID:
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
 			mDbHelper.deleteCell(mNetwork, (int) info.id);
-			listCells();
+			try {
+				listCells();}
+			catch (RemoteException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();}
 			return true;}
 		return super.onContextItemSelected(item);}
     
@@ -97,12 +152,12 @@ public class ManageCells extends ListActivity {
     protected void onListItemClick(ListView list, View view, int position, long id) {
     	super.onListItemClick(list, view, position, id);}
    
-   public void listCells() {
-        Cursor c = mDbHelper.fetchCellsByNetwork(mNetwork);
+   public void listCells() throws RemoteException {
+        Cursor c = mDbHelper.fetchCellsByNetwork(mNetwork, mFilter, mServiceConn.mIService.getCells());
         startManagingCursor(c);
         SimpleCursorAdapter cells = new SimpleCursorAdapter(this,
         		R.layout.cell_row,
         		c,
-        		new String[]{WapdroidDbAdapter.CELLS_CID},
-        		new int[]{R.id.cell_row_CID});
+        		new String[]{WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.STATUS},
+        		new int[]{R.id.cell_row_CID, R.id.cell_row_status});
         setListAdapter(cells);}}

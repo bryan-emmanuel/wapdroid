@@ -38,6 +38,16 @@
 					android:gravity="right"
 					android:textSize="18dip"/>
 			</TableRow>
+			<TableRow>
+				<TextView android:textStyle="bold"
+					android:textColor="@color/text_primary"
+					android:textSize="18dip"
+					android:text="@string/label_status"/>
+				<TextView android:id="@+id/cell_row_status"
+					android:textColor="@color/text_primary"
+					android:gravity="right"
+					android:textSize="18dip"/>
+			</TableRow>
 		</TableLayout>
     </TableRow>
 </TableLayout>

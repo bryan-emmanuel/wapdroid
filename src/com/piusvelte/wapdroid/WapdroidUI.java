@@ -108,7 +108,7 @@ public class WapdroidUI extends Activity {
             Button donate = (Button) dialog.findViewById(R.id.button_donate);
             donate.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
-					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.piusvelte.com?wapdroid")));}});
+					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.piusvelte.com?p=wapdroid")));}});
             dialog.show();
     		return true;}
         return super.onOptionsItemSelected(item);}

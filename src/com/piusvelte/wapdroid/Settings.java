@@ -67,8 +67,8 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 		else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
 			try {
 				mServiceConn.mIService.updatePreferences(Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "0")),
-						sharedPreferences.getBoolean(getString(R.string.key_notify), true),
-						sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
-						sharedPreferences.getBoolean(getString(R.string.key_led), false),
-						sharedPreferences.getBoolean(getString(R.string.key_ringtone), false));}
+					sharedPreferences.getBoolean(getString(R.string.key_notify), true),
+					sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
+					sharedPreferences.getBoolean(getString(R.string.key_led), false),
+					sharedPreferences.getBoolean(getString(R.string.key_ringtone), false));}
 			catch (RemoteException e) {}}}}
