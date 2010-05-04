@@ -146,8 +146,14 @@ public class WapdroidDbAdapter {
     		cell = c.getInt(c.getColumnIndex(TABLE_ID));}
     	c.close();
     	return cell;}
+
+    public Cursor fetchCellsByNetwork(int network) {
+    	return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID + ", " + CELLS_CID
+    		+ " FROM " + WAPDROID_CELLS
+    		+ " WHERE " + CELLS_NETWORK + "=" + network
+    		+ " ORDER BY " + CELLS_CID, null);}
     
-    public Cursor fetchCellsByNetwork(int network, int filter, int[] cells) {
+    public Cursor fetchCellsByNetworkFiltered(int network, int filter, int[] cells) {
     	// filter using connected & neighboring cells
     	if ((filter == 1) && (cells != null)) {
     		String cells_query = "";
@@ -198,7 +204,7 @@ public class WapdroidDbAdapter {
 
     public void deleteCell(int network, int cell) {
 		mDb.delete(WAPDROID_CELLS, TABLE_ID + "=" + cell + " AND " + CELLS_NETWORK + "=" + network, null);
-		Cursor c = fetchCellsByNetwork(network, 0, null);// filter All
+		Cursor c = fetchCellsByNetwork(network);// filter All
     	if (c.getCount() == 0) {
     		mDb.delete(WAPDROID_NETWORKS, TABLE_ID + "=" + network, null);}
     	c.close();}}
