@@ -96,6 +96,13 @@ public class WapdroidDbAdapter {
         mDb.execSQL(CREATE_NETWORKS);
         mDb.execSQL(CREATE_CELLS);}
     
+    public String parseCellsQuery(int[] cells){
+		String query = "";
+		for (int c = 0; c < cells.length; c++) {
+			if (c != 0) query += " OR ";
+			query += CELLS_CID + "=" + Integer.toString(cells[c]);}  
+    	return query;}
+    
     public int fetchNetworkOrCreate(String SSID, String BSSID) {
     	int network = -1;
     	String ssid = "", bssid = "";
@@ -122,17 +129,14 @@ public class WapdroidDbAdapter {
 
     public Cursor fetchNetworks(int filter, int[] cells) {
     	// filter using connected & neighboring cells
-    	if ((filter == 1) && (cells != null)) {
-    		String cells_query = "";
-    		for (int c = 0; c < cells.length; c++) {
-    			if (c != 0) cells_query += " OR ";
-    			cells_query += CELLS_CID + "=" + cells[c];}    		
+    	if ((filter == 1) && (cells != null)) {   		
     		return mDb.rawQuery("SELECT " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID
     	    			+ " FROM " + WAPDROID_NETWORKS
-    	    			+ " WHERE IN(SELECT "
+    	    			+ " WHERE "
+    	    			+ TABLE_ID + " IN(SELECT "
     	    			+ CELLS_NETWORK + " FROM "
     	    			+ WAPDROID_CELLS + " WHERE "
-    	    			+ cells_query + ")", null);}
+    	    			+ parseCellsQuery(cells) + ")", null);}
     	else return mDb.rawQuery("SELECT " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID
     			+ " FROM " + WAPDROID_NETWORKS, null);}
     
@@ -155,15 +159,11 @@ public class WapdroidDbAdapter {
     
     public Cursor fetchCellsByNetworkFiltered(int network, int filter, int[] cells) {
     	// filter using connected & neighboring cells
-    	if ((filter == 1) && (cells != null)) {
-    		String cells_query = "";
-    		for (int c = 0; c < cells.length; c++) {
-    			if (c != 0) cells_query += " OR ";
-    			cells_query += CELLS_CID + "=" + cells[c];}    		
+    	if ((filter == 1) && (cells != null)) {   		
     		return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID + ", " + CELLS_CID
         			+ " FROM " + WAPDROID_CELLS
         			+ " WHERE " + CELLS_NETWORK + "=" + network
-        			+ " AND (" + cells_query + ")"
+        			+ " AND (" + parseCellsQuery(cells) + ")"
         			+ " ORDER BY " + CELLS_CID, null);}
     	else return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID + ", " + CELLS_CID
     			+ " FROM " + WAPDROID_CELLS
