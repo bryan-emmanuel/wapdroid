@@ -56,9 +56,7 @@ public class ManageCells extends ListActivity {
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 		    mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);}
-        registerForContextMenu(getListView());
-		mDbHelper = new WapdroidDbAdapter(this);
-		mDbHelper.open();}
+        registerForContextMenu(getListView());}
 
     @Override
     public void onPause() {
@@ -75,6 +73,9 @@ public class ManageCells extends ListActivity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		if (mDbHelper == null) {
+			mDbHelper = new WapdroidDbAdapter(this);
+			mDbHelper.open();}
 		if (mServiceConn == null) {
 			mServiceConn = new ServiceConn();
 			bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}
