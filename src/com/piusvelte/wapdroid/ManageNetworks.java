@@ -153,7 +153,7 @@ public class ManageNetworks extends ListActivity {
     
     public void listNetworks() throws RemoteException {
     	// filter results
-        Cursor c = mDbHelper.fetchNetworks(mFilter, mServiceConn.mIService.getCells());
+        Cursor c = mDbHelper.fetchNetworks(mFilter, mServiceConn.mIService.getCellsSet());
         startManagingCursor(c);
         SimpleCursorAdapter networks = new SimpleCursorAdapter(this,
         		R.layout.network_row,

@@ -153,7 +153,7 @@ public class ManageCells extends ListActivity {
     	super.onListItemClick(list, view, position, id);}
    
     public void listCells() throws RemoteException {
-        Cursor c = mDbHelper.fetchCellsByNetworkFiltered(mNetwork, mFilter, mServiceConn.mIService.getCells());
+        Cursor c = mDbHelper.fetchCellsByNetworkFilter(mNetwork, mFilter, mServiceConn.mIService.getCellsSet());
         startManagingCursor(c);
         SimpleCursorAdapter cells = new SimpleCursorAdapter(this,
         		R.layout.cell_row,

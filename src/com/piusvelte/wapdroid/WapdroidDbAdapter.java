@@ -36,21 +36,21 @@ public class WapdroidDbAdapter {
 	public static final String TABLE_ID = "_id";
 	public static final String TABLE_CODE = "code";
 	private static final String ID_TYPE = " integer primary key autoincrement, ";
-	public static final String WAPDROID_NETWORKS = "networks";
+	public static final String TABLE_NETWORKS = "networks";
 	public static final String NETWORKS_SSID = "SSID";
 	public static final String NETWORKS_BSSID = "BSSID";
-	public static final String WAPDROID_CELLS = "cells";
+	public static final String TABLE_CELLS = "cells";
 	public static final String CELLS_CID = "CID";
 	public static final String CELLS_NETWORK = "network";
 	public static final String STATUS = "status";
 	
 	private static final String CREATE_NETWORKS = "create table "
-		+ WAPDROID_NETWORKS + " ("
+		+ TABLE_NETWORKS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ NETWORKS_SSID + " text not null, "
 		+ NETWORKS_BSSID + " text not null);";
 	private static final String CREATE_CELLS = "create table "
-		+ WAPDROID_CELLS + " ("
+		+ TABLE_CELLS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ CELLS_CID + " integer, "
 		+ CELLS_NETWORK + " integer);";
@@ -72,14 +72,14 @@ public class WapdroidDbAdapter {
         public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
         	if (oldVersion < 2) {
         		// add BSSID
-    			database.execSQL(DROP + WAPDROID_NETWORKS + "_bkp;");
-    			database.execSQL("create temporary table " + WAPDROID_NETWORKS + "_bkp AS SELECT * FROM " + WAPDROID_NETWORKS + ";");
-    			database.execSQL(DROP + WAPDROID_NETWORKS + ";");
+    			database.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
+    			database.execSQL("create temporary table " + TABLE_NETWORKS + "_bkp AS SELECT * FROM " + TABLE_NETWORKS + ";");
+    			database.execSQL(DROP + TABLE_NETWORKS + ";");
     			database.execSQL(CREATE_NETWORKS);
-    			database.execSQL("INSERT INTO " + WAPDROID_NETWORKS + " SELECT "
+    			database.execSQL("INSERT INTO " + TABLE_NETWORKS + " SELECT "
         				+ TABLE_ID + ", " + NETWORKS_SSID + ", \"\""
-        				+ " FROM " + WAPDROID_NETWORKS + "_bkp;");
-    			database.execSQL(DROP + WAPDROID_NETWORKS + "_bkp;");}}}
+        				+ " FROM " + TABLE_NETWORKS + "_bkp;");
+    			database.execSQL(DROP + TABLE_NETWORKS + "_bkp;");}}}
     
     public WapdroidDbAdapter(Context context) {
         this.mContext = context;}
@@ -95,20 +95,13 @@ public class WapdroidDbAdapter {
     public void createTables() {
         mDb.execSQL(CREATE_NETWORKS);
         mDb.execSQL(CREATE_CELLS);}
-    
-    public String parseCellsQuery(int[] cells){
-		String query = "";
-		for (int c = 0; c < cells.length; c++) {
-			if (c != 0) query += " OR ";
-			query += CELLS_CID + "=" + Integer.toString(cells[c]);}  
-    	return query;}
-    
+        
     public int fetchNetworkOrCreate(String SSID, String BSSID) {
     	int network = -1;
     	String ssid = "", bssid = "";
 		ContentValues initialValues = new ContentValues();
 		// upgrading, BSSID may not be set yet
-    	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " FROM " + WAPDROID_NETWORKS + " WHERE " + NETWORKS_BSSID + "=\"" + BSSID + "\" OR (" + NETWORKS_SSID + "=\"" + SSID + "\" AND " + NETWORKS_BSSID + "=\"\")", null);
+    	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " FROM " + TABLE_NETWORKS + " WHERE " + NETWORKS_BSSID + "=\"" + BSSID + "\" OR (" + NETWORKS_SSID + "=\"" + SSID + "\" AND " + NETWORKS_BSSID + "=\"\")", null);
     	if (c.getCount() > 0) {
     		c.moveToFirst();
     		network = c.getInt(c.getColumnIndex(TABLE_ID));
@@ -116,34 +109,38 @@ public class WapdroidDbAdapter {
     		bssid = c.getString(c.getColumnIndex(NETWORKS_BSSID));
     		if (bssid.equals("")) {
         		initialValues.put(NETWORKS_BSSID, BSSID);
-        		mDb.update(WAPDROID_NETWORKS, initialValues, TABLE_ID + "=" + network, null);}
+        		mDb.update(TABLE_NETWORKS, initialValues, TABLE_ID + "=" + network, null);}
     		else if (!ssid.equals(SSID)) {
         		initialValues.put(NETWORKS_SSID, SSID);
-        		mDb.update(WAPDROID_NETWORKS, initialValues, TABLE_ID + "=" + network, null);}}
+        		mDb.update(TABLE_NETWORKS, initialValues, TABLE_ID + "=" + network, null);}}
     	else {
     		initialValues.put(NETWORKS_SSID, SSID);
     		initialValues.put(NETWORKS_BSSID, BSSID);
-    		network = (int) mDb.insert(WAPDROID_NETWORKS, null, initialValues);}
+    		network = (int) mDb.insert(TABLE_NETWORKS, null, initialValues);}
     	c.close();
     	return network;}
 
-    public Cursor fetchNetworks(int filter, int[] cells) {
-    	// filter using connected & neighboring cells
-    	if ((filter == 1) && (cells != null)) {   		
-    		return mDb.rawQuery("SELECT " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID
-    	    			+ " FROM " + WAPDROID_NETWORKS
-    	    			+ " WHERE "
-    	    			+ TABLE_ID + " IN(SELECT "
-    	    			+ CELLS_NETWORK + " FROM "
-    	    			+ WAPDROID_CELLS + " WHERE "
-    	    			+ parseCellsQuery(cells) + ")", null);}
-    	else return mDb.rawQuery("SELECT " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID
-    			+ " FROM " + WAPDROID_NETWORKS, null);}
+    public Cursor fetchNetworks(int filter, String set) {
+   		return mDb.rawQuery("SELECT " + TABLE_NETWORKS + "." + TABLE_ID + " AS " + TABLE_ID + ", "
+   			+ TABLE_NETWORKS + "." + NETWORKS_SSID + " AS " + NETWORKS_SSID + ", "
+   			+ TABLE_NETWORKS + "." + NETWORKS_BSSID + " AS " + NETWORKS_BSSID + ", "
+			+ "CASE WHEN (" + TABLE_NETWORKS + "." + TABLE_ID + " IN SELECT " + CELLS_CID
+    			+ " FROM " + TABLE_CELLS
+    			+ " WHERE " + CELLS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+       	    	+ " AND " + CELLS_CID + " IN " + set + ") THEN \""
+					+ mContext.getString(R.string.label_inrange)
+					+ "\" ELSE \"" + mContext.getString(R.string.label_inrange) + "\" END AS " + STATUS
+   	    	+ " FROM " + TABLE_NETWORKS
+   	    	+ ((filter == 1) ?
+   	    		(", " + TABLE_CELLS
+   	    		+ " WHERE " + TABLE_NETWORKS + "." + TABLE_ID + " = " + TABLE_CELLS + "." + TABLE_ID
+   	    		+ " AND " + TABLE_CELLS + "." + CELLS_CID + " IN " + set)
+   	    		: ""), null);}
     
     public int fetchCell(int CID, int network) {
     	int cell = -1;
     	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID
-    			+ " FROM " + WAPDROID_CELLS	+ " WHERE " + CELLS_CID + "=" + CID
+    			+ " FROM " + TABLE_CELLS	+ " WHERE " + CELLS_CID + "=" + CID
     			+ " AND " + CELLS_NETWORK + "=" + network, null);
     	if (c.getCount() > 0) {
     		c.moveToFirst();
@@ -152,22 +149,24 @@ public class WapdroidDbAdapter {
     	return cell;}
 
     public Cursor fetchCellsByNetwork(int network) {
-    	return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID + ", " + CELLS_CID
-    		+ " FROM " + WAPDROID_CELLS
+    	return mDb.rawQuery("SELECT " + TABLE_ID + ", " + CELLS_CID
+    		+ " FROM " + TABLE_CELLS
     		+ " WHERE " + CELLS_NETWORK + "=" + network
     		+ " ORDER BY " + CELLS_CID, null);}
     
-    public Cursor fetchCellsByNetworkFiltered(int network, int filter, int[] cells) {
-    	// filter using connected & neighboring cells
-    	if ((filter == 1) && (cells != null)) {   		
-    		return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID + ", " + CELLS_CID
-        			+ " FROM " + WAPDROID_CELLS
-        			+ " WHERE " + CELLS_NETWORK + "=" + network
-        			+ " AND (" + parseCellsQuery(cells) + ")"
-        			+ " ORDER BY " + CELLS_CID, null);}
-    	else return mDb.rawQuery("SELECT " + WAPDROID_CELLS + "." + TABLE_ID + ", " + CELLS_CID
-    			+ " FROM " + WAPDROID_CELLS
+    public Cursor fetchCellsByNetworkFilter(int network, int filter, String set) {
+    	return mDb.rawQuery("SELECT " + TABLE_CELLS + "." + TABLE_ID + ", " + CELLS_CID + ", "
+    			+ ((filter == 1) ?
+    				("CASE WHEN (" + CELLS_CID + " IN " + set + ") THEN \""
+    					+ mContext.getString(R.string.label_inrange)
+    					+ "\" ELSE \"" + mContext.getString(R.string.label_inrange) + "\" END AS ")
+    				: (mContext.getString(R.string.label_inrange) + " AS "))
+    			+ STATUS	
+    			+ " FROM " + TABLE_CELLS
     			+ " WHERE " + CELLS_NETWORK + "=" + network
+       	    	+ ((filter == 1) ?
+       	   	    		(" AND " + CELLS_CID + " IN " + set)
+       	   	    		: "")
     			+ " ORDER BY " + CELLS_CID, null);}
     
     public int updateCellRange(String SSID, String BSSID, int CID) {
@@ -177,7 +176,7 @@ public class WapdroidDbAdapter {
     		ContentValues initialValues = new ContentValues();
         	initialValues.put(CELLS_CID, CID);
         	initialValues.put(CELLS_NETWORK, network);
-    		cell = (int) mDb.insert(WAPDROID_CELLS, null, initialValues);}
+    		cell = (int) mDb.insert(TABLE_CELLS, null, initialValues);}
     	return network;}
     
     public void updateCellNeighbor(int network, int CID) {
@@ -186,25 +185,25 @@ public class WapdroidDbAdapter {
     		ContentValues initialValues = new ContentValues();
         	initialValues.put(CELLS_CID, CID);
         	initialValues.put(CELLS_NETWORK, network);
-    		cell = (int) mDb.insert(WAPDROID_CELLS, null, initialValues);}}
+    		cell = (int) mDb.insert(TABLE_CELLS, null, initialValues);}}
     
     public boolean cellInRange(int CID) {
     	boolean inRange = false;
     	Cursor c = mDb.rawQuery("SELECT " + TABLE_ID
 				+ ", " + CELLS_NETWORK
-				+ " FROM " + WAPDROID_CELLS
+				+ " FROM " + TABLE_CELLS
 				+ " WHERE " + CELLS_CID + "=" + CID, null);;
    		inRange = (c.getCount() > 0);
 	    c.close();
     	return inRange;}
     
 	public void deleteNetwork(int network) {
-		mDb.delete(WAPDROID_CELLS, CELLS_NETWORK + "=" + network, null);
-		mDb.delete(WAPDROID_NETWORKS, TABLE_ID + "=" + network, null);}
+		mDb.delete(TABLE_CELLS, CELLS_NETWORK + "=" + network, null);
+		mDb.delete(TABLE_NETWORKS, TABLE_ID + "=" + network, null);}
 
     public void deleteCell(int network, int cell) {
-		mDb.delete(WAPDROID_CELLS, TABLE_ID + "=" + cell + " AND " + CELLS_NETWORK + "=" + network, null);
+		mDb.delete(TABLE_CELLS, TABLE_ID + "=" + cell + " AND " + CELLS_NETWORK + "=" + network, null);
 		Cursor c = fetchCellsByNetwork(network);// filter All
     	if (c.getCount() == 0) {
-    		mDb.delete(WAPDROID_NETWORKS, TABLE_ID + "=" + network, null);}
+    		mDb.delete(TABLE_NETWORKS, TABLE_ID + "=" + network, null);}
     	c.close();}}

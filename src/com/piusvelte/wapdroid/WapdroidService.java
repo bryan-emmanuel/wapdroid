@@ -89,12 +89,10 @@ public class WapdroidService extends Service {
 			mLed = led;
 			mRingtone = ringtone;}
 		
-		public int[] getCells() {
-			int[] cells = new int[mNeighboringCells.size() + 1];
-			cells[0] = mCID;
-			for (NeighboringCellInfo n : mNeighboringCells) {
-				cells[cells.length] = n.getCid();}
-			return cells;}};
+		public String getCellsSet() {
+			String set = "(" + Integer.toString(mCID) + "";
+			for (NeighboringCellInfo n : mNeighboringCells) set += "," + Integer.toString(n.getCid());
+			return set + ")";}};
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
