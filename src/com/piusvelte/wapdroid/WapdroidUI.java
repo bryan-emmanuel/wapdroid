@@ -150,9 +150,9 @@ public class WapdroidUI extends Activity {
 		else {
 			releaseService();
 			stopService(new Intent(this, WapdroidService.class));
-	    	field_CID.setText(getString(R.string.label_disabled));
-	    	field_MNC.setText(getString(R.string.label_disabled));
-	    	field_MCC.setText(getString(R.string.label_disabled));}}
+	    	field_CID.setText(getString(R.string.msg_service));
+	    	field_MNC.setText(getString(R.string.msg_service));
+	    	field_MCC.setText(getString(R.string.msg_service));}}
     
 	private void wifiChanged() {
 		if (mWifiIsEnabled) {

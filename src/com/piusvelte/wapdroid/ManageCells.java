@@ -27,6 +27,7 @@ import android.app.ListActivity;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -37,6 +38,7 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageCells extends ListActivity {
@@ -48,6 +50,7 @@ public class ManageCells extends ListActivity {
     private static int mFilter = 0;// default is All
     private AlertDialog mAlertDialog;
 	private ServiceConn mServiceConn;
+	private boolean serviceEnabled = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -56,7 +59,9 @@ public class ManageCells extends ListActivity {
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 		    mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);}
-        registerForContextMenu(getListView());}
+        registerForContextMenu(getListView());
+        SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
+        serviceEnabled = prefs.getBoolean(getString(R.string.key_manageWifi), true);}
 
     @Override
     public void onPause() {
@@ -66,19 +71,24 @@ public class ManageCells extends ListActivity {
     		mDbHelper = null;}
 		if (mServiceConn != null) {
 			if (mServiceConn.mIService != null) {
+				try {
+					mServiceConn.mIService.setCallback(null);}
+				catch (RemoteException e) {}
 				mServiceConn.mIService = null;}
 			unbindService(mServiceConn);
 			mServiceConn = null;}}
-	
+    
 	@Override
 	protected void onResume() {
 		super.onResume();
 		if (mDbHelper == null) {
 			mDbHelper = new WapdroidDbAdapter(this);
 			mDbHelper.open();}
-		if (mServiceConn == null) {
-			mServiceConn = new ServiceConn();
-			bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}
+		if (serviceEnabled) {
+			startService(new Intent(this, WapdroidService.class));
+			if (mServiceConn == null) {
+				mServiceConn = new ServiceConn();
+				bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}}
 		try {
 			listCells();}
 		catch (RemoteException e) {
@@ -119,6 +129,9 @@ public class ManageCells extends ListActivity {
     					public void onClick(DialogInterface dialog, int which) {
     						mAlertDialog.dismiss();
     						mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
+    						if ((mFilter != 0) && !serviceEnabled) {
+    							mFilter = 0;
+    							Toast.makeText(ManageCells.this, R.string.msg_service, Toast.LENGTH_SHORT).show();}
     						try {
 								listCells();}
     						catch (RemoteException e) {
@@ -154,7 +167,7 @@ public class ManageCells extends ListActivity {
     	super.onListItemClick(list, view, position, id);}
    
     public void listCells() throws RemoteException {
-        Cursor c = mDbHelper.fetchCellsByNetworkFilter(mNetwork, mFilter, mServiceConn.mIService.getCellsSet());
+        Cursor c = mDbHelper.fetchCellsByNetworkFilter(mNetwork, mFilter, (serviceEnabled ? mServiceConn.mIService.getCellsSet() : ""));
         startManagingCursor(c);
         SimpleCursorAdapter cells = new SimpleCursorAdapter(this,
         		R.layout.cell_row,

@@ -27,6 +27,7 @@ import android.app.ListActivity;
 import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.RemoteException;
@@ -37,6 +38,7 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
+import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageNetworks extends ListActivity {
@@ -47,12 +49,15 @@ public class ManageNetworks extends ListActivity {
     private static int mFilter = 0;// default is All
     private AlertDialog mAlertDialog;
 	private ServiceConn mServiceConn;
+	private boolean serviceEnabled = false;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.networks_list);
-        registerForContextMenu(getListView());}
+        registerForContextMenu(getListView());
+        SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
+        serviceEnabled = prefs.getBoolean(getString(R.string.key_manageWifi), true);}
 
     @Override
     public void onPause() {
@@ -62,6 +67,9 @@ public class ManageNetworks extends ListActivity {
     		mDbHelper = null;}
 		if (mServiceConn != null) {
 			if (mServiceConn.mIService != null) {
+				try {
+					mServiceConn.mIService.setCallback(null);}
+				catch (RemoteException e) {}
 				mServiceConn.mIService = null;}
 			unbindService(mServiceConn);
 			mServiceConn = null;}}
@@ -72,9 +80,11 @@ public class ManageNetworks extends ListActivity {
 		if (mDbHelper == null) {
 			mDbHelper = new WapdroidDbAdapter(this);
 			mDbHelper.open();}
-		if (mServiceConn == null) {
-			mServiceConn = new ServiceConn();
-			bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}
+		if (serviceEnabled) {
+			startService(new Intent(this, WapdroidService.class));
+			if (mServiceConn == null) {
+				mServiceConn = new ServiceConn();
+				bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}}
 		try {
 			listNetworks();}
 		catch (RemoteException e) {
@@ -115,6 +125,9 @@ public class ManageNetworks extends ListActivity {
     					public void onClick(DialogInterface dialog, int which) {
     						mAlertDialog.dismiss();
     						mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
+    						if ((mFilter != 0) && !serviceEnabled) {
+    							mFilter = 0;
+    							Toast.makeText(ManageNetworks.this, R.string.msg_service, Toast.LENGTH_SHORT).show();}
     						try {
 								listNetworks();}
     						catch (RemoteException e) {
@@ -154,7 +167,7 @@ public class ManageNetworks extends ListActivity {
     
     public void listNetworks() throws RemoteException {
     	// filter results
-        Cursor c = mDbHelper.fetchNetworks(mFilter, mServiceConn.mIService.getCellsSet());
+        Cursor c = mDbHelper.fetchNetworks(mFilter, (serviceEnabled ? mServiceConn.mIService.getCellsSet() : ""));
         startManagingCursor(c);
         SimpleCursorAdapter networks = new SimpleCursorAdapter(this,
         		R.layout.network_row,

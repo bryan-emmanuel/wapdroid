@@ -64,23 +64,23 @@ public class WapdroidDbAdapter {
         DatabaseHelper(Context context) {
             super(context, DATABASE_NAME, null, DATABASE_VERSION);}
         @Override
-        public void onCreate(SQLiteDatabase database) {
-            database.execSQL(CREATE_NETWORKS);
-            database.execSQL(CREATE_CELLS);}
+        public void onCreate(SQLiteDatabase db) {
+            db.execSQL(CREATE_NETWORKS);
+            db.execSQL(CREATE_CELLS);}
         
         @Override
-        public void onUpgrade(SQLiteDatabase database, int oldVersion, int newVersion) {
+        public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         	if (oldVersion < 2) {
         		// add BSSID
-    			database.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
-    			database.execSQL("create temporary table " + TABLE_NETWORKS + "_bkp AS SELECT * FROM " + TABLE_NETWORKS + ";");
-    			database.execSQL(DROP + TABLE_NETWORKS + ";");
-    			database.execSQL(CREATE_NETWORKS);
-    			database.execSQL("INSERT INTO " + TABLE_NETWORKS + " SELECT "
+    			db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
+    			db.execSQL("create temporary table " + TABLE_NETWORKS + "_bkp AS SELECT * FROM " + TABLE_NETWORKS + ";");
+    			db.execSQL(DROP + TABLE_NETWORKS + ";");
+    			db.execSQL(CREATE_NETWORKS);
+    			db.execSQL("INSERT INTO " + TABLE_NETWORKS + " SELECT "
         				+ TABLE_ID + ", " + NETWORKS_SSID + ", \"\""
         				+ " FROM " + TABLE_NETWORKS + "_bkp;");
-    			database.execSQL(DROP + TABLE_NETWORKS + "_bkp;");}}}
-    
+    			db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");}}}
+        
     public WapdroidDbAdapter(Context context) {
         this.mContext = context;}
     
@@ -121,21 +121,37 @@ public class WapdroidDbAdapter {
     	return network;}
 
     public Cursor fetchNetworks(int filter, String set) {
+    	android.util.Log.v("WAP","SELECT " + TABLE_NETWORKS + "." + TABLE_ID + " AS " + TABLE_ID + ", "
+   	   			+ TABLE_NETWORKS + "." + NETWORKS_SSID + " AS " + NETWORKS_SSID + ", "
+   	   			+ TABLE_NETWORKS + "." + NETWORKS_BSSID + " AS " + NETWORKS_BSSID + ", ");
+    	android.util.Log.v("WAP",
+   	   			"CASE WHEN " + TABLE_NETWORKS + "." + TABLE_ID
+   	   			+ " IN (SELECT " + CELLS_NETWORK
+   	   			+ " FROM " + TABLE_CELLS
+   	   			+ " WHERE " + CELLS_CID + " IN (" + set
+   	   			+ ")) THEN \"" + mContext.getString(R.string.label_inrange)
+   				+ "\" ELSE \"" + mContext.getString(R.string.label_outrange) + "\" END AS " + STATUS
+   	   	    	+ " FROM " + TABLE_NETWORKS
+   	   	    	+ ((filter == 1) ?
+   	   	    		(", " + TABLE_CELLS
+   	   	    		+ " WHERE " + TABLE_NETWORKS + "." + TABLE_ID + " = " + TABLE_CELLS + "." + TABLE_ID
+   	   	    		+ " AND " + TABLE_CELLS + "." + CELLS_CID + " IN " + set)
+   	   	    		: ""));
    		return mDb.rawQuery("SELECT " + TABLE_NETWORKS + "." + TABLE_ID + " AS " + TABLE_ID + ", "
-   			+ TABLE_NETWORKS + "." + NETWORKS_SSID + " AS " + NETWORKS_SSID + ", "
-   			+ TABLE_NETWORKS + "." + NETWORKS_BSSID + " AS " + NETWORKS_BSSID + ", "
-			+ "CASE WHEN (" + TABLE_NETWORKS + "." + TABLE_ID + " IN SELECT " + CELLS_CID
-    			+ " FROM " + TABLE_CELLS
-    			+ " WHERE " + CELLS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
-       	    	+ " AND " + CELLS_CID + " IN " + set + ") THEN \""
-					+ mContext.getString(R.string.label_inrange)
-					+ "\" ELSE \"" + mContext.getString(R.string.label_inrange) + "\" END AS " + STATUS
-   	    	+ " FROM " + TABLE_NETWORKS
-   	    	+ ((filter == 1) ?
-   	    		(", " + TABLE_CELLS
-   	    		+ " WHERE " + TABLE_NETWORKS + "." + TABLE_ID + " = " + TABLE_CELLS + "." + TABLE_ID
-   	    		+ " AND " + TABLE_CELLS + "." + CELLS_CID + " IN " + set)
-   	    		: ""), null);}
+   	   			+ TABLE_NETWORKS + "." + NETWORKS_SSID + " AS " + NETWORKS_SSID + ", "
+   	   			+ TABLE_NETWORKS + "." + NETWORKS_BSSID + " AS " + NETWORKS_BSSID + ", "
+   	   			+ "CASE WHEN " + TABLE_NETWORKS + "." + TABLE_ID
+   	   			+ " IN (SELECT " + CELLS_NETWORK
+   	   			+ " FROM " + TABLE_CELLS
+   	   			+ " WHERE " + CELLS_CID + " IN (" + set
+   	   			+ ")) THEN \"" + mContext.getString(R.string.label_inrange)
+   				+ "\" ELSE \"" + mContext.getString(R.string.label_outrange) + "\" END AS " + STATUS
+   	   	    	+ " FROM " + TABLE_NETWORKS
+   	   	    	+ ((filter == 1) ?
+   	   	    		(", " + TABLE_CELLS
+   	   	    		+ " WHERE " + TABLE_NETWORKS + "." + TABLE_ID + " = " + TABLE_CELLS + "." + TABLE_ID
+   	   	    		+ " AND " + TABLE_CELLS + "." + CELLS_CID + " IN (" + set + ")")
+   	   	    		: ""), null);}
     
     public int fetchCell(int CID, int network) {
     	int cell = -1;
@@ -157,15 +173,15 @@ public class WapdroidDbAdapter {
     public Cursor fetchCellsByNetworkFilter(int network, int filter, String set) {
     	return mDb.rawQuery("SELECT " + TABLE_CELLS + "." + TABLE_ID + ", " + CELLS_CID + ", "
     			+ ((filter == 1) ?
-    				("CASE WHEN (" + CELLS_CID + " IN " + set + ") THEN \""
+    				("CASE WHEN " + CELLS_CID + " IN (" + set + ") THEN \""
     					+ mContext.getString(R.string.label_inrange)
-    					+ "\" ELSE \"" + mContext.getString(R.string.label_inrange) + "\" END AS ")
+    					+ "\" ELSE \"" + mContext.getString(R.string.label_outrange) + "\" END AS ")
     				: (mContext.getString(R.string.label_inrange) + " AS "))
-    			+ STATUS	
+    			+ STATUS
     			+ " FROM " + TABLE_CELLS
     			+ " WHERE " + CELLS_NETWORK + "=" + network
        	    	+ ((filter == 1) ?
-       	   	    		(" AND " + CELLS_CID + " IN " + set)
+       	   	    		(" AND " + CELLS_CID + " IN (" + set + ")")
        	   	    		: "")
     			+ " ORDER BY " + CELLS_CID, null);}
     

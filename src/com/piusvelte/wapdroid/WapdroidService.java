@@ -90,9 +90,10 @@ public class WapdroidService extends Service {
 			mRingtone = ringtone;}
 		
 		public String getCellsSet() {
-			String set = "(" + Integer.toString(mCID) + "";
-			for (NeighboringCellInfo n : mNeighboringCells) set += "," + Integer.toString(n.getCid());
-			return set + ")";}};
+			String set = "'" + Integer.toString(mCID) + "'";
+			for (NeighboringCellInfo n : mNeighboringCells) set += ",'" + Integer.toString(n.getCid()) + "'";
+			android.util.Log.v("WAP",set);
+			return set;}};
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
