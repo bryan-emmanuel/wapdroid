@@ -20,17 +20,24 @@
 
 package com.piusvelte.wapdroid;
 
+import java.util.List;
+
 import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.AlertDialog.Builder;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.RemoteException;
+import android.telephony.CellLocation;
+import android.telephony.NeighboringCellInfo;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.telephony.gsm.GsmCellLocation;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -38,7 +45,6 @@ import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
-import android.widget.Toast;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageNetworks extends ListActivity {
@@ -48,43 +54,31 @@ public class ManageNetworks extends ListActivity {
     private static final int FILTER_ID = Menu.FIRST + 2;
     private static int mFilter = 0;// default is All
     private AlertDialog mAlertDialog;
-	private ServiceConn mServiceConn;
-	private boolean serviceEnabled = false;
+	private TelephonyManager mTeleManager;
+	private String mCellsSet = "";
+	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
+    	public void onCellLocationChanged(CellLocation location) {
+    		checkLocation(location);}};
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.networks_list);
         registerForContextMenu(getListView());
-        SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-        serviceEnabled = prefs.getBoolean(getString(R.string.key_manageWifi), true);}
-
+        mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+        mDbHelper = new WapdroidDbAdapter(this);}
+	
     @Override
     public void onPause() {
     	super.onPause();
-    	if (mDbHelper != null) {
-    		mDbHelper.close();
-    		mDbHelper = null;}
-		if (mServiceConn != null) {
-			if (mServiceConn.mIService != null) {
-				try {
-					mServiceConn.mIService.setCallback(null);}
-				catch (RemoteException e) {}
-				mServiceConn.mIService = null;}
-			unbindService(mServiceConn);
-			mServiceConn = null;}}
+   		mDbHelper.close();
+   		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);}
     
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (mDbHelper == null) {
-			mDbHelper = new WapdroidDbAdapter(this);
-			mDbHelper.open();}
-		if (serviceEnabled) {
-			startService(new Intent(this, WapdroidService.class));
-			if (mServiceConn == null) {
-				mServiceConn = new ServiceConn();
-				bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}}
+		mDbHelper.open();
+		checkLocation(mTeleManager.getCellLocation());
 		try {
 			listNetworks();}
 		catch (RemoteException e) {
@@ -125,9 +119,6 @@ public class ManageNetworks extends ListActivity {
     					public void onClick(DialogInterface dialog, int which) {
     						mAlertDialog.dismiss();
     						mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
-    						if ((mFilter != 0) && !serviceEnabled) {
-    							mFilter = 0;
-    							Toast.makeText(ManageNetworks.this, R.string.msg_service, Toast.LENGTH_SHORT).show();}
     						try {
 								listNetworks();}
     						catch (RemoteException e) {
@@ -167,11 +158,28 @@ public class ManageNetworks extends ListActivity {
     
     public void listNetworks() throws RemoteException {
     	// filter results
-        Cursor c = mDbHelper.fetchNetworks(mFilter, (serviceEnabled ? mServiceConn.mIService.getCellsSet() : ""));
+        Cursor c = mDbHelper.fetchNetworks(mFilter, mCellsSet);
         startManagingCursor(c);
         SimpleCursorAdapter networks = new SimpleCursorAdapter(this,
         		R.layout.network_row,
         		c,
         		new String[] {WapdroidDbAdapter.NETWORKS_SSID, WapdroidDbAdapter.NETWORKS_BSSID, WapdroidDbAdapter.STATUS},
         		new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status});
-        setListAdapter(networks);}}
+        setListAdapter(networks);}
+    
+    private void checkLocation(CellLocation location) {
+    	int cid = -1;
+   		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+   			cid = ((GsmCellLocation) location).getCid();}
+       	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+    		// check the phone type, cdma is not available before API 2.0, so use a wrapper
+       		try {
+       			cid = (new CdmaCellLocationWrapper(location)).getBaseStationId();}
+       		catch (Throwable t) {
+       			cid = -1;}}
+   		List<NeighboringCellInfo> neighboringCells = mTeleManager.getNeighboringCellInfo();
+   		if (cid > 0) {
+   			mCellsSet = "'" + Integer.toString(cid) + "'";
+   			if (!neighboringCells.isEmpty()) {
+   				for (NeighboringCellInfo n : neighboringCells) mCellsSet += ",'" + Integer.toString(n.getCid()) + "'";}}
+   		else mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}}

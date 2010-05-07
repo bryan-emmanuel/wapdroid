@@ -42,15 +42,6 @@ case INTERFACE_TRANSACTION:
 reply.writeString(DESCRIPTOR);
 return true;
 }
-case TRANSACTION_setCallback:
-{
-data.enforceInterface(DESCRIPTOR);
-android.os.IBinder _arg0;
-_arg0 = data.readStrongBinder();
-this.setCallback(_arg0);
-reply.writeNoException();
-return true;
-}
 case TRANSACTION_updatePreferences:
 {
 data.enforceInterface(DESCRIPTOR);
@@ -66,14 +57,6 @@ boolean _arg4;
 _arg4 = (0!=data.readInt());
 this.updatePreferences(_arg0, _arg1, _arg2, _arg3, _arg4);
 reply.writeNoException();
-return true;
-}
-case TRANSACTION_getCellsSet:
-{
-data.enforceInterface(DESCRIPTOR);
-java.lang.String _result = this.getCellsSet();
-reply.writeNoException();
-reply.writeString(_result);
 return true;
 }
 }
@@ -94,21 +77,6 @@ public java.lang.String getInterfaceDescriptor()
 {
 return DESCRIPTOR;
 }
-public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException
-{
-android.os.Parcel _data = android.os.Parcel.obtain();
-android.os.Parcel _reply = android.os.Parcel.obtain();
-try {
-_data.writeInterfaceToken(DESCRIPTOR);
-_data.writeStrongBinder(mWapdroidUIBinder);
-mRemote.transact(Stub.TRANSACTION_setCallback, _data, _reply, 0);
-_reply.readException();
-}
-finally {
-_reply.recycle();
-_data.recycle();
-}
-}
 public void updatePreferences(int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
@@ -128,29 +96,8 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public java.lang.String getCellsSet() throws android.os.RemoteException
-{
-android.os.Parcel _data = android.os.Parcel.obtain();
-android.os.Parcel _reply = android.os.Parcel.obtain();
-java.lang.String _result;
-try {
-_data.writeInterfaceToken(DESCRIPTOR);
-mRemote.transact(Stub.TRANSACTION_getCellsSet, _data, _reply, 0);
-_reply.readException();
-_result = _reply.readString();
 }
-finally {
-_reply.recycle();
-_data.recycle();
+static final int TRANSACTION_updatePreferences = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 }
-return _result;
-}
-}
-static final int TRANSACTION_setCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-static final int TRANSACTION_updatePreferences = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
-static final int TRANSACTION_getCellsSet = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
-}
-public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException;
 public void updatePreferences(int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException;
-public java.lang.String getCellsSet() throws android.os.RemoteException;
 }

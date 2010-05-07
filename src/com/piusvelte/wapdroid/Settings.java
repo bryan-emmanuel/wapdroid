@@ -44,25 +44,29 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
     public void onPause() {
     	super.onPause();
     	mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
-		if (mServiceConn != null) {
-			if (mServiceConn.mIService != null) {
-				mServiceConn.mIService = null;}
-			unbindService(mServiceConn);
-			mServiceConn = null;}}
+   		if (mServiceConn != null) releaseService();}
     
 	@Override
     public void onResume() {
     	super.onResume();
         mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
-        if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), true) && (mServiceConn == null)) {
-			mServiceConn = new ServiceConn();
-			bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}}
-
+        if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), true) && (mServiceConn == null)) captureService();}
+	
+	public void captureService() {
+    	mServiceConn = new ServiceConn();
+    	bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}
+	
+	public void releaseService() {
+   		unbindService(mServiceConn);
+   		mServiceConn = null;}
+	
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
 			if (sharedPreferences.getBoolean(key, true)) {
-				startService(new Intent(this, WapdroidService.class));}
+				startService(new Intent(this, WapdroidService.class));
+				captureService();}
 			else {
+				releaseService();
 				stopService(new Intent(this, WapdroidService.class));}}
 		else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
 			try {

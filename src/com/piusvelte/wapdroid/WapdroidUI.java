@@ -29,20 +29,21 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.SharedPreferences;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.os.RemoteException;
+import android.telephony.CellLocation;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
+import android.telephony.gsm.GsmCellLocation;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 public class WapdroidUI extends Activity {
 	public static final int MANAGE_ID = Menu.FIRST;
@@ -55,13 +56,17 @@ public class WapdroidUI extends Activity {
 	private WifiManager mWifiManager;
 	private int mWifiState;
 	private String mSSID, mBSSID;
-	private ServiceConn mServiceConn;
+	//private ServiceConn mServiceConn;
 	private static final String WIFI_CHANGE = WifiManager.WIFI_STATE_CHANGED_ACTION;
 	private static final String NETWORK_CHANGE = WifiManager.NETWORK_STATE_CHANGED_ACTION;
 	private static final int mWifiDisabling = WifiManager.WIFI_STATE_DISABLING;
 	private static final int mWifiEnabling = WifiManager.WIFI_STATE_ENABLING;
 	private static final int mWifiEnabled = WifiManager.WIFI_STATE_ENABLED;
 	private static final int mWifiUnknown = WifiManager.WIFI_STATE_UNKNOWN;
+	private TelephonyManager mTeleManager;
+	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
+    	public void onCellLocationChanged(CellLocation location) {
+    		checkLocation(location);}};
 		
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -70,13 +75,16 @@ public class WapdroidUI extends Activity {
          * manual control of wifi is enabled through the UI, but listen for changes made by the service
          */
         setContentView(R.layout.main);
-    	field_CID = (TextView) findViewById(R.id.field_CID);
-    	field_MNC = (TextView) findViewById(R.id.field_MNC);
-    	field_MCC = (TextView) findViewById(R.id.field_MCC);
-    	field_wifiState = (TextView) findViewById(R.id.field_wifiState);
-    	label_wifiBSSID = (TextView) findViewById(R.id.label_wifiBSSID);
-    	field_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
-		mWifiManager = (WifiManager) getSystemService(WIFI_SERVICE);}
+        field_CID = (TextView) findViewById(R.id.field_CID);
+		field_MNC = (TextView) findViewById(R.id.field_MNC);
+		field_MCC = (TextView) findViewById(R.id.field_MCC);
+		field_wifiState = (TextView) findViewById(R.id.field_wifiState);
+		field_wifiBSSID = (TextView) findViewById(R.id.label_wifiBSSID);
+		label_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
+		mWifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
+		mWifiReceiver = new WapdroidWifiReceiver();
+		//mServiceConn = new ServiceConn();
+		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -116,10 +124,9 @@ public class WapdroidUI extends Activity {
     @Override
     public void onPause() {
     	super.onPause();
-    	if (mWifiReceiver != null) {
-    		unregisterReceiver(mWifiReceiver);
-    		mWifiReceiver = null;}
-    	releaseService();}
+   		unregisterReceiver(mWifiReceiver);
+   		//if (mServiceConn.mIService != null) unbindService(mServiceConn);
+   		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);}
     
     @Override
     public void onResume() {
@@ -131,11 +138,13 @@ public class WapdroidUI extends Activity {
 		else {
 			clearWifiInfo();}
 		wifiChanged();
-    	if (mWifiReceiver == null) {
+    	//if (mWifiReceiver == null) {
     		IntentFilter intentfilter = new IntentFilter();
     		intentfilter.addAction(WIFI_CHANGE);
     		intentfilter.addAction(NETWORK_CHANGE);
-    		registerReceiver(mWifiReceiver = new WapdroidWifiReceiver(), intentfilter);}
+    		registerReceiver(mWifiReceiver, intentfilter);
+    	//}
+    	/*
         SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		boolean enabled = prefs.getBoolean(getString(R.string.key_manageWifi), true);
 		if (enabled) {
@@ -146,13 +155,18 @@ public class WapdroidUI extends Activity {
 			if (mServiceConn == null) {
 				mServiceConn = new ServiceConn();
 				mServiceConn.setUIStub(mWapdroidUI);
-				bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}}
+				bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
+			}
+			}
 		else {
-			releaseService();
+			unbindService(mServiceConn);
 			stopService(new Intent(this, WapdroidService.class));
-	    	field_CID.setText(getString(R.string.msg_service));
-	    	field_MNC.setText(getString(R.string.msg_service));
-	    	field_MCC.setText(getString(R.string.msg_service));}}
+	    	field_CID.setText(getString(R.string.label_disabled));
+	    	field_MNC.setText(getString(R.string.label_disabled));
+	    	field_MCC.setText(getString(R.string.label_disabled));
+			}
+		 */
+		checkLocation(mTeleManager.getCellLocation());}
     
 	private void wifiChanged() {
 		if (mWifiIsEnabled) {
@@ -172,7 +186,7 @@ public class WapdroidUI extends Activity {
 							: getString(R.string.label_disabled))));
 			label_wifiBSSID.setText("");
 			field_wifiBSSID.setText("");}}
-	
+	/*
 	private void releaseService() {
 		if (mServiceConn != null) {
 			if (mServiceConn.mIService != null) {
@@ -182,7 +196,7 @@ public class WapdroidUI extends Activity {
 				mServiceConn.mIService = null;}
 			unbindService(mServiceConn);
 			mServiceConn = null;}}
-	
+	*/
 	private void setWifiInfo(WifiInfo info) {
 		mSSID = info.getSSID();
 		mBSSID = info.getBSSID();}
@@ -209,7 +223,7 @@ public class WapdroidUI extends Activity {
     	    	else {
     	    		clearWifiInfo();}
     			wifiChanged();}}}
-    
+    /*
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellLocation(String mCID, String mMNC, String mMCC) throws RemoteException {
 	    	field_CID.setText(mCID);
@@ -217,4 +231,20 @@ public class WapdroidUI extends Activity {
 	    	field_MCC.setText(mMCC);}
 
 		public void newCell(String cell) throws RemoteException {
-			Toast.makeText(WapdroidUI.this, cell, Toast.LENGTH_SHORT).show();}};}
+			Toast.makeText(WapdroidUI.this, cell, Toast.LENGTH_SHORT).show();
+			}};
+	*/
+    private void checkLocation(CellLocation location) {
+    	int cid = -1;
+   		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+   			cid = ((GsmCellLocation) location).getCid();}
+       	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
+    		// check the phone type, cdma is not available before API 2.0, so use a wrapper
+       		try {
+       			cid = (new CdmaCellLocationWrapper(location)).getBaseStationId();}
+       		catch (Throwable t) {
+       			cid = -1;}}
+   		if (cid > 0) field_CID.setText(Integer.toString(cid));
+   		field_MNC.setText(mTeleManager.getNetworkOperatorName());
+   		field_MCC.setText(mTeleManager.getNetworkCountryIso());
+   		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}}
