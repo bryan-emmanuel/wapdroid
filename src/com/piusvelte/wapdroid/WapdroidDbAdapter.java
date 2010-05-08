@@ -41,6 +41,9 @@ public class WapdroidDbAdapter {
 	public static final String CELLS_CID = "CID";
 	public static final String CELLS_NETWORK = "network";
 	public static final String STATUS = "status";
+	public static final int FILTER_ALL = 0;
+	public static final int FILTER_INRANGE = 1;
+	public static final int FILTER_OUTRANGE = 2;
 	
 	private static final String CREATE_NETWORKS = "create table "
 		+ TABLE_NETWORKS + " ("
@@ -129,10 +132,10 @@ public class WapdroidDbAdapter {
    	   			+ ")) THEN \"" + mContext.getString(R.string.label_inrange)
    				+ "\" ELSE \"" + mContext.getString(R.string.label_outrange) + "\" END AS " + STATUS
    	   	    	+ " FROM " + TABLE_NETWORKS
-   	   	    	+ ((filter == 1) ?
+   	   	    	+ ((filter != FILTER_ALL) ?
    	   	    		(", " + TABLE_CELLS
    	   	    		+ " WHERE " + TABLE_NETWORKS + "." + TABLE_ID + " = " + TABLE_CELLS + "." + TABLE_ID
-   	   	    		+ " AND " + TABLE_CELLS + "." + CELLS_CID + " IN (" + set + ")")
+   	   	    		+ " AND " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " IN (" + set + ")")
    	   	    		: ""), null);}
     
     public int fetchCell(int CID, int network) {
@@ -154,16 +157,18 @@ public class WapdroidDbAdapter {
     
     public Cursor fetchCellsByNetworkFilter(int network, int filter, String set) {
     	return mDb.rawQuery("SELECT " + TABLE_CELLS + "." + TABLE_ID + ", " + CELLS_CID + ", "
-    			+ ((filter == 1) ?
+    			+ ((filter == FILTER_ALL) ?
     				("CASE WHEN " + CELLS_CID + " IN (" + set + ") THEN \""
     					+ mContext.getString(R.string.label_inrange)
     					+ "\" ELSE \"" + mContext.getString(R.string.label_outrange) + "\" END AS ")
-    				: (mContext.getString(R.string.label_inrange) + " AS "))
+    				: (mContext.getString(filter == FILTER_INRANGE ?
+    						R.string.label_inrange
+    						: R.string.label_outrange) + " AS "))
     			+ STATUS
     			+ " FROM " + TABLE_CELLS
     			+ " WHERE " + CELLS_NETWORK + "=" + network
-       	    	+ ((filter == 1) ?
-       	   	    		(" AND " + CELLS_CID + " IN (" + set + ")")
+       	    	+ ((filter != FILTER_ALL) ?
+       	   	    		(" AND " + CELLS_CID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " IN (" + set + ")")
        	   	    		: "")
     			+ " ORDER BY " + CELLS_CID, null);}
     

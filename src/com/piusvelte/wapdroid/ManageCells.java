@@ -51,7 +51,7 @@ public class ManageCells extends ListActivity {
     private static final int REFRESH_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
     private static final int FILTER_ID = Menu.FIRST + 2;
-    private static int mFilter = 0;// default is All
+    private static int mFilter = WapdroidDbAdapter.FILTER_ALL;
     private AlertDialog mAlertDialog;
 	private TelephonyManager mTeleManager;
 	private String mCellsSet = "";
