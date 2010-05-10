@@ -27,6 +27,7 @@ import com.piusvelte.wapdroid.R;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.AlertDialog.Builder;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -67,7 +68,7 @@ public class ManageCells extends ListActivity {
 		if (extras != null) {
 		    mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);}
         registerForContextMenu(getListView());
-        mDbHelper = new WapdroidDbAdapter(this);
+        mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mDbHelper = new WapdroidDbAdapter(this);}
 	
     @Override
@@ -117,7 +118,7 @@ public class ManageCells extends ListActivity {
     				R.array.filter_entries,
     				which,
     				new DialogInterface.OnClickListener() {
-    					@Override
+    					//@Override
     					public void onClick(DialogInterface dialog, int which) {
     						mAlertDialog.dismiss();
     						mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
@@ -156,7 +157,7 @@ public class ManageCells extends ListActivity {
     	super.onListItemClick(list, view, position, id);}
    
     public void listCells() throws RemoteException {
-        Cursor c = mDbHelper.fetchCellsByNetworkFilter(mNetwork, mFilter, "");
+        Cursor c = mDbHelper.fetchCellsByNetworkFilter(mNetwork, mFilter, mCellsSet);
         startManagingCursor(c);
         SimpleCursorAdapter cells = new SimpleCursorAdapter(this,
         		R.layout.cell_row,

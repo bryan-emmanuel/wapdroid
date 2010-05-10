@@ -39,10 +39,9 @@
 					android:textSize="18dip"/>
 		    </TableRow>
 			<TableRow>
-				<TextView android:id="@+id/label_wifiBSSID"
-			    	android:textColor="@color/text_secondary"
+				<TextView android:textColor="@color/text_secondary"
 					android:textSize="14dip"
-					android:text="@string/label_CID"/>
+					android:text="@string/label_BSSID"/>
 				<TextView android:id="@+id/field_wifiBSSID"
 			    	android:textColor="@color/text_secondary"
 					android:gravity="right"

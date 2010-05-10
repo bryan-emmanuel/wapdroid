@@ -115,7 +115,7 @@ public class ManageNetworks extends ListActivity {
     				R.array.filter_entries,
     				which,
     				new DialogInterface.OnClickListener() {
-    					@Override
+    					//@Override
     					public void onClick(DialogInterface dialog, int which) {
     						mAlertDialog.dismiss();
     						mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);

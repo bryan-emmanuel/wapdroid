@@ -26,9 +26,9 @@ import android.os.IBinder;
 
 public class ServiceConn implements ServiceConnection {
 	public IWapdroidService mIService;
-	@Override
+	//@Override
 	public void onServiceConnected(ComponentName className, IBinder boundService) {
 		mIService = IWapdroidService.Stub.asInterface((IBinder) boundService);}
-	@Override
+	//@Override
 	public void onServiceDisconnected(ComponentName className) {
 		mIService = null;}}

@@ -50,7 +50,7 @@ public class WapdroidUI extends Activity {
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
 	public static final int ABOUT_ID = Menu.FIRST + 3;
-	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID, label_wifiBSSID;
+	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID;
 	private boolean mWifiIsEnabled = false;
 	private WapdroidWifiReceiver mWifiReceiver;
 	private WifiManager mWifiManager;
@@ -78,8 +78,7 @@ public class WapdroidUI extends Activity {
 		field_MNC = (TextView) findViewById(R.id.field_MNC);
 		field_MCC = (TextView) findViewById(R.id.field_MCC);
 		field_wifiState = (TextView) findViewById(R.id.field_wifiState);
-		field_wifiBSSID = (TextView) findViewById(R.id.label_wifiBSSID);
-		label_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
+		field_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
 		mWifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
 		mWifiReceiver = new WapdroidWifiReceiver();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);}
@@ -143,11 +142,9 @@ public class WapdroidUI extends Activity {
 		if (mWifiIsEnabled) {
 			if (mSSID != null) {
 				field_wifiState.setText(mSSID);
-				label_wifiBSSID.setText(getString(R.string.label_BSSID));
 				field_wifiBSSID.setText(mBSSID);}
 			else {
 				field_wifiState.setText(getString(R.string.label_enabled));
-				label_wifiBSSID.setText("");
 				field_wifiBSSID.setText("");}}
 		else {
 			field_wifiState.setText((mWifiState == mWifiEnabling ?
@@ -155,7 +152,6 @@ public class WapdroidUI extends Activity {
 					: (mWifiState == mWifiDisabling ?
 							getString(R.string.label_disabling)
 							: getString(R.string.label_disabled))));
-			label_wifiBSSID.setText("");
 			field_wifiBSSID.setText("");}}
 	
 	private void setWifiInfo(WifiInfo info) {
