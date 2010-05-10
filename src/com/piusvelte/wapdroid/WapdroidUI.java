@@ -56,7 +56,6 @@ public class WapdroidUI extends Activity {
 	private WifiManager mWifiManager;
 	private int mWifiState;
 	private String mSSID, mBSSID;
-	//private ServiceConn mServiceConn;
 	private static final String WIFI_CHANGE = WifiManager.WIFI_STATE_CHANGED_ACTION;
 	private static final String NETWORK_CHANGE = WifiManager.NETWORK_STATE_CHANGED_ACTION;
 	private static final int mWifiDisabling = WifiManager.WIFI_STATE_DISABLING;
@@ -83,7 +82,6 @@ public class WapdroidUI extends Activity {
 		label_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
 		mWifiManager = (WifiManager) getSystemService(WIFI_SERVICE);
 		mWifiReceiver = new WapdroidWifiReceiver();
-		//mServiceConn = new ServiceConn();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);}
 	
     @Override
@@ -125,7 +123,6 @@ public class WapdroidUI extends Activity {
     public void onPause() {
     	super.onPause();
    		unregisterReceiver(mWifiReceiver);
-   		//if (mServiceConn.mIService != null) unbindService(mServiceConn);
    		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);}
     
     @Override
@@ -133,39 +130,13 @@ public class WapdroidUI extends Activity {
     	super.onResume();
 		mWifiState = mWifiManager.getWifiState();
 		mWifiIsEnabled = (mWifiState == mWifiEnabled);
-		if (mWifiIsEnabled) {
-			setWifiInfo(mWifiManager.getConnectionInfo());}
-		else {
-			clearWifiInfo();}
+		if (mWifiIsEnabled) setWifiInfo(mWifiManager.getConnectionInfo());
+		else clearWifiInfo();
 		wifiChanged();
-    	//if (mWifiReceiver == null) {
-    		IntentFilter intentfilter = new IntentFilter();
-    		intentfilter.addAction(WIFI_CHANGE);
-    		intentfilter.addAction(NETWORK_CHANGE);
-    		registerReceiver(mWifiReceiver, intentfilter);
-    	//}
-    	/*
-        SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-		boolean enabled = prefs.getBoolean(getString(R.string.key_manageWifi), true);
-		if (enabled) {
-	    	field_CID.setText(getString(R.string.scanning));
-	    	field_MNC.setText(getString(R.string.scanning));
-	    	field_MCC.setText(getString(R.string.scanning));
-			startService(new Intent(this, WapdroidService.class));
-			if (mServiceConn == null) {
-				mServiceConn = new ServiceConn();
-				mServiceConn.setUIStub(mWapdroidUI);
-				bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
-			}
-			}
-		else {
-			unbindService(mServiceConn);
-			stopService(new Intent(this, WapdroidService.class));
-	    	field_CID.setText(getString(R.string.label_disabled));
-	    	field_MNC.setText(getString(R.string.label_disabled));
-	    	field_MCC.setText(getString(R.string.label_disabled));
-			}
-		 */
+    	IntentFilter intentfilter = new IntentFilter();
+    	intentfilter.addAction(WIFI_CHANGE);
+    	intentfilter.addAction(NETWORK_CHANGE);
+    	registerReceiver(mWifiReceiver, intentfilter);
 		checkLocation(mTeleManager.getCellLocation());}
     
 	private void wifiChanged() {
@@ -186,17 +157,7 @@ public class WapdroidUI extends Activity {
 							: getString(R.string.label_disabled))));
 			label_wifiBSSID.setText("");
 			field_wifiBSSID.setText("");}}
-	/*
-	private void releaseService() {
-		if (mServiceConn != null) {
-			if (mServiceConn.mIService != null) {
-				try {
-					mServiceConn.mIService.setCallback(null);}
-				catch (RemoteException e) {}
-				mServiceConn.mIService = null;}
-			unbindService(mServiceConn);
-			mServiceConn = null;}}
-	*/
+	
 	private void setWifiInfo(WifiInfo info) {
 		mSSID = info.getSSID();
 		mBSSID = info.getBSSID();}
@@ -213,31 +174,17 @@ public class WapdroidUI extends Activity {
     	    	if (mState != mWifiUnknown) {
     	    		mWifiState = mState;
     	    		mWifiIsEnabled = (mState == mWifiEnabled);
-    	    		if (!mWifiIsEnabled) {
-        	    		clearWifiInfo();}}
+    	    		if (!mWifiIsEnabled) clearWifiInfo();}
     			wifiChanged();}
     		else if (intent.getAction().equals(NETWORK_CHANGE)) {
     			NetworkInfo info = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
-    	    	if (info.isConnected()) {
-    	    		setWifiInfo(mWifiManager.getConnectionInfo());}
-    	    	else {
-    	    		clearWifiInfo();}
+    	    	if (info.isConnected()) setWifiInfo(mWifiManager.getConnectionInfo());
+    	    	else clearWifiInfo();
     			wifiChanged();}}}
-    /*
-    private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void setCellLocation(String mCID, String mMNC, String mMCC) throws RemoteException {
-	    	field_CID.setText(mCID);
-	    	field_MNC.setText(mMNC);
-	    	field_MCC.setText(mMCC);}
-
-		public void newCell(String cell) throws RemoteException {
-			Toast.makeText(WapdroidUI.this, cell, Toast.LENGTH_SHORT).show();
-			}};
-	*/
+    
     private void checkLocation(CellLocation location) {
     	int cid = -1;
-   		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-   			cid = ((GsmCellLocation) location).getCid();}
+   		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) cid = ((GsmCellLocation) location).getCid();
        	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
     		// check the phone type, cdma is not available before API 2.0, so use a wrapper
        		try {

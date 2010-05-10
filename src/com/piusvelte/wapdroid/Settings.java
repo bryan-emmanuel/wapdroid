@@ -32,13 +32,15 @@ import android.preference.PreferenceActivity;
 public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
 	private SharedPreferences mSharedPreferences;
 	private ServiceConn mServiceConn;
+	private Intent mServiceIntent;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
         getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
 		addPreferencesFromResource(R.xml.preferences);
-		mSharedPreferences = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);}
+		mSharedPreferences = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
+		mServiceIntent = new Intent(this, WapdroidService.class);}
 
     @Override
     public void onPause() {
@@ -54,7 +56,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	
 	public void captureService() {
     	mServiceConn = new ServiceConn();
-    	bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}
+    	bindService(mServiceIntent, mServiceConn, BIND_AUTO_CREATE);}
 	
 	public void releaseService() {
    		unbindService(mServiceConn);
@@ -63,11 +65,11 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
 			if (sharedPreferences.getBoolean(key, true)) {
-				startService(new Intent(this, WapdroidService.class));
+				startService(mServiceIntent);
 				captureService();}
 			else {
 				releaseService();
-				stopService(new Intent(this, WapdroidService.class));}}
+				stopService(mServiceIntent);}}
 		else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
 			try {
 				mServiceConn.mIService.updatePreferences(Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "0")),

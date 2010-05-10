@@ -23,13 +23,12 @@ package com.piusvelte.wapdroid;
 import android.content.ComponentName;
 import android.content.ServiceConnection;
 import android.os.IBinder;
-//import android.os.RemoteException;
 
 public class ServiceConn implements ServiceConnection {
 	public IWapdroidService mIService;
-	
+	@Override
 	public void onServiceConnected(ComponentName className, IBinder boundService) {
 		mIService = IWapdroidService.Stub.asInterface((IBinder) boundService);}
-	
+	@Override
 	public void onServiceDisconnected(ComponentName className) {
 		mIService = null;}}
