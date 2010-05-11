@@ -54,8 +54,10 @@ public final class R {
     }
     public static final class string {
         public static final int about=0x7f070029;
+        public static final int accessible=0x7f070027;
         public static final int app_name=0x7f070007;
         public static final int gpl=0x7f07002a;
+        public static final int inaccessible=0x7f070028;
         public static final int key_interval=0x7f070006;
         public static final int key_led=0x7f070004;
         public static final int key_manageWifi=0x7f070001;
@@ -75,14 +77,11 @@ public final class R {
         public static final int label_donate=0x7f070024;
         public static final int label_enabled=0x7f070017;
         public static final int label_enabling=0x7f070019;
-        public static final int label_inrange=0x7f070027;
         public static final int label_interval=0x7f070021;
         public static final int label_led=0x7f07001d;
         public static final int label_notify=0x7f07001a;
-        public static final int label_outrange=0x7f070028;
         public static final int label_ringtone=0x7f07001e;
         public static final int label_save=0x7f07001f;
-        public static final int label_status=0x7f070026;
         public static final int label_vibrate=0x7f07001c;
         public static final int label_wapdroidState=0x7f07000d;
         public static final int menu_deleteCell=0x7f070013;
@@ -96,6 +95,7 @@ public final class R {
         public static final int no_cells=0x7f07000f;
         public static final int no_networks=0x7f07000e;
         public static final int scanning=0x7f070022;
+        public static final int status=0x7f070026;
     }
     public static final class xml {
         public static final int preferences=0x7f040000;

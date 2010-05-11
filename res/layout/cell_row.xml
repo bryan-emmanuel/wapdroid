@@ -42,7 +42,7 @@
 				<TextView android:textStyle="bold"
 					android:textColor="@color/text_primary"
 					android:textSize="18dip"
-					android:text="@string/label_status"/>
+					android:text="@string/status"/>
 				<TextView android:id="@+id/cell_row_status"
 					android:textColor="@color/text_primary"
 					android:gravity="right"

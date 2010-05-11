@@ -129,8 +129,8 @@ public class WapdroidDbAdapter {
    	   			+ " IN (SELECT " + CELLS_NETWORK
    	   			+ " FROM " + TABLE_CELLS
    	   			+ " WHERE " + CELLS_CID + " IN (" + set
-   	   			+ ")) THEN '" + mContext.getString(R.string.label_inrange)
-   				+ "' ELSE '" + mContext.getString(R.string.label_outrange) + "' END AS " + STATUS
+   	   			+ ")) THEN '" + mContext.getString(R.string.accessible)
+   				+ "' ELSE '" + mContext.getString(R.string.inaccessible) + "' END AS " + STATUS
    	   	    	+ " FROM " + TABLE_NETWORKS
    	   	    	+ ((filter != FILTER_ALL) ?
    	   	    		(", " + TABLE_CELLS
@@ -159,11 +159,11 @@ public class WapdroidDbAdapter {
     	return mDb.rawQuery("SELECT " + TABLE_CELLS + "." + TABLE_ID + ", " + CELLS_CID + ", "
     			+ ((filter == FILTER_ALL) ?
     				("CASE WHEN " + CELLS_CID + " IN (" + set + ") THEN '"
-    					+ mContext.getString(R.string.label_inrange)
-    					+ "' ELSE '" + mContext.getString(R.string.label_outrange) + "' END AS ")
+    					+ mContext.getString(R.string.accessible)
+    					+ "' ELSE '" + mContext.getString(R.string.inaccessible) + "' END AS ")
     				: "'" + (mContext.getString(filter == FILTER_INRANGE ?
-    						R.string.label_inrange
-    						: R.string.label_outrange) + "' AS "))
+    						R.string.accessible
+    						: R.string.inaccessible) + "' AS "))
     			+ STATUS
     			+ " FROM " + TABLE_CELLS
     			+ " WHERE " + CELLS_NETWORK + "=" + network
