@@ -97,7 +97,7 @@ public class WapdroidUI extends Activity {
     	Intent intent;
     	switch (item.getItemId()) {
     	case MANAGE_ID:
-        	intent = new Intent(this, ManageNetworks.class);
+        	intent = new Intent(this, ManageData.class);
         	startActivity(intent);
     		return true;
     	case SETTINGS_ID:

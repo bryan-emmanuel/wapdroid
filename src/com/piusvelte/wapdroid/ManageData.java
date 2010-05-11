@@ -47,9 +47,10 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageNetworks extends ListActivity {
+public class ManageData extends ListActivity {
 	private WapdroidDbAdapter mDbHelper;
-	public static final int REFRESH_ID = Menu.FIRST;
+	private int mNetwork = -1;
+	private static final int REFRESH_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
     private static final int FILTER_ID = Menu.FIRST + 2;
     private static int mFilter = WapdroidDbAdapter.FILTER_ALL;
@@ -63,7 +64,9 @@ public class ManageNetworks extends ListActivity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.networks_list);
+		Bundle extras = getIntent().getExtras();
+		if (extras != null) mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);
+		setContentView(mNetwork == -1 ? R.layout.networks_list : R.layout.cells_list);
         registerForContextMenu(getListView());
         mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mDbHelper = new WapdroidDbAdapter(this);}
@@ -80,7 +83,7 @@ public class ManageNetworks extends ListActivity {
 		mDbHelper.open();
 		checkLocation(mTeleManager.getCellLocation());
 		try {
-			listNetworks();}
+			listData();}
 		catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();}}
@@ -97,7 +100,7 @@ public class ManageNetworks extends ListActivity {
     	switch (item.getItemId()) {
     	case REFRESH_ID:
     		try {
-				listNetworks();}
+				listData();}
     		catch (RemoteException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();}
@@ -120,7 +123,7 @@ public class ManageNetworks extends ListActivity {
     						mAlertDialog.dismiss();
     						mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
     						try {
-								listNetworks();}
+								listData();}
     						catch (RemoteException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();}}});
@@ -132,7 +135,7 @@ public class ManageNetworks extends ListActivity {
     @Override
 	public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, view, menuInfo);
-		menu.add(0, DELETE_ID, 0, R.string.menu_deleteNetwork);}
+		menu.add(0, DELETE_ID, 0, mNetwork == -1 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);}
 
     @Override
 	public boolean onContextItemSelected(MenuItem item) {
@@ -140,9 +143,10 @@ public class ManageNetworks extends ListActivity {
 		switch(item.getItemId()) {
 		case DELETE_ID:
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
-			mDbHelper.deleteNetwork((int) info.id);
+			if (mNetwork == -1) mDbHelper.deleteNetwork((int) info.id);
+			else mDbHelper.deleteCell(mNetwork, (int) info.id);
 			try {
-				listNetworks();}
+				listData();}
 			catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();}
@@ -152,20 +156,27 @@ public class ManageNetworks extends ListActivity {
     @Override
     protected void onListItemClick(ListView list, View view, int position, long id) {
     	super.onListItemClick(list, view, position, id);
-    	Intent intent = new Intent(this, ManageCells.class);
-    	intent.putExtra(WapdroidDbAdapter.TABLE_ID, (int) id);
-    	startActivity(intent);}
+    	if (mNetwork == -1) {
+    		Intent intent = new Intent(this, ManageData.class);
+    		intent.putExtra(WapdroidDbAdapter.TABLE_ID, (int) id);
+    		startActivity(intent);}}
     
-    public void listNetworks() throws RemoteException {
+    public void listData() throws RemoteException {
     	// filter results
-        Cursor c = mDbHelper.fetchNetworks(mFilter, mCellsSet);
+    	Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworks(mFilter, mCellsSet) : mDbHelper.fetchCellsByNetworkFilter(mNetwork, mFilter, mCellsSet);
         startManagingCursor(c);
-        SimpleCursorAdapter networks = new SimpleCursorAdapter(this,
-        		R.layout.network_row,
-        		c,
-        		new String[] {WapdroidDbAdapter.NETWORKS_SSID, WapdroidDbAdapter.NETWORKS_BSSID, WapdroidDbAdapter.STATUS},
-        		new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status});
-        setListAdapter(networks);}
+        SimpleCursorAdapter data = mNetwork == -1 ?
+        		new SimpleCursorAdapter(this,
+        				R.layout.network_row,
+        				c,
+        				new String[] {WapdroidDbAdapter.NETWORKS_SSID, WapdroidDbAdapter.NETWORKS_BSSID, WapdroidDbAdapter.STATUS},
+        				new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status})
+        		: new SimpleCursorAdapter(this,
+        				R.layout.cell_row,
+        				c,
+        				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.STATUS},
+        				new int[] {R.id.cell_row_CID, R.id.cell_row_status});
+        setListAdapter(data);}
     
     private void checkLocation(CellLocation location) {
     	int cid = -1;
