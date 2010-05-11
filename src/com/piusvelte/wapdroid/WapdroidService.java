@@ -52,7 +52,7 @@ public class WapdroidService extends Service {
 	private String mSSID, mBSSID;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
-	private int mCID = -1, mWifiState, mInterval;
+	private int mCID = -1, mLAC = -1, mWifiState, mInterval;
 	private boolean mWifiIsEnabled, mNotify, mVibrate, mLed, mRingtone;
 	private AlarmManager mAlarmManager;
 	private PendingIntent mPendingIntent;
@@ -189,13 +189,18 @@ public class WapdroidService extends Service {
     private void checkLocation(CellLocation location) {
     	// check that the DB is open
     	if (mDbHelper != null) {
-    		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) mCID = ((GsmCellLocation) location).getCid();
+    		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+    			mCID = ((GsmCellLocation) location).getCid();
+    			mLAC = ((GsmCellLocation) location).getLac();}
 	       	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
 	    		// check the phone type, cdma is not available before API 2.0, so use a wrapper
 	       		try {
-	       			mCID = (new CdmaCellLocationWrapper(location)).getBaseStationId();}
+	       			CdmaCellLocationWrapper cdma = new CdmaCellLocationWrapper(location);
+	       			mCID = cdma.getBaseStationId();
+	       			mLAC = cdma.getNetworkId();}
 	       		catch (Throwable t) {
-	       			mCID = -1;}}
+	       			mCID = -1;
+	       			mLAC = -1;}}
 	   			processLocation();}}
     
     private void processLocation() {
@@ -230,11 +235,11 @@ public class WapdroidService extends Service {
 		mBSSID = mWifiManager.getConnectionInfo().getBSSID();}
     
     private void updateRange() {
-    	int network = mDbHelper.updateCellRange(mSSID, mBSSID, mCID);
+    	int network = mDbHelper.updateCellRange(mSSID, mBSSID, mCID, mLAC);
 		int cid;
 		for (NeighboringCellInfo n : mNeighboringCells) {
 			cid = n.getCid();
-			if (cid > 0) mDbHelper.updateCellNeighbor(network, cid);}}
+			if (cid > 0) mDbHelper.updateCellNeighbor(network, cid, mLAC);}}
 	
 	private void wifiChanged() {
 		if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null) && (mCID > 0) && (mDbHelper != null)) {

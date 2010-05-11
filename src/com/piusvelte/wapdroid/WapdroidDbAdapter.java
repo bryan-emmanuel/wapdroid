@@ -29,7 +29,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class WapdroidDbAdapter {
 	private static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 2;
+	private static final int DATABASE_VERSION = 3;
 	private static final String DROP = "DROP TABLE IF EXISTS ";
 	public static final String TABLE_ID = "_id";
 	public static final String TABLE_CODE = "code";
@@ -40,6 +40,7 @@ public class WapdroidDbAdapter {
 	public static final String TABLE_CELLS = "cells";
 	public static final String CELLS_CID = "CID";
 	public static final String CELLS_NETWORK = "network";
+	public static final String CELLS_LAC = "LAC";
 	public static final String STATUS = "status";
 	public static final int FILTER_ALL = 0;
 	public static final int FILTER_INRANGE = 1;
@@ -54,7 +55,8 @@ public class WapdroidDbAdapter {
 		+ TABLE_CELLS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ CELLS_CID + " integer, "
-		+ CELLS_NETWORK + " integer);";
+		+ CELLS_NETWORK + " integer, "
+		+ CELLS_LAC + " integer);";
 	
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDb;
@@ -80,7 +82,18 @@ public class WapdroidDbAdapter {
     			db.execSQL("INSERT INTO " + TABLE_NETWORKS + " SELECT "
         				+ TABLE_ID + ", " + NETWORKS_SSID + ", \"\""
         				+ " FROM " + TABLE_NETWORKS + "_bkp;");
-    			db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");}}}
+    			db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");}
+        	if (oldVersion < 3) {
+        		// add LAC
+    			db.execSQL(DROP + TABLE_CELLS + "_bkp;");
+    			db.execSQL("create temporary table " + TABLE_CELLS + "_bkp AS SELECT * FROM " + TABLE_CELLS + ";");
+    			db.execSQL(DROP + TABLE_CELLS + ";");
+    			db.execSQL(CREATE_CELLS);
+    			db.execSQL("INSERT INTO " + TABLE_CELLS + " SELECT "
+        				+ TABLE_ID + ", " + CELLS_CID + ", " + CELLS_NETWORK + ", \"\""
+        				+ " FROM " + TABLE_CELLS + "_bkp;");
+    			db.execSQL(DROP + TABLE_CELLS + "_bkp;");
+        		}}}
         
     public WapdroidDbAdapter(Context context) {
         this.mContext = context;}
@@ -148,6 +161,16 @@ public class WapdroidDbAdapter {
     		cell = c.getInt(c.getColumnIndex(TABLE_ID));}
     	c.close();
     	return cell;}
+    
+    public Cursor fetchNetworkData(int id) {
+    	return mDb.rawQuery("SELECT " + CELLS_CID + ", " + CELLS_LAC
+    		+ " FROM " + TABLE_CELLS
+    		+ " WHERE " + CELLS_NETWORK + "=" + id, null);}
+    
+    public Cursor fetchCellData(int id) {
+    	return mDb.rawQuery("SELECT " + CELLS_CID + ", " + CELLS_LAC
+    		+ " FROM " + TABLE_CELLS
+    		+ " WHERE " + TABLE_ID + "=" + id, null);}
 
     public Cursor fetchCellsByNetwork(int network) {
     	return mDb.rawQuery("SELECT " + TABLE_ID + ", " + CELLS_CID
@@ -172,22 +195,24 @@ public class WapdroidDbAdapter {
        	   	    		: "")
     			+ " ORDER BY " + CELLS_CID, null);}
     
-    public int updateCellRange(String SSID, String BSSID, int CID) {
+    public int updateCellRange(String SSID, String BSSID, int CID, int LAC) {
     	int network = fetchNetworkOrCreate(SSID, BSSID);
     	int cell = fetchCell(CID, network);
     	if (cell < 0) {
     		ContentValues initialValues = new ContentValues();
         	initialValues.put(CELLS_CID, CID);
         	initialValues.put(CELLS_NETWORK, network);
+        	initialValues.put(CELLS_LAC, LAC);
     		cell = (int) mDb.insert(TABLE_CELLS, null, initialValues);}
     	return network;}
     
-    public void updateCellNeighbor(int network, int CID) {
+    public void updateCellNeighbor(int network, int CID, int LAC) {
     	int cell = fetchCell(CID, network);
     	if (cell < 0) {
     		ContentValues initialValues = new ContentValues();
         	initialValues.put(CELLS_CID, CID);
         	initialValues.put(CELLS_NETWORK, network);
+        	initialValues.put(CELLS_LAC, LAC);
     		cell = (int) mDb.insert(TABLE_CELLS, null, initialValues);}}
     
     public boolean cellInRange(int CID) {

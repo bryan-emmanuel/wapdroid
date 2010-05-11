@@ -25,12 +25,16 @@ import android.telephony.cdma.CdmaCellLocation;
 
 public class CdmaCellLocationWrapper {
 	private int mBaseStationId;
+	private int mNetworkId;
 	static {
 		try {
 			Class.forName("android.telephony.cdma.CdmaCellLocation");}
 		catch (Exception ex) {
 			throw new RuntimeException(ex);}}
 	public CdmaCellLocationWrapper(CellLocation location) {
-		this.mBaseStationId = ((CdmaCellLocation) location).getBaseStationId();}
+		this.mBaseStationId = ((CdmaCellLocation) location).getBaseStationId();
+		this.mNetworkId = ((CdmaCellLocation) location).getNetworkId();}
 	public int getBaseStationId() {
-		return this.mBaseStationId;}}
+		return this.mBaseStationId;}
+	public int getNetworkId() {
+		return this.mNetworkId;}}

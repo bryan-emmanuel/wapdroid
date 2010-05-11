@@ -20,7 +20,19 @@
 
 package com.piusvelte.wapdroid;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
+
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.ResponseHandler;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.BasicResponseHandler;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import com.piusvelte.wapdroid.R;
 
@@ -31,6 +43,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.telephony.CellLocation;
@@ -49,14 +62,15 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageData extends ListActivity {
 	private WapdroidDbAdapter mDbHelper;
-	private int mNetwork = -1;
+	private int mNetwork = -1, mCid = -1;
 	private static final int REFRESH_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
     private static final int FILTER_ID = Menu.FIRST + 2;
+    private static final int GEO_ID = Menu.FIRST + 3;
     private static int mFilter = WapdroidDbAdapter.FILTER_ALL;
     private AlertDialog mAlertDialog;
 	private TelephonyManager mTeleManager;
-	private String mCellsSet = "";
+	private List<NeighboringCellInfo> mNeighboringCells;
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
     		checkLocation(location);}};
@@ -135,7 +149,8 @@ public class ManageData extends ListActivity {
     @Override
 	public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, view, menuInfo);
-		menu.add(0, DELETE_ID, 0, mNetwork == -1 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);}
+		menu.add(0, DELETE_ID, 0, mNetwork == -1 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);
+		menu.add(0, GEO_ID, 0, R.string.map);}
 
     @Override
 	public boolean onContextItemSelected(MenuItem item) {
@@ -150,6 +165,43 @@ public class ManageData extends ListActivity {
 			catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();}
+			return true;
+		case GEO_ID:
+			// open gmaps
+			info = (AdapterContextMenuInfo) item.getMenuInfo();
+			JSONObject query = new JSONObject();
+			try {
+				query.put("version", "1.1.0");
+				query.put("host", "maps.google.com");
+				query.put("home_mobile_country_code", mTeleManager.getNetworkCountryIso());
+				query.put("home_mobile_network_code", mTeleManager.getNetworkOperator().substring(3));
+				query.put("carrier", mTeleManager.getNetworkOperatorName());}
+			catch (JSONException e) {}
+			Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworkData((int) info.id) : mDbHelper.fetchCellData((int) info.id);
+	    	if (c.getCount() > 0) {
+	    		c.moveToFirst();
+	    		while (!c.isAfterLast()) {
+	    			JSONObject tower = new JSONObject();
+	    			try {
+	    				tower.put("cell_id", c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
+	    				tower.put("location_area_code", c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_LAC)));
+	    				tower.put("mobile_country_code", mTeleManager.getNetworkCountryIso());
+	    				tower.put("mobile_network_code", mTeleManager.getNetworkOperator().substring(3));
+	    				query.accumulate("cell_towers", tower);}
+	    			catch (JSONException e) {}
+	    			c.moveToNext();}}
+	    	c.close();
+	    	String lat = "", lon = "";
+	    	JSONTokener jsontokener = new JSONTokener(post(query));
+	    	jsontokener.skipPast("latitude\":");
+	    	try {
+	    		lat = coordinate(jsontokener.nextValue().toString());}
+	    	catch (JSONException e) {}
+	    	jsontokener.skipPast("longitude\":");
+	    	try {
+	    		lon = coordinate(jsontokener.nextValue().toString());}
+	    	catch (JSONException e) {}
+			startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("geo:" + lat + "," + lon)));
 			return true;}
 		return super.onContextItemSelected(item);}
     
@@ -161,9 +213,17 @@ public class ManageData extends ListActivity {
     		intent.putExtra(WapdroidDbAdapter.TABLE_ID, (int) id);
     		startActivity(intent);}}
     
+    public String coordinate(String value) {
+    	return new String(value.getBytes(), 0, value.length() -1);}
+    
     public void listData() throws RemoteException {
     	// filter results
-    	Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworks(mFilter, mCellsSet) : mDbHelper.fetchCellsByNetworkFilter(mNetwork, mFilter, mCellsSet);
+    	String cellsSet = "";
+   		if (mCid > 0) {
+   			cellsSet = "'" + Integer.toString(mCid) + "'";
+   			if (!mNeighboringCells.isEmpty()) {
+   				for (NeighboringCellInfo n : mNeighboringCells) cellsSet += ",'" + Integer.toString(n.getCid()) + "'";}}
+    	Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworks(mFilter, cellsSet) : mDbHelper.fetchCellsByNetworkFilter(mNetwork, mFilter, cellsSet);
         startManagingCursor(c);
         SimpleCursorAdapter data = mNetwork == -1 ?
         		new SimpleCursorAdapter(this,
@@ -177,20 +237,31 @@ public class ManageData extends ListActivity {
         				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.STATUS},
         				new int[] {R.id.cell_row_CID, R.id.cell_row_status});
         setListAdapter(data);}
+
+	public String post(JSONObject query) {
+		String response = "";
+		DefaultHttpClient httpClient = new DefaultHttpClient();
+		ResponseHandler <String> responseHandler = new BasicResponseHandler();
+		HttpPost postMethod = new HttpPost("https://www.google.com/loc/json");
+		try {
+			postMethod.setEntity(new StringEntity(query.toString()));}
+		catch (UnsupportedEncodingException e) {}
+		postMethod.setHeader("Accept", "application/json");
+		postMethod.setHeader("Content-type", "application/json");
+		try {
+			response = httpClient.execute(postMethod, responseHandler);}
+		catch (ClientProtocolException e) {}
+		catch (IOException e) {}
+		return response;}
     
     private void checkLocation(CellLocation location) {
-    	int cid = -1;
    		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-   			cid = ((GsmCellLocation) location).getCid();}
+   			mCid = ((GsmCellLocation) location).getCid();}
        	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
     		// check the phone type, cdma is not available before API 2.0, so use a wrapper
        		try {
-       			cid = (new CdmaCellLocationWrapper(location)).getBaseStationId();}
+       			mCid = (new CdmaCellLocationWrapper(location)).getBaseStationId();}
        		catch (Throwable t) {
-       			cid = -1;}}
-   		List<NeighboringCellInfo> neighboringCells = mTeleManager.getNeighboringCellInfo();
-   		if (cid > 0) {
-   			mCellsSet = "'" + Integer.toString(cid) + "'";
-   			if (!neighboringCells.isEmpty()) {
-   				for (NeighboringCellInfo n : neighboringCells) mCellsSet += ",'" + Integer.toString(n.getCid()) + "'";}}
-   		else mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}}
+       			mCid = -1;}}
+   		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
+   		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}}

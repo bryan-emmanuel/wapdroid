@@ -49,6 +49,11 @@
     <string name="scanning">扫描中</string>
     <string name="label_about">关于</string>
     <string name="label_donate">捐助</string>
+    <string name="menu_filter">Filter</string>
+    <string name="status">Status</string>
+    <string name="accessible">accessible</string>
+    <string name="inaccessible">inaccessible</string>
+    <string name="map">map</string>
     <string name="about">Wapdroid 在后台运行, 可记录您使用的 WiFi 网络附近的手机信号接收塔。如果在手机在信号接收塔的范围之内, WiFi 就会自动开启, 其它时候则是关闭着以节省电量。请提交问题到 http://wapdroid.com.\u000A\u000A 谢谢！</string>
     <string name="gpl">Wapdroid - 是基于Android Location 的 Wifi 管理器。\u000A\u000A版权 (C) 2009 Bryan Emmanuel\u000A\u000A该软件是免费的: 您可以根据自由软件基金会的 GNU 通用公共许可证发布和修改软件；您可以选择遵守许可证的第三版或更高版。\u000A\u000A发布该软件是希望对大家有用, 但是不做任何保证, 甚至没有适销性或适用某一特定用途的默示保证。 了解更多详情请查看 GNU 通用公共许可证。\u000A\u000A您应该会收到该软件附着的 GNU 通用公共许可证。  如果没有请查看 \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com</string>
 </resources>

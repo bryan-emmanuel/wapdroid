@@ -39,8 +39,8 @@
 	</string-array>
 	<string-array name="filter_entries">
 		<item>All</item>
-		<item>In range</item>
-		<item>Out of range</item>
+		<item>Accessible</item>
+		<item>Inaccessible</item>
 	</string-array>
 	<string-array name="filter_values">
 		<item>0</item>

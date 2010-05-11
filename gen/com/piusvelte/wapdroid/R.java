@@ -53,10 +53,10 @@ public final class R {
         public static final int networks_list=0x7f030005;
     }
     public static final class string {
-        public static final int about=0x7f070029;
+        public static final int about=0x7f07002a;
         public static final int accessible=0x7f070027;
         public static final int app_name=0x7f070007;
-        public static final int gpl=0x7f07002a;
+        public static final int gpl=0x7f07002b;
         public static final int inaccessible=0x7f070028;
         public static final int key_interval=0x7f070006;
         public static final int key_led=0x7f070004;
@@ -84,6 +84,7 @@ public final class R {
         public static final int label_save=0x7f07001f;
         public static final int label_vibrate=0x7f07001c;
         public static final int label_wapdroidState=0x7f07000d;
+        public static final int map=0x7f070029;
         public static final int menu_deleteCell=0x7f070013;
         public static final int menu_deleteNetwork=0x7f070012;
         public static final int menu_filter=0x7f070025;
