@@ -210,8 +210,8 @@ public class ManageData extends ListActivity {
 			try {
 				results = new JSONObject(response);
 				location = results.getJSONObject("location");
-	    		lat = (String) location.get("latitude");
-	    		lon = (String) location.get("longitude");}
+	    		lat = Double.toString(location.getDouble("latitude"));
+	    		lon = Double.toString(location.getDouble("longitude"));}
 			catch (JSONException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();}
