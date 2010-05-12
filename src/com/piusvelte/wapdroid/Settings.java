@@ -52,7 +52,9 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
     public void onResume() {
     	super.onResume();
         mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
-        if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), true) && (mServiceConn == null)) captureService();}
+        if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
+        	startService(mServiceIntent);
+        	if (mServiceConn == null) captureService();}}
 	
 	public void captureService() {
     	mServiceConn = new ServiceConn();

@@ -214,12 +214,13 @@ public class WapdroidService extends Service {
 			if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null)) updateRange();
 			else {
 				boolean mInRange = false;
-				if (mDbHelper.cellInRange(mCID)) {
+				if (mDbHelper.cellInRange(mCID, mLAC)) {
 					mInRange = true;
-						int cid;
+						int cid, lac;
 						for (NeighboringCellInfo n : mNeighboringCells) {
 							cid = n.getCid();
-							if (mInRange && (cid > 0)) mInRange = mDbHelper.cellInRange(cid);}}
+							lac = n.getLac();
+							if (mInRange && (cid > 0)) mInRange = mDbHelper.cellInRange(cid, lac);}}
 				if ((mInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
 					mWifiManager.setWifiEnabled(mInRange);
 					if (mNotify) {
@@ -239,11 +240,12 @@ public class WapdroidService extends Service {
 		mBSSID = mWifiManager.getConnectionInfo().getBSSID();}
     
     private void updateRange() {
-    	int network = mDbHelper.updateCellRange(mSSID, mBSSID, mCID, mLAC);
-		int cid;
+    	int network = mDbHelper.updateNetworkRange(mSSID, mBSSID, mCID, mLAC);
+		int cid, lac;
 		for (NeighboringCellInfo n : mNeighboringCells) {
 			cid = n.getCid();
-			if (cid > 0) mDbHelper.updateCellNeighbor(network, cid, mLAC);}}
+			lac = n.getLac();
+			if (cid > 0) mDbHelper.updateNetworkNeighbor(network, cid, lac);}}
 	
 	private void wifiChanged() {
 		if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null) && (mCID > 0) && (mDbHelper != null)) {

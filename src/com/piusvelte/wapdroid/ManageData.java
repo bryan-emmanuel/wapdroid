@@ -32,7 +32,6 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
 import com.piusvelte.wapdroid.R;
 
@@ -51,6 +50,7 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -71,6 +71,7 @@ public class ManageData extends ListActivity {
     private AlertDialog mAlertDialog;
 	private TelephonyManager mTeleManager;
 	private List<NeighboringCellInfo> mNeighboringCells;
+	private static final String TAG = "ManageData";
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
     		checkLocation(location);}};
@@ -159,7 +160,7 @@ public class ManageData extends ListActivity {
 		case DELETE_ID:
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
 			if (mNetwork == -1) mDbHelper.deleteNetwork((int) info.id);
-			else mDbHelper.deleteCell(mNetwork, (int) info.id);
+			else mDbHelper.deletePair(mNetwork, (int) info.id);
 			try {
 				listData();}
 			catch (RemoteException e) {
@@ -174,14 +175,15 @@ public class ManageData extends ListActivity {
 			try {
 				query.put("version", "1.1.0");
 				query.put("host", "maps.google.com");
-				android.util.Log.v("Wapdroid", "home_mobile_country_code:" + operator.substring(0, 3));
+				Log.v("Wapdroid", "home_mobile_country_code:" + operator.substring(0, 3));
 				query.put("home_mobile_country_code", operator.substring(0, 3));
-				android.util.Log.v("Wapdroid", "home_mobile_country_code:" + operator.substring(0, 3));
+				Log.v("Wapdroid", "home_mobile_country_code:" + operator.substring(0, 3));
 				query.put("home_mobile_network_code", operator.substring(3));
-				android.util.Log.v("Wapdroid", "home_mobile_network_code:" + operator.substring(3));
+				Log.v("Wapdroid", "home_mobile_network_code:" + operator.substring(3));
 				query.put("carrier", mTeleManager.getNetworkOperatorName());
-				android.util.Log.v("Wapdroid", "carrier:" + mTeleManager.getNetworkOperatorName());}
-			catch (JSONException e) {}
+				Log.v("Wapdroid", "carrier:" + mTeleManager.getNetworkOperatorName());}
+			catch (JSONException e) {
+				Log.e(TAG, "error building json query");}
 			Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworkData((int) info.id) : mDbHelper.fetchCellData((int) info.id);
 	    	if (c.getCount() > 0) {
 	    		c.moveToFirst();
@@ -189,28 +191,31 @@ public class ManageData extends ListActivity {
 	    			JSONObject tower = new JSONObject();
 	    			try {
 	    				tower.put("cell_id", c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
-	    				android.util.Log.v("Wapdroid", "cell_id:" + c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
-	    				tower.put("location_area_code", c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_LAC)));
-	    				android.util.Log.v("Wapdroid", "location_area_code:" + c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_LAC)));
+	    				Log.v("Wapdroid", "cell_id:" + c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
+	    				tower.put("location_area_code", c.getInt(c.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
+	    				Log.v("Wapdroid", "location_area_code:" + c.getInt(c.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
 	    				tower.put("mobile_country_code", operator.substring(0, 3));
-	    				android.util.Log.v("Wapdroid", "mobile_country_code:" + operator.substring(0, 3));
+	    				Log.v("Wapdroid", "mobile_country_code:" + operator.substring(0, 3));
 	    				tower.put("mobile_network_code", operator.substring(3));
-	    				android.util.Log.v("Wapdroid", "mobile_network_code:" + operator.substring(3));
+	    				Log.v("Wapdroid", "mobile_network_code:" + operator.substring(3));
 	    				query.accumulate("cell_towers", tower);}
-	    			catch (JSONException e) {}
+	    			catch (JSONException e) {
+	    				Log.e(TAG, "error building json tower");}
 	    			c.moveToNext();}}
 	    	c.close();
 	    	String lat = "", lon = "";
-	    	JSONTokener jsontokener = new JSONTokener(post(query));
-	    	jsontokener.skipPast("latitude\":");
-	    	try {
-	    		lat = coordinate(jsontokener.nextValue().toString());}
-	    	catch (JSONException e) {}
-	    	jsontokener.skipPast("longitude\":");
-	    	try {
-	    		lon = coordinate(jsontokener.nextValue().toString());}
-	    	catch (JSONException e) {}
-			android.util.Log.v("Wapdroid", "geo:" + lat + "," + lon);
+	    	String response = post(query);
+	    	Log.v(TAG, "response: "+response);
+	    	JSONObject results, location;
+			try {
+				results = new JSONObject(response);
+				location = results.getJSONObject("location");
+	    		lat = (String) location.get("latitude");
+	    		lon = (String) location.get("longitude");}
+			catch (JSONException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();}
+			Log.v("Wapdroid", "geo:" + lat + "," + lon);
 			startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("geo:" + lat + "," + lon)));
 			return true;}
 		return super.onContextItemSelected(item);}
@@ -223,9 +228,6 @@ public class ManageData extends ListActivity {
     		intent.putExtra(WapdroidDbAdapter.TABLE_ID, (int) id);
     		startActivity(intent);}}
     
-    public String coordinate(String value) {
-    	return new String(value.getBytes(), 0, value.length() -1);}
-    
     public void listData() throws RemoteException {
     	// filter results
     	String cellsSet = "";
@@ -233,7 +235,7 @@ public class ManageData extends ListActivity {
    			cellsSet = "'" + Integer.toString(mCid) + "'";
    			if (!mNeighboringCells.isEmpty()) {
    				for (NeighboringCellInfo n : mNeighboringCells) cellsSet += ",'" + Integer.toString(n.getCid()) + "'";}}
-    	Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworks(mFilter, cellsSet) : mDbHelper.fetchCellsByNetworkFilter(mNetwork, mFilter, cellsSet);
+    	Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworks(mFilter, cellsSet) : mDbHelper.fetchPairsByNetworkFilter(mNetwork, mFilter, cellsSet);
         startManagingCursor(c);
         SimpleCursorAdapter data = mNetwork == -1 ?
         		new SimpleCursorAdapter(this,
