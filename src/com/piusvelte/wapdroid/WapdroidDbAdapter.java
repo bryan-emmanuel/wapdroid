@@ -39,24 +39,48 @@ public class WapdroidDbAdapter {
 	public static final String NETWORKS_BSSID = "BSSID";
 	public static final String TABLE_CELLS = "cells";
 	public static final String CELLS_CID = "CID";
+	/*
 	public static final String CELLS_NETWORK = "network";
 	public static final String CELLS_LAC = "LAC";
+	*/
 	public static final String STATUS = "status";
 	public static final int FILTER_ALL = 0;
 	public static final int FILTER_INRANGE = 1;
 	public static final int FILTER_OUTRANGE = 2;
+	public static final String TABLE_LOCATIONS = "locations";
+	public static final String LOCATIONS_LAC = "LAC";
+	public static final String TABLE_PAIRS = "pairs";
+	public static final String PAIRS_CELL = "cell";
+	public static final String PAIRS_NETWORK = "network";
+	public static final String PAIRS_LOCATION = "location";
 	
 	private static final String CREATE_NETWORKS = "create table "
 		+ TABLE_NETWORKS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ NETWORKS_SSID + " text not null, "
 		+ NETWORKS_BSSID + " text not null);";
+	/*
 	private static final String CREATE_CELLS = "create table "
 		+ TABLE_CELLS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ CELLS_CID + " integer, "
 		+ CELLS_NETWORK + " integer, "
 		+ CELLS_LAC + " integer);";
+	*/
+	private static final String CREATE_CELLS = "create table "
+		+ TABLE_CELLS + " ("
+		+ TABLE_ID + ID_TYPE
+		+ CELLS_CID + " integer);";
+	private static final String CREATE_PAIRS = "create table "
+		+ TABLE_PAIRS + " ("
+		+ TABLE_ID + ID_TYPE
+		+ PAIRS_CELL + " integer, "
+		+ PAIRS_NETWORK + " integer, "
+		+ PAIRS_LOCATION + " integer);";
+	private static final String CREATE_LOCATIONS = "create table "
+		+ TABLE_LOCATIONS + " ("
+		+ TABLE_ID + ID_TYPE
+		+ LOCATIONS_LAC + " integer);";
 	
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDb;
@@ -69,7 +93,9 @@ public class WapdroidDbAdapter {
         @Override
         public void onCreate(SQLiteDatabase db) {
             db.execSQL(CREATE_NETWORKS);
-            db.execSQL(CREATE_CELLS);}
+            db.execSQL(CREATE_CELLS);
+            db.execSQL(CREATE_PAIRS);
+            db.execSQL(CREATE_LOCATIONS);}
         
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -84,15 +110,19 @@ public class WapdroidDbAdapter {
         				+ " FROM " + TABLE_NETWORKS + "_bkp;");
     			db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");}
         	if (oldVersion < 3) {
-        		// add LAC
-    			db.execSQL(DROP + TABLE_CELLS + "_bkp;");
+        		// add locations
+        		db.execSQL(CREATE_LOCATIONS);
+        		// first backup cells to create pairs
+        		db.execSQL(DROP + TABLE_CELLS + "_bkp");
     			db.execSQL("create temporary table " + TABLE_CELLS + "_bkp AS SELECT * FROM " + TABLE_CELLS + ";");
-    			db.execSQL(DROP + TABLE_CELLS + ";");
-    			db.execSQL(CREATE_CELLS);
-    			db.execSQL("INSERT INTO " + TABLE_CELLS + " SELECT "
-        				+ TABLE_ID + ", " + CELLS_CID + ", " + CELLS_NETWORK + ", \"\""
-        				+ " FROM " + TABLE_CELLS + "_bkp;");
-    			db.execSQL(DROP + TABLE_CELLS + "_bkp;");
+            	// update cells, dropping network column, making unique
+        		db.execSQL(DROP + TABLE_CELLS + ";");
+        		db.execSQL(CREATE_CELLS);
+        		db.execSQL("INSERT INTO " + TABLE_CELLS + " SELECT DISTINCT " + CELLS_CID + " FROM " + TABLE_CELLS + "_bkp", null);
+        		// create pairs
+        		db.execSQL(CREATE_PAIRS);
+        		db.execSQL("INSERT INTO " + TABLE_PAIRS + " SELECT " TABLE_CELLS + "." + CELLS_CID + ", " + TABLE_CELLS + "_bkp.network FROM + " TABLE_CELLS + ", " + TABLE_CELLS + "_bkp WHERE " + TABLE_CELLS + "." + TABLE_ID + "=" + TABLE_CELLS + "_bkp." + CELLS_CID, null);
+            	Cursor c = db.rawQuery("SELECT " + TABLE_ID + ", network" + " FROM " + TABLE_CELLS + "_bkp", null);
         		}}}
         
     public WapdroidDbAdapter(Context context) {
