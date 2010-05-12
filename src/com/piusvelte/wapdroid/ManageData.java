@@ -169,13 +169,18 @@ public class ManageData extends ListActivity {
 		case GEO_ID:
 			// open gmaps
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
+    		String operator = mTeleManager.getNetworkOperator();
 			JSONObject query = new JSONObject();
 			try {
 				query.put("version", "1.1.0");
 				query.put("host", "maps.google.com");
-				query.put("home_mobile_country_code", mTeleManager.getNetworkCountryIso());
-				query.put("home_mobile_network_code", mTeleManager.getNetworkOperator().substring(3));
-				query.put("carrier", mTeleManager.getNetworkOperatorName());}
+				android.util.Log.v("Wapdroid", "home_mobile_country_code:" + operator.substring(0, 3));
+				query.put("home_mobile_country_code", operator.substring(0, 3));
+				android.util.Log.v("Wapdroid", "home_mobile_country_code:" + operator.substring(0, 3));
+				query.put("home_mobile_network_code", operator.substring(3));
+				android.util.Log.v("Wapdroid", "home_mobile_network_code:" + operator.substring(3));
+				query.put("carrier", mTeleManager.getNetworkOperatorName());
+				android.util.Log.v("Wapdroid", "carrier:" + mTeleManager.getNetworkOperatorName());}
 			catch (JSONException e) {}
 			Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworkData((int) info.id) : mDbHelper.fetchCellData((int) info.id);
 	    	if (c.getCount() > 0) {
@@ -184,9 +189,13 @@ public class ManageData extends ListActivity {
 	    			JSONObject tower = new JSONObject();
 	    			try {
 	    				tower.put("cell_id", c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
+	    				android.util.Log.v("Wapdroid", "cell_id:" + c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
 	    				tower.put("location_area_code", c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_LAC)));
-	    				tower.put("mobile_country_code", mTeleManager.getNetworkCountryIso());
-	    				tower.put("mobile_network_code", mTeleManager.getNetworkOperator().substring(3));
+	    				android.util.Log.v("Wapdroid", "location_area_code:" + c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_LAC)));
+	    				tower.put("mobile_country_code", operator.substring(0, 3));
+	    				android.util.Log.v("Wapdroid", "mobile_country_code:" + operator.substring(0, 3));
+	    				tower.put("mobile_network_code", operator.substring(3));
+	    				android.util.Log.v("Wapdroid", "mobile_network_code:" + operator.substring(3));
 	    				query.accumulate("cell_towers", tower);}
 	    			catch (JSONException e) {}
 	    			c.moveToNext();}}
@@ -201,6 +210,7 @@ public class ManageData extends ListActivity {
 	    	try {
 	    		lon = coordinate(jsontokener.nextValue().toString());}
 	    	catch (JSONException e) {}
+			android.util.Log.v("Wapdroid", "geo:" + lat + "," + lon);
 			startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("geo:" + lat + "," + lon)));
 			return true;}
 		return super.onContextItemSelected(item);}

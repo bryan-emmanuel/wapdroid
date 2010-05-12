@@ -114,6 +114,7 @@ public class WapdroidService extends Service {
 	
 	@Override
 	public IBinder onBind(Intent intent) {
+		android.util.Log.v("Wapdroid", "onBind");
     	mAlarmManager.cancel(mPendingIntent);
 		ManageWakeLocks.release();
 		return mWapdroidService;}
@@ -135,6 +136,7 @@ public class WapdroidService extends Service {
 		 * boot and wake will wakelock and should set the alarm,
 		 * others should release the lock and cancel the alarm
 		 */
+		android.util.Log.v("Wapdroid", "init");
 		mWifiState = mWifiManager.getWifiState();
 		mWifiIsEnabled = (mWifiState == WifiManager.WIFI_STATE_ENABLED);
 		if (mWifiIsEnabled) setWifiInfo();
@@ -154,6 +156,7 @@ public class WapdroidService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+		android.util.Log.v("Wapdroid", "onCreate");
 		IntentFilter intentfilter = new IntentFilter();
 		intentfilter.addAction(Intent.ACTION_SCREEN_OFF);
 		intentfilter.addAction(Intent.ACTION_SCREEN_ON);
@@ -180,6 +183,7 @@ public class WapdroidService extends Service {
     @Override
     public void onDestroy() {
     	super.onDestroy();
+		android.util.Log.v("Wapdroid", "onDestroy");
     	if (mReceiver != null) {
     		unregisterReceiver(mReceiver);
     		mReceiver = null;}

@@ -56,19 +56,23 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	
 	public void captureService() {
     	mServiceConn = new ServiceConn();
+    	android.util.Log.v("Wapdroid", "bindService");
     	bindService(mServiceIntent, mServiceConn, BIND_AUTO_CREATE);}
 	
 	public void releaseService() {
+    	android.util.Log.v("Wapdroid", "unbindService");
    		unbindService(mServiceConn);
    		mServiceConn = null;}
 	
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
 			if (sharedPreferences.getBoolean(key, true)) {
+		    	android.util.Log.v("Wapdroid", "startService");
 				startService(mServiceIntent);
 				captureService();}
 			else {
 				releaseService();
+		    	android.util.Log.v("Wapdroid", "stopService");
 				stopService(mServiceIntent);}}
 		else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
 			try {
