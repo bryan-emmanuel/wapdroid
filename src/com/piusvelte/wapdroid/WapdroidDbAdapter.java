@@ -235,18 +235,22 @@ public class WapdroidDbAdapter {
     	c.close();
     	return pair;}
     
-    public Cursor fetchNetworkData(int id) {
-    	return mDb.rawQuery("select " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
-    		+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-    		+ " where " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+    public Cursor fetchNetworkData(int network) {
+    	return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
+    		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+    		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+    		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
     		+ " and " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-    		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + id, null);}
+    		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network, null);}
     
-    public Cursor fetchCellData(int id) {
-    	return mDb.rawQuery("select " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
-        		+ " from " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-        		+ " where " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-        		+ " and " + TABLE_CELLS + "." + TABLE_ID + "=" + id, null);}
+    public Cursor fetchCellData(int network, int cell) {
+    	return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
+        		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+        		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+        		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+        		+ " and " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+        		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network
+        		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + cell, null);}
 
     public Cursor fetchPairsByNetwork(int network) {
     	Log.v(TAG,"fetchPairs: "+"select " + tableColAs(TABLE_PAIRS, TABLE_ID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID)
@@ -259,7 +263,7 @@ public class WapdroidDbAdapter {
     		+ " and "+ PAIRS_NETWORK + "=" + network, null);}
     
     public Cursor fetchPairsByNetworkFilter(int network, int filter, String set) {
-    	return mDb.rawQuery("select " + tableColAs(TABLE_PAIRS, TABLE_ID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", "
+    	return mDb.rawQuery("select " + tableColAs(TABLE_PAIRS, TABLE_ID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC) + ", "
     			+ ((filter == FILTER_ALL) ?
     				("CASE WHEN " + TABLE_CELLS + "." + CELLS_CID + " in (" + set + ") then '"
     					+ mContext.getString(R.string.withinarea)
@@ -268,8 +272,9 @@ public class WapdroidDbAdapter {
     						R.string.accessible
     						: R.string.inaccessible) + "' as "))
     			+ STATUS
-    			+ " from " + TABLE_PAIRS + "," + TABLE_CELLS
+    			+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
     			+ " where " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+    			+ " and " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
     			+ " and "+ PAIRS_NETWORK + "=" + network
        	    	+ ((filter != FILTER_ALL) ?
        	   	    		(" and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " not" : "") + " in (" + set + ")")

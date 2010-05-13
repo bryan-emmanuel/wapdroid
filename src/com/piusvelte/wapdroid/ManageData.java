@@ -20,18 +20,7 @@
 
 package com.piusvelte.wapdroid;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
-
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.BasicResponseHandler;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.piusvelte.wapdroid.R;
 
@@ -42,7 +31,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.RemoteException;
 import android.telephony.CellLocation;
@@ -50,7 +38,6 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -71,7 +58,6 @@ public class ManageData extends ListActivity {
     private AlertDialog mAlertDialog;
 	private TelephonyManager mTeleManager;
 	private List<NeighboringCellInfo> mNeighboringCells;
-	private static final String TAG = "ManageData";
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
     		checkLocation(location);}};
@@ -100,7 +86,6 @@ public class ManageData extends ListActivity {
 		try {
 			listData();}
 		catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();}}
 	
     @Override
@@ -117,7 +102,6 @@ public class ManageData extends ListActivity {
     		try {
 				listData();}
     		catch (RemoteException e1) {
-				// TODO Auto-generated catch block
 				e1.printStackTrace();}
     		return true;
     	case FILTER_ID:
@@ -140,7 +124,6 @@ public class ManageData extends ListActivity {
     						try {
 								listData();}
     						catch (RemoteException e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();}}});
     		mAlertDialog = b.create();
     		mAlertDialog.show();
@@ -164,69 +147,20 @@ public class ManageData extends ListActivity {
 			try {
 				listData();}
 			catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();}
 			return true;
 		case GEO_ID:
 			// open gmaps
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
     		String operator = mTeleManager.getNetworkOperator();
-			JSONObject query = new JSONObject();
-			try {
-				query.put("version", "1.1.0");
-				query.put("host", "maps.google.com");
-				Log.v("Wapdroid", "home_mobile_country_code:" + operator.substring(0, 3));
-				query.put("home_mobile_country_code", operator.substring(0, 3));
-				Log.v("Wapdroid", "home_mobile_country_code:" + operator.substring(0, 3));
-				query.put("home_mobile_network_code", operator.substring(3));
-				Log.v("Wapdroid", "home_mobile_network_code:" + operator.substring(3));
-				query.put("carrier", mTeleManager.getNetworkOperatorName());
-				Log.v("Wapdroid", "carrier:" + mTeleManager.getNetworkOperatorName());}
-			catch (JSONException e) {
-				Log.e(TAG, "error building json query");}
-			Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworkData((int) info.id) : mDbHelper.fetchCellData((int) info.id);
-	    	if (c.getCount() > 0) {
-	    		c.moveToFirst();
-	    		while (!c.isAfterLast()) {
-	    			JSONObject tower = new JSONObject();
-	    			try {
-	    				// add tower to query, but also get location for each tower to add pins
-		    			JSONObject pin = new JSONObject();
-						pin.put("version", "1.1.0");
-						pin.put("host", "maps.google.com");
-						pin.put("home_mobile_country_code", operator.substring(0, 3));
-						pin.put("home_mobile_network_code", operator.substring(3));
-						pin.put("carrier", mTeleManager.getNetworkOperatorName());
-	    				tower.put("cell_id", c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
-	    				Log.v("Wapdroid", "cell_id:" + c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
-	    				tower.put("location_area_code", c.getInt(c.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
-	    				Log.v("Wapdroid", "location_area_code:" + c.getInt(c.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
-	    				tower.put("mobile_country_code", operator.substring(0, 3));
-	    				Log.v("Wapdroid", "mobile_country_code:" + operator.substring(0, 3));
-	    				tower.put("mobile_network_code", operator.substring(3));
-	    				Log.v("Wapdroid", "mobile_network_code:" + operator.substring(3));
-	    				pin.accumulate("cell_towers", tower);
-	    				String pin_response = post(pin);
-	    				Log.v(TAG,"pin_respones: "+pin_response);
-	    				query.accumulate("cell_towers", tower);}
-	    			catch (JSONException e) {
-	    				Log.e(TAG, "error building json tower");}
-	    			c.moveToNext();}}
-	    	c.close();
-	    	String lat = "", lon = "";
-	    	String response = post(query);
-	    	Log.v(TAG, "response: "+response);
-	    	JSONObject results, location;
-			try {
-				results = new JSONObject(response);
-				location = results.getJSONObject("location");
-	    		lat = Double.toString(location.getDouble("latitude"));
-	    		lon = Double.toString(location.getDouble("longitude"));}
-			catch (JSONException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();}
-			Log.v("Wapdroid", "geo:" + lat + "," + lon);
-			startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("geo:" + lat + "," + lon)));
+    		Intent intent = new Intent(this, ManageData.class);
+    		if (mNetwork == -1) intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) info.id);
+    		else {
+    			intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) mNetwork);
+    			intent.putExtra(WapdroidDbAdapter.PAIRS_CELL, (int) info.id);}
+    		intent.putExtra(MapData.OPERATOR, operator);
+    		intent.putExtra(MapData.CARRIER, mTeleManager.getNetworkOperatorName());
+    		startActivity(intent);
 			return true;}
 		return super.onContextItemSelected(item);}
     
@@ -256,25 +190,9 @@ public class ManageData extends ListActivity {
         		: new SimpleCursorAdapter(this,
         				R.layout.cell_row,
         				c,
-        				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.STATUS},
-        				new int[] {R.id.cell_row_CID, R.id.cell_row_status});
+        				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.LOCATIONS_LAC, WapdroidDbAdapter.STATUS},
+        				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_status});
         setListAdapter(data);}
-
-	public String post(JSONObject query) {
-		String response = "";
-		DefaultHttpClient httpClient = new DefaultHttpClient();
-		ResponseHandler <String> responseHandler = new BasicResponseHandler();
-		HttpPost postMethod = new HttpPost("https://www.google.com/loc/json");
-		try {
-			postMethod.setEntity(new StringEntity(query.toString()));}
-		catch (UnsupportedEncodingException e) {}
-		postMethod.setHeader("Accept", "application/json");
-		postMethod.setHeader("Content-type", "application/json");
-		try {
-			response = httpClient.execute(postMethod, responseHandler);}
-		catch (ClientProtocolException e) {}
-		catch (IOException e) {}
-		return response;}
     
     private void checkLocation(CellLocation location) {
    		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {

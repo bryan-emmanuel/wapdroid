@@ -22,27 +22,31 @@ public final class R {
         public static final int text_secondary=0x7f060002;
     }
     public static final class drawable {
-        public static final int field=0x7f020000;
-        public static final int icon=0x7f020001;
-        public static final int scanning=0x7f020002;
-        public static final int status=0x7f020003;
-        public static final int statuson=0x7f020004;
+        public static final int cell=0x7f020000;
+        public static final int field=0x7f020001;
+        public static final int icon=0x7f020002;
+        public static final int scanning=0x7f020003;
+        public static final int status=0x7f020004;
+        public static final int statuson=0x7f020005;
+        public static final int wifi=0x7f020006;
     }
     public static final class id {
         public static final int button_donate=0x7f080000;
         public static final int cell_row_CID=0x7f080001;
-        public static final int cell_row_status=0x7f080002;
-        public static final int field_CID=0x7f080006;
-        public static final int field_MCC=0x7f08000a;
-        public static final int field_MNC=0x7f080008;
-        public static final int field_wifiBSSID=0x7f080004;
-        public static final int field_wifiState=0x7f080003;
-        public static final int label_CID=0x7f080005;
-        public static final int label_MCC=0x7f080009;
-        public static final int label_MNC=0x7f080007;
-        public static final int network_row_BSSID=0x7f08000c;
-        public static final int network_row_SSID=0x7f08000b;
-        public static final int network_row_status=0x7f08000d;
+        public static final int cell_row_LAC=0x7f080002;
+        public static final int cell_row_status=0x7f080003;
+        public static final int field_CID=0x7f080007;
+        public static final int field_MCC=0x7f08000b;
+        public static final int field_MNC=0x7f080009;
+        public static final int field_wifiBSSID=0x7f080005;
+        public static final int field_wifiState=0x7f080004;
+        public static final int label_CID=0x7f080006;
+        public static final int label_MCC=0x7f08000a;
+        public static final int label_MNC=0x7f080008;
+        public static final int mapview=0x7f08000c;
+        public static final int network_row_BSSID=0x7f08000e;
+        public static final int network_row_SSID=0x7f08000d;
+        public static final int network_row_status=0x7f08000f;
     }
     public static final class layout {
         public static final int about=0x7f030000;
