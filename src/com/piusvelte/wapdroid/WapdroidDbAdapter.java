@@ -101,26 +101,16 @@ public class WapdroidDbAdapter {
     			db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");}
         	if (oldVersion < 3) {
         		// add locations
-        		Log.v(TAG, CREATE_LOCATIONS);
         		db.execSQL(CREATE_LOCATIONS);
         		// first backup cells to create pairs
         		db.execSQL(DROP + TABLE_CELLS + "_bkp");
-        		Log.v(TAG, "create temporary table " + TABLE_CELLS + "_bkp as select * from " + TABLE_CELLS + ";");
     			db.execSQL("create temporary table " + TABLE_CELLS + "_bkp as select * from " + TABLE_CELLS + ";");
             	// update cells, dropping network column, making unique
         		db.execSQL(DROP + TABLE_CELLS + ";");
-        		Log.v(TAG, CREATE_CELLS);
         		db.execSQL(CREATE_CELLS);
-        		Log.v(TAG, "insert into " + TABLE_CELLS + " select " + TABLE_ID + ", " + CELLS_CID + ", null from " + TABLE_CELLS + "_bkp group by " + CELLS_CID);
         		db.execSQL("insert into " + TABLE_CELLS + " select " + TABLE_ID + ", " + CELLS_CID + ", null from " + TABLE_CELLS + "_bkp group by " + CELLS_CID);
         		// create pairs
-        		Log.v(TAG, CREATE_PAIRS);
         		db.execSQL(CREATE_PAIRS);
-        		Log.v(TAG, "insert into " + TABLE_PAIRS
-        				+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK
-        				+ ") select " + TABLE_CELLS + "." + CELLS_CID + ", " + TABLE_CELLS
-        				+ "_bkp.network from " + TABLE_CELLS + ", " + TABLE_CELLS
-        				+ "_bkp where " + TABLE_CELLS + "." + TABLE_ID + "=" + TABLE_CELLS + "_bkp." + TABLE_ID);
         		db.execSQL("insert into " + TABLE_PAIRS
         				+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK
         				+ ") select " + TABLE_CELLS + "." + CELLS_CID + ", " + TABLE_CELLS
@@ -173,6 +163,24 @@ public class WapdroidDbAdapter {
     	return network;}
 
     public Cursor fetchNetworks(int filter, String set) {
+    	Log.v(TAG, "fetchNetworks:");
+    	Log.v(TAG, "select " + tableColAs(TABLE_NETWORKS, TABLE_ID) + ", "
+   	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", "
+   	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_BSSID) + ", "
+   	   			+ "CASE WHEN " + TABLE_NETWORKS + "." + TABLE_ID
+   	   			+ " in (select " + TABLE_PAIRS + "." + PAIRS_NETWORK
+   	   			+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
+   	   			+ " where " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + CELLS_CID
+   	   			+ " and " + CELLS_CID + " in (" + set
+   	   			+ ")) then '" + mContext.getString(R.string.withinarea)
+   				+ "' else '" + mContext.getString(R.string.outofarea) + "' end as " + STATUS);
+   		Log.v(TAG, " from " + TABLE_NETWORKS
+   	   	    	+ ((filter != FILTER_ALL) ?
+   	   	    		(", " + TABLE_PAIRS + ", " + TABLE_CELLS
+   	   	    		+ " where " + TABLE_NETWORKS + "." + TABLE_ID + " = " + TABLE_PAIRS + "." + PAIRS_NETWORK
+   	   	    		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+   	   	    		+ " and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " in (" + set + ")")
+   	   	    	: ""));
    		return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, TABLE_ID) + ", "
    	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", "
    	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_BSSID) + ", "
@@ -181,8 +189,8 @@ public class WapdroidDbAdapter {
    	   			+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
    	   			+ " where " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + CELLS_CID
    	   			+ " and " + CELLS_CID + " in (" + set
-   	   			+ ")) then '" + mContext.getString(R.string.accessible)
-   				+ "' else '" + mContext.getString(R.string.inaccessible) + "' end as " + STATUS
+   	   			+ ")) then '" + mContext.getString(R.string.withinarea)
+   				+ "' else '" + mContext.getString(R.string.outofarea) + "' end as " + STATUS
    	   	    	+ " from " + TABLE_NETWORKS
    	   	    	+ ((filter != FILTER_ALL) ?
    	   	    		(", " + TABLE_PAIRS + ", " + TABLE_CELLS
@@ -254,8 +262,8 @@ public class WapdroidDbAdapter {
     	return mDb.rawQuery("select " + tableColAs(TABLE_PAIRS, TABLE_ID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", "
     			+ ((filter == FILTER_ALL) ?
     				("CASE WHEN " + TABLE_CELLS + "." + CELLS_CID + " in (" + set + ") then '"
-    					+ mContext.getString(R.string.accessible)
-    					+ "' else '" + mContext.getString(R.string.inaccessible) + "' end as ")
+    					+ mContext.getString(R.string.withinarea)
+    					+ "' else '" + mContext.getString(R.string.outofarea) + "' end as ")
     				: "'" + (mContext.getString(filter == FILTER_INRANGE ?
     						R.string.accessible
     						: R.string.inaccessible) + "' as "))

@@ -41,10 +41,10 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
-	private static int NOTIFY_SCANNING = 2;
 	public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
 	private WapdroidDbAdapter mDbHelper;
 	private NotificationManager mNotificationManager;
@@ -56,6 +56,7 @@ public class WapdroidService extends Service {
 	private boolean mWifiIsEnabled, mNotify, mVibrate, mLed, mRingtone;
 	private AlarmManager mAlarmManager;
 	private PendingIntent mPendingIntent;
+	private static final String TAG = "WapdroidService";
 	
     private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
 		public void updatePreferences(int interval, boolean notify,
@@ -63,7 +64,7 @@ public class WapdroidService extends Service {
 				throws RemoteException {
 			mInterval = interval;
 			if (mNotify && !notify) {
-				mNotificationManager.cancel(NOTIFY_SCANNING);
+				mNotificationManager.cancel(NOTIFY_ID);
 				mNotificationManager = null;}
 			else if (!mNotify && notify) {
 				mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -71,7 +72,7 @@ public class WapdroidService extends Service {
 			   	Notification notification = new Notification(R.drawable.scanning, contentTitle, System.currentTimeMillis());
 				PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
 			   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-				mNotificationManager.notify(NOTIFY_SCANNING, notification);}
+				mNotificationManager.notify(NOTIFY_ID, notification);}
 			mNotify = notify;
 			mVibrate = vibrate;
 			mLed = led;
@@ -114,7 +115,7 @@ public class WapdroidService extends Service {
 	
 	@Override
 	public IBinder onBind(Intent intent) {
-		android.util.Log.v("Wapdroid", "onBind");
+		Log.v(TAG, "onBind");
     	mAlarmManager.cancel(mPendingIntent);
 		ManageWakeLocks.release();
 		return mWapdroidService;}
@@ -136,7 +137,7 @@ public class WapdroidService extends Service {
 		 * boot and wake will wakelock and should set the alarm,
 		 * others should release the lock and cancel the alarm
 		 */
-		android.util.Log.v("Wapdroid", "init");
+		Log.v(TAG, "init");
 		mWifiState = mWifiManager.getWifiState();
 		mWifiIsEnabled = (mWifiState == WifiManager.WIFI_STATE_ENABLED);
 		if (mWifiIsEnabled) setWifiInfo();
@@ -145,7 +146,7 @@ public class WapdroidService extends Service {
 		   	Notification notification = new Notification(R.drawable.scanning, contentTitle, System.currentTimeMillis());
 			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
 		   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-			mNotificationManager.notify(NOTIFY_SCANNING, notification);}
+			mNotificationManager.notify(NOTIFY_ID, notification);}
 		checkLocation(mTeleManager.getCellLocation());
 		if (mCID == -1) mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);
 		else {
@@ -156,7 +157,7 @@ public class WapdroidService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-		android.util.Log.v("Wapdroid", "onCreate");
+		Log.v(TAG, "onCreate");
 		IntentFilter intentfilter = new IntentFilter();
 		intentfilter.addAction(Intent.ACTION_SCREEN_OFF);
 		intentfilter.addAction(Intent.ACTION_SCREEN_ON);
@@ -183,12 +184,12 @@ public class WapdroidService extends Service {
     @Override
     public void onDestroy() {
     	super.onDestroy();
-		android.util.Log.v("Wapdroid", "onDestroy");
+		Log.v(TAG, "onDestroy");
     	if (mReceiver != null) {
     		unregisterReceiver(mReceiver);
     		mReceiver = null;}
 		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);
-		if (mNotify && (mNotificationManager != null)) mNotificationManager.cancel(NOTIFY_SCANNING);}
+		if (mNotify && (mNotificationManager != null)) mNotificationManager.cancel(NOTIFY_ID);}
     
     private void checkLocation(CellLocation location) {
     	// check that the DB is open
@@ -242,6 +243,7 @@ public class WapdroidService extends Service {
     private void updateRange() {
     	int network = mDbHelper.updateNetworkRange(mSSID, mBSSID, mCID, mLAC);
 		int cid, lac;
+		Log.v(TAG, "update range: " + mCID + "," + mLAC);
 		for (NeighboringCellInfo n : mNeighboringCells) {
 			cid = n.getCid();
 			lac = n.getLac();

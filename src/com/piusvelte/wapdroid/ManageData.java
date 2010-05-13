@@ -150,8 +150,8 @@ public class ManageData extends ListActivity {
     @Override
 	public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, view, menuInfo);
-		menu.add(0, DELETE_ID, 0, mNetwork == -1 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);
-		menu.add(0, GEO_ID, 0, R.string.map);}
+		menu.add(0, GEO_ID, 0, R.string.map).setIcon(android.R.drawable.ic_menu_compass);
+		menu.add(0, DELETE_ID, 0, mNetwork == -1 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell).setIcon(android.R.drawable.ic_menu_delete);}
 
     @Override
 	public boolean onContextItemSelected(MenuItem item) {
@@ -190,6 +190,13 @@ public class ManageData extends ListActivity {
 	    		while (!c.isAfterLast()) {
 	    			JSONObject tower = new JSONObject();
 	    			try {
+	    				// add tower to query, but also get location for each tower to add pins
+		    			JSONObject pin = new JSONObject();
+						pin.put("version", "1.1.0");
+						pin.put("host", "maps.google.com");
+						pin.put("home_mobile_country_code", operator.substring(0, 3));
+						pin.put("home_mobile_network_code", operator.substring(3));
+						pin.put("carrier", mTeleManager.getNetworkOperatorName());
 	    				tower.put("cell_id", c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
 	    				Log.v("Wapdroid", "cell_id:" + c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
 	    				tower.put("location_area_code", c.getInt(c.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
@@ -198,6 +205,9 @@ public class ManageData extends ListActivity {
 	    				Log.v("Wapdroid", "mobile_country_code:" + operator.substring(0, 3));
 	    				tower.put("mobile_network_code", operator.substring(3));
 	    				Log.v("Wapdroid", "mobile_network_code:" + operator.substring(3));
+	    				pin.accumulate("cell_towers", tower);
+	    				String pin_response = post(pin);
+	    				Log.v(TAG,"pin_respones: "+pin_response);
 	    				query.accumulate("cell_towers", tower);}
 	    			catch (JSONException e) {
 	    				Log.e(TAG, "error building json tower");}
