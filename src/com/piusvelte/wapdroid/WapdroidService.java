@@ -41,7 +41,6 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
@@ -56,7 +55,6 @@ public class WapdroidService extends Service {
 	private boolean mWifiIsEnabled, mNotify, mVibrate, mLed, mRingtone;
 	private AlarmManager mAlarmManager;
 	private PendingIntent mPendingIntent;
-	private static final String TAG = "WapdroidService";
 	
     private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
 		public void updatePreferences(int interval, boolean notify,
@@ -115,7 +113,6 @@ public class WapdroidService extends Service {
 	
 	@Override
 	public IBinder onBind(Intent intent) {
-		Log.v(TAG, "onBind");
     	mAlarmManager.cancel(mPendingIntent);
 		ManageWakeLocks.release();
 		return mWapdroidService;}
@@ -137,7 +134,6 @@ public class WapdroidService extends Service {
 		 * boot and wake will wakelock and should set the alarm,
 		 * others should release the lock and cancel the alarm
 		 */
-		Log.v(TAG, "init");
 		mWifiState = mWifiManager.getWifiState();
 		mWifiIsEnabled = (mWifiState == WifiManager.WIFI_STATE_ENABLED);
 		if (mWifiIsEnabled) setWifiInfo();
@@ -157,7 +153,6 @@ public class WapdroidService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-		Log.v(TAG, "onCreate");
 		IntentFilter intentfilter = new IntentFilter();
 		intentfilter.addAction(Intent.ACTION_SCREEN_OFF);
 		intentfilter.addAction(Intent.ACTION_SCREEN_ON);
@@ -184,7 +179,6 @@ public class WapdroidService extends Service {
     @Override
     public void onDestroy() {
     	super.onDestroy();
-		Log.v(TAG, "onDestroy");
     	if (mReceiver != null) {
     		unregisterReceiver(mReceiver);
     		mReceiver = null;}
@@ -243,7 +237,6 @@ public class WapdroidService extends Service {
     private void updateRange() {
     	int network = mDbHelper.updateNetworkRange(mSSID, mBSSID, mCID, mLAC);
 		int cid, lac;
-		Log.v(TAG, "update range: " + mCID + "," + mLAC);
 		for (NeighboringCellInfo n : mNeighboringCells) {
 			cid = n.getCid();
 			lac = n.getLac();

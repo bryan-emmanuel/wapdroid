@@ -41,7 +41,7 @@
 			<TableRow>
 				<TextView android:textStyle="bold"
 					android:textColor="@color/text_primary"
-					android:textSize="18dip"
+					android:textSize="14dip"
 					android:text="@string/label_LAC"/>
 				<TextView android:id="@+id/cell_row_LAC"
 					android:textColor="@color/text_primary"
@@ -51,7 +51,7 @@
 			<TableRow>
 				<TextView android:textStyle="bold"
 					android:textColor="@color/text_primary"
-					android:textSize="18dip"
+					android:textSize="14dip"
 					android:text="@string/status"/>
 				<TextView android:id="@+id/cell_row_status"
 					android:textColor="@color/text_primary"

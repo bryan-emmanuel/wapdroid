@@ -38,6 +38,7 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -52,12 +53,13 @@ public class ManageData extends ListActivity {
 	private int mNetwork = -1, mCid = -1;
 	private static final int REFRESH_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
-    private static final int FILTER_ID = Menu.FIRST + 2;
-    private static final int GEO_ID = Menu.FIRST + 3;
+    private static final int GEO_ID = Menu.FIRST + 2;
+    private static final int FILTER_ID = Menu.FIRST + 3;
     private static int mFilter = WapdroidDbAdapter.FILTER_ALL;
     private AlertDialog mAlertDialog;
 	private TelephonyManager mTeleManager;
 	private List<NeighboringCellInfo> mNeighboringCells;
+	private static final String TAG = "ManageData";
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
     		checkLocation(location);}};
@@ -140,6 +142,21 @@ public class ManageData extends ListActivity {
 	public boolean onContextItemSelected(MenuItem item) {
     	AdapterContextMenuInfo info;
 		switch(item.getItemId()) {
+		case GEO_ID:
+			// open gmaps
+			Log.v(TAG, "open gmaps");
+			info = (AdapterContextMenuInfo) item.getMenuInfo();
+    		String operator = mTeleManager.getNetworkOperator();
+			Log.v(TAG, "operator:" + operator);
+    		Intent intent = new Intent(this, MapData.class);
+    		if (mNetwork == -1) intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) info.id);
+    		else {
+    			intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) mNetwork);
+    			intent.putExtra(WapdroidDbAdapter.PAIRS_CELL, (int) info.id);}
+    		intent.putExtra(MapData.OPERATOR, operator);
+    		intent.putExtra(MapData.CARRIER, mTeleManager.getNetworkOperatorName());
+    		startActivity(intent);
+			return true;
 		case DELETE_ID:
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
 			if (mNetwork == -1) mDbHelper.deleteNetwork((int) info.id);
@@ -148,19 +165,6 @@ public class ManageData extends ListActivity {
 				listData();}
 			catch (RemoteException e) {
 				e.printStackTrace();}
-			return true;
-		case GEO_ID:
-			// open gmaps
-			info = (AdapterContextMenuInfo) item.getMenuInfo();
-    		String operator = mTeleManager.getNetworkOperator();
-    		Intent intent = new Intent(this, ManageData.class);
-    		if (mNetwork == -1) intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) info.id);
-    		else {
-    			intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) mNetwork);
-    			intent.putExtra(WapdroidDbAdapter.PAIRS_CELL, (int) info.id);}
-    		intent.putExtra(MapData.OPERATOR, operator);
-    		intent.putExtra(MapData.CARRIER, mTeleManager.getNetworkOperatorName());
-    		startActivity(intent);
 			return true;}
 		return super.onContextItemSelected(item);}
     

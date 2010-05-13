@@ -29,6 +29,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.net.wifi.WifiInfo;
@@ -127,6 +128,8 @@ public class WapdroidUI extends Activity {
     @Override
     public void onResume() {
     	super.onResume();
+    	SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
+        if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
 		mWifiState = mWifiManager.getWifiState();
 		mWifiIsEnabled = (mWifiState == mWifiEnabled);
 		if (mWifiIsEnabled) setWifiInfo(mWifiManager.getConnectionInfo());
