@@ -44,6 +44,7 @@ public class MapData extends MapActivity {
 	private String mCarrier = "", mToken = "";
 	private MapView mMapView;
 	private ProgressDialog mLoadingDialog;
+	private Thread mLoadData;
 	//@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -59,26 +60,27 @@ public class MapData extends MapActivity {
 			mMNC = Integer.parseInt(operator.substring(3));
 			mCarrier = extras.getString(CARRIER);}
         mDb = new WapdroidDbAdapter(this);
-		mLoadingDialog = ProgressDialog.show(this, getString(R.string.loading), (mCell == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.TABLE_CELLS));
-		new Thread() {
+		mLoadData = new Thread() {
 			public void run() {
 				mDb.open();
 				List<Overlay> mapOverlays = mMapView.getOverlays();
 				String network_request = "{";
 				if (mCell == 0) {
 					network_request += getRequestHeader();}
-				String msg = "";
+				String ssid = "";
     			String towers = "";
 				Cursor c = mCell == 0 ? mDb.fetchNetworkData((int) mNetwork) : mDb.fetchCellData((int) mNetwork, (int) mCell);
 		    	if (c.getCount() > 0) {
 		    		c.moveToFirst();
 		    		while (!c.isAfterLast()) {
+		    			int cid = c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID));
+		    			mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(cid));
 		    			// get the wifi msg
-		    			if ((mCell == 0) && (msg == "")) msg = c.getString(c.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
+		    			if ((mCell == 0) && (ssid == "")) ssid = c.getString(c.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
 	    				// add tower to query, but also get location for each tower to add pins
 		    			String cell_request = "{" + getRequestHeader();
 		    			if (mToken != "") cell_request += "," + addString(access_token, mToken);
-						String tower = "{" + addInt(cell_id, c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
+						String tower = "{" + addInt(cell_id, cid);
 	    				tower += "," + addInt(lac, c.getInt(c.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
 	    				tower += "," + addInt(mcc, mMCC);
 	    				tower += "," + addInt(mnc, mMNC) + "}";
@@ -95,13 +97,17 @@ public class MapData extends MapActivity {
 				mDb.close();
 		    	// the cells are added in above, this is only for the network
 		    	if (mCell == 0) {
+	    			mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid);
 		    		network_request += "," + addString(access_token, mToken);
 		    		network_request += "," + addArray(cell_towers, towers) + "}";
 			    	CellOverlay overlay = new CellOverlay(getResources().getDrawable(R.drawable.wifi));
-			    	OverlayItem overlayitem = new OverlayItem(getGeoPoint(post(network_request)), WapdroidDbAdapter.PAIRS_NETWORK, msg);
+			    	OverlayItem overlayitem = new OverlayItem(getGeoPoint(post(network_request)), WapdroidDbAdapter.PAIRS_NETWORK, ssid);
 			    	overlay.addOverlay(overlayitem);
 			    	mapOverlays.add(overlay);}
-		    	mLoadingDialog.dismiss();}}.start();}
+		    	mLoadingDialog.dismiss();}};
+			mLoadingDialog = ProgressDialog.show(this, getString(R.string.loading), (mCell == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
+			mLoadingDialog.setCancelable(true);
+		    mLoadData.run();}
 
 	@Override
 	protected boolean isRouteDisplayed() {

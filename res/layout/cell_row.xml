@@ -29,18 +29,17 @@
 			android:stretchColumns="0"
 			android:padding="16dip">
 			<TableRow>
-				<TextView android:textStyle="bold"
-					android:textColor="@color/text_primary"
+				<TextView android:textColor="@color/text_primary"
 					android:textSize="18dip"
 					android:text="@string/label_CID"/>
 				<TextView android:id="@+id/cell_row_CID"
+					android:textStyle="bold"
 					android:textColor="@color/text_primary"
 					android:gravity="right"
 					android:textSize="18dip"/>
 			</TableRow>
 			<TableRow>
-				<TextView android:textStyle="bold"
-					android:textColor="@color/text_primary"
+				<TextView android:textColor="@color/text_primary"
 					android:textSize="14dip"
 					android:text="@string/label_LAC"/>
 				<TextView android:id="@+id/cell_row_LAC"
@@ -49,8 +48,7 @@
 					android:textSize="14dip"/>
 			</TableRow>
 			<TableRow>
-				<TextView android:textStyle="bold"
-					android:textColor="@color/text_primary"
+				<TextView android:textColor="@color/text_primary"
 					android:textSize="14dip"
 					android:text="@string/status"/>
 				<TextView android:id="@+id/cell_row_status"
