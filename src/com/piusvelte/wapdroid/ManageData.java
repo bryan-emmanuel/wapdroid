@@ -38,7 +38,6 @@ import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -59,7 +58,6 @@ public class ManageData extends ListActivity {
     private AlertDialog mAlertDialog;
 	private TelephonyManager mTeleManager;
 	private List<NeighboringCellInfo> mNeighboringCells;
-	private static final String TAG = "ManageData";
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
     		checkLocation(location);}};
@@ -135,8 +133,8 @@ public class ManageData extends ListActivity {
     @Override
 	public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, view, menuInfo);
-		menu.add(0, GEO_ID, 0, R.string.map).setIcon(android.R.drawable.ic_menu_compass);
-		menu.add(0, DELETE_ID, 0, mNetwork == -1 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell).setIcon(android.R.drawable.ic_menu_delete);}
+		menu.add(0, GEO_ID, 0, R.string.map);
+		menu.add(0, DELETE_ID, 0, mNetwork == -1 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);}
 
     @Override
 	public boolean onContextItemSelected(MenuItem item) {
@@ -144,10 +142,8 @@ public class ManageData extends ListActivity {
 		switch(item.getItemId()) {
 		case GEO_ID:
 			// open gmaps
-			Log.v(TAG, "open gmaps");
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
     		String operator = mTeleManager.getNetworkOperator();
-			Log.v(TAG, "operator:" + operator);
     		Intent intent = new Intent(this, MapData.class);
     		if (mNetwork == -1) intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) info.id);
     		else {

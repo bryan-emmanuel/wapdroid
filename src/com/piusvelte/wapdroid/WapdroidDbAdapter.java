@@ -26,6 +26,7 @@ import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 public class WapdroidDbAdapter {
 	private static final String DATABASE_NAME = "wapdroid";
@@ -49,6 +50,7 @@ public class WapdroidDbAdapter {
 	public static final String PAIRS_CELL = "cell";
 	public static final String PAIRS_NETWORK = "network";
 	public static final String CELLS_LOCATION = "location";
+	private static final String TAG = "Wapdroid";
 	
 	private static final String CREATE_NETWORKS = "create table "
 		+ TABLE_NETWORKS + " ("
@@ -161,6 +163,23 @@ public class WapdroidDbAdapter {
     	return network;}
 
     public Cursor fetchNetworks(int filter, String set) {
+    	Log.v(TAG,"fetchNetworks: "+"select " + tableColAs(TABLE_NETWORKS, TABLE_ID) + ", "
+   	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", "
+   	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_BSSID) + ", "
+   	   			+ "CASE WHEN " + TABLE_NETWORKS + "." + TABLE_ID
+   	   			+ " in (select " + TABLE_PAIRS + "." + PAIRS_NETWORK
+   	   			+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
+   	   			+ " where " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + CELLS_CID
+   	   			+ " and " + CELLS_CID + " in (" + set
+   	   			+ ")) then '" + mContext.getString(R.string.withinarea)
+   				+ "' else '" + mContext.getString(R.string.outofarea) + "' end as " + STATUS
+   	   	    	+ " from " + TABLE_NETWORKS
+   	   	    	+ ((filter != FILTER_ALL) ?
+   	   	    		(", " + TABLE_PAIRS + ", " + TABLE_CELLS
+   	   	    		+ " where " + TABLE_NETWORKS + "." + TABLE_ID + " = " + TABLE_PAIRS + "." + PAIRS_NETWORK
+   	   	    		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+   	   	    		+ " and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " in (" + set + ")")
+   	   	    	: ""));
    		return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, TABLE_ID) + ", "
    	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", "
    	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_BSSID) + ", "
@@ -216,6 +235,12 @@ public class WapdroidDbAdapter {
     	return pair;}
     
     public Cursor fetchNetworkData(int network) {
+    	Log.v(TAG, "fetchNetworkData: "+"select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
+        		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+        		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+        		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+        		+ " and " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+        		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network);
     	return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
     		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
     		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
@@ -224,6 +249,13 @@ public class WapdroidDbAdapter {
     		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network, null);}
     
     public Cursor fetchCellData(int network, int cell) {
+    	Log.v(TAG, "fetchCellData: "+"select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
+        		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+        		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+        		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+        		+ " and " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+        		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network
+        		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + cell);
     	return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
         		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
         		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID

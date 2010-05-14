@@ -12,11 +12,15 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.Handler;
+import android.util.Log;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
+import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
@@ -24,6 +28,7 @@ import com.google.android.maps.OverlayItem;
 public class MapData extends MapActivity {
 	public static final String OPERATOR = "operator";
 	public static final String CARRIER = "carrier";
+	private static final String TAG = "Wapdroid";
 	private static final String version = "version";
 	private static final String gmaps_version = "1.1.0";
 	private static final String host = "host";
@@ -40,17 +45,61 @@ public class MapData extends MapActivity {
 	private static final String latitude = "latitude";
 	private static final String longitude = "longitude";
 	private WapdroidDbAdapter mDb;
-	private int mNetwork, mCell, mMCC, mMNC;
-	private String mCarrier = "", mToken = "";
-	private MapView mMapView;
+	private int mNetwork, mCell, mMCC, mMNC, mCID;
+	private String mCarrier = "", mToken = "", mRequest = "", mResponse = "", mTitle = "", mSnippet = "";
+	private MapView mMView;
+	private MapController mMController;
+	private List<Overlay> mMOverlays;
 	private ProgressDialog mLoadingDialog;
-	private Thread mLoadData;
+	private GeoPoint mPoint = new GeoPoint(0, 0);
+	private Thread mThread = new Thread() {
+		public void run() {
+			String ssid = "", towers = "";
+			int ctr = 0;
+			Cursor cells = mCell == 0 ? mDb.fetchNetworkData((int) mNetwork) : mDb.fetchCellData((int) mNetwork, (int) mCell);
+	    	if (cells.getCount() > 0) {
+	    		String ct = Integer.toString(cells.getCount());
+	    		Log.v(TAG, "cell count: " + ct);
+	    		cells.moveToFirst();
+	    		while (!cells.isAfterLast()) {
+	    			ctr++;
+		    		mCID = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.CELLS_CID));
+		    		Log.v(TAG, "Loading: " + WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + "(" + Integer.toString(ctr) + "/" + ct + ")");
+		    		mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + "(" + Integer.toString(ctr) + "/" + ct + ")");
+		    		String tower = "{" + addInt(cell_id, mCID);
+		    		tower += "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
+		    		tower += "," + addInt(mcc, mMCC);
+		    		tower += "," + addInt(mnc, mMNC) + "}";
+		    		if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
+		    		if (towers != "") towers += ",";
+		    		towers += tower;
+		    		mTitle = WapdroidDbAdapter.PAIRS_CELL;
+		    		mSnippet = Integer.toString(mCID);
+					mResponse = sendRequest(bldRequest(tower));
+					mHandler.post(mDropPin);
+		    		cells.moveToNext();}
+	    		if (mCell == 0) {
+	        		mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid);
+	        		mTitle = WapdroidDbAdapter.PAIRS_NETWORK;
+	        		mSnippet = ssid;
+					mResponse = sendRequest(bldRequest(towers));
+					mHandler.post(mDropPin);}
+	    	   	mMController.setCenter(mPoint);
+	    	   	mMController.setZoom(12);}
+			cells.close();
+		   	mLoadingDialog.dismiss();}};
+	final Handler mHandler = new Handler();
+	final Runnable mDropPin = new Runnable() {
+		public void run() {
+			dropPin();}};
 	//@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.map);
-		mMapView = (MapView) findViewById(R.id.mapview);
-		mMapView.setBuiltInZoomControls(true);
+		mMView = (MapView) findViewById(R.id.mapview);
+		mMView.setBuiltInZoomControls(true);
+		mMController = mMView.getController();
+		mMOverlays = mMView.getOverlays();
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			mNetwork = extras.getInt(WapdroidDbAdapter.PAIRS_NETWORK);
@@ -59,55 +108,20 @@ public class MapData extends MapActivity {
 			mMCC = Integer.parseInt(operator.substring(0, 3));
 			mMNC = Integer.parseInt(operator.substring(3));
 			mCarrier = extras.getString(CARRIER);}
-        mDb = new WapdroidDbAdapter(this);
-		mLoadData = new Thread() {
-			public void run() {
-				mDb.open();
-				List<Overlay> mapOverlays = mMapView.getOverlays();
-				String network_request = "{";
-				if (mCell == 0) {
-					network_request += getRequestHeader();}
-				String ssid = "";
-    			String towers = "";
-				Cursor c = mCell == 0 ? mDb.fetchNetworkData((int) mNetwork) : mDb.fetchCellData((int) mNetwork, (int) mCell);
-		    	if (c.getCount() > 0) {
-		    		c.moveToFirst();
-		    		while (!c.isAfterLast()) {
-		    			int cid = c.getInt(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID));
-		    			mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(cid));
-		    			// get the wifi msg
-		    			if ((mCell == 0) && (ssid == "")) ssid = c.getString(c.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
-	    				// add tower to query, but also get location for each tower to add pins
-		    			String cell_request = "{" + getRequestHeader();
-		    			if (mToken != "") cell_request += "," + addString(access_token, mToken);
-						String tower = "{" + addInt(cell_id, cid);
-	    				tower += "," + addInt(lac, c.getInt(c.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
-	    				tower += "," + addInt(mcc, mMCC);
-	    				tower += "," + addInt(mnc, mMNC) + "}";
-	    				cell_request += "," + addArray(cell_towers, tower) + "}";
-	    				// add tower overlay
-	    	    		CellOverlay overlay = new CellOverlay(getResources().getDrawable(R.drawable.cell));
-	    	    		OverlayItem overlayitem = new OverlayItem(getGeoPoint(post(cell_request)), WapdroidDbAdapter.PAIRS_CELL, c.getString(c.getColumnIndex(WapdroidDbAdapter.CELLS_CID)));
-	    	    		overlay.addOverlay(overlayitem);
-	    	    		mapOverlays.add(overlay);
-	    	    		if (towers != "") towers += ",";
-	    	    		towers += tower;
-		    			c.moveToNext();}}
-		    	c.close();
-				mDb.close();
-		    	// the cells are added in above, this is only for the network
-		    	if (mCell == 0) {
-	    			mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid);
-		    		network_request += "," + addString(access_token, mToken);
-		    		network_request += "," + addArray(cell_towers, towers) + "}";
-			    	CellOverlay overlay = new CellOverlay(getResources().getDrawable(R.drawable.wifi));
-			    	OverlayItem overlayitem = new OverlayItem(getGeoPoint(post(network_request)), WapdroidDbAdapter.PAIRS_NETWORK, ssid);
-			    	overlay.addOverlay(overlayitem);
-			    	mapOverlays.add(overlay);}
-		    	mLoadingDialog.dismiss();}};
-			mLoadingDialog = ProgressDialog.show(this, getString(R.string.loading), (mCell == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
-			mLoadingDialog.setCancelable(true);
-		    mLoadData.run();}
+        mDb = new WapdroidDbAdapter(this);}
+	
+    @Override
+    public void onPause() {
+    	super.onPause();
+   		mDb.close();}
+    
+	@Override
+	protected void onResume() {
+		super.onResume();
+		mDb.open();
+		mLoadingDialog = LoadingDialog.show(this, getString(R.string.loading), (mCell == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
+		mLoadingDialog.setCancelable(true);
+		mThread.start();}
 
 	@Override
 	protected boolean isRouteDisplayed() {
@@ -149,24 +163,51 @@ public class MapData extends MapActivity {
 	public GeoPoint getGeoPoint(String response) {
 		if (mToken == "") {
 			mToken = getValue(response, access_token);
-			mToken = mToken.substring(1);
-			mToken = mToken.substring(0, mToken.length() -1);}
+			if (mToken.length() > 0) {
+				mToken = mToken.substring(1);
+				mToken = mToken.substring(0, mToken.length() -1);}}
 		int lat = parseCoordinate(response, latitude);
 		int lon = parseCoordinate(response, longitude);
-		return new GeoPoint(lat,  lon);}
+		return new GeoPoint(lat, lon);}
 	
-	public String post(String query) {
+	public String sendRequest(String query) {
+		Log.v(TAG,"post: "+query);
 		String response = "";
 		DefaultHttpClient httpClient = new DefaultHttpClient();
 		ResponseHandler <String> responseHandler = new BasicResponseHandler();
 		HttpPost postMethod = new HttpPost("https://www.google.com/loc/json");
 		try {
 			postMethod.setEntity(new StringEntity(query));}
-		catch (UnsupportedEncodingException e) {}
+		catch (UnsupportedEncodingException e) {
+			Log.v(TAG, "post:setEntity error: "+e);}
 		postMethod.setHeader("Accept", "application/json");
 		postMethod.setHeader("Content-type", "application/json");
 		try {
 			response = httpClient.execute(postMethod, responseHandler);}
-		catch (ClientProtocolException e) {}
-		catch (IOException e) {}
-		return response;}}
+		catch (ClientProtocolException e) {
+			Log.v(TAG, "post:ClientProtocolException error: "+e);}
+		catch (IOException e) {
+			Log.v(TAG, "post:IOException error: "+e);}
+		Log.v(TAG,"response: "+response);
+		return response;}
+	
+	private String bldRequest(String towers) {
+		String request = "{" + getRequestHeader();
+		if (mToken != "") mRequest += "," + addString(access_token, mToken);
+		return request + "," + addArray(cell_towers, towers) + "}";}
+	
+	private void dropPin() {
+		CellOverlay overlay = new CellOverlay(getResources().getDrawable(R.drawable.cell));
+		mPoint = getGeoPoint(mResponse);
+		OverlayItem overlayitem = new OverlayItem(mPoint, mTitle, mSnippet);
+		overlay.addOverlay(overlayitem);
+		mMOverlays.add(overlay);}
+	
+	private class LoadingDialog extends ProgressDialog {
+		public LoadingDialog(Context context) {
+			super(context);}
+		@Override
+		public void onBackPressed() {
+			super.onBackPressed();
+			mThread.interrupt();
+			return;}}}
