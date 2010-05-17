@@ -45,8 +45,8 @@ public class MapData extends MapActivity {
 	private static final String latitude = "latitude";
 	private static final String longitude = "longitude";
 	private WapdroidDbAdapter mDb;
-	private int mNetwork, mCell, mMCC, mMNC, mCID;
-	private String mCarrier = "", mToken = "", mRequest = "", mResponse = "", mTitle = "", mSnippet = "";
+	private int mNetwork, mCell, mMCC, mMNC, mCID, mPin;
+	private String mCarrier = "", mToken = "", mResponse = "", mTitle = "", mSnippet = "", mMsg = "";
 	private MapView mMView;
 	private MapController mMController;
 	private List<Overlay> mMOverlays;
@@ -54,6 +54,9 @@ public class MapData extends MapActivity {
 	private GeoPoint mPoint = new GeoPoint(0, 0);
 	private Thread mThread;
 	final Handler mHandler = new Handler();
+	final Runnable mUpdtDialog = new Runnable() {
+		public void run() {
+			updtDialog();}};
 	final Runnable mDropPin = new Runnable() {
 		public void run() {
 			dropPin();}};
@@ -92,14 +95,15 @@ public class MapData extends MapActivity {
 				int ctr = 0;
 				Cursor cells = mCell == 0 ? mDb.fetchNetworkData((int) mNetwork) : mDb.fetchCellData((int) mNetwork, (int) mCell);
 		    	if (cells.getCount() > 0) {
+		    		mPin = R.drawable.cell;
 		    		String ct = Integer.toString(cells.getCount());
 		    		Log.v(TAG, "cell count: " + ct);
 		    		cells.moveToFirst();
 		    		while (!cells.isAfterLast()) {
 		    			ctr++;
 			    		mCID = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.CELLS_CID));
-			    		Log.v(TAG, "Loading: " + WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + "(" + Integer.toString(ctr) + "/" + ct + ")");
-			    		mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + "(" + Integer.toString(ctr) + "/" + ct + ")");
+			    		mMsg = WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + " (" + Integer.toString(ctr) + "/" + ct + ")";
+			    		mHandler.post(mUpdtDialog);
 			    		String tower = "{" + addInt(cell_id, mCID);
 			    		tower += "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
 			    		tower += "," + addInt(mcc, mMCC);
@@ -113,13 +117,13 @@ public class MapData extends MapActivity {
 						mHandler.post(mDropPin);
 			    		cells.moveToNext();}
 		    		if (mCell == 0) {
-		        		mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid);
+		    			mPin = R.drawable.wifi;
+		    			mMsg = WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid;
+		    			mHandler.post(mUpdtDialog);
 		        		mTitle = WapdroidDbAdapter.PAIRS_NETWORK;
 		        		mSnippet = ssid;
 						mResponse = sendRequest(bldRequest(towers));
-						mHandler.post(mDropPin);}
-		    	   	mMController.setCenter(mPoint);
-		    	   	mMController.setZoom(12);}
+						mHandler.post(mDropPin);}}
 				cells.close();
 			   	mLoadingDialog.dismiss();}};
 		mThread.start();}
@@ -162,11 +166,6 @@ public class MapData extends MapActivity {
 		return parsed;}
 	
 	public GeoPoint getGeoPoint(String response) {
-		if (mToken == "") {
-			mToken = getValue(response, access_token);
-			if (mToken.length() > 0) {
-				mToken = mToken.substring(1);
-				mToken = mToken.substring(0, mToken.length() -1);}}
 		int lat = parseCoordinate(response, latitude);
 		int lon = parseCoordinate(response, longitude);
 		return new GeoPoint(lat, lon);}
@@ -190,19 +189,31 @@ public class MapData extends MapActivity {
 		catch (IOException e) {
 			Log.v(TAG, "post:IOException error: "+e);}
 		Log.v(TAG,"response: "+response);
+		if (mToken == "") {
+			mToken = getValue(response, access_token);
+			if (mToken.length() > 0) {
+				mToken = mToken.substring(1);
+				mToken = mToken.substring(0, mToken.length() -1);}}
+		Log.v(TAG,access_token + ": " + mToken);
 		return response;}
 	
 	private String bldRequest(String towers) {
 		String request = "{" + getRequestHeader();
-		if (mToken != "") mRequest += "," + addString(access_token, mToken);
+		if (mToken != "") request += "," + addString(access_token, mToken);
 		return request + "," + addArray(cell_towers, towers) + "}";}
 	
 	private void dropPin() {
-		CellOverlay overlay = new CellOverlay(getResources().getDrawable(R.drawable.cell));
+		CellOverlay overlay = new CellOverlay(getResources().getDrawable(mPin));
 		mPoint = getGeoPoint(mResponse);
 		OverlayItem overlayitem = new OverlayItem(mPoint, mTitle, mSnippet);
 		overlay.addOverlay(overlayitem);
-		mMOverlays.add(overlay);}
+		mMOverlays.add(overlay);
+	   	mMController.setCenter(mPoint);
+	   	mMController.setZoom(12);}
+	
+	private void updtDialog() {
+		Log.v(TAG, "Loading: " + mMsg);
+		mLoadingDialog.setMessage(mMsg);}
 	
 	private class LoadingDialog extends ProgressDialog {
 		public LoadingDialog(Context context) {

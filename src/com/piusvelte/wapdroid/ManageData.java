@@ -54,7 +54,7 @@ public class ManageData extends ListActivity {
     private static final int DELETE_ID = Menu.FIRST + 1;
     private static final int GEO_ID = Menu.FIRST + 2;
     private static final int FILTER_ID = Menu.FIRST + 3;
-    private static int mFilter = WapdroidDbAdapter.FILTER_ALL;
+    private int mFilter = WapdroidDbAdapter.FILTER_ALL;
     private AlertDialog mAlertDialog;
 	private TelephonyManager mTeleManager;
 	private List<NeighboringCellInfo> mNeighboringCells;
@@ -106,11 +106,11 @@ public class ManageData extends ListActivity {
     		return true;
     	case FILTER_ID:
     		/* filter options */
-    		String[] filters = getResources().getStringArray(R.array.filter_values);
+    		String[] options = getResources().getStringArray(R.array.filter_values);
     		int which = 0;
-    		for (int f = 0; f < filters.length; f++) {
-    			if (mFilter == Integer.parseInt(filters[f])) {
-    				which = f;
+    		for (int o = 0; o < options.length; o++) {
+    			if (mFilter == Integer.parseInt(options[o])) {
+    				which = o;
     				break;}}
     		Builder b = new AlertDialog.Builder(this);
     		b.setSingleChoiceItems(

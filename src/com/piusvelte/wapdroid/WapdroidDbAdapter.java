@@ -312,16 +312,19 @@ public class WapdroidDbAdapter {
     
     public boolean cellInRange(int CID, int LAC) {
     	boolean inRange = false;
-    	Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION
-				+ " from " + TABLE_CELLS
-				+ " where " + CELLS_CID + "=" + CID, null);
+    	Cursor c = mDb.rawQuery("select " + tableColAs(TABLE_CELLS, TABLE_ID) + ", " + tableColAs(TABLE_CELLS, CELLS_LOCATION)
+				+ " from " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+				+ " where " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+				+ " and "+ CELLS_CID + "=" + CID
+				+ " and (" + TABLE_LOCATIONS + "." + LOCATIONS_LAC + "=" + LAC
+				+ " or " + TABLE_LOCATIONS + "." + LOCATIONS_LAC + " is null)", null);
    		inRange = (c.getCount() > 0);
-   		if (inRange) {
+   		if (inRange && (LAC > 0)) {
    			// check LAC, as this is a new column
    			c.moveToFirst();
-   			int location = c.getInt(c.getColumnIndex(CELLS_LOCATION));
-   			if (!(location > -1)) {
-   				location = fetchLocationOrCreate(LAC);
+   			if (c.isNull(c.getColumnIndex(CELLS_LOCATION))) {
+   				Log.v(TAG,"new LAC "+LAC);
+   				int location = fetchLocationOrCreate(LAC);
    				ContentValues values = new ContentValues();
    				int cell = c.getInt(c.getColumnIndex(TABLE_ID));
    				values.put(CELLS_LOCATION, location);
@@ -329,43 +332,32 @@ public class WapdroidDbAdapter {
 	    c.close();
     	return inRange;}
     
-    public void cleanCellsLocations(int cell, int location) {
-		Cursor c = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell, null);
-		if (c.getCount() == 0) {
-			// delete this cell
-			// get any unused locations
-			mDb.delete(TABLE_CELLS, TABLE_ID + "=" + cell, null);
-			Cursor l = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location, null);
-			if (l.getCount() == 0) mDb.delete(TABLE_LOCATIONS, TABLE_ID + "=" + location, null);
-			l.close();}
+    public void cleanCellsLocations() {
+		Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION + " from " + TABLE_CELLS, null);
+		if (c.getCount() > 0) {
+			c.moveToFirst();
+			while (!c.isAfterLast()) {
+				int cell = c.getInt(c.getColumnIndex(TABLE_ID));
+				Cursor p = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell, null);
+				if (p.getCount() == 0) {
+					mDb.delete(TABLE_CELLS, TABLE_ID + "=" + cell, null);
+					int location = c.getInt(c.getColumnIndex(CELLS_LOCATION));
+					Cursor l = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location, null);
+					if (l.getCount() == 0) mDb.delete(TABLE_LOCATIONS, TABLE_ID + "=" + location, null);
+					l.close();}
+				p.close();
+				c.moveToNext();}}
 		c.close();}
     
 	public void deleteNetwork(int network) {
-		// get cells paired with the network
-		Cursor p = mDb.rawQuery("select " + tableColAs(TABLE_PAIRS, PAIRS_CELL) + tableColAs(TABLE_CELLS, CELLS_LOCATION)
-				+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
-				+ " where " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-				+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network, null);
 		mDb.delete(TABLE_NETWORKS, TABLE_ID + "=" + network, null);
 		mDb.delete(TABLE_PAIRS, PAIRS_NETWORK + "=" + network, null);
-		// delete any unpaired cells
-		if (p.getCount() > 0) {
-			p.moveToFirst();
-			while (!p.isAfterLast()) {
-				cleanCellsLocations(p.getInt(p.getColumnIndex(PAIRS_CELL)), p.getInt(p.getColumnIndex(CELLS_LOCATION)));
-				p.moveToNext();}}
-		p.close();}
+		cleanCellsLocations();}
 
     public void deletePair(int network, int pair) {
 		// get paired cell and location
-		Cursor p = mDb.rawQuery("select " + tableColAs(TABLE_PAIRS, PAIRS_CELL) + tableColAs(TABLE_CELLS, CELLS_LOCATION)
-				+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
-				+ " where " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-				+ " and " + TABLE_PAIRS + "." + TABLE_ID + "=" + pair, null);
-		if (p.getCount() > 0) {
-			p.moveToFirst();
-			cleanCellsLocations(p.getInt(p.getColumnIndex(PAIRS_CELL)), p.getInt(p.getColumnIndex(CELLS_LOCATION)));}
 		mDb.delete(TABLE_PAIRS, TABLE_ID + "=" + pair, null);
-		Cursor c = fetchPairsByNetwork(network);
-    	if (c.getCount() == 0) mDb.delete(TABLE_NETWORKS, TABLE_ID + "=" + network, null);
-    	c.close();}}
+		Cursor n = fetchPairsByNetwork(network);
+    	if (n.getCount() == 0) mDb.delete(TABLE_NETWORKS, TABLE_ID + "=" + network, null);
+    	n.close();
+		cleanCellsLocations();}}
