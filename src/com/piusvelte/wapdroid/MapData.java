@@ -52,42 +52,7 @@ public class MapData extends MapActivity {
 	private List<Overlay> mMOverlays;
 	private ProgressDialog mLoadingDialog;
 	private GeoPoint mPoint = new GeoPoint(0, 0);
-	private Thread mThread = new Thread() {
-		public void run() {
-			String ssid = "", towers = "";
-			int ctr = 0;
-			Cursor cells = mCell == 0 ? mDb.fetchNetworkData((int) mNetwork) : mDb.fetchCellData((int) mNetwork, (int) mCell);
-	    	if (cells.getCount() > 0) {
-	    		String ct = Integer.toString(cells.getCount());
-	    		Log.v(TAG, "cell count: " + ct);
-	    		cells.moveToFirst();
-	    		while (!cells.isAfterLast()) {
-	    			ctr++;
-		    		mCID = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.CELLS_CID));
-		    		Log.v(TAG, "Loading: " + WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + "(" + Integer.toString(ctr) + "/" + ct + ")");
-		    		mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + "(" + Integer.toString(ctr) + "/" + ct + ")");
-		    		String tower = "{" + addInt(cell_id, mCID);
-		    		tower += "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
-		    		tower += "," + addInt(mcc, mMCC);
-		    		tower += "," + addInt(mnc, mMNC) + "}";
-		    		if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
-		    		if (towers != "") towers += ",";
-		    		towers += tower;
-		    		mTitle = WapdroidDbAdapter.PAIRS_CELL;
-		    		mSnippet = Integer.toString(mCID);
-					mResponse = sendRequest(bldRequest(tower));
-					mHandler.post(mDropPin);
-		    		cells.moveToNext();}
-	    		if (mCell == 0) {
-	        		mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid);
-	        		mTitle = WapdroidDbAdapter.PAIRS_NETWORK;
-	        		mSnippet = ssid;
-					mResponse = sendRequest(bldRequest(towers));
-					mHandler.post(mDropPin);}
-	    	   	mMController.setCenter(mPoint);
-	    	   	mMController.setZoom(12);}
-			cells.close();
-		   	mLoadingDialog.dismiss();}};
+	private Thread mThread;
 	final Handler mHandler = new Handler();
 	final Runnable mDropPin = new Runnable() {
 		public void run() {
@@ -121,6 +86,42 @@ public class MapData extends MapActivity {
 		mDb.open();
 		mLoadingDialog = LoadingDialog.show(this, getString(R.string.loading), (mCell == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
 		mLoadingDialog.setCancelable(true);
+		mThread = new Thread() {
+			public void run() {
+				String ssid = "", towers = "";
+				int ctr = 0;
+				Cursor cells = mCell == 0 ? mDb.fetchNetworkData((int) mNetwork) : mDb.fetchCellData((int) mNetwork, (int) mCell);
+		    	if (cells.getCount() > 0) {
+		    		String ct = Integer.toString(cells.getCount());
+		    		Log.v(TAG, "cell count: " + ct);
+		    		cells.moveToFirst();
+		    		while (!cells.isAfterLast()) {
+		    			ctr++;
+			    		mCID = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.CELLS_CID));
+			    		Log.v(TAG, "Loading: " + WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + "(" + Integer.toString(ctr) + "/" + ct + ")");
+			    		mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + "(" + Integer.toString(ctr) + "/" + ct + ")");
+			    		String tower = "{" + addInt(cell_id, mCID);
+			    		tower += "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
+			    		tower += "," + addInt(mcc, mMCC);
+			    		tower += "," + addInt(mnc, mMNC) + "}";
+			    		if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
+			    		if (towers != "") towers += ",";
+			    		towers += tower;
+			    		mTitle = WapdroidDbAdapter.PAIRS_CELL;
+			    		mSnippet = Integer.toString(mCID);
+						mResponse = sendRequest(bldRequest(tower));
+						mHandler.post(mDropPin);
+			    		cells.moveToNext();}
+		    		if (mCell == 0) {
+		        		mLoadingDialog.setMessage(WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid);
+		        		mTitle = WapdroidDbAdapter.PAIRS_NETWORK;
+		        		mSnippet = ssid;
+						mResponse = sendRequest(bldRequest(towers));
+						mHandler.post(mDropPin);}
+		    	   	mMController.setCenter(mPoint);
+		    	   	mMController.setZoom(12);}
+				cells.close();
+			   	mLoadingDialog.dismiss();}};
 		mThread.start();}
 
 	@Override
@@ -209,5 +210,6 @@ public class MapData extends MapActivity {
 		@Override
 		public void onBackPressed() {
 			super.onBackPressed();
+			Log.v(TAG,"backpressed: interrupt thread");
 			mThread.interrupt();
 			return;}}}
