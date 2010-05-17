@@ -117,9 +117,9 @@ public class MapData extends MapActivity {
 						mHandler.post(mDropPin);
 			    		cells.moveToNext();}
 		    		if (mCell == 0) {
-		    			mPin = R.drawable.wifi;
 		    			mMsg = WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid;
 		    			mHandler.post(mUpdtDialog);
+		    			mPin = R.drawable.network;
 		        		mTitle = WapdroidDbAdapter.PAIRS_NETWORK;
 		        		mSnippet = ssid;
 						mResponse = sendRequest(bldRequest(towers));
