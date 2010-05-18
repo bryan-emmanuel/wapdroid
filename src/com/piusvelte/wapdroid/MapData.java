@@ -14,6 +14,11 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -23,7 +28,6 @@ import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
 
 public class MapData extends MapActivity {
 	public static final String OPERATOR = "operator";
@@ -46,7 +50,7 @@ public class MapData extends MapActivity {
 	private static final String longitude = "longitude";
 	private WapdroidDbAdapter mDb;
 	private int mNetwork, mCell, mMCC, mMNC, mCID, mPin;
-	private String mCarrier = "", mToken = "", mResponse = "", mTitle = "", mSnippet = "", mMsg = "";
+	private String mCarrier = "", mToken = "", mMsg = "";//, mTitle = "", mSnippet = "";
 	private MapView mMView;
 	private MapController mMController;
 	private List<Overlay> mMOverlays;
@@ -67,6 +71,7 @@ public class MapData extends MapActivity {
 		mMView = (MapView) findViewById(R.id.mapview);
 		mMView.setBuiltInZoomControls(true);
 		mMController = mMView.getController();
+	   	mMController.setZoom(12);
 		mMOverlays = mMView.getOverlays();
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
@@ -81,6 +86,7 @@ public class MapData extends MapActivity {
     @Override
     public void onPause() {
     	super.onPause();
+    	mMOverlays.clear();
    		mDb.close();}
     
 	@Override
@@ -111,18 +117,18 @@ public class MapData extends MapActivity {
 			    		if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
 			    		if (towers != "") towers += ",";
 			    		towers += tower;
-			    		mTitle = WapdroidDbAdapter.PAIRS_CELL;
-			    		mSnippet = Integer.toString(mCID);
-						mResponse = sendRequest(bldRequest(tower));
+			    		//mTitle = WapdroidDbAdapter.PAIRS_CELL;
+			    		//mSnippet = Integer.toString(mCID);
+						mPoint = getGeoPoint(bldRequest(tower));
 						mHandler.post(mDropPin);
 			    		cells.moveToNext();}
 		    		if (mCell == 0) {
 		    			mMsg = WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid;
 		    			mHandler.post(mUpdtDialog);
 		    			mPin = R.drawable.network;
-		        		mTitle = WapdroidDbAdapter.PAIRS_NETWORK;
-		        		mSnippet = ssid;
-						mResponse = sendRequest(bldRequest(towers));
+		        		//mTitle = WapdroidDbAdapter.PAIRS_NETWORK;
+		        		//mSnippet = ssid;
+						mPoint = getGeoPoint(bldRequest(towers));
 						mHandler.post(mDropPin);}}
 				cells.close();
 			   	mLoadingDialog.dismiss();}};
@@ -165,12 +171,7 @@ public class MapData extends MapActivity {
 		if (value != "") parsed = (int) (Double.parseDouble(value) * 1E6);
 		return parsed;}
 	
-	public GeoPoint getGeoPoint(String response) {
-		int lat = parseCoordinate(response, latitude);
-		int lon = parseCoordinate(response, longitude);
-		return new GeoPoint(lat, lon);}
-	
-	public String sendRequest(String query) {
+	public GeoPoint getGeoPoint(String query) {
 		Log.v(TAG,"post: "+query);
 		String response = "";
 		DefaultHttpClient httpClient = new DefaultHttpClient();
@@ -195,7 +196,9 @@ public class MapData extends MapActivity {
 				mToken = mToken.substring(1);
 				mToken = mToken.substring(0, mToken.length() -1);}}
 		Log.v(TAG,access_token + ": " + mToken);
-		return response;}
+		int lat = parseCoordinate(response, latitude);
+		int lon = parseCoordinate(response, longitude);
+		return new GeoPoint(lat, lon);}
 	
 	private String bldRequest(String towers) {
 		String request = "{" + getRequestHeader();
@@ -203,19 +206,34 @@ public class MapData extends MapActivity {
 		return request + "," + addArray(cell_towers, towers) + "}";}
 	
 	private void dropPin() {
-		CellOverlay overlay = new CellOverlay(getResources().getDrawable(mPin));
-		mPoint = getGeoPoint(mResponse);
-		OverlayItem overlayitem = new OverlayItem(mPoint, mTitle, mSnippet);
-		overlay.addOverlay(overlayitem);
-		mMOverlays.add(overlay);
+		mMOverlays.add(new PinOverlay());
 	   	mMController.setCenter(mPoint);
-	   	mMController.setZoom(12);}
+		mMView.invalidate();}
 	
 	private void updtDialog() {
 		Log.v(TAG, "Loading: " + mMsg);
 		mLoadingDialog.setMessage(mMsg);}
 	
-	private class LoadingDialog extends ProgressDialog {
+	class PinOverlay extends Overlay {
+		@Override
+		public void draw(Canvas canvas, MapView mapView, boolean shadow) {
+			super.draw(canvas, mapView, shadow);
+			Point pt = new Point();
+			mapView.getProjection().toPixels(mPoint, pt);
+			Bitmap bmp = BitmapFactory.decodeResource(getResources(), mPin);
+			canvas.drawBitmap(bmp, (pt.x - (int) Math.floor(bmp.getWidth() / 2)), (pt.y + bmp.getHeight()), null);
+			Paint paint = new Paint();
+			int range = 0;
+			if (mPin == R.drawable.network) {
+				paint.setColor(getResources().getColor(R.color.text_primary));
+				range = 8;}
+			else {
+				paint.setColor(getResources().getColor(R.color.text_secondary));
+				range = 16;}
+			paint.setAlpha(72);
+			canvas.drawCircle(mPoint.getLatitudeE6(), mPoint.getLongitudeE6(), range, paint);}}
+		
+	class LoadingDialog extends ProgressDialog {
 		public LoadingDialog(Context context) {
 			super(context);}
 		@Override
