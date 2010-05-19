@@ -51,6 +51,10 @@ public class WapdroidDbAdapter {
 	public static final String PAIRS_NETWORK = "network";
 	public static final String CELLS_LOCATION = "location";
 	private static final String TAG = "Wapdroid";
+	public static final String PAIRS_RSSI_MIN = "RSSI_min";
+	public static final String PAIRS_RSSI_MAX = "RSSI_max";
+	public static final int UNKNOWN_CID = -1;
+	public static final int UNKNOWN_RSSI = 99;
 	
 	private static final String CREATE_NETWORKS = "create table "
 		+ TABLE_NETWORKS + " ("
@@ -66,7 +70,9 @@ public class WapdroidDbAdapter {
 		+ TABLE_PAIRS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ PAIRS_CELL + " integer, "
-		+ PAIRS_NETWORK + " integer);";
+		+ PAIRS_NETWORK + " integer, "
+		+ PAIRS_RSSI_MIN + " integer, "
+		+ PAIRS_RSSI_MAX + " integer);";
 	private static final String CREATE_LOCATIONS = "create table "
 		+ TABLE_LOCATIONS + " ("
 		+ TABLE_ID + ID_TYPE
@@ -102,21 +108,37 @@ public class WapdroidDbAdapter {
         	if (oldVersion < 3) {
         		// add locations
         		db.execSQL(CREATE_LOCATIONS);
+        		// add the unknown location
+        		ContentValues values = new ContentValues();
+            	values.put(LOCATIONS_LAC, UNKNOWN_CID);
+        		int location = (int) db.insert(TABLE_CELLS, null, values);
         		// first backup cells to create pairs
-        		db.execSQL(DROP + TABLE_CELLS + "_bkp");
+        		db.execSQL(DROP + TABLE_CELLS + "_bkp;");
     			db.execSQL("create temporary table " + TABLE_CELLS + "_bkp as select * from " + TABLE_CELLS + ";");
             	// update cells, dropping network column, making unique
         		db.execSQL(DROP + TABLE_CELLS + ";");
         		db.execSQL(CREATE_CELLS);
-        		db.execSQL("insert into " + TABLE_CELLS + " select " + TABLE_ID + ", " + CELLS_CID + ", null from " + TABLE_CELLS + "_bkp group by " + CELLS_CID);
+        		Log.v(TAG,"create new cells: insert into " + TABLE_CELLS + " select " + TABLE_ID + ", " + CELLS_CID + ", " + location + " from " + TABLE_CELLS + "_bkp group by " + CELLS_CID + ";");
+        		db.execSQL("insert into " + TABLE_CELLS + " select " + TABLE_ID + ", " + CELLS_CID + ", " + location + " from " + TABLE_CELLS + "_bkp group by " + CELLS_CID + ";");
         		// create pairs
         		db.execSQL(CREATE_PAIRS);
+        		Log.v(TAG, "create pairs: insert into " + TABLE_PAIRS
+        				+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK
+        				+ ") select " + TABLE_CELLS + "." + CELLS_CID + ", " + TABLE_CELLS
+        				+ "_bkp.network from " + TABLE_CELLS + ", " + TABLE_CELLS
+        				+ "_bkp where " + TABLE_CELLS + "." + TABLE_ID + "=" + TABLE_CELLS + "_bkp." + TABLE_ID + ";");
         		db.execSQL("insert into " + TABLE_PAIRS
         				+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK
         				+ ") select " + TABLE_CELLS + "." + CELLS_CID + ", " + TABLE_CELLS
         				+ "_bkp.network from " + TABLE_CELLS + ", " + TABLE_CELLS
-        				+ "_bkp where " + TABLE_CELLS + "." + TABLE_ID + "=" + TABLE_CELLS + "_bkp." + TABLE_ID);
-            	db.execSQL(DROP + TABLE_CELLS + "_bkp");}}}
+        				+ "_bkp where " + TABLE_CELLS + "." + TABLE_ID + "=" + TABLE_CELLS + "_bkp." + TABLE_ID + ";");
+            	db.execSQL(DROP + TABLE_CELLS + "_bkp;");}
+        		db.execSQL(DROP + TABLE_PAIRS + "_bkp;");
+    			db.execSQL("create temporary table " + TABLE_PAIRS + "_bkp as select * from " + TABLE_PAIRS + ";");
+    			db.execSQL(DROP + TABLE_PAIRS + ";");
+    			db.execSQL(CREATE_PAIRS);
+    			db.execSQL("insert into " + TABLE_PAIRS	+ " select " + TABLE_ID + ", " + PAIRS_CELL + ", " + PAIRS_NETWORK + ", " + UNKNOWN_RSSI + ", " + UNKNOWN_RSSI + " from " + TABLE_PAIRS + "_bkp;");
+        		db.execSQL(DROP + TABLE_PAIRS + "_bkp;");}}
         
     public WapdroidDbAdapter(Context context) {
         this.mContext = context;}
@@ -135,11 +157,11 @@ public class WapdroidDbAdapter {
         mDb.execSQL(CREATE_PAIRS);
         mDb.execSQL(CREATE_LOCATIONS);}
     
-    public String tableColAs(String table, String column) {
-    	return table + "." + column + " as " + column;}
+    public String tableId(String table) {
+    	return table + "." + TABLE_ID + " as " + TABLE_ID;}
         
     public int fetchNetworkOrCreate(String SSID, String BSSID) {
-    	int network = -1;
+    	int network = UNKNOWN_CID;
     	String ssid = "", bssid = "";
 		ContentValues values = new ContentValues();
 		// upgrading, BSSID may not be set yet
@@ -163,9 +185,10 @@ public class WapdroidDbAdapter {
     	return network;}
 
     public Cursor fetchNetworks(int filter, String set) {
-    	Log.v(TAG,"fetchNetworks: "+"select " + tableColAs(TABLE_NETWORKS, TABLE_ID) + ", "
-   	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", "
-   	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_BSSID) + ", "
+    	Log.v(TAG,"fetchNetworks: "+"select "
+    			+ tableId(TABLE_NETWORKS) + ", "
+   	   			+ NETWORKS_SSID + ", "
+   	   			+ NETWORKS_BSSID + ", "
    	   			+ "CASE WHEN " + TABLE_NETWORKS + "." + TABLE_ID
    	   			+ " in (select " + TABLE_PAIRS + "." + PAIRS_NETWORK
    	   			+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
@@ -180,9 +203,10 @@ public class WapdroidDbAdapter {
    	   	    		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
    	   	    		+ " and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " in (" + set + ")")
    	   	    	: ""));
-   		return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, TABLE_ID) + ", "
-   	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", "
-   	   			+ tableColAs(TABLE_NETWORKS, NETWORKS_BSSID) + ", "
+   		return mDb.rawQuery("select "
+   				+ tableId(TABLE_NETWORKS) + ", "
+   	   			+ NETWORKS_SSID + ", "
+   	   			+ NETWORKS_BSSID + ", "
    	   			+ "CASE WHEN " + TABLE_NETWORKS + "." + TABLE_ID
    	   			+ " in (select " + TABLE_PAIRS + "." + PAIRS_NETWORK
    	   			+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
@@ -199,7 +223,7 @@ public class WapdroidDbAdapter {
    	   	    	: ""), null);}
     
     public int fetchLocationOrCreate(int LAC) {
-    	int location = -1;
+    	int location = UNKNOWN_CID;
     	Cursor c = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=" + LAC, null);
     	if (c.getCount() > 0) {
     		c.moveToFirst();
@@ -212,11 +236,20 @@ public class WapdroidDbAdapter {
     	return location;}
     
     public int fetchCellOrCreate(int CID, int location) {
-    	int cell = -1;
-    	Cursor c = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_CELLS + " where " + CELLS_CID + "=" + CID + " and " + CELLS_LOCATION + "=" + location, null);
+    	int cell = UNKNOWN_CID;
+    	int unknown = fetchLocationOrCreate(UNKNOWN_CID);
+    	Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION
+    		+ " from " + TABLE_CELLS
+    		+ " where " + CELLS_CID + "=" + CID
+    		+ " and (" + CELLS_LOCATION + "=" + unknown + " or " + CELLS_LOCATION + "=" + location + ")", null);
     	if (c.getCount() > 0) {
     		c.moveToFirst();
-    		cell = c.getInt(c.getColumnIndex(TABLE_ID));}
+    		cell = c.getInt(c.getColumnIndex(TABLE_ID));
+    		if ((location != unknown) && (unknown != c.getInt(c.getColumnIndex(CELLS_LOCATION)))){
+    			// update the location
+        		ContentValues values = new ContentValues();
+            	values.put(CELLS_LOCATION, location);
+        		mDb.update(TABLE_CELLS, values, TABLE_ID + "=" + cell, null);}}
     	else {
     		ContentValues values = new ContentValues();
         	values.put(CELLS_CID, CID);
@@ -225,23 +258,48 @@ public class WapdroidDbAdapter {
     	c.close();
     	return cell;}
     
-    public int fetchPair(int cell, int network) {
-    	int pair = -1;
-    	Cursor c = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell + " and " + PAIRS_NETWORK + "=" + network, null);
+    public int createPair(int CID, int LAC, int network, int RSSI) {
+    	int location = fetchLocationOrCreate(LAC);
+    	int cell = fetchCellOrCreate(CID, location);
+    	int pair = UNKNOWN_CID;
+    	Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell + " and " + PAIRS_NETWORK + "=" + network, null);
     	if (c.getCount() > 0) {
     		c.moveToFirst();
-    		pair = c.getInt(c.getColumnIndex(TABLE_ID));}
+    		pair = c.getInt(c.getColumnIndex(TABLE_ID));
+    		int rssi_min = c.getInt(c.getColumnIndex(PAIRS_RSSI_MIN));
+    		int rssi_max = c.getInt(c.getColumnIndex(PAIRS_RSSI_MAX));
+    		if ((rssi_min == UNKNOWN_RSSI) || (rssi_max == UNKNOWN_RSSI)) {
+        		ContentValues values = new ContentValues();
+            	values.put(PAIRS_RSSI_MIN, RSSI);
+            	values.put(PAIRS_RSSI_MAX, RSSI);
+        		mDb.update(TABLE_PAIRS, values, TABLE_ID + "=" + pair, null);}
+    		else {
+        		if (rssi_min > RSSI) {
+            		ContentValues values = new ContentValues();
+                	values.put(PAIRS_RSSI_MIN, RSSI);
+            		mDb.update(TABLE_PAIRS, values, TABLE_ID + "=" + pair, null);}
+        		else if (rssi_max < RSSI) {
+            		ContentValues values = new ContentValues();
+                	values.put(PAIRS_RSSI_MAX, RSSI);
+            		mDb.update(TABLE_PAIRS, values, TABLE_ID + "=" + pair, null);}}}
+    	else {
+    		ContentValues values = new ContentValues();
+        	values.put(PAIRS_CELL, cell);
+        	values.put(PAIRS_NETWORK, network);
+        	values.put(PAIRS_RSSI_MIN, RSSI);
+        	values.put(PAIRS_RSSI_MAX, RSSI);
+    		return (int) mDb.insert(TABLE_PAIRS, null, values);}
     	c.close();
     	return pair;}
     
     public Cursor fetchNetworkData(int network) {
-    	Log.v(TAG, "fetchNetworkData: "+"select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
+    	Log.v(TAG, "fetchNetworkData: "+"select " + NETWORKS_SSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC
         		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
         		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
         		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
         		+ " and " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
         		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network);
-    	return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
+    	return mDb.rawQuery("select " + NETWORKS_SSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC
     		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
     		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
     		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
@@ -249,7 +307,7 @@ public class WapdroidDbAdapter {
     		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network, null);}
     
     public Cursor fetchCellData(int network, int cell) {
-    	Log.v(TAG, "fetchCellData: "+"select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
+    	Log.v(TAG, "fetchCellData: "+"select " + NETWORKS_SSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC
         		+ " from " + TABLE_PAIRS
         		+ " left join " + TABLE_NETWORKS
         		+ " on " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
@@ -259,7 +317,7 @@ public class WapdroidDbAdapter {
         		+ " on " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
         		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network
         		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + cell);
-    	return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
+    	return mDb.rawQuery("select " + NETWORKS_SSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC
         		+ " from " + TABLE_PAIRS
         		+ " left join " + TABLE_NETWORKS
         		+ " on " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
@@ -271,13 +329,13 @@ public class WapdroidDbAdapter {
         		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + cell, null);}
 
     public Cursor fetchPairsByNetwork(int network) {
-    	return mDb.rawQuery("select " + tableColAs(TABLE_PAIRS, TABLE_ID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID)
+    	return mDb.rawQuery("select " + tableId(TABLE_PAIRS) + ", " + CELLS_CID
     		+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
     		+ " where " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
     		+ " and "+ PAIRS_NETWORK + "=" + network, null);}
     
     public Cursor fetchPairsByNetworkFilter(int network, int filter, String set) {
-    	return mDb.rawQuery("select " + tableColAs(TABLE_PAIRS, TABLE_ID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC) + ", "
+    	return mDb.rawQuery("select " + tableId(TABLE_PAIRS) + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", "
     			+ ((filter == FILTER_ALL) ?
     				("CASE WHEN " + TABLE_CELLS + "." + CELLS_CID + " in (" + set + ") then '"
     					+ mContext.getString(R.string.withinarea)
@@ -296,43 +354,48 @@ public class WapdroidDbAdapter {
        	   	    		(" and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " not" : "") + " in (" + set + ")")
        	   	    		: ""), null);}
     
-    public int updateNetworkRange(String SSID, String BSSID, int CID, int LAC) {
+    public int updateNetworkRange(String SSID, String BSSID, int CID, int LAC, int RSSI) {
     	int network = fetchNetworkOrCreate(SSID, BSSID);
-    	int location = fetchLocationOrCreate(LAC);
-    	int cell = fetchCellOrCreate(CID, location);
-    	int pair = fetchPair(cell, network);
-    	if (pair < 0) {
-    		ContentValues initialValues = new ContentValues();
-        	initialValues.put(PAIRS_CELL, cell);
-        	initialValues.put(PAIRS_NETWORK, network);
-    		cell = (int) mDb.insert(TABLE_PAIRS, null, initialValues);}
+    	createPair(CID, LAC, network, RSSI);
     	return network;}
     
-    public void updateNetworkNeighbor(int network, int CID, int LAC) {
-    	int location = fetchLocationOrCreate(LAC);
-    	int cell = fetchCellOrCreate(CID, location);
-    	int pair = fetchPair(cell, network);
-    	if (pair < 0) {
-    		ContentValues initialValues = new ContentValues();
-        	initialValues.put(PAIRS_CELL, cell);
-        	initialValues.put(PAIRS_NETWORK, network);
-    		cell = (int) mDb.insert(TABLE_PAIRS, null, initialValues);}}
-    
-    public boolean cellInRange(int CID, int LAC) {
+    public boolean cellInRange(int CID, int LAC, int RSSI) {
     	boolean inRange = false;
-    	Cursor c = mDb.rawQuery("select " + tableColAs(TABLE_CELLS, TABLE_ID) + ", " + tableColAs(TABLE_CELLS, CELLS_LOCATION)
-				+ " from " + TABLE_CELLS
+    	Log.v(TAG, "cellInRange, select " + tableId(TABLE_CELLS)
+    			+ ", " + CELLS_LOCATION
+    			+ ", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MIN
+    			+ ", (select max(" + PAIRS_RSSI_MAX + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MAX
+    			+ " from " + TABLE_CELLS
 				+ " left outer join " + TABLE_LOCATIONS
-				+ " on " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+				+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
 				+ " where "+ CELLS_CID + "=" + CID
-				+ " and (" + TABLE_LOCATIONS + "." + LOCATIONS_LAC + "=" + LAC
-				+ " or " + TABLE_LOCATIONS + "." + LOCATIONS_LAC + " is null)", null);
+				+ " and (" + LAC + "=" + UNKNOWN_CID
+				+ " or " + LOCATIONS_LAC + "=" + LAC
+				+ ") and ((" + PAIRS_RSSI_MIN + "=" + PAIRS_RSSI_MAX
+				+ ") or ((" + RSSI + "=" + UNKNOWN_RSSI
+				+ " or " + PAIRS_RSSI_MIN + " is null or " + PAIRS_RSSI_MIN + "<=" + RSSI
+				+ ") and (" + RSSI + "=" + UNKNOWN_RSSI
+				+ " or " + PAIRS_RSSI_MAX + " is null or " + PAIRS_RSSI_MAX + ">=" + RSSI + "))");
+    	Cursor c = mDb.rawQuery("select " + tableId(TABLE_CELLS)
+    			+ ", " + CELLS_LOCATION
+    			+ ", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MIN
+    			+ ", (select max(" + PAIRS_RSSI_MAX + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MAX
+    			+ " from " + TABLE_CELLS
+				+ " left outer join " + TABLE_LOCATIONS
+				+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+				+ " where "+ CELLS_CID + "=" + CID
+				+ " and (" + LAC + "=" + UNKNOWN_CID
+				+ " or " + LOCATIONS_LAC + "=" + LAC
+				+ ") and ((" + PAIRS_RSSI_MIN + "=" + PAIRS_RSSI_MAX
+				+ ") or ((" + RSSI + "=" + UNKNOWN_RSSI
+				+ " or " + PAIRS_RSSI_MIN + " is null or " + PAIRS_RSSI_MIN + "<=" + RSSI
+				+ ") and (" + RSSI + "=" + UNKNOWN_RSSI
+				+ " or " + PAIRS_RSSI_MAX + " is null or " + PAIRS_RSSI_MAX + ">=" + RSSI + "))", null);
    		inRange = (c.getCount() > 0);
    		if (inRange && (LAC > 0)) {
    			// check LAC, as this is a new column
    			c.moveToFirst();
-   			if (c.isNull(c.getColumnIndex(CELLS_LOCATION))) {
-   				Log.v(TAG,"new LAC "+LAC);
+   			if (c.isNull(c.getColumnIndex(CELLS_LOCATION)) && (LAC != 0)) {
    				int location = fetchLocationOrCreate(LAC);
    				ContentValues values = new ContentValues();
    				int cell = c.getInt(c.getColumnIndex(TABLE_ID));

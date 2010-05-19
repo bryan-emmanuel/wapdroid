@@ -49,7 +49,7 @@ public class MapData extends MapActivity {
 	private static final String latitude = "latitude";
 	private static final String longitude = "longitude";
 	private WapdroidDbAdapter mDb;
-	private int mNetwork, mCell, mMCC, mMNC, mCID, mPin;
+	private int mNetwork, mCell = 0, mMCC, mMNC, mCID, mPin;
 	private String mCarrier = "", mToken = "", mMsg = "";//, mTitle = "", mSnippet = "";
 	private MapView mMView;
 	private MapController mMController;
@@ -81,6 +81,7 @@ public class MapData extends MapActivity {
 			mMCC = Integer.parseInt(operator.substring(0, 3));
 			mMNC = Integer.parseInt(operator.substring(3));
 			mCarrier = extras.getString(CARRIER);}
+		Log.v(TAG,"map mCell :"+mCell);
         mDb = new WapdroidDbAdapter(this);}
 	
     @Override
