@@ -22,10 +22,13 @@ package com.piusvelte.wapdroid;
 
 import com.piusvelte.wapdroid.R;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceActivity;
 
@@ -83,4 +86,13 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 					sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
 					sharedPreferences.getBoolean(getString(R.string.key_led), false),
 					sharedPreferences.getBoolean(getString(R.string.key_ringtone), false));}
-			catch (RemoteException e) {}}}}
+			catch (RemoteException e) {}}}
+	
+	class ServiceConn implements ServiceConnection {
+		public IWapdroidService mIService;
+		//@Override
+		public void onServiceConnected(ComponentName className, IBinder boundService) {
+			mIService = IWapdroidService.Stub.asInterface((IBinder) boundService);}
+		//@Override
+		public void onServiceDisconnected(ComponentName className) {
+			mIService = null;}}}

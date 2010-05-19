@@ -223,15 +223,13 @@ public class MapData extends MapActivity {
 			Bitmap bmp = BitmapFactory.decodeResource(getResources(), mPin);
 			canvas.drawBitmap(bmp, (pt.x - (int) Math.floor(bmp.getWidth() / 2)), (pt.y + bmp.getHeight()), null);
 			Paint paint = new Paint();
-			int range = 0;
+			int meters = 40000;
 			if (mPin == R.drawable.network) {
 				paint.setColor(getResources().getColor(R.color.text_primary));
-				range = 8;}
-			else {
-				paint.setColor(getResources().getColor(R.color.text_secondary));
-				range = 16;}
+				meters = 140;}
+			else paint.setColor(getResources().getColor(R.color.text_secondary));
 			paint.setAlpha(72);
-			canvas.drawCircle(mPoint.getLatitudeE6(), mPoint.getLongitudeE6(), range, paint);}}
+			canvas.drawCircle(mPoint.getLatitudeE6(), mPoint.getLongitudeE6(), mapView.getProjection().metersToEquatorPixels(meters), paint);}}
 		
 	class LoadingDialog extends ProgressDialog {
 		public LoadingDialog(Context context) {

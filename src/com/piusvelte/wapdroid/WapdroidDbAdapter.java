@@ -250,17 +250,23 @@ public class WapdroidDbAdapter {
     
     public Cursor fetchCellData(int network, int cell) {
     	Log.v(TAG, "fetchCellData: "+"select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
-        		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-        		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
-        		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-        		+ " and " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+        		+ " from " + TABLE_PAIRS
+        		+ " left join " + TABLE_NETWORKS
+        		+ " on " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+        		+ " left join " + TABLE_CELLS
+        		+ " on " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+        		+ " left outer join " + TABLE_LOCATIONS
+        		+ " on " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
         		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network
         		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + cell);
     	return mDb.rawQuery("select " + tableColAs(TABLE_NETWORKS, NETWORKS_SSID) + ", " + tableColAs(TABLE_CELLS, CELLS_CID) + ", " + tableColAs(TABLE_LOCATIONS, LOCATIONS_LAC)
-        		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-        		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
-        		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-        		+ " and " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+        		+ " from " + TABLE_PAIRS
+        		+ " left join " + TABLE_NETWORKS
+        		+ " on " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+        		+ " left join " + TABLE_CELLS
+        		+ " on " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+        		+ " left outer join " + TABLE_LOCATIONS
+        		+ " on " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
         		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network
         		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + cell, null);}
 
@@ -280,10 +286,12 @@ public class WapdroidDbAdapter {
     						R.string.accessible
     						: R.string.inaccessible) + "' as "))
     			+ STATUS
-    			+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-    			+ " where " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-    			+ " and " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-    			+ " and "+ PAIRS_NETWORK + "=" + network
+    			+ " from " + TABLE_PAIRS
+        		+ " left join " + TABLE_CELLS
+        		+ " on " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+        		+ " left outer join " + TABLE_LOCATIONS
+        		+ " on " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+    			+ " where "+ PAIRS_NETWORK + "=" + network
        	    	+ ((filter != FILTER_ALL) ?
        	   	    		(" and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " not" : "") + " in (" + set + ")")
        	   	    		: ""), null);}
@@ -313,9 +321,10 @@ public class WapdroidDbAdapter {
     public boolean cellInRange(int CID, int LAC) {
     	boolean inRange = false;
     	Cursor c = mDb.rawQuery("select " + tableColAs(TABLE_CELLS, TABLE_ID) + ", " + tableColAs(TABLE_CELLS, CELLS_LOCATION)
-				+ " from " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-				+ " where " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-				+ " and "+ CELLS_CID + "=" + CID
+				+ " from " + TABLE_CELLS
+				+ " left outer join " + TABLE_LOCATIONS
+				+ " on " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+				+ " where "+ CELLS_CID + "=" + CID
 				+ " and (" + TABLE_LOCATIONS + "." + LOCATIONS_LAC + "=" + LAC
 				+ " or " + TABLE_LOCATIONS + "." + LOCATIONS_LAC + " is null)", null);
    		inRange = (c.getCount() > 0);
