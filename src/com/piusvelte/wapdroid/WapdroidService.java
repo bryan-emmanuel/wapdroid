@@ -50,12 +50,12 @@ public class WapdroidService extends Service {
 	private WapdroidDbAdapter mDbHelper;
 	private NotificationManager mNotificationManager;
 	private TelephonyManager mTeleManager;
-	private String mSSID, mBSSID;
+	private String mSsid, mBssid;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
-	private int mCID = -1, mLAC = -1, mRSSI = 99, mWifiState, mInterval, mNetworkType;
+	private int mCid = -1, mLac = -1, mRssi = 99, mWifiState, mInterval, mNetworkType;
 	private boolean mWifiIsEnabled, mNotify, mVibrate, mLed, mRingtone;
-	private AlarmManager mAlarmManager;
+	private AlarmManager mAlarmMgr;
 	private PendingIntent mPendingIntent;
     private IWapdroidUI mWapdroidUI;
 	private static final String TAG = "Wapdroid";
@@ -84,35 +84,32 @@ public class WapdroidService extends Service {
 				throws RemoteException {
             if (mWapdroidUIBinder != null) {
                 mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
-                if ((mWapdroidUI != null) && (mCID != -1)) {
+                if ((mWapdroidUI != null) && (mCid != -1)) {
                 	try {
-                  		String cells = "'" + Integer.toString(mCID) + "'";
+                  		String cells = "'" + Integer.toString(mCid) + "'";
                			if (!mNeighboringCells.isEmpty()) {
                				for (NeighboringCellInfo n : mNeighboringCells) cells += ",'" + Integer.toString(n.getCid()) + "'";}
-                		mWapdroidUI.setCellInfo(Integer.toString(mCID), Integer.toString(mLAC), mTeleManager.getNetworkOperatorName(), mTeleManager.getNetworkCountryIso(), mTeleManager.getNetworkOperator(), cells);
-                		mWapdroidUI.setWifiInfo(mWifiState, mSSID, mBSSID);
-                		mWapdroidUI.setSignalStrength(Integer.toString(mRSSI));}
+                		mWapdroidUI.setCellInfo(Integer.toString(mCid), Integer.toString(mLac), mTeleManager.getNetworkOperatorName(), mTeleManager.getNetworkCountryIso(), mTeleManager.getNetworkOperator(), cells);
+                		mWapdroidUI.setWifiInfo(mWifiState, mSsid, mBssid);
+                		mWapdroidUI.setSignalStrength(Integer.toString(mRssi));}
                     catch (RemoteException e) {}}}}};
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
-    		getCellInfo(location);
-    		if (ManageWakeLocks.hasLock()) {
-    			if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
-    			ManageWakeLocks.release();}}
+    		getCellInfo(location);}
     	public void onSignalStrengthChanged(int asu) {
 			mNetworkType = mTeleManager.getNetworkType();
-			if ((mNetworkType == TelephonyManager.NETWORK_TYPE_GPRS) || (mNetworkType == TelephonyManager.NETWORK_TYPE_EDGE)) mRSSI = -113 + 2 * asu;
+			if ((mNetworkType == TelephonyManager.NETWORK_TYPE_GPRS) || (mNetworkType == TelephonyManager.NETWORK_TYPE_EDGE)) mRssi = -113 + 2 * asu;
 			else if ((mNetworkType == TelephonyManager.NETWORK_TYPE_UMTS) || (mNetworkType == TelephonyManager.NETWORK_TYPE_HSDPA) || (mNetworkType == TelephonyManager.NETWORK_TYPE_HSUPA) || (mNetworkType == TelephonyManager.NETWORK_TYPE_HSPA)) {
 				Log.v(TAG, "UMTS");
 				Log.v(TAG, "rssi: "+asu);}
     		signalStrengthChanged();
             if (mWapdroidUI != null) {
             	try {
-            		mWapdroidUI.setSignalStrength(Integer.toString(mRSSI));}
+            		mWapdroidUI.setSignalStrength(Integer.toString(mRssi));}
                 catch (RemoteException e) {}}
     		if (ManageWakeLocks.hasLock()) {
-    			if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+    			if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
     			ManageWakeLocks.release();}}
     	public void onSignalStrengthsChanged(SignalStrength signalStrength) {
     		Log.v(TAG, "onSignalStrengthsChanged");}};
@@ -121,11 +118,11 @@ public class WapdroidService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-		    	mAlarmManager.cancel(mPendingIntent);
+		    	mAlarmMgr.cancel(mPendingIntent);
 				ManageWakeLocks.release();
 				context.startService(new Intent(context, WapdroidService.class));}
 			else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-				if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);}
+				if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);}
 			else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 				// save the state as it's checked elsewhere, like the phonestatelistener
 				int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
@@ -134,20 +131,20 @@ public class WapdroidService extends Service {
 					wifiChanged();}
 				else if (mWifiState != WifiManager.WIFI_STATE_UNKNOWN) {
 					mWifiIsEnabled = false;
-					mSSID = null;
-					mBSSID = null;}}
+					mSsid = null;
+					mBssid = null;}}
 			else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 				NetworkInfo mNetworkInfo = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 				if (mNetworkInfo.isConnected()) {
 					setWifiInfo();
 					wifiChanged();}
 				else {
-					mSSID = null;
-					mBSSID = null;}}}};
+					mSsid = null;
+					mBssid = null;}}}};
 	
 	@Override
 	public IBinder onBind(Intent intent) {
-    	mAlarmManager.cancel(mPendingIntent);
+    	mAlarmMgr.cancel(mPendingIntent);
 		ManageWakeLocks.release();
 		return mWapdroidService;}
 	
@@ -178,10 +175,10 @@ public class WapdroidService extends Service {
 		   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
 			mNotificationManager.notify(NOTIFY_ID, notification);}
 		getCellInfo(mTeleManager.getCellLocation());
-		if (mCID == -1) mTeleManager.listen(mPhoneStateListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS));
+		if (mCid == -1) mTeleManager.listen(mPhoneStateListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | PhoneStateListener.LISTEN_SIGNAL_STRENGTHS));
 		else {
 			if (ManageWakeLocks.hasLock()) {
-				if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+				if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
 				ManageWakeLocks.release();}}}
 	
     @Override
@@ -208,7 +205,7 @@ public class WapdroidService extends Service {
 		mDbHelper = new WapdroidDbAdapter(this);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);}
+		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);}
     
     @Override
     public void onDestroy() {
@@ -222,41 +219,46 @@ public class WapdroidService extends Service {
     private void getCellInfo(CellLocation location) {
 		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
    		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-			mCID = ((GsmCellLocation) location).getCid();
-			mLAC = ((GsmCellLocation) location).getLac();}
+   			int cid = ((GsmCellLocation) location).getCid();
+   			if (cid > 0) mCid = cid;
+			int lac = ((GsmCellLocation) location).getLac();
+			if (lac > 0) mLac = lac;}
        	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
     		// check the phone type, cdma is not available before API 2.0, so use a wrapper
        		try {
        			CdmaCellLocationWrapper cdma = new CdmaCellLocationWrapper(location);
-       			mCID = cdma.getBaseStationId();
-       			mLAC = cdma.getNetworkId();}
+       			int cid = cdma.getBaseStationId();
+       			if (cid > 0) mCid = cid;
+    			int lac = cdma.getNetworkId();
+    			if (lac > 0) mLac = lac;}
        		catch (Throwable t) {
-       			mCID = -1;
-       			mLAC = -1;}}
-   		Log.v(TAG, "getCellInfo;mCID: " + Integer.toString(mCID));
-        if ((mWapdroidUI != null) && (mCID != -1)) {
+       			mCid = -1;
+       			mLac = -1;}}
+   		Log.v(TAG, "getCellInfo;" + Integer.toString(mCid) + "," + Integer.toString(mLac));
+        if ((mWapdroidUI != null) && (mCid != -1)) {
         	try {
-          		String cells = "'" + Integer.toString(mCID) + "'";
+          		String cells = "'" + Integer.toString(mCid) + "'";
        			if (!mNeighboringCells.isEmpty()) {
        				for (NeighboringCellInfo n : mNeighboringCells) cells += ",'" + Integer.toString(n.getCid()) + "'";}
-        		mWapdroidUI.setCellInfo(Integer.toString(mCID), Integer.toString(mLAC), mTeleManager.getNetworkOperatorName(), mTeleManager.getNetworkCountryIso(), mTeleManager.getNetworkOperator(), cells);}
+        		mWapdroidUI.setCellInfo(Integer.toString(mCid), Integer.toString(mLac), mTeleManager.getNetworkOperatorName(), mTeleManager.getNetworkCountryIso(), mTeleManager.getNetworkOperator(), cells);}
             catch (RemoteException e) {
-            	Log.e(TAG, "error in mWapdroidUI.setCellInfo"+mCID+","+mLAC+","+mTeleManager.getNetworkOperatorName()+","+mTeleManager.getNetworkCountryIso());}}}
+            	Log.e(TAG, "error in mWapdroidUI.setCellInfo"+mCid+","+mLac+","+mTeleManager.getNetworkOperatorName()+","+mTeleManager.getNetworkCountryIso());}}}
     
     private void signalStrengthChanged() {
-   		Log.v(TAG, "signalStrengthChanged;mRSSI: " + Integer.toString(mRSSI));
-       	if ((mCID > 0) && (mDbHelper != null)) {
+   		Log.v(TAG, "signalStrengthChanged;mRSSI: " + Integer.toString(mRssi));
+       	if ((mCid != -1) && (mDbHelper != null)) {
     		mDbHelper.open();
-			if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null)) updateRange();
+			if (mWifiIsEnabled && (mSsid != null) && (mBssid != null)) updateRange();
 			else {
 				boolean mInRange = false;
-				if (mDbHelper.cellInRange(mCID, mLAC, mRSSI)) {
+				if (mDbHelper.cellInRange(mCid, mLac, mRssi)) {
 					mInRange = true;
 					for (NeighboringCellInfo n : mNeighboringCells) {
 						int cid = -1, lac = -1, rssi = 99;
 		    			if ((mNetworkType == TelephonyManager.NETWORK_TYPE_GPRS) || (mNetworkType == TelephonyManager.NETWORK_TYPE_EDGE)) {
 		    				cid = n.getCid();
 		    				lac = n.getLac();
+		    				if (lac < 1) lac = -1;
 		    				rssi = n.getRssi();}
 		    			else if ((mNetworkType == TelephonyManager.NETWORK_TYPE_UMTS) || (mNetworkType == TelephonyManager.NETWORK_TYPE_HSDPA) || (mNetworkType == TelephonyManager.NETWORK_TYPE_HSUPA) || (mNetworkType == TelephonyManager.NETWORK_TYPE_HSPA)) {
 		    				Log.v(TAG, "UMTS");
@@ -280,23 +282,24 @@ public class WapdroidService extends Service {
 	    	mDbHelper.close();}}
     
     private void setWifiInfo() {
-		mSSID = mWifiManager.getConnectionInfo().getSSID();
-		mBSSID = mWifiManager.getConnectionInfo().getBSSID();
+		mSsid = mWifiManager.getConnectionInfo().getSSID();
+		mBssid = mWifiManager.getConnectionInfo().getBSSID();
         if (mWapdroidUI != null) {
         	try {
-        		mWapdroidUI.setWifiInfo(mWifiState, mSSID, mBSSID);}
+        		mWapdroidUI.setWifiInfo(mWifiState, mSsid, mBssid);}
             catch (RemoteException e) {}}}
     
     private void updateRange() {
-    	int network = mDbHelper.updateNetworkRange(mSSID, mBSSID, mCID, mLAC, mRSSI);
+    	int network = mDbHelper.updateNetworkRange(mSsid, mBssid, mCid, mLac, mRssi);
 		for (NeighboringCellInfo n : mNeighboringCells) {
 			int cid = n.getCid();
 			int lac = n.getLac();
+			if (lac < 1) lac = -1;
 			int rssi = n.getRssi();
 			if (cid > 0) mDbHelper.createPair(cid, lac, network, rssi);}}
 	
 	private void wifiChanged() {
-		if (mWifiIsEnabled && (mSSID != null) && (mBSSID != null) && (mCID > 0) && (mDbHelper != null)) {
+		if (mWifiIsEnabled && (mSsid != null) && (mBssid != null) && (mCid != -1) && (mDbHelper != null)) {
 			mDbHelper.open();
 	    	updateRange();
 	    	mDbHelper.close();}}}
