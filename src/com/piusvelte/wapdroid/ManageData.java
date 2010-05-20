@@ -20,24 +20,18 @@
 
 package com.piusvelte.wapdroid;
 
-import java.util.List;
-
 import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.app.AlertDialog.Builder;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.telephony.CellLocation;
-import android.telephony.NeighboringCellInfo;
-import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
-import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,18 +43,16 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageData extends ListActivity {
 	private WapdroidDbAdapter mDbHelper;
-	private int mNetwork = -1, mCid = -1;
+	private int mNetwork = -1;
 	private static final int REFRESH_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
     private static final int GEO_ID = Menu.FIRST + 2;
     private static final int FILTER_ID = Menu.FIRST + 3;
     private int mFilter = WapdroidDbAdapter.FILTER_ALL;
     private AlertDialog mAlertDialog;
-	private TelephonyManager mTeleManager;
-	private List<NeighboringCellInfo> mNeighboringCells;
-	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
-    	public void onCellLocationChanged(CellLocation location) {
-    		checkLocation(location);}};
+    private String mCells = "", mOperator = "", mOperatorName = "";
+	private ServiceConn mServiceConn;
+	private static final String TAG = "Wapdroid";
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -69,20 +61,29 @@ public class ManageData extends ListActivity {
 		if (extras != null) mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);
 		setContentView(mNetwork == -1 ? R.layout.networks_list : R.layout.cells_list);
         registerForContextMenu(getListView());
-        mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
         mDbHelper = new WapdroidDbAdapter(this);}
 	
     @Override
     public void onPause() {
     	super.onPause();
-   		mDbHelper.close();
-   		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_NONE);}
+        if (mServiceConn != null) {
+            if (mServiceConn.mIService != null) {
+                try {
+                        mServiceConn.mIService.setCallback(null);}
+                catch (RemoteException e) {}}
+            unbindService(mServiceConn);
+            mServiceConn = null;}
+   		mDbHelper.close();}
     
 	@Override
 	protected void onResume() {
 		super.onResume();
+		Log.v(TAG, "ManageData; open db");
 		mDbHelper.open();
-		checkLocation(mTeleManager.getCellLocation());
+    	SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
+        if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
+        mServiceConn = new ServiceConn(mWapdroidUI);
+        bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
 		try {
 			listData();}
 		catch (RemoteException e) {
@@ -143,14 +144,13 @@ public class ManageData extends ListActivity {
 		case GEO_ID:
 			// open gmaps
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
-    		String operator = mTeleManager.getNetworkOperator();
     		Intent intent = new Intent(this, MapData.class);
     		if (mNetwork == -1) intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) info.id);
     		else {
     			intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) mNetwork);
     			intent.putExtra(WapdroidDbAdapter.PAIRS_CELL, (int) info.id);}
-    		intent.putExtra(MapData.OPERATOR, operator);
-    		intent.putExtra(MapData.CARRIER, mTeleManager.getNetworkOperatorName());
+    		intent.putExtra(MapData.OPERATOR, mOperator);
+    		intent.putExtra(MapData.CARRIER, mOperatorName);
     		startActivity(intent);
 			return true;
 		case DELETE_ID:
@@ -174,12 +174,7 @@ public class ManageData extends ListActivity {
     
     public void listData() throws RemoteException {
     	// filter results
-    	String cellsSet = "";
-   		if (mCid > 0) {
-   			cellsSet = "'" + Integer.toString(mCid) + "'";
-   			if (!mNeighboringCells.isEmpty()) {
-   				for (NeighboringCellInfo n : mNeighboringCells) cellsSet += ",'" + Integer.toString(n.getCid()) + "'";}}
-    	Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworks(mFilter, cellsSet) : mDbHelper.fetchPairsByNetworkFilter(mNetwork, mFilter, cellsSet);
+    	Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworks(mFilter, mCells) : mDbHelper.fetchPairsByNetworkFilter(mNetwork, mFilter, mCells);
         startManagingCursor(c);
         SimpleCursorAdapter data = mNetwork == -1 ?
         		new SimpleCursorAdapter(this,
@@ -193,15 +188,14 @@ public class ManageData extends ListActivity {
         				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.LOCATIONS_LAC, WapdroidDbAdapter.STATUS},
         				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_status});
         setListAdapter(data);}
-    
-    private void checkLocation(CellLocation location) {
-   		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-   			mCid = ((GsmCellLocation) location).getCid();}
-       	else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
-    		// check the phone type, cdma is not available before API 2.0, so use a wrapper
-       		try {
-       			mCid = (new CdmaCellLocationWrapper(location)).getBaseStationId();}
-       		catch (Throwable t) {
-       			mCid = -1;}}
-   		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
-   		mTeleManager.listen(mPhoneStateListener, PhoneStateListener.LISTEN_CELL_LOCATION);}}
+
+    private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
+		public void setCellInfo(String cid, String lac, String operatorName, String country, String operator, String cells) throws RemoteException {
+			mCells = cells;
+			mOperator = operator;
+			mOperatorName = operatorName;}
+		
+		public void setWifiInfo(int state, String ssid, String bssid)
+				throws RemoteException {}
+		
+		public void setSignalStrength(String rssi) throws RemoteException {}};}

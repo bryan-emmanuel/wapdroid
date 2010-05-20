@@ -42,6 +42,15 @@ case INTERFACE_TRANSACTION:
 reply.writeString(DESCRIPTOR);
 return true;
 }
+case TRANSACTION_setCallback:
+{
+data.enforceInterface(DESCRIPTOR);
+android.os.IBinder _arg0;
+_arg0 = data.readStrongBinder();
+this.setCallback(_arg0);
+reply.writeNoException();
+return true;
+}
 case TRANSACTION_updatePreferences:
 {
 data.enforceInterface(DESCRIPTOR);
@@ -77,6 +86,21 @@ public java.lang.String getInterfaceDescriptor()
 {
 return DESCRIPTOR;
 }
+public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeStrongBinder(mWapdroidUIBinder);
+mRemote.transact(Stub.TRANSACTION_setCallback, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
 public void updatePreferences(int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
@@ -97,7 +121,9 @@ _data.recycle();
 }
 }
 }
-static final int TRANSACTION_updatePreferences = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_setCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_updatePreferences = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
 }
+public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException;
 public void updatePreferences(int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException;
 }

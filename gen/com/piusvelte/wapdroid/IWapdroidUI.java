@@ -42,7 +42,7 @@ case INTERFACE_TRANSACTION:
 reply.writeString(DESCRIPTOR);
 return true;
 }
-case TRANSACTION_setCellLocation:
+case TRANSACTION_setCellInfo:
 {
 data.enforceInterface(DESCRIPTOR);
 java.lang.String _arg0;
@@ -51,16 +51,35 @@ java.lang.String _arg1;
 _arg1 = data.readString();
 java.lang.String _arg2;
 _arg2 = data.readString();
-this.setCellLocation(_arg0, _arg1, _arg2);
+java.lang.String _arg3;
+_arg3 = data.readString();
+java.lang.String _arg4;
+_arg4 = data.readString();
+java.lang.String _arg5;
+_arg5 = data.readString();
+this.setCellInfo(_arg0, _arg1, _arg2, _arg3, _arg4, _arg5);
 reply.writeNoException();
 return true;
 }
-case TRANSACTION_newCell:
+case TRANSACTION_setWifiInfo:
+{
+data.enforceInterface(DESCRIPTOR);
+int _arg0;
+_arg0 = data.readInt();
+java.lang.String _arg1;
+_arg1 = data.readString();
+java.lang.String _arg2;
+_arg2 = data.readString();
+this.setWifiInfo(_arg0, _arg1, _arg2);
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_setSignalStrength:
 {
 data.enforceInterface(DESCRIPTOR);
 java.lang.String _arg0;
 _arg0 = data.readString();
-this.newCell(_arg0);
+this.setSignalStrength(_arg0);
 reply.writeNoException();
 return true;
 }
@@ -82,16 +101,19 @@ public java.lang.String getInterfaceDescriptor()
 {
 return DESCRIPTOR;
 }
-public void setCellLocation(java.lang.String mCID, java.lang.String mMNC, java.lang.String mMCC) throws android.os.RemoteException
+public void setCellInfo(java.lang.String cid, java.lang.String lac, java.lang.String operatorName, java.lang.String country, java.lang.String operator, java.lang.String cells) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
 try {
 _data.writeInterfaceToken(DESCRIPTOR);
-_data.writeString(mCID);
-_data.writeString(mMNC);
-_data.writeString(mMCC);
-mRemote.transact(Stub.TRANSACTION_setCellLocation, _data, _reply, 0);
+_data.writeString(cid);
+_data.writeString(lac);
+_data.writeString(operatorName);
+_data.writeString(country);
+_data.writeString(operator);
+_data.writeString(cells);
+mRemote.transact(Stub.TRANSACTION_setCellInfo, _data, _reply, 0);
 _reply.readException();
 }
 finally {
@@ -99,14 +121,31 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public void newCell(java.lang.String cell) throws android.os.RemoteException
+public void setWifiInfo(int state, java.lang.String ssid, java.lang.String bssid) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
 try {
 _data.writeInterfaceToken(DESCRIPTOR);
-_data.writeString(cell);
-mRemote.transact(Stub.TRANSACTION_newCell, _data, _reply, 0);
+_data.writeInt(state);
+_data.writeString(ssid);
+_data.writeString(bssid);
+mRemote.transact(Stub.TRANSACTION_setWifiInfo, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void setSignalStrength(java.lang.String rssi) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeString(rssi);
+mRemote.transact(Stub.TRANSACTION_setSignalStrength, _data, _reply, 0);
 _reply.readException();
 }
 finally {
@@ -115,9 +154,11 @@ _data.recycle();
 }
 }
 }
-static final int TRANSACTION_setCellLocation = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-static final int TRANSACTION_newCell = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+static final int TRANSACTION_setCellInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
+static final int TRANSACTION_setWifiInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+static final int TRANSACTION_setSignalStrength = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
 }
-public void setCellLocation(java.lang.String mCID, java.lang.String mMNC, java.lang.String mMCC) throws android.os.RemoteException;
-public void newCell(java.lang.String cell) throws android.os.RemoteException;
+public void setCellInfo(java.lang.String cid, java.lang.String lac, java.lang.String operatorName, java.lang.String country, java.lang.String operator, java.lang.String cells) throws android.os.RemoteException;
+public void setWifiInfo(int state, java.lang.String ssid, java.lang.String bssid) throws android.os.RemoteException;
+public void setSignalStrength(java.lang.String rssi) throws android.os.RemoteException;
 }
