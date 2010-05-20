@@ -34,19 +34,22 @@ public final class R {
         public static final int button_donate=0x7f080000;
         public static final int cell_row_CID=0x7f080001;
         public static final int cell_row_LAC=0x7f080002;
-        public static final int cell_row_status=0x7f080003;
-        public static final int field_CID=0x7f080007;
-        public static final int field_MCC=0x7f08000b;
-        public static final int field_MNC=0x7f080009;
-        public static final int field_wifiBSSID=0x7f080005;
-        public static final int field_wifiState=0x7f080004;
-        public static final int label_CID=0x7f080006;
-        public static final int label_MCC=0x7f08000a;
-        public static final int label_MNC=0x7f080008;
-        public static final int mapview=0x7f08000c;
-        public static final int network_row_BSSID=0x7f08000e;
-        public static final int network_row_SSID=0x7f08000d;
-        public static final int network_row_status=0x7f08000f;
+        public static final int cell_row_range=0x7f080003;
+        public static final int cell_row_status=0x7f080004;
+        public static final int field_CID=0x7f080008;
+        public static final int field_MCC=0x7f08000c;
+        public static final int field_MNC=0x7f08000a;
+        public static final int field_signal=0x7f08000e;
+        public static final int field_wifiBSSID=0x7f080006;
+        public static final int field_wifiState=0x7f080005;
+        public static final int label_CID=0x7f080007;
+        public static final int label_MCC=0x7f08000b;
+        public static final int label_MNC=0x7f080009;
+        public static final int mapview=0x7f08000f;
+        public static final int network_row_BSSID=0x7f080011;
+        public static final int network_row_SSID=0x7f080010;
+        public static final int network_row_status=0x7f080012;
+        public static final int signal=0x7f08000d;
     }
     public static final class layout {
         public static final int about=0x7f030000;
@@ -58,11 +61,13 @@ public final class R {
         public static final int networks_list=0x7f030006;
     }
     public static final class string {
-        public static final int about=0x7f07002b;
-        public static final int accessible=0x7f07002d;
+        public static final int about=0x7f07002f;
+        public static final int accessible=0x7f070031;
         public static final int app_name=0x7f070007;
-        public static final int gpl=0x7f07002c;
-        public static final int inaccessible=0x7f07002e;
+        public static final int dbm=0x7f07002c;
+        public static final int gpl=0x7f070030;
+        public static final int hyphen=0x7f07002d;
+        public static final int inaccessible=0x7f070032;
         public static final int key_interval=0x7f070006;
         public static final int key_led=0x7f070004;
         public static final int key_manageWifi=0x7f070001;
@@ -102,7 +107,9 @@ public final class R {
         public static final int no_cells=0x7f07000f;
         public static final int no_networks=0x7f07000e;
         public static final int outofarea=0x7f070028;
+        public static final int range=0x7f07002b;
         public static final int scanning=0x7f070022;
+        public static final int signal=0x7f07002e;
         public static final int status=0x7f070026;
         public static final int withinarea=0x7f070027;
     }

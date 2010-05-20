@@ -87,6 +87,17 @@
 					android:textSize="14dip"
 					android:text="@string/scanning"/>
 		    </TableRow>
+			<TableRow>
+				<TextView android:id="@+id/signal"
+			    	android:textColor="@color/text_secondary"
+					android:textSize="14dip"
+					android:text="@string/signal"/>
+				<TextView android:id="@+id/field_signal"
+			    	android:textColor="@color/text_secondary"
+					android:gravity="right"
+					android:textSize="14dip"
+					android:text="@string/scanning"/>
+		    </TableRow>
 		</TableLayout>
 	</TableRow>
 </TableLayout>

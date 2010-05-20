@@ -158,11 +158,11 @@ public class MapData extends MapActivity {
 	public String getValue(String dictionary, String key) {
 		int key_index = dictionary.indexOf(key), end;
 		String value = "";
-		if (key_index != -1) {
+		if (key_index != WapdroidDbAdapter.UNKNOWN_CID) {
 			key_index += key.length() + 1;
 			key_index = dictionary.indexOf(":", key_index) + 1;
 			end = dictionary.indexOf(",", key_index);
-			if (end == -1) end = dictionary.indexOf("}", key_index);
+			if (end == WapdroidDbAdapter.UNKNOWN_CID) end = dictionary.indexOf("}", key_index);
 			value = dictionary.substring(key_index, end);}
 		return value;}
 	
@@ -195,7 +195,7 @@ public class MapData extends MapActivity {
 			mToken = getValue(response, access_token);
 			if (mToken.length() > 0) {
 				mToken = mToken.substring(1);
-				mToken = mToken.substring(0, mToken.length() -1);}}
+				mToken = mToken.substring(0, mToken.length()-1);}}
 		Log.v(TAG,access_token + ": " + mToken);
 		int lat = parseCoordinate(response, latitude);
 		int lon = parseCoordinate(response, longitude);

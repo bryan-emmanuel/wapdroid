@@ -114,14 +114,15 @@ public class WapdroidDbAdapter {
             	// update cells, dropping network column, making unique
         		db.execSQL(DROP + TABLE_CELLS + ";");
         		db.execSQL(CREATE_CELLS);
-        		db.execSQL("insert into " + TABLE_CELLS + " select " + TABLE_ID + ", " + CELLS_CID + ", " + UNKNOWN_CID + " from " + TABLE_CELLS + "_bkp group by " + CELLS_CID + ";");
+        		db.execSQL("insert into " + TABLE_CELLS + " (" + CELLS_CID + ", " + CELLS_LOCATION
+        				+ ") select " + CELLS_CID + ", " + UNKNOWN_CID + " from " + TABLE_CELLS + "_bkp group by " + CELLS_CID + ";");
         		// create pairs
         		db.execSQL(CREATE_PAIRS);
         		db.execSQL("insert into " + TABLE_PAIRS
-        				+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK
-        				+ ") select " + TABLE_CELLS + "." + CELLS_CID + ", " + TABLE_CELLS
-        				+ "_bkp.network from " + TABLE_CELLS + ", " + TABLE_CELLS
-        				+ "_bkp where " + TABLE_CELLS + "." + TABLE_ID + "=" + TABLE_CELLS + "_bkp." + TABLE_ID + ";");
+        				+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
+        				+ ") select " + TABLE_CELLS + "." + TABLE_ID + ", " + TABLE_CELLS + "_bkp." + PAIRS_NETWORK + ", 99, 99"
+        				+ " from " + TABLE_CELLS + "_bkp"
+        				+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "_bkp." + CELLS_CID + "=" + TABLE_CELLS + "." + CELLS_CID + ";");
             	db.execSQL(DROP + TABLE_CELLS + "_bkp;");}
         		db.execSQL(DROP + TABLE_PAIRS + "_bkp;");
     			db.execSQL("create temporary table " + TABLE_PAIRS + "_bkp as select * from " + TABLE_PAIRS + ";");
@@ -334,6 +335,7 @@ public class WapdroidDbAdapter {
     
     public Cursor fetchPairsByNetworkFilter(int network, int filter, String set) {
     	Log.v(TAG, "fetchPairsByNetworkFilter: select " + tableId(TABLE_PAIRS) + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", "
+    			+ "(" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.hyphen) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') as " + PAIRS_RSSI_MIN + ", "
     			+ ((filter == FILTER_ALL) ?
     				("CASE WHEN " + TABLE_CELLS + "." + CELLS_CID + " in (" + set + ") then '"
     					+ mContext.getString(R.string.withinarea)
@@ -352,6 +354,7 @@ public class WapdroidDbAdapter {
        	   	    		(" and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " not" : "") + " in (" + set + ")")
        	   	    		: ""));
     	return mDb.rawQuery("select " + tableId(TABLE_PAIRS) + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", "
+    			+ "(" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.hyphen) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') as " + PAIRS_RSSI_MIN + ", "
     			+ ((filter == FILTER_ALL) ?
     				("CASE WHEN " + TABLE_CELLS + "." + CELLS_CID + " in (" + set + ") then '"
     					+ mContext.getString(R.string.withinarea)

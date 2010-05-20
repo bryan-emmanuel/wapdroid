@@ -50,6 +50,15 @@
 			<TableRow>
 				<TextView android:textColor="@color/text_primary"
 					android:textSize="14dip"
+					android:text="@string/range"/>
+				<TextView android:id="@+id/cell_row_range"
+					android:textColor="@color/text_primary"
+					android:gravity="right"
+					android:textSize="14dip"/>
+			</TableRow>
+			<TableRow>
+				<TextView android:textColor="@color/text_primary"
+					android:textSize="14dip"
 					android:text="@string/status"/>
 				<TextView android:id="@+id/cell_row_status"
 					android:textColor="@color/text_primary"

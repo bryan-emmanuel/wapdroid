@@ -43,7 +43,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageData extends ListActivity {
 	private WapdroidDbAdapter mDbHelper;
-	private int mNetwork = -1;
+	private int mNetwork = 0;
 	private static final int REFRESH_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
     private static final int GEO_ID = Menu.FIRST + 2;
@@ -58,8 +58,11 @@ public class ManageData extends ListActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Bundle extras = getIntent().getExtras();
-		if (extras != null) mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);
-		setContentView(mNetwork == -1 ? R.layout.networks_list : R.layout.cells_list);
+		if (extras != null) {
+			mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);
+			mCells = extras.getString(WapdroidDbAdapter.TABLE_CELLS);
+			Log.v(TAG,"ManageData,extras:"+Integer.toString(mNetwork)+","+mCells);}
+		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
         registerForContextMenu(getListView());
         mDbHelper = new WapdroidDbAdapter(this);}
 	
@@ -135,7 +138,7 @@ public class ManageData extends ListActivity {
 	public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, view, menuInfo);
 		menu.add(0, GEO_ID, 0, R.string.map);
-		menu.add(0, DELETE_ID, 0, mNetwork == -1 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);}
+		menu.add(0, DELETE_ID, 0, mNetwork == 0 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);}
 
     @Override
 	public boolean onContextItemSelected(MenuItem item) {
@@ -145,7 +148,7 @@ public class ManageData extends ListActivity {
 			// open gmaps
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
     		Intent intent = new Intent(this, MapData.class);
-    		if (mNetwork == -1) intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) info.id);
+    		if (mNetwork == 0) intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) info.id);
     		else {
     			intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) mNetwork);
     			intent.putExtra(WapdroidDbAdapter.PAIRS_CELL, (int) info.id);}
@@ -155,7 +158,7 @@ public class ManageData extends ListActivity {
 			return true;
 		case DELETE_ID:
 			info = (AdapterContextMenuInfo) item.getMenuInfo();
-			if (mNetwork == -1) mDbHelper.deleteNetwork((int) info.id);
+			if (mNetwork == 0) mDbHelper.deleteNetwork((int) info.id);
 			else mDbHelper.deletePair(mNetwork, (int) info.id);
 			try {
 				listData();}
@@ -167,16 +170,17 @@ public class ManageData extends ListActivity {
     @Override
     protected void onListItemClick(ListView list, View view, int position, long id) {
     	super.onListItemClick(list, view, position, id);
-    	if (mNetwork == -1) {
+    	if (mNetwork == 0) {
     		Intent intent = new Intent(this, ManageData.class);
     		intent.putExtra(WapdroidDbAdapter.TABLE_ID, (int) id);
+    		intent.putExtra(WapdroidDbAdapter.TABLE_CELLS, mCells);
     		startActivity(intent);}}
     
     public void listData() throws RemoteException {
     	// filter results
-    	Cursor c = mNetwork == -1 ? mDbHelper.fetchNetworks(mFilter, mCells) : mDbHelper.fetchPairsByNetworkFilter(mNetwork, mFilter, mCells);
+    	Cursor c = mNetwork == 0 ? mDbHelper.fetchNetworks(mFilter, mCells) : mDbHelper.fetchPairsByNetworkFilter(mNetwork, mFilter, mCells);
         startManagingCursor(c);
-        SimpleCursorAdapter data = mNetwork == -1 ?
+        SimpleCursorAdapter data = mNetwork == 0 ?
         		new SimpleCursorAdapter(this,
         				R.layout.network_row,
         				c,
@@ -185,12 +189,13 @@ public class ManageData extends ListActivity {
         		: new SimpleCursorAdapter(this,
         				R.layout.cell_row,
         				c,
-        				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.LOCATIONS_LAC, WapdroidDbAdapter.STATUS},
-        				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_status});
+        				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.LOCATIONS_LAC, WapdroidDbAdapter.PAIRS_RSSI_MIN, WapdroidDbAdapter.STATUS},
+        				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status});
         setListAdapter(data);}
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(String cid, String lac, String operatorName, String country, String operator, String cells) throws RemoteException {
+			Log.v(TAG,"setCellInfo: "+cells+","+operator+","+operatorName);
 			mCells = cells;
 			mOperator = operator;
 			mOperatorName = operatorName;}

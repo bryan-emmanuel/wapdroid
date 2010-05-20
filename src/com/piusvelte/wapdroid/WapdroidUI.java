@@ -43,8 +43,9 @@ public class WapdroidUI extends Activity {
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
 	public static final int ABOUT_ID = Menu.FIRST + 3;
-	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID;
+	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID, field_signal;
 	private ServiceConn mServiceConn;
+	private String mCells = "";
 		
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -54,7 +55,8 @@ public class WapdroidUI extends Activity {
 		field_MNC = (TextView) findViewById(R.id.field_MNC);
 		field_MCC = (TextView) findViewById(R.id.field_MCC);
 		field_wifiState = (TextView) findViewById(R.id.field_wifiState);
-		field_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);}
+		field_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
+		field_signal = (TextView) findViewById(R.id.field_signal);}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -67,10 +69,10 @@ public class WapdroidUI extends Activity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-    	Intent intent;
     	switch (item.getItemId()) {
     	case MANAGE_ID:
-        	intent = new Intent(this, ManageData.class);
+    		Intent intent = new Intent(this, ManageData.class);
+    		intent.putExtra(WapdroidDbAdapter.TABLE_CELLS, mCells);
         	startActivity(intent);
     		return true;
     	case SETTINGS_ID:
@@ -114,7 +116,8 @@ public class WapdroidUI extends Activity {
 		public void setCellInfo(String cid, String lac, String operatorName, String country, String operator, String cells) throws RemoteException {
 	   		field_CID.setText(cid);
 	   		field_MNC.setText(operatorName);
-	   		field_MCC.setText(country);}
+	   		field_MCC.setText(country);
+	   		mCells = cells;}
 		
 		public void setWifiInfo(int state, String ssid, String bssid)
 				throws RemoteException {
@@ -133,4 +136,5 @@ public class WapdroidUI extends Activity {
 								: getString(R.string.label_disabled))));
 				field_wifiBSSID.setText("");}}
 		
-		public void setSignalStrength(String rssi) throws RemoteException {}};}
+		public void setSignalStrength(String rssi) throws RemoteException {
+			field_signal.setText(rssi + getString(R.string.dbm));}};}
