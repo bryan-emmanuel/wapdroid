@@ -137,4 +137,4 @@ public class WapdroidUI extends Activity {
 				field_wifiBSSID.setText("");}}
 		
 		public void setSignalStrength(String rssi) throws RemoteException {
-			field_signal.setText(rssi + getString(R.string.dbm));}};}
+			field_signal.setText(rssi);}};}

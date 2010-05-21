@@ -195,7 +195,6 @@ public class ManageData extends ListActivity {
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(String cid, String lac, String operatorName, String country, String operator, String cells) throws RemoteException {
-			Log.v(TAG,"setCellInfo: "+cells+","+operator+","+operatorName);
 			mCells = cells;
 			mOperator = operator;
 			mOperatorName = operatorName;}
