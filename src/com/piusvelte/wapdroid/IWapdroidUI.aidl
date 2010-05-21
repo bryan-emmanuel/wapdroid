@@ -21,6 +21,7 @@
 package com.piusvelte.wapdroid;
 
 interface IWapdroidUI {
-	void setCellInfo(String cid, String lac, String operatorName, String country, String operator, String cells);
+	void setOperator(String operatorName, String country, String operator);
+	void setCellInfo(String cid, String lac, String cells);
 	void setWifiInfo(int state, String ssid, String bssid);
-	void setSignalStrength(String rssi);}
+	void setSignalStrength(int rssi);}

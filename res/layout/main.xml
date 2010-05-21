@@ -36,7 +36,8 @@
 					android:textStyle="bold"
 			    	android:textColor="@color/text_primary"
 					android:gravity="right"
-					android:textSize="18dip"/>
+					android:textSize="18dip"
+					android:text="@string/scanning"/>
 		    </TableRow>
 			<TableRow>
 				<TextView android:textColor="@color/text_secondary"
@@ -45,7 +46,8 @@
 				<TextView android:id="@+id/field_wifiBSSID"
 			    	android:textColor="@color/text_secondary"
 					android:gravity="right"
-					android:textSize="14dip"/>
+					android:textSize="14dip"
+					android:text="@string/scanning"/>
 			</TableRow>
 		</TableLayout>
 	</TableRow>

@@ -57,7 +57,7 @@
     <string name="loading">Loading...</string>
     <string name="range">Range</string>
     <string name="dbm">\u0020dBm</string>
-    <string name="hyphen">\u0020-\u0020</string>
+    <string name="colon">\u0020:\u0020</string>
     <string name="signal">Signal</string>
     <string name="about">Wapdroid runs in the background, recording cell towers near WiFi networks to which you connect. When in range of those towers, WiFi is turned on, otherwise it is turned off to save battery power. Please report issues or questions to http://wapdroid.com.\u000A\u000A</string>
     <string name="gpl">Wapdroid - Android Location based Wifi Manager\u000A\u000ACopyright (C) 2009 Bryan Emmanuel\u000A\u000AThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\u000A\u000AThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\u000A\u000AYou should have received a copy of the GNU General Public License along with this program.  If not, see \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com</string>

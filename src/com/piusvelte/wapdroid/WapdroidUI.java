@@ -113,10 +113,8 @@ public class WapdroidUI extends Activity {
         bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void setCellInfo(String cid, String lac, String operatorName, String country, String operator, String cells) throws RemoteException {
+		public void setCellInfo(String cid, String lac, String cells) throws RemoteException {
 	   		field_CID.setText(cid);
-	   		field_MNC.setText(operatorName);
-	   		field_MCC.setText(country);
 	   		mCells = cells;}
 		
 		public void setWifiInfo(int state, String ssid, String bssid)
@@ -136,5 +134,11 @@ public class WapdroidUI extends Activity {
 								: getString(R.string.label_disabled))));
 				field_wifiBSSID.setText("");}}
 		
-		public void setSignalStrength(String rssi) throws RemoteException {
-			field_signal.setText(rssi);}};}
+		public void setSignalStrength(int rssi) throws RemoteException {
+			field_signal.setText((rssi != WapdroidDbAdapter.UNKNOWN_RSSI ? (Integer.toString(rssi) + getString(R.string.dbm)) : getString(R.string.scanning)));}
+
+		@Override
+		public void setOperator(String operatorName, String country,
+				String operator) throws RemoteException {
+	   		field_MNC.setText(operatorName);
+	   		field_MCC.setText(country);}};}

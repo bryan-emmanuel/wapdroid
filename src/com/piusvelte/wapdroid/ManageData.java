@@ -180,6 +180,7 @@ public class ManageData extends ListActivity {
     	// filter results
     	Cursor c = mNetwork == 0 ? mDbHelper.fetchNetworks(mFilter, mCells) : mDbHelper.fetchPairsByNetworkFilter(mNetwork, mFilter, mCells);
         startManagingCursor(c);
+        /* status disabled
         SimpleCursorAdapter data = mNetwork == 0 ?
         		new SimpleCursorAdapter(this,
         				R.layout.network_row,
@@ -191,15 +192,31 @@ public class ManageData extends ListActivity {
         				c,
         				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.LOCATIONS_LAC, WapdroidDbAdapter.PAIRS_RSSI_MIN, WapdroidDbAdapter.STATUS},
         				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status});
+        */
+        SimpleCursorAdapter data = mNetwork == 0 ?
+        		new SimpleCursorAdapter(this,
+        				R.layout.network_row,
+        				c,
+        				new String[] {WapdroidDbAdapter.NETWORKS_SSID, WapdroidDbAdapter.NETWORKS_BSSID},
+        				new int[] {R.id.network_row_SSID, R.id.network_row_BSSID})
+        		: new SimpleCursorAdapter(this,
+        				R.layout.cell_row,
+        				c,
+        				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.LOCATIONS_LAC, WapdroidDbAdapter.PAIRS_RSSI_MIN},
+        				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range});
         setListAdapter(data);}
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void setCellInfo(String cid, String lac, String operatorName, String country, String operator, String cells) throws RemoteException {
-			mCells = cells;
-			mOperator = operator;
-			mOperatorName = operatorName;}
+		public void setCellInfo(String cid, String lac, String cells) throws RemoteException {
+			mCells = cells;}
 		
 		public void setWifiInfo(int state, String ssid, String bssid)
 				throws RemoteException {}
 		
-		public void setSignalStrength(String rssi) throws RemoteException {}};}
+		public void setSignalStrength(int rssi) throws RemoteException {}
+
+		@Override
+		public void setOperator(String operatorName, String country,
+				String operator) throws RemoteException {
+			mOperator = operator;
+			mOperatorName = operatorName;}};}

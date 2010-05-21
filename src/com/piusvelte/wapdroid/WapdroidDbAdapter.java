@@ -177,6 +177,7 @@ public class WapdroidDbAdapter {
 
     public Cursor fetchNetworks(int filter, String set) {
     	Log.v(TAG,"fetchNetworks:");
+    	/*
     	Log.v(TAG,"select "
     			+ tableId(TABLE_NETWORKS) + ", "
    	   			+ NETWORKS_SSID + ", "
@@ -206,6 +207,29 @@ public class WapdroidDbAdapter {
    	   			+ " and " + CELLS_CID + " in (" + set
    	   			+ ")) then '" + mContext.getString(R.string.withinarea)
    				+ "' else '" + mContext.getString(R.string.outofarea) + "' end as " + STATUS
+   	   	    	+ " from " + TABLE_NETWORKS
+   	   	    	+ ((filter != FILTER_ALL) ?
+   	   	    		(", " + TABLE_PAIRS + ", " + TABLE_CELLS
+   	   	    		+ " where " + TABLE_NETWORKS + "." + TABLE_ID + " = " + TABLE_PAIRS + "." + PAIRS_NETWORK
+   	   	    		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+   	   	    		+ " and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " in (" + set + ")")
+   	   	    	: ""), null);
+   		*/
+    	Log.v(TAG,"select "
+    			+ tableId(TABLE_NETWORKS) + ", "
+   	   			+ NETWORKS_SSID + ", "
+   	   			+ NETWORKS_BSSID);
+    	Log.v(TAG," from " + TABLE_NETWORKS
+   	   	    	+ ((filter != FILTER_ALL) ?
+   	   	    		(", " + TABLE_PAIRS + ", " + TABLE_CELLS
+   	   	    		+ " where " + TABLE_NETWORKS + "." + TABLE_ID + " = " + TABLE_PAIRS + "." + PAIRS_NETWORK
+   	   	    		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+   	   	    		+ " and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " in (" + set + ")")
+   	   	    	: ""));
+   		return mDb.rawQuery("select "
+   				+ tableId(TABLE_NETWORKS) + ", "
+   	   			+ NETWORKS_SSID + ", "
+   	   			+ NETWORKS_BSSID
    	   	    	+ " from " + TABLE_NETWORKS
    	   	    	+ ((filter != FILTER_ALL) ?
    	   	    		(", " + TABLE_PAIRS + ", " + TABLE_CELLS
@@ -334,8 +358,9 @@ public class WapdroidDbAdapter {
     		+ " and "+ PAIRS_NETWORK + "=" + network, null);}
     
     public Cursor fetchPairsByNetworkFilter(int network, int filter, String set) {
+    	/* status disabled
     	Log.v(TAG, "fetchPairsByNetworkFilter: select " + tableId(TABLE_PAIRS) + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", "
-    			+ "(" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.hyphen) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') as " + PAIRS_RSSI_MIN + ", "
+    			+ "(" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') as " + PAIRS_RSSI_MIN + ", "
     			+ ((filter == FILTER_ALL) ?
     				("CASE WHEN " + TABLE_CELLS + "." + CELLS_CID + " in (" + set + ") then '"
     					+ mContext.getString(R.string.withinarea)
@@ -354,7 +379,7 @@ public class WapdroidDbAdapter {
        	   	    		(" and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " not" : "") + " in (" + set + ")")
        	   	    		: ""));
     	return mDb.rawQuery("select " + tableId(TABLE_PAIRS) + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", "
-    			+ "(" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.hyphen) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') as " + PAIRS_RSSI_MIN + ", "
+    			+ "(" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') as " + PAIRS_RSSI_MIN + ", "
     			+ ((filter == FILTER_ALL) ?
     				("CASE WHEN " + TABLE_CELLS + "." + CELLS_CID + " in (" + set + ") then '"
     					+ mContext.getString(R.string.withinarea)
@@ -363,6 +388,29 @@ public class WapdroidDbAdapter {
     						R.string.accessible
     						: R.string.inaccessible) + "' as "))
     			+ STATUS
+    			+ " from " + TABLE_PAIRS
+        		+ " left join " + TABLE_CELLS
+        		+ " on " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+        		+ " left outer join " + TABLE_LOCATIONS
+        		+ " on " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+    			+ " where "+ PAIRS_NETWORK + "=" + network
+       	    	+ ((filter != FILTER_ALL) ?
+       	   	    		(" and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " not" : "") + " in (" + set + ")")
+       	   	    		: ""), null);
+       	*/
+    	Log.v(TAG, "fetchPairsByNetworkFilter: select " + tableId(TABLE_PAIRS) + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", "
+    			+ "(" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') as " + PAIRS_RSSI_MIN);
+    	Log.v(TAG," from " + TABLE_PAIRS
+        		+ " left join " + TABLE_CELLS
+        		+ " on " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+        		+ " left outer join " + TABLE_LOCATIONS
+        		+ " on " + TABLE_CELLS + "." + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID);
+        Log.v(TAG," where "+ PAIRS_NETWORK + "=" + network
+       	    	+ ((filter != FILTER_ALL) ?
+       	   	    		(" and " + TABLE_CELLS + "." + CELLS_CID + (filter == FILTER_OUTRANGE ? " not" : "") + " in (" + set + ")")
+       	   	    		: ""));
+    	return mDb.rawQuery("select " + tableId(TABLE_PAIRS) + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", "
+    			+ "(" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') as " + PAIRS_RSSI_MIN
     			+ " from " + TABLE_PAIRS
         		+ " left join " + TABLE_CELLS
         		+ " on " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
