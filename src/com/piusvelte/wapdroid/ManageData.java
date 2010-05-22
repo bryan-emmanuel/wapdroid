@@ -215,7 +215,6 @@ public class ManageData extends ListActivity {
 		
 		public void setSignalStrength(int rssi) throws RemoteException {}
 
-		@Override
 		public void setOperator(String operatorName, String country,
 				String operator) throws RemoteException {
 			mOperator = operator;

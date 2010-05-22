@@ -137,7 +137,6 @@ public class WapdroidUI extends Activity {
 		public void setSignalStrength(int rssi) throws RemoteException {
 			field_signal.setText((rssi != WapdroidDbAdapter.UNKNOWN_RSSI ? (Integer.toString(rssi) + getString(R.string.dbm)) : getString(R.string.scanning)));}
 
-		@Override
 		public void setOperator(String operatorName, String country,
 				String operator) throws RemoteException {
 	   		field_MNC.setText(operatorName);

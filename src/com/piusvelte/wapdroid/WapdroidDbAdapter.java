@@ -437,7 +437,7 @@ public class WapdroidDbAdapter {
 				+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID);
     	Log.v(TAG," where "+ CELLS_CID + "=" + cid
 				+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
-				+ " and (" + PAIRS_RSSI_MIN + "=" + PAIRS_RSSI_MAX + " or (" + PAIRS_RSSI_MIN + "<=" + rssi + " and " + PAIRS_RSSI_MAX + ">=" + rssi + "))");
+				+ " and (" + rssi + "=" + UNKNOWN_RSSI + " or " + PAIRS_RSSI_MIN + "=" + PAIRS_RSSI_MAX + " or (" + PAIRS_RSSI_MIN + "<=" + rssi + " and " + PAIRS_RSSI_MAX + ">=" + rssi + "))");
     	Cursor c = mDb.rawQuery("select " + tableId(TABLE_CELLS)
     			+ ", " + CELLS_LOCATION
     			+ ", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MIN
@@ -447,7 +447,7 @@ public class WapdroidDbAdapter {
 				+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
 				+ " where "+ CELLS_CID + "=" + cid
 				+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
-				+ " and (" + PAIRS_RSSI_MIN + "=" + PAIRS_RSSI_MAX + " or (" + PAIRS_RSSI_MIN + "<=" + rssi + " and " + PAIRS_RSSI_MAX + ">=" + rssi + "))", null);
+				+ " and (" + rssi + "=" + UNKNOWN_RSSI + " or " + PAIRS_RSSI_MIN + "=" + PAIRS_RSSI_MAX + " or (" + PAIRS_RSSI_MIN + "<=" + rssi + " and " + PAIRS_RSSI_MAX + ">=" + rssi + "))", null);
    		inRange = (c.getCount() > 0);
    		if (inRange && (lac != -1)) {
    			// check LAC, as this is a new column
