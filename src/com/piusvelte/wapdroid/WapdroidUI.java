@@ -79,6 +79,9 @@ public class WapdroidUI extends Activity {
     		startActivity(new Intent(this, Settings.class));
     		return true;
     	case WIFI_ID:
+    		try {
+    			mServiceConn.mIService.suspendWifiControl();}
+    		catch (RemoteException e) {}
 			startActivity(new Intent().setComponent(new ComponentName("com.android.settings", "com.android.settings.wifi.WifiSettings")));
 			return true;
     	case ABOUT_ID:

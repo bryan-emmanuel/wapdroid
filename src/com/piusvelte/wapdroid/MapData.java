@@ -1,7 +1,28 @@
+/*
+ * Wapdroid - Android Location based Wifi Manager
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+ */
+
 package com.piusvelte.wapdroid;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.client.ClientProtocolException;
@@ -11,23 +32,22 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Point;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 
 import com.google.android.maps.GeoPoint;
+import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
+import com.google.android.maps.OverlayItem;
 
 public class MapData extends MapActivity {
 	public static final String OPERATOR = "operator";
@@ -48,31 +68,30 @@ public class MapData extends MapActivity {
 	private static final String cell_towers = "cell_towers";
 	private static final String latitude = "latitude";
 	private static final String longitude = "longitude";
+	private static final String wifi_towers = "wifi_towers";
+	private static final String mac_address = "mac_address";
+	private static final String signal_strength = "signal_strength";
 	private WapdroidDbAdapter mDb;
-	private int mNetwork, mCell = 0, mMCC, mMNC, mCID, mPin;
-	private String mCarrier = "", mToken = "", mMsg = "";//, mTitle = "", mSnippet = "";
+	private Context mContext;
+	private int mNetwork, mCell = 0, mMCC, mMNC, mCID;
+	private String mCarrier = "", mToken = "", mMsg = "";
 	private MapView mMView;
 	private MapController mMController;
-	private List<Overlay> mMOverlays;
 	private ProgressDialog mLoadingDialog;
-	private GeoPoint mPoint = new GeoPoint(0, 0);
 	private Thread mThread;
 	final Handler mHandler = new Handler();
 	final Runnable mUpdtDialog = new Runnable() {
 		public void run() {
 			updtDialog();}};
-	final Runnable mDropPin = new Runnable() {
-		public void run() {
-			dropPin();}};
 	//@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.map);
+		mContext = this;
 		mMView = (MapView) findViewById(R.id.mapview);
 		mMView.setBuiltInZoomControls(true);
 		mMController = mMView.getController();
 	   	mMController.setZoom(12);
-		mMOverlays = mMView.getOverlays();
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			mNetwork = extras.getInt(WapdroidDbAdapter.PAIRS_NETWORK);
@@ -87,7 +106,7 @@ public class MapData extends MapActivity {
     @Override
     public void onPause() {
     	super.onPause();
-    	mMOverlays.clear();
+    	mMView.getOverlays().clear();
    		mDb.close();}
     
 	@Override
@@ -98,41 +117,45 @@ public class MapData extends MapActivity {
 		mLoadingDialog.setCancelable(true);
 		mThread = new Thread() {
 			public void run() {
-				String ssid = "", towers = "";
-				int ctr = 0;
+				String ssid = "", bssid = "", towers = "", ct = "";
+				int ctr = 0, pin = R.drawable.cell;
+				List<Overlay> mapOverlays = mMView.getOverlays();
+				PinOverlays pinOverlays = new PinOverlays(mContext.getResources().getDrawable(pin));
+				GeoPoint point = new GeoPoint(0, 0);
 				Cursor cells = mCell == 0 ? mDb.fetchNetworkData((int) mNetwork) : mDb.fetchCellData((int) mNetwork, (int) mCell);
 		    	if (cells.getCount() > 0) {
-		    		mPin = R.drawable.cell;
-		    		String ct = Integer.toString(cells.getCount());
+		    		ct = Integer.toString(cells.getCount());
 		    		Log.v(TAG, "cell count: " + ct);
 		    		cells.moveToFirst();
-		    		while (!cells.isAfterLast()) {
+		    		while (!interrupted() && !cells.isAfterLast()) {
 		    			ctr++;
+		    			Log.v(TAG, "cell:"+Integer.toString(ctr)+" of "+ct);
 			    		mCID = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.CELLS_CID));
 			    		mMsg = WapdroidDbAdapter.PAIRS_CELL + ": " + Integer.toString(mCID) + " (" + Integer.toString(ctr) + "/" + ct + ")";
 			    		mHandler.post(mUpdtDialog);
 			    		String tower = "{" + addInt(cell_id, mCID);
 			    		tower += "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)));
 			    		tower += "," + addInt(mcc, mMCC);
-			    		tower += "," + addInt(mnc, mMNC) + "}";
+			    		tower += "," + addInt(mnc, mMNC);
+			    		tower += "," + addInt(signal_strength, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)))+ "}";
 			    		if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
+			    		if (bssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_BSSID));
 			    		if (towers != "") towers += ",";
 			    		towers += tower;
-			    		//mTitle = WapdroidDbAdapter.PAIRS_CELL;
-			    		//mSnippet = Integer.toString(mCID);
-						mPoint = getGeoPoint(bldRequest(tower));
-						mHandler.post(mDropPin);
+			    		point = getGeoPoint(bldRequest(tower, bssid));
+						pinOverlays.addOverlay(new OverlayItem(point, WapdroidDbAdapter.PAIRS_CELL, Integer.toString(mCID)));
 			    		cells.moveToNext();}
 		    		if (mCell == 0) {
 		    			mMsg = WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid;
 		    			mHandler.post(mUpdtDialog);
-		    			mPin = R.drawable.network;
-		        		//mTitle = WapdroidDbAdapter.PAIRS_NETWORK;
-		        		//mSnippet = ssid;
-						mPoint = getGeoPoint(bldRequest(towers));
-						mHandler.post(mDropPin);}}
+		    			pin = R.drawable.network;
+		    			point = getGeoPoint(bldRequest(towers, bssid));
+						pinOverlays.addOverlay(new OverlayItem(point, WapdroidDbAdapter.PAIRS_NETWORK, ssid));}}
 				cells.close();
-			   	mLoadingDialog.dismiss();}};
+				mapOverlays.add(pinOverlays);
+			   	mMController.setCenter(point);
+			   	mLoadingDialog.dismiss();
+			   	interrupt();}};
 		mThread.start();}
 
 	@Override
@@ -201,20 +224,17 @@ public class MapData extends MapActivity {
 		int lon = parseCoordinate(response, longitude);
 		return new GeoPoint(lat, lon);}
 	
-	private String bldRequest(String towers) {
+	private String bldRequest(String towers, String bssid) {
 		String request = "{" + getRequestHeader();
 		if (mToken != "") request += "," + addString(access_token, mToken);
-		return request + "," + addArray(cell_towers, towers) + "}";}
-	
-	private void dropPin() {
-		mMOverlays.add(new PinOverlay());
-	   	mMController.setCenter(mPoint);
-		mMView.invalidate();}
+		if (towers != "") request += "," + addArray(cell_towers, towers);
+		if (bssid != "") request += "," + addArray(wifi_towers, "{" + addString(mac_address, bssid) + "}");
+		return request + "}";}
 	
 	private void updtDialog() {
 		Log.v(TAG, "Loading: " + mMsg);
 		mLoadingDialog.setMessage(mMsg);}
-	
+/*
 	class PinOverlay extends Overlay {
 		@Override
 		public void draw(Canvas canvas, MapView mapView, boolean shadow) {
@@ -231,7 +251,7 @@ public class MapData extends MapActivity {
 			else paint.setColor(getResources().getColor(R.color.text_secondary));
 			paint.setAlpha(72);
 			canvas.drawCircle(mPoint.getLatitudeE6(), mPoint.getLongitudeE6(), mapView.getProjection().metersToEquatorPixels(meters), paint);}}
-		
+*/
 	class LoadingDialog extends ProgressDialog {
 		public LoadingDialog(Context context) {
 			super(context);}
@@ -240,4 +260,27 @@ public class MapData extends MapActivity {
 			super.onBackPressed();
 			Log.v(TAG,"backpressed: interrupt thread");
 			mThread.interrupt();
-			return;}}}
+			return;}}
+	
+	class PinOverlays extends ItemizedOverlay<OverlayItem> {
+		private ArrayList<OverlayItem> mOverlays = new ArrayList<OverlayItem>();
+		//private Context mContext;
+		public PinOverlays(Drawable defaultMarker) {
+			super(boundCenterBottom(defaultMarker));}
+		@Override
+		protected OverlayItem createItem(int i) {
+			return mOverlays.get(i);}
+		@Override
+		public int size() {
+			return mOverlays.size();}
+		public void addOverlay(OverlayItem overlay) {
+			mOverlays.add(overlay);
+			populate();}
+		@Override
+		protected boolean onTap(int i) {
+			OverlayItem item = mOverlays.get(i);
+			AlertDialog.Builder dialog = new AlertDialog.Builder(mContext);
+			dialog.setTitle(item.getTitle());
+			dialog.setMessage(item.getSnippet());
+			dialog.show();
+			return true;}}}

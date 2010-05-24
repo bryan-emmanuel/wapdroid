@@ -68,6 +68,13 @@ this.updatePreferences(_arg0, _arg1, _arg2, _arg3, _arg4);
 reply.writeNoException();
 return true;
 }
+case TRANSACTION_suspendWifiControl:
+{
+data.enforceInterface(DESCRIPTOR);
+this.suspendWifiControl();
+reply.writeNoException();
+return true;
+}
 }
 return super.onTransact(code, data, reply, flags);
 }
@@ -120,10 +127,26 @@ _reply.recycle();
 _data.recycle();
 }
 }
+public void suspendWifiControl() throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+mRemote.transact(Stub.TRANSACTION_suspendWifiControl, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
 }
 static final int TRANSACTION_setCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 static final int TRANSACTION_updatePreferences = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
+static final int TRANSACTION_suspendWifiControl = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
 }
 public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException;
 public void updatePreferences(int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone) throws android.os.RemoteException;
+public void suspendWifiControl() throws android.os.RemoteException;
 }
