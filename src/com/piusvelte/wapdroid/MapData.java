@@ -259,11 +259,11 @@ public class MapData extends MapActivity {
 				projection.toPixels(gpt, pt);
 				if (item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) {
 					paint.setColor(getResources().getColor(R.color.text_primary));
-					paint.setAlpha(2);
+					paint.setAlpha(1);
 					meters = 140;}
 				else {
 					paint.setColor(getResources().getColor(R.color.text_secondary));
-					paint.setAlpha(4);}
+					paint.setAlpha(1);}
 				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(meters), paint);}}
 		@Override
 		protected OverlayItem createItem(int i) {
