@@ -71,8 +71,8 @@ public class WapdroidService extends Service {
 				mNotificationManager = null;}
 			else if (!mNotify && notify) {
 				mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-				CharSequence contentTitle = getString(R.string.scanning);
-			   	Notification notification = new Notification(R.drawable.scanning, contentTitle, System.currentTimeMillis());
+				CharSequence contentTitle = getString(mWifiIsEnabled ? R.string.label_enabled : R.string.label_disabled);
+			   	Notification notification = new Notification((mWifiIsEnabled ? R.drawable.scanning : R.drawable.status), contentTitle, System.currentTimeMillis());
 				PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
 			   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
 				mNotificationManager.notify(NOTIFY_ID, notification);}
@@ -188,8 +188,8 @@ public class WapdroidService extends Service {
 		mWifiIsEnabled = (mWifiState == WifiManager.WIFI_STATE_ENABLED);
 		if (mWifiIsEnabled) setWifiInfo();
 		if (mNotify) {
-			CharSequence contentTitle = getString(R.string.scanning);
-		   	Notification notification = new Notification(R.drawable.scanning, contentTitle, System.currentTimeMillis());
+			CharSequence contentTitle = getString(mWifiIsEnabled ? R.string.label_enabled : R.string.label_disabled);
+		   	Notification notification = new Notification((mWifiIsEnabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
 			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
 		   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
 			mNotificationManager.notify(NOTIFY_ID, notification);}
@@ -288,9 +288,9 @@ public class WapdroidService extends Service {
     		mDbHelper.open();
 			if (mWifiIsEnabled && (mSsid != null) && (mBssid != null)) updateRange();
 			else if (mControlWifi) {
-				boolean mInRange = false;
+				boolean isInRange = false;
 				if (mDbHelper.cellInRange(mCid, mLac, mRssi)) {
-					mInRange = true;
+					isInRange = true;
 					for (NeighboringCellInfo n : mNeighboringCells) {
 						int cid = WapdroidDbAdapter.UNKNOWN_CID, lac = WapdroidDbAdapter.UNKNOWN_CID, rssi = WapdroidDbAdapter.UNKNOWN_RSSI;
 		    			if ((mNetworkType == TelephonyManager.NETWORK_TYPE_GPRS) || (mNetworkType == TelephonyManager.NETWORK_TYPE_EDGE)) {
@@ -305,13 +305,13 @@ public class WapdroidService extends Service {
 	    				Log.v(TAG, "lac: "+n.getLac());
 	    				Log.v(TAG, "rssi: "+n.getRssi());
 	    				Log.v(TAG, "psc: "+n.getPsc());
-						if (mInRange && (cid > 0)) mInRange = mDbHelper.cellInRange(cid, lac, rssi);}}
-				if ((mInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
-					Log.v(TAG, "set wifi:"+mInRange);
-					mWifiManager.setWifiEnabled(mInRange);
+						if (isInRange && (cid > 0)) isInRange = mDbHelper.cellInRange(cid, lac, rssi);}}
+				if ((isInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!isInRange && mWifiIsEnabled)) {
+					Log.v(TAG, "set wifi:"+isInRange);
+					mWifiManager.setWifiEnabled(isInRange);
 					if (mNotify) {
-						CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(mInRange ? R.string.label_enabled : R.string.label_disabled);
-					   	Notification notification = new Notification((mInRange ? R.drawable.statuson : R.drawable.status), contentTitle, System.currentTimeMillis());
+						CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(isInRange ? R.string.label_enabled : R.string.label_disabled);
+					   	Notification notification = new Notification((isInRange ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
 					   	Intent i = new Intent(getBaseContext(), WapdroidService.class);
 						PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
 					   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
