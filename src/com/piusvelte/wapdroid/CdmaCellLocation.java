@@ -21,9 +21,8 @@
 package com.piusvelte.wapdroid;
 
 import android.telephony.CellLocation;
-import android.telephony.cdma.CdmaCellLocation;
 
-public class CdmaCellLocationWrapper {
+public class CdmaCellLocation {
 	private int mBaseStationId;
 	private int mNetworkId;
 	static {
@@ -31,9 +30,9 @@ public class CdmaCellLocationWrapper {
 			Class.forName("android.telephony.cdma.CdmaCellLocation");}
 		catch (Exception ex) {
 			throw new RuntimeException(ex);}}
-	public CdmaCellLocationWrapper(CellLocation location) {
-		this.mBaseStationId = ((CdmaCellLocation) location).getBaseStationId();
-		this.mNetworkId = ((CdmaCellLocation) location).getNetworkId();}
+	public CdmaCellLocation(CellLocation location) {
+		this.mBaseStationId = ((android.telephony.cdma.CdmaCellLocation) location).getBaseStationId();
+		this.mNetworkId = ((android.telephony.cdma.CdmaCellLocation) location).getNetworkId();}
 	public int getBaseStationId() {
 		return this.mBaseStationId;}
 	public int getNetworkId() {

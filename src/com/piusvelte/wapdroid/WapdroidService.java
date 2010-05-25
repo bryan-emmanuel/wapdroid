@@ -80,7 +80,6 @@ public class WapdroidService extends Service {
 			mVibrate = vibrate;
 			mLed = led;
 			mRingtone = ringtone;}
-		
 		public void setCallback(IBinder mWapdroidUIBinder)
 				throws RemoteException {
             if (mWapdroidUIBinder != null) {
@@ -97,8 +96,6 @@ public class WapdroidService extends Service {
                 		mWapdroidUI.setWifiInfo(mWifiState, mSsid, mBssid);
                 		mWapdroidUI.setSignalStrength(mRssi);}
                     catch (RemoteException e) {}}}}
-
-		@Override
 		public void suspendWifiControl() throws RemoteException {
 			Log.v(TAG, "running wifi settings, disable wifi control");
 			mControlWifi = false;}};

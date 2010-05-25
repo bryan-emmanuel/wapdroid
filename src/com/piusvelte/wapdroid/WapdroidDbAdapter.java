@@ -120,16 +120,13 @@ public class WapdroidDbAdapter {
         		db.execSQL(CREATE_PAIRS);
         		db.execSQL("insert into " + TABLE_PAIRS
         				+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
-        				+ ") select " + TABLE_CELLS + "." + TABLE_ID + ", " + TABLE_CELLS + "_bkp." + PAIRS_NETWORK + ", 99, 99"
+        				+ ") select " + TABLE_CELLS + "." + TABLE_ID + ", " + TABLE_CELLS + "_bkp." + PAIRS_NETWORK + ", " + UNKNOWN_RSSI + ", " + UNKNOWN_RSSI
         				+ " from " + TABLE_CELLS + "_bkp"
         				+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "_bkp." + CELLS_CID + "=" + TABLE_CELLS + "." + CELLS_CID + ";");
             	db.execSQL(DROP + TABLE_CELLS + "_bkp;");}
         		db.execSQL(DROP + TABLE_PAIRS + "_bkp;");
     			db.execSQL("create temporary table " + TABLE_PAIRS + "_bkp as select * from " + TABLE_PAIRS + ";");
-    			db.execSQL(DROP + TABLE_PAIRS + ";");
-    			db.execSQL(CREATE_PAIRS);
-    			db.execSQL("insert into " + TABLE_PAIRS	+ " select " + TABLE_ID + ", " + PAIRS_CELL + ", " + PAIRS_NETWORK + ", " + UNKNOWN_RSSI + ", " + UNKNOWN_RSSI + " from " + TABLE_PAIRS + "_bkp;");
-        		db.execSQL(DROP + TABLE_PAIRS + "_bkp;");}}
+    			db.execSQL(DROP + TABLE_PAIRS + ";");}}
         
     public WapdroidDbAdapter(Context context) {
         this.mContext = context;}
@@ -255,24 +252,20 @@ public class WapdroidDbAdapter {
     			+ " from " + TABLE_PAIRS
     			+ " where " + PAIRS_CELL + "=" + cell + " and " + PAIRS_NETWORK + "=" + network, null);
     	if (c.getCount() > 0) {
-    		c.moveToFirst();
-    		pair = c.getInt(c.getColumnIndex(TABLE_ID));
-    		int rssi_min = c.getInt(c.getColumnIndex(PAIRS_RSSI_MIN));
-    		int rssi_max = c.getInt(c.getColumnIndex(PAIRS_RSSI_MAX));
-    		if ((rssi_min == UNKNOWN_RSSI) || (rssi_max == UNKNOWN_RSSI)) {
+    		if (rssi != UNKNOWN_RSSI) {
+    			c.moveToFirst();
+    			pair = c.getInt(c.getColumnIndex(TABLE_ID));
+    			int rssi_min = c.getInt(c.getColumnIndex(PAIRS_RSSI_MIN));
+	    		int rssi_max = c.getInt(c.getColumnIndex(PAIRS_RSSI_MAX));
+	    		boolean update = false;
         		ContentValues values = new ContentValues();
-            	values.put(PAIRS_RSSI_MIN, rssi);
-            	values.put(PAIRS_RSSI_MAX, rssi);
-        		mDb.update(TABLE_PAIRS, values, TABLE_ID + "=" + pair, null);}
-    		else {
         		if (rssi_min > rssi) {
-            		ContentValues values = new ContentValues();
-                	values.put(PAIRS_RSSI_MIN, rssi);
-            		mDb.update(TABLE_PAIRS, values, TABLE_ID + "=" + pair, null);}
-        		else if (rssi_max < rssi) {
-            		ContentValues values = new ContentValues();
-                	values.put(PAIRS_RSSI_MAX, rssi);
-            		mDb.update(TABLE_PAIRS, values, TABLE_ID + "=" + pair, null);}}}
+        			update = true;
+                	values.put(PAIRS_RSSI_MIN, rssi);}
+        		else if ((rssi_max == UNKNOWN_RSSI) || (rssi_max < rssi)) {
+        			update = true;
+                	values.put(PAIRS_RSSI_MAX, rssi);}
+        		if (update) mDb.update(TABLE_PAIRS, values, TABLE_ID + "=" + pair, null);}}
     	else {
     		ContentValues values = new ContentValues();
         	values.put(PAIRS_CELL, cell);
@@ -350,6 +343,17 @@ public class WapdroidDbAdapter {
     
     public boolean cellInRange(int cid, int lac, int rssi) {
     	boolean inRange = false;
+    	Log.v(TAG,"cellInRange");
+    	Log.v(TAG,"select " + tableId(TABLE_CELLS)
+    			+ ", " + CELLS_LOCATION
+    			+ ", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MIN
+    			+ ", (select max(" + PAIRS_RSSI_MAX + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MAX);
+    	Log.v(TAG," from " + TABLE_CELLS
+				+ " left outer join " + TABLE_LOCATIONS
+				+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID);
+    	Log.v(TAG," where "+ CELLS_CID + "=" + cid
+				+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
+				+ " and (" + rssi + "=" + UNKNOWN_RSSI + " or (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + rssi + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + rssi + "))))");
     	Cursor c = mDb.rawQuery("select " + tableId(TABLE_CELLS)
     			+ ", " + CELLS_LOCATION
     			+ ", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MIN
@@ -359,7 +363,7 @@ public class WapdroidDbAdapter {
 				+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
 				+ " where "+ CELLS_CID + "=" + cid
 				+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
-				+ " and (" + rssi + "=" + UNKNOWN_RSSI + " or " + PAIRS_RSSI_MIN + "=" + PAIRS_RSSI_MAX + " or (" + PAIRS_RSSI_MIN + "<=" + rssi + " and " + PAIRS_RSSI_MAX + ">=" + rssi + "))", null);
+				+ " and (" + rssi + "=" + UNKNOWN_RSSI + " or (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + rssi + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + rssi + "))))", null);
    		inRange = (c.getCount() > 0);
    		if (inRange && (lac != -1)) {
    			// check LAC, as this is a new column
@@ -371,6 +375,7 @@ public class WapdroidDbAdapter {
    				values.put(CELLS_LOCATION, location);
         		mDb.update(TABLE_CELLS, values, TABLE_ID + "=" + cell, null);}}
 	    c.close();
+	    Log.v(TAG,"cellInRange:"+inRange);
     	return inRange;}
     
     public void cleanCellsLocations() {
