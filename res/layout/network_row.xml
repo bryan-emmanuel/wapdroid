@@ -39,12 +39,10 @@
 				android:textColor="@color/text_secondary"
 				android:textSize="14dip"/>
 	    </TableRow>
-	    <!--
 		<TableRow>
 			<TextView android:id="@+id/network_row_status"
 				android:textColor="@color/text_secondary"
 				android:textSize="14dip"/>
 	    </TableRow>
-	    -->
 	</TableLayout>
 </LinearLayout>

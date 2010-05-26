@@ -56,7 +56,6 @@
 					android:gravity="right"
 					android:textSize="14dip"/>
 			</TableRow>
-			<!--
 			<TableRow>
 				<TextView android:textColor="@color/text_primary"
 					android:textSize="14dip"
@@ -66,7 +65,6 @@
 					android:gravity="right"
 					android:textSize="14dip"/>
 			</TableRow>
-			-->
 		</TableLayout>
     </TableRow>
 </TableLayout>

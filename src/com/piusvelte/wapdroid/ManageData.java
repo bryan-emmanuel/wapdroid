@@ -178,9 +178,9 @@ public class ManageData extends ListActivity {
     
     public void listData() throws RemoteException {
     	// filter results
+    	Log.v(TAG,"listData,mCells:"+mCells);
     	Cursor c = mNetwork == 0 ? mDbHelper.fetchNetworks(mFilter, mCells) : mDbHelper.fetchPairsByNetworkFilter(mNetwork, mFilter, mCells);
         startManagingCursor(c);
-        /* status disabled
         SimpleCursorAdapter data = mNetwork == 0 ?
         		new SimpleCursorAdapter(this,
         				R.layout.network_row,
@@ -192,18 +192,6 @@ public class ManageData extends ListActivity {
         				c,
         				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.LOCATIONS_LAC, WapdroidDbAdapter.PAIRS_RSSI_MIN, WapdroidDbAdapter.STATUS},
         				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status});
-        */
-        SimpleCursorAdapter data = mNetwork == 0 ?
-        		new SimpleCursorAdapter(this,
-        				R.layout.network_row,
-        				c,
-        				new String[] {WapdroidDbAdapter.NETWORKS_SSID, WapdroidDbAdapter.NETWORKS_BSSID},
-        				new int[] {R.id.network_row_SSID, R.id.network_row_BSSID})
-        		: new SimpleCursorAdapter(this,
-        				R.layout.cell_row,
-        				c,
-        				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.LOCATIONS_LAC, WapdroidDbAdapter.PAIRS_RSSI_MIN},
-        				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range});
         setListAdapter(data);}
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
