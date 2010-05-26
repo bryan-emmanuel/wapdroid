@@ -136,7 +136,11 @@ public class MapData extends MapActivity {
 			    		mCID = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.CELLS_CID));
 			    		mMsg = WapdroidDbAdapter.PAIRS_CELL + " " + Integer.toString(ctr) + " of " + ct;
 			    		mHandler.post(mUpdtDialog);
-			    		String tower = "{" + addInt(cell_id, mCID) + "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC) + "," + addInt(signal_strength, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)))+ "}";
+			    		String tower = "{" + addInt(cell_id, mCID) + "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
+			    		int rssi_min = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)),
+			    			rssi_max = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MAX));
+			    		if ((rssi_min != WapdroidDbAdapter.UNKNOWN_RSSI) && (rssi_max != WapdroidDbAdapter.UNKNOWN_RSSI)) tower += "," + addInt(signal_strength, Math.round((rssi_min + rssi_max)/2));
+			    		tower += "}";
 			    		if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
 			    		if (bssid == "") bssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_BSSID));
 			    		if (towers != "") towers += ",";
@@ -249,7 +253,6 @@ public class MapData extends MapActivity {
 			super(boundCenterBottom(defaultMarker));}
 		@Override
 		public void draw(Canvas canvas, MapView mapView, boolean shadow) {
-			super.draw(canvas, mapView, shadow);
 			for (OverlayItem item : mOverlays) {
 				int meters = 40000;
 				Paint paint = new Paint();
@@ -257,14 +260,18 @@ public class MapData extends MapActivity {
 				Point pt = new Point();
 				Projection projection = mapView.getProjection();
 				projection.toPixels(gpt, pt);
+				paint.setStyle(Paint.Style.STROKE);
+				// set the stroke and radius using the rssi range as a percentage of the total signal
+				paint.setStrokeWidth(4);
 				if (item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) {
 					paint.setColor(getResources().getColor(R.color.text_primary));
-					paint.setAlpha(1);
+					paint.setAlpha(4);
 					meters = 140;}
 				else {
 					paint.setColor(getResources().getColor(R.color.text_secondary));
-					paint.setAlpha(1);}
-				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(meters), paint);}}
+					paint.setAlpha(8);}
+				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(meters), paint);}
+			super.draw(canvas, mapView, shadow);}
 		@Override
 		protected OverlayItem createItem(int i) {
 			return mOverlays.get(i);}

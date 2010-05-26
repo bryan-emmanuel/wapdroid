@@ -277,7 +277,7 @@ public class WapdroidDbAdapter {
     	return pair;}
     
     public Cursor fetchNetworkData(int network) {
-    	return mDb.rawQuery("select " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", (" + PAIRS_RSSI_MIN + "+" + PAIRS_RSSI_MAX + ")/2 as " + PAIRS_RSSI_MIN
+    	return mDb.rawQuery("select " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
     		+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
     		+ " where " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
     		+ " and " + TABLE_PAIRS + "." + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
@@ -285,7 +285,7 @@ public class WapdroidDbAdapter {
     		+ " and " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + network, null);}
     
     public Cursor fetchCellData(int network, int cell) {
-    	return mDb.rawQuery("select " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", (" + PAIRS_RSSI_MIN + "+" + PAIRS_RSSI_MAX + ")/2 as " + PAIRS_RSSI_MIN
+    	return mDb.rawQuery("select " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
         		+ " from " + TABLE_PAIRS
         		+ " left join " + TABLE_NETWORKS
         		+ " on " + TABLE_PAIRS + "." + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
