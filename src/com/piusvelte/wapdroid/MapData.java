@@ -78,7 +78,7 @@ public class MapData extends MapActivity {
 	private static final String signal_strength = "signal_strength";
 	private WapdroidDbAdapter mDb;
 	private Context mContext;
-	private int mNetwork, mCell = 0, mMCC, mMNC, mCID;
+	private int mNetwork, mCell = 0, mMCC = 0, mMNC = 0, mCID;
 	private String mCarrier = "", mToken = "", mMsg = "";
 	private MapView mMView;
 	private MapController mMController;
@@ -102,8 +102,9 @@ public class MapData extends MapActivity {
 			mNetwork = extras.getInt(WapdroidDbAdapter.PAIRS_NETWORK);
 			mCell = extras.getInt(WapdroidDbAdapter.PAIRS_CELL);
 			String operator = extras.getString(OPERATOR);
-			mMCC = Integer.parseInt(operator.substring(0, 3));
-			mMNC = Integer.parseInt(operator.substring(3));
+			if (operator.length() > 0) {
+				mMCC = Integer.parseInt(operator.substring(0, 3));
+				mMNC = Integer.parseInt(operator.substring(3));}
 			mCarrier = extras.getString(CARRIER);}
 		Log.v(TAG,"map mCell :"+mCell);
         mDb = new WapdroidDbAdapter(this);}
@@ -140,7 +141,8 @@ public class MapData extends MapActivity {
 			    		String tower = "{" + addInt(cell_id, mCID) + "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
 			    		int rssi_min = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)),
 			    			rssi_max = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MAX)),
-			    			rssi_avg = Math.round((rssi_min + rssi_max)/2);
+			    			rssi_avg = Math.round((rssi_min + rssi_max)/2),
+		    				rssi_range = getScaleSignal(rssi_min) - getScaleSignal(rssi_max);
 			    		if (rssi_avg != WapdroidDbAdapter.UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
 			    		tower += "}";
 			    		if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
@@ -148,15 +150,16 @@ public class MapData extends MapActivity {
 			    		if (towers != "") towers += ",";
 			    		towers += tower;
 			    		point = getGeoPoint(bldRequest(tower, bssid));
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL, Integer.toString(mCID), rssi_min, rssi_max));
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL, Integer.toString(mCID), rssi_avg, rssi_range));
 			    		cells.moveToNext();}
 		    		if (mCell == 0) {
 		    			mMsg = WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid;
 		    			mHandler.post(mUpdtDialog);
 		    			point = getGeoPoint(bldRequest(towers, bssid));
 		    			Location location = new Location("");
-		    			location.setLatitude(point.getLatitudeE6()/1E6);
-		    			location.setLongitude(point.getLongitudeE6()/1E6);
+		    			location.setLatitude(point.getLatitudeE6()/1e6);
+		    			location.setLongitude(point.getLongitudeE6()/1e6);
+		    			Log.v(TAG,"location:"+Double.toString(location.getLatitude())+","+Double.toString(location.getLongitude()));
 						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_NETWORK, ssid), mContext.getResources().getDrawable(R.drawable.network));
 						pinOverlays.setDistances(location);}}
 				cells.close();
@@ -252,32 +255,33 @@ public class MapData extends MapActivity {
 			mThread.interrupt();
 			return;}}
 	
-	private float getScaleDraw(int meters, Projection projection, int latitude) {
-		//return projection.metersToEquatorPixels(Math.round(meters/Math.cos(Math.toRadians(latitude))));
-		return projection.metersToEquatorPixels(meters);}
-	
 	class WapdroidOverlayItem extends OverlayItem {
 		protected GeoPoint mPoint;
 		protected String mSnippet;
 		protected String mTitle;
 		protected Drawable mMarker;
-		protected int mRssi_min = 0;
-		protected int mRssi_max = 0;
-		protected int mDistance = 0;
+		protected int mRssi_avg = 0;
+		protected int mRssi_range = 0;
+		protected int mRadius = 0;
+		protected long mStroke = 0;
 		public WapdroidOverlayItem(GeoPoint point, String title, String snippet) {
 			super(point, title, snippet);}
-		public WapdroidOverlayItem(GeoPoint point, String title, String snippet, int rssi_min, int rssi_max) {
+		public WapdroidOverlayItem(GeoPoint point, String title, String snippet, int rssi_avg, int rssi_range) {
 			super(point, title, snippet);
-			mRssi_min = rssi_min;
-			mRssi_max = rssi_max;}
-		public int getRssiMin() {
-			return mRssi_min;}
-		public int getRssiMax() {
-			return mRssi_max;}
-		public void setDistance(int distance) {
-			mDistance = distance;}
-		public int getDistance() {
-			return mDistance;}}
+			mRssi_avg = rssi_avg;
+			mRssi_range = rssi_range;}
+		public int getRssiAvg() {
+			return mRssi_avg;}
+		public int getRssiRange() {
+			return mRssi_range;}
+		public void setRadius(int radius) {
+			mRadius = radius;}
+		public int getRadius() {
+			return mRadius;}
+		public void setStroke(long stroke) {
+			mStroke = stroke;}
+		public long getStroke() {
+			return mStroke;}}
 	
 	class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem> {
 		private ArrayList<WapdroidOverlayItem> mOverlays = new ArrayList<WapdroidOverlayItem>();
@@ -286,30 +290,30 @@ public class MapData extends MapActivity {
 		@Override
 		public void draw(Canvas canvas, MapView mapView, boolean shadow) {
 			for (WapdroidOverlayItem item : mOverlays) {
-				int range = item.getDistance(), radius = 0;
-				String title = item.getTitle();
-				Log.v(TAG,"title: "+title);
-				if ((item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) || (range > 0)) {
-					Paint paint = new Paint();
-					GeoPoint gpt = item.getPoint();
-					Point pt = new Point();
-					Projection projection = mapView.getProjection();
-					projection.toPixels(gpt, pt);
-					if (item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) {
-						radius = 70;
-						Log.v(TAG,"radius:"+Integer.toString(radius));
-						paint.setStyle(Paint.Style.FILL);
-						paint.setColor(getResources().getColor(R.color.text_primary));
-						paint.setAlpha(8);}
+				int radius = 0;
+				Paint paint = new Paint();
+				GeoPoint gpt = item.getPoint();
+				Point pt = new Point();
+				Projection projection = mapView.getProjection();
+				projection.toPixels(gpt, pt);
+				double mercator = Math.cos(Math.toRadians(gpt.getLatitudeE6()/1E6));
+				if (item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) {
+					radius = 70;
+					paint.setColor(getResources().getColor(R.color.text_primary));
+					paint.setAlpha(16);}
+				else {
+					long stroke = item.getStroke();
+					radius = item.getRadius();
+					Log.v(TAG,"distance:"+Integer.toString(radius));
+					paint.setColor(getResources().getColor(R.color.text_secondary));
+					paint.setAlpha(8);
+					if (stroke == 0) paint.setStyle(Paint.Style.FILL);
 					else {
-						radius = item.getDistance();
-						Log.v(TAG,"distance:"+Integer.toString(radius));
 						paint.setStyle(Paint.Style.STROKE);
-						paint.setColor(getResources().getColor(R.color.text_secondary));
-						paint.setAlpha(4);
-						paint.setStrokeWidth(getScaleDraw(range, projection, gpt.getLatitudeE6()));}
-					Log.v(TAG,"draw:"+Float.toString(getScaleDraw(radius, projection, gpt.getLatitudeE6())));
-					canvas.drawCircle(pt.x, pt.y, getScaleDraw(radius, projection, gpt.getLatitudeE6()), paint);}}
+						Log.v(TAG,"stroke:"+Long.toString(stroke));
+						paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));}}
+				Log.v(TAG,"draw:"+Integer.toString(radius));
+				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(Math.round(radius/mercator)), paint);}
 			super.draw(canvas, mapView, shadow);}
 		@Override
 		protected WapdroidOverlayItem createItem(int i) {
@@ -328,15 +332,12 @@ public class MapData extends MapActivity {
 				if (item.getTitle() != WapdroidDbAdapter.PAIRS_NETWORK) {
 					GeoPoint gpt = item.getPoint();
 					Location cell = new Location("");
-					cell.setLatitude(gpt.getLatitudeE6()/1E6);
-					cell.setLongitude(gpt.getLongitudeE6()/1E6);
-					item.setDistance(Math.round(location.distanceTo(cell)));
-	    			int rssi_min = item.getRssiMin(),
-	    				rssi_max = item.getRssiMax(),
-		    			rssi_avg = Math.round((rssi_min + rssi_max)/2),
-	    				range = getScaleSignal(rssi_min) - getScaleSignal(rssi_max);
-					// distance = range * network_distance/signal strength
-					}}}
+					cell.setLatitude(gpt.getLatitudeE6()/1e6);
+					cell.setLongitude(gpt.getLongitudeE6()/1e6);
+	    			int radius = Math.round(location.distanceTo(cell));
+	    			double scale = radius / (item.getRssiAvg() - 51);
+	    			item.setRadius(radius);
+	    			item.setStroke(Math.round(item.getRssiRange() * scale));}}}
 		@Override
 		protected boolean onTap(int i) {
 			OverlayItem item = mOverlays.get(i);
