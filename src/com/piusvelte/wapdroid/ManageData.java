@@ -178,7 +178,6 @@ public class ManageData extends ListActivity {
     
     public void listData() throws RemoteException {
     	// filter results
-    	Log.v(TAG,"listData,mCells:"+mCells);
     	Cursor c = mNetwork == 0 ? mDbHelper.fetchNetworks(mFilter, mCells) : mDbHelper.fetchPairsByNetworkFilter(mNetwork, mFilter, mCells);
         startManagingCursor(c);
         SimpleCursorAdapter data = mNetwork == 0 ?

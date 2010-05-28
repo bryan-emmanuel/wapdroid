@@ -27,23 +27,40 @@
         <ListPreference
         		android:key="@string/key_interval"
 	        	android:title="@string/label_interval"
+	        	android:dependency="@string/key_manageWifi"
 	        	android:entries="@array/scan_interval_entries"
 	        	android:entryValues="@array/scan_interval_values"
 	        	android:defaultValue="300000"/>
         <CheckBoxPreference
                 android:key="@string/key_notify"
                 android:title="@string/label_notify"
+	        	android:dependency="@string/key_manageWifi"
                 android:defaultValue="false"/>
         <CheckBoxPreference
                 android:key="@string/key_vibrate"
                 android:title="@string/label_vibrate"
+	        	android:dependency="@string/key_notify"
                 android:defaultValue="false"/>
         <CheckBoxPreference
                 android:key="@string/key_led"
                 android:title="@string/label_led"
+	        	android:dependency="@string/key_notify"
                 android:defaultValue="false"/>
         <CheckBoxPreference
                 android:key="@string/key_ringtone"
                 android:title="@string/label_ringtone"
+	        	android:dependency="@string/key_notify"
                 android:defaultValue="false"/>
+        <CheckBoxPreference
+                android:key="@string/key_battery_override"
+                android:title="@string/battery_override"
+	        	android:dependency="@string/key_manageWifi"
+                android:defaultValue="false"/>
+        <ListPreference
+        		android:key="@string/key_battery_percentage"
+	        	android:title="@string/battery_percentage"
+	        	android:dependency="@string/key_battery_override"
+	        	android:entries="@array/battery_entries"
+	        	android:entryValues="@array/battery_values"
+	        	android:defaultValue="30"/>
 </PreferenceScreen>

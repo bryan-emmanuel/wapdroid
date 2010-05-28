@@ -26,4 +26,6 @@
     <string name="key_led">led</string>
     <string name="key_ringtone">ringtone</string>
     <string name="key_interval">interval</string>
+    <string name="key_battery_override">battery_override</string>
+    <string name="key_battery_percentage">battery_percentage</string>
 </resources>

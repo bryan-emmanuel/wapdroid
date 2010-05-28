@@ -34,6 +34,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.telephony.CellLocation;
@@ -54,16 +55,17 @@ public class WapdroidService extends Service {
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
 	private int mCid = WapdroidDbAdapter.UNKNOWN_CID, mLac = WapdroidDbAdapter.UNKNOWN_CID, mRssi = 99, mWifiState, mInterval, mPhoneType = TelephonyManager.PHONE_TYPE_NONE, mNetworkType = TelephonyManager.NETWORK_TYPE_UNKNOWN;
-	private boolean mWifiIsEnabled, mNotify, mVibrate, mLed, mRingtone;
+	private boolean mWifiIsEnabled, mNotify, mVibrate, mLed, mRingtone, mBatteryOverride, mBatteryLock = true;
 	private AlarmManager mAlarmMgr;
 	private PendingIntent mPendingIntent;
     private IWapdroidUI mWapdroidUI;
     private boolean mControlWifi = true;
 	private static final String TAG = "Wapdroid";
+	private double mBatteryPercentage = 100;
 	
     private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
 		public void updatePreferences(int interval, boolean notify,
-				boolean vibrate, boolean led, boolean ringtone)
+				boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage)
 				throws RemoteException {
 			mInterval = interval;
 			if (mNotify && !notify) {
@@ -79,7 +81,9 @@ public class WapdroidService extends Service {
 			mNotify = notify;
 			mVibrate = vibrate;
 			mLed = led;
-			mRingtone = ringtone;}
+			mRingtone = ringtone;
+			mBatteryOverride = batteryOverride;
+			mBatteryPercentage = batteryPercentage;}
 		public void setCallback(IBinder mWapdroidUIBinder)
 				throws RemoteException {
             if (mWapdroidUIBinder != null) {
@@ -159,7 +163,13 @@ public class WapdroidService extends Service {
 				else {
 					mSsid = null;
 					mBssid = null;}
-                updateUiWifi();}}};
+                updateUiWifi();}
+			else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+				Log.v(TAG,"battery:"+Double.toString(intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)));
+				if (mBatteryOverride && (mBatteryPercentage > (intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)))) {
+					mBatteryLock = true;
+					toggleWifi(false);}
+				else mBatteryLock = false;}}};
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -204,18 +214,21 @@ public class WapdroidService extends Service {
 		intentfilter.addAction(Intent.ACTION_SCREEN_ON);
 		intentfilter.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 		intentfilter.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
+		intentfilter.addAction(Intent.ACTION_BATTERY_CHANGED);
 		registerReceiver(mReceiver, intentfilter);
 		Intent i = new Intent(this, BootReceiver.class);
 		i.setAction(WAKE_SERVICE);
 		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
 		SharedPreferences prefs = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		// initialize preferences, updated by UI
-		mInterval = Integer.parseInt((String) prefs.getString(getString(R.string.key_interval), "0"));
+		mInterval = Integer.parseInt((String) prefs.getString(getString(R.string.key_interval), "30000"));
 		mNotify = prefs.getBoolean(getString(R.string.key_notify), false);
 		if (mNotify) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mVibrate = prefs.getBoolean(getString(R.string.key_vibrate), false);
 		mLed = prefs.getBoolean(getString(R.string.key_led), false);
 		mRingtone = prefs.getBoolean(getString(R.string.key_ringtone), false);
+		mBatteryOverride = prefs.getBoolean(getString(R.string.key_battery_override), false);
+		mBatteryPercentage = Integer.parseInt((String) prefs.getString(getString(R.string.key_battery_percentage), "30"));
 		prefs = null;
 		mDbHelper = new WapdroidDbAdapter(this);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -306,20 +319,23 @@ public class WapdroidService extends Service {
 	    				Log.v(TAG, "rssi: "+n.getRssi());
 	    				Log.v(TAG, "psc: "+n.getPsc());
 						if (isInRange && (cid > 0)) isInRange = mDbHelper.cellInRange(cid, lac, rssi);}}
-				if ((isInRange && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!isInRange && mWifiIsEnabled)) {
+				if ((isInRange && !mBatteryLock && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!isInRange && mWifiIsEnabled)) {
 					Log.v(TAG, "set wifi:"+isInRange);
-					mWifiManager.setWifiEnabled(isInRange);
-					if (mNotify) {
-						CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(isInRange ? R.string.label_enabled : R.string.label_disabled);
-					   	Notification notification = new Notification((isInRange ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
-					   	Intent i = new Intent(getBaseContext(), WapdroidService.class);
-						PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
-					   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-					   	if (mVibrate) notification.defaults |= Notification.DEFAULT_VIBRATE;
-					   	if (mLed) notification.defaults |= Notification.DEFAULT_LIGHTS;
-					   	if (mRingtone) notification.defaults |= Notification.DEFAULT_SOUND;
-						mNotificationManager.notify(NOTIFY_ID, notification);}}}
+					toggleWifi(isInRange);}}
 	    	mDbHelper.close();}}
+    
+    private void toggleWifi(boolean enable) {
+    	mWifiManager.setWifiEnabled(enable);
+		if (mNotify) {
+			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enable ? R.string.label_enabled : R.string.label_disabled);
+		   	Notification notification = new Notification((enable ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
+		   	Intent i = new Intent(getBaseContext(), WapdroidService.class);
+			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
+		   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
+		   	if (mVibrate) notification.defaults |= Notification.DEFAULT_VIBRATE;
+		   	if (mLed) notification.defaults |= Notification.DEFAULT_LIGHTS;
+		   	if (mRingtone) notification.defaults |= Notification.DEFAULT_SOUND;
+			mNotificationManager.notify(NOTIFY_ID, notification);}}
     
     private void updateUiWifi() {
     	if (mWapdroidUI != null) {
