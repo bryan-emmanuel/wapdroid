@@ -61,7 +61,7 @@ public class WapdroidService extends Service {
     private IWapdroidUI mWapdroidUI;
     private boolean mControlWifi = true;
 	private static final String TAG = "Wapdroid";
-	private double mBatteryPercentage = 100;
+	private double mBatteryPercentage = 100.0, mBatteryRemaining;
 	
     private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
 		public void updatePreferences(int interval, boolean notify,
@@ -96,9 +96,11 @@ public class WapdroidService extends Service {
                			if (!mNeighboringCells.isEmpty()) {
                				for (NeighboringCellInfo n : mNeighboringCells) cells += ",'" + Integer.toString(n.getCid()) + "'";}
                			mWapdroidUI.setOperator(mOperatorName, mMcc, mOperator);
-                		mWapdroidUI.setCellInfo(Integer.toString(mCid), Integer.toString(mLac), cells);
+                		mWapdroidUI.setCellInfo(Integer.toString(mCid), Integer.toString(mLac));
                 		mWapdroidUI.setWifiInfo(mWifiState, mSsid, mBssid);
-                		mWapdroidUI.setSignalStrength(mRssi);}
+                		mWapdroidUI.setSignalStrength(mRssi);
+                		mWapdroidUI.setCells(cells);
+                		mWapdroidUI.setBattery(mBatteryRemaining);}
                     catch (RemoteException e) {}}}}
 		public void suspendWifiControl() throws RemoteException {
 			Log.v(TAG, "running wifi settings, disable wifi control");
@@ -165,11 +167,16 @@ public class WapdroidService extends Service {
 					mBssid = null;}
                 updateUiWifi();}
 			else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
-				Log.v(TAG,"battery:"+Double.toString(intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)));
-				if (mBatteryOverride && (mBatteryPercentage > (intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100)))) {
+				mBatteryRemaining = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
+				Log.v(TAG,"battery:"+Double.toString(mBatteryRemaining));
+				if (mBatteryOverride && (mBatteryRemaining < mBatteryPercentage)) {
 					mBatteryLock = true;
 					toggleWifi(false);}
-				else mBatteryLock = false;}}};
+				else mBatteryLock = false;
+		    	if (mWapdroidUI != null) {
+		        	try {
+		        		mWapdroidUI.setBattery(mBatteryRemaining);}
+		            catch (RemoteException e) {}}}}};
 	
 	@Override
 	public IBinder onBind(Intent intent) {
@@ -197,14 +204,7 @@ public class WapdroidService extends Service {
 		mWifiState = mWifiManager.getWifiState();
 		mWifiIsEnabled = (mWifiState == WifiManager.WIFI_STATE_ENABLED);
 		if (mWifiIsEnabled) setWifiInfo();
-		if (mNotify) {
-			CharSequence contentTitle = getString(mWifiIsEnabled ? R.string.label_enabled : R.string.label_disabled);
-		   	Notification notification = new Notification((mWifiIsEnabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
-			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
-		   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-			mNotificationManager.notify(NOTIFY_ID, notification);}
-		getCellInfo(mTeleManager.getCellLocation());
-		mTeleManager.listen(mPhoneStateListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH| PhoneStateListener.LISTEN_SIGNAL_STRENGTHS));}
+		getCellInfo(mTeleManager.getCellLocation());}
 	
     @Override
     public void onCreate() {
@@ -232,9 +232,16 @@ public class WapdroidService extends Service {
 		prefs = null;
 		mDbHelper = new WapdroidDbAdapter(this);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+		mTeleManager.listen(mPhoneStateListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH| PhoneStateListener.LISTEN_SIGNAL_STRENGTHS));
 		mPhoneType = mTeleManager.getPhoneType();
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);}
+		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		if (mNotify) {
+			CharSequence contentTitle = getString(mWifiIsEnabled ? R.string.label_enabled : R.string.label_disabled);
+		   	Notification notification = new Notification((mWifiIsEnabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
+			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
+		   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
+			mNotificationManager.notify(NOTIFY_ID, notification);}}
     
     @Override
     public void onDestroy() {
@@ -288,7 +295,8 @@ public class WapdroidService extends Service {
        				for (NeighboringCellInfo n : mNeighboringCells) cells += ",'" + Integer.toString(n.getCid()) + "'";}
        			Log.v(TAG,"getCellInfo:"+Integer.toString(mCid)+","+Integer.toString(mLac)+","+mOperatorName+","+mMcc+","+mOperator+","+cells);
        			mWapdroidUI.setOperator(mOperatorName, mMcc, mOperator);
-        		mWapdroidUI.setCellInfo(Integer.toString(mCid), Integer.toString(mLac), cells);}
+        		mWapdroidUI.setCellInfo(Integer.toString(mCid), Integer.toString(mLac));
+        		mWapdroidUI.setCells(cells);}
             catch (RemoteException e) {
             	Log.e(TAG, "error in mWapdroidUI.setCellInfo"+mCid+","+mLac+","+mTeleManager.getNetworkOperatorName()+","+mTeleManager.getNetworkCountryIso());}}}
     

@@ -68,6 +68,18 @@
 					android:text="@string/scanning"/>
 		    </TableRow>
 			<TableRow>
+				<TextView android:id="@+id/label_LAC"
+			    	android:textColor="@color/text_primary"
+					android:textSize="18dip"
+					android:text="@string/label_LAC"/>
+				<TextView android:id="@+id/field_LAC"
+					android:textStyle="bold"
+			    	android:textColor="@color/text_primary"
+					android:gravity="right"
+					android:textSize="18dip"
+					android:text="@string/scanning"/>
+		    </TableRow>
+			<TableRow>
 				<TextView android:id="@+id/label_MNC"
 			    	android:textColor="@color/text_secondary"
 					android:textSize="14dip"
@@ -98,6 +110,23 @@
 			    	android:textColor="@color/text_secondary"
 					android:gravity="right"
 					android:textSize="14dip"
+					android:text="@string/scanning"/>
+		    </TableRow>
+		</TableLayout>
+	</TableRow>
+	<TableRow>
+		<TableLayout android:background="@drawable/field"
+			android:padding="16dip"
+			android:stretchColumns="0">
+			<TableRow>
+				<TextView android:textColor="@color/text_primary"
+					android:textSize="18dip"
+					android:text="@string/battery_remaining"/>
+				<TextView android:id="@+id/field_battery"
+					android:textStyle="bold"
+			    	android:textColor="@color/text_primary"
+					android:gravity="right"
+					android:textSize="18dip"
 					android:text="@string/scanning"/>
 		    </TableRow>
 		</TableLayout>

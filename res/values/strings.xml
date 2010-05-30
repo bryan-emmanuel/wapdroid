@@ -59,6 +59,7 @@
     <string name="dbm">\u0020dBm</string>
     <string name="colon">\u0020:\u0020</string>
     <string name="signal">Signal</string>
+    <string name="battery_remaining">Battery remaining</string>
     <string name="battery_override">Disable WiFi on low battery</string>
     <string name="battery_percentage">Battery percentage remaining</string>
     <string name="about">Wapdroid runs in the background, recording cell towers near WiFi networks to which you connect. When in range of those towers, WiFi is turned on, otherwise it is turned off to save battery power. Please report issues or questions to http://wapdroid.com.\u000A\u000A</string>

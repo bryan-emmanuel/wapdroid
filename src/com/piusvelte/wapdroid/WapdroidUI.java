@@ -43,7 +43,7 @@ public class WapdroidUI extends Activity {
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
 	public static final int ABOUT_ID = Menu.FIRST + 3;
-	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID, field_signal;
+	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID, field_signal, field_battery, field_LAC;
 	private ServiceConn mServiceConn;
 	private String mCells = "";
 		
@@ -56,7 +56,9 @@ public class WapdroidUI extends Activity {
 		field_MCC = (TextView) findViewById(R.id.field_MCC);
 		field_wifiState = (TextView) findViewById(R.id.field_wifiState);
 		field_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
-		field_signal = (TextView) findViewById(R.id.field_signal);}
+		field_signal = (TextView) findViewById(R.id.field_signal);
+		field_battery = (TextView) findViewById(R.id.field_battery);
+		field_LAC = (TextView) findViewById(R.id.field_LAC);}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -116,9 +118,9 @@ public class WapdroidUI extends Activity {
         bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void setCellInfo(String cid, String lac, String cells) throws RemoteException {
+		public void setCellInfo(String cid, String lac) throws RemoteException {
 	   		field_CID.setText(cid);
-	   		mCells = cells;}
+	   		field_LAC.setText(lac);}
 		
 		public void setWifiInfo(int state, String ssid, String bssid)
 				throws RemoteException {
@@ -143,4 +145,9 @@ public class WapdroidUI extends Activity {
 		public void setOperator(String operatorName, String country,
 				String operator) throws RemoteException {
 	   		field_MNC.setText(operatorName);
-	   		field_MCC.setText(country);}};}
+	   		field_MCC.setText(country);}
+
+		public void setBattery(double batteryPercentage) throws RemoteException {
+			field_battery.setText(Double.toString(batteryPercentage) + "%");}
+
+		public void setCells(String cells) throws RemoteException {}};}

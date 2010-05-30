@@ -194,8 +194,7 @@ public class ManageData extends ListActivity {
         setListAdapter(data);}
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void setCellInfo(String cid, String lac, String cells) throws RemoteException {
-			mCells = cells;}
+		public void setCellInfo(String cid, String lac) throws RemoteException {}
 		
 		public void setWifiInfo(int state, String ssid, String bssid)
 				throws RemoteException {}
@@ -205,4 +204,9 @@ public class ManageData extends ListActivity {
 		public void setOperator(String operatorName, String country,
 				String operator) throws RemoteException {
 			mOperator = operator;
-			mOperatorName = operatorName;}};}
+			mOperatorName = operatorName;}
+
+		public void setBattery(double batteryPercentage) throws RemoteException {}
+
+		public void setCells(String cells) throws RemoteException {
+			mCells = cells;}};}

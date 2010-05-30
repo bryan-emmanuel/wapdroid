@@ -62,9 +62,25 @@ java.lang.String _arg0;
 _arg0 = data.readString();
 java.lang.String _arg1;
 _arg1 = data.readString();
-java.lang.String _arg2;
-_arg2 = data.readString();
-this.setCellInfo(_arg0, _arg1, _arg2);
+this.setCellInfo(_arg0, _arg1);
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_setCells:
+{
+data.enforceInterface(DESCRIPTOR);
+java.lang.String _arg0;
+_arg0 = data.readString();
+this.setCells(_arg0);
+reply.writeNoException();
+return true;
+}
+case TRANSACTION_setBattery:
+{
+data.enforceInterface(DESCRIPTOR);
+double _arg0;
+_arg0 = data.readDouble();
+this.setBattery(_arg0);
 reply.writeNoException();
 return true;
 }
@@ -125,7 +141,7 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public void setCellInfo(java.lang.String cid, java.lang.String lac, java.lang.String cells) throws android.os.RemoteException
+public void setCellInfo(java.lang.String cid, java.lang.String lac) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -133,8 +149,37 @@ try {
 _data.writeInterfaceToken(DESCRIPTOR);
 _data.writeString(cid);
 _data.writeString(lac);
-_data.writeString(cells);
 mRemote.transact(Stub.TRANSACTION_setCellInfo, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void setCells(java.lang.String cells) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeString(cells);
+mRemote.transact(Stub.TRANSACTION_setCells, _data, _reply, 0);
+_reply.readException();
+}
+finally {
+_reply.recycle();
+_data.recycle();
+}
+}
+public void setBattery(double batteryPercentage) throws android.os.RemoteException
+{
+android.os.Parcel _data = android.os.Parcel.obtain();
+android.os.Parcel _reply = android.os.Parcel.obtain();
+try {
+_data.writeInterfaceToken(DESCRIPTOR);
+_data.writeDouble(batteryPercentage);
+mRemote.transact(Stub.TRANSACTION_setBattery, _data, _reply, 0);
 _reply.readException();
 }
 finally {
@@ -177,11 +222,15 @@ _data.recycle();
 }
 static final int TRANSACTION_setOperator = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 static final int TRANSACTION_setCellInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
-static final int TRANSACTION_setWifiInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
-static final int TRANSACTION_setSignalStrength = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
+static final int TRANSACTION_setCells = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
+static final int TRANSACTION_setBattery = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
+static final int TRANSACTION_setWifiInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
+static final int TRANSACTION_setSignalStrength = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
 }
 public void setOperator(java.lang.String operatorName, java.lang.String country, java.lang.String operator) throws android.os.RemoteException;
-public void setCellInfo(java.lang.String cid, java.lang.String lac, java.lang.String cells) throws android.os.RemoteException;
+public void setCellInfo(java.lang.String cid, java.lang.String lac) throws android.os.RemoteException;
+public void setCells(java.lang.String cells) throws android.os.RemoteException;
+public void setBattery(double batteryPercentage) throws android.os.RemoteException;
 public void setWifiInfo(int state, java.lang.String ssid, java.lang.String bssid) throws android.os.RemoteException;
 public void setSignalStrength(int rssi) throws android.os.RemoteException;
 }
