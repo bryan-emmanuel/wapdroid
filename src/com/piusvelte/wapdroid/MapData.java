@@ -299,16 +299,16 @@ public class MapData extends MapActivity {
 				if (item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) {
 					radius = 70;
 					paint.setColor(getResources().getColor(R.color.text_primary));
-					paint.setAlpha(32);}
+					paint.setAlpha(24);}
 				else {
 					long stroke = item.getStroke();
 					radius = item.getRadius();
 					paint.setColor(getResources().getColor(R.color.text_secondary));
 					if (stroke == 0) {
-						paint.setAlpha(16);
+						paint.setAlpha(12);
 						paint.setStyle(Paint.Style.FILL);}
 					else {
-						paint.setAlpha(24);
+						paint.setAlpha(16);
 						paint.setStyle(Paint.Style.STROKE);
 						Log.v(TAG,"stroke:"+Long.toString(stroke));
 						paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));}}

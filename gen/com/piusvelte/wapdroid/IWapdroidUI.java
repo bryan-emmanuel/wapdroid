@@ -78,8 +78,8 @@ return true;
 case TRANSACTION_setBattery:
 {
 data.enforceInterface(DESCRIPTOR);
-double _arg0;
-_arg0 = data.readDouble();
+int _arg0;
+_arg0 = data.readInt();
 this.setBattery(_arg0);
 reply.writeNoException();
 return true;
@@ -172,13 +172,13 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public void setBattery(double batteryPercentage) throws android.os.RemoteException
+public void setBattery(int batteryPercentage) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
 try {
 _data.writeInterfaceToken(DESCRIPTOR);
-_data.writeDouble(batteryPercentage);
+_data.writeInt(batteryPercentage);
 mRemote.transact(Stub.TRANSACTION_setBattery, _data, _reply, 0);
 _reply.readException();
 }
@@ -230,7 +230,7 @@ static final int TRANSACTION_setSignalStrength = (android.os.IBinder.FIRST_CALL_
 public void setOperator(java.lang.String operatorName, java.lang.String country, java.lang.String operator) throws android.os.RemoteException;
 public void setCellInfo(java.lang.String cid, java.lang.String lac) throws android.os.RemoteException;
 public void setCells(java.lang.String cells) throws android.os.RemoteException;
-public void setBattery(double batteryPercentage) throws android.os.RemoteException;
+public void setBattery(int batteryPercentage) throws android.os.RemoteException;
 public void setWifiInfo(int state, java.lang.String ssid, java.lang.String bssid) throws android.os.RemoteException;
 public void setSignalStrength(int rssi) throws android.os.RemoteException;
 }

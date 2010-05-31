@@ -51,17 +51,33 @@ public class WapdroidService extends Service {
 	private WapdroidDbAdapter mDbHelper;
 	private NotificationManager mNotificationManager;
 	private TelephonyManager mTeleManager;
-	private String mSsid = "", mBssid = "", mOperator = "", mOperatorName = "", mMcc = "";
+	private String mSsid = "",
+	mBssid = "", mOperator = "",
+	mOperatorName = "",
+	mMcc = "";
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
-	private int mCid = WapdroidDbAdapter.UNKNOWN_CID, mLac = WapdroidDbAdapter.UNKNOWN_CID, mRssi = 99, mWifiState, mInterval, mPhoneType = TelephonyManager.PHONE_TYPE_NONE, mNetworkType = TelephonyManager.NETWORK_TYPE_UNKNOWN;
-	private boolean mWifiIsEnabled, mNotify, mVibrate, mLed, mRingtone, mBatteryOverride, mBatteryLock = true;
+	private int mCid = WapdroidDbAdapter.UNKNOWN_CID,
+	mLac = WapdroidDbAdapter.UNKNOWN_CID,
+	mRssi = 99,
+	mWifiState,
+	mInterval,
+	mPhoneType = TelephonyManager.PHONE_TYPE_NONE,
+	mNetworkType = TelephonyManager.NETWORK_TYPE_UNKNOWN,
+	mBatteryPercentage = 100,
+	mBatteryRemaining;
+	private boolean mWifiIsEnabled,
+	mNotify,
+	mVibrate,
+	mLed,
+	mRingtone,
+	mBatteryOverride,
+	mBatteryLock = false;
 	private AlarmManager mAlarmMgr;
 	private PendingIntent mPendingIntent;
     private IWapdroidUI mWapdroidUI;
     private boolean mControlWifi = true;
 	private static final String TAG = "Wapdroid";
-	private double mBatteryPercentage = 100.0, mBatteryRemaining;
 	
     private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
 		public void updatePreferences(int interval, boolean notify,
@@ -167,8 +183,8 @@ public class WapdroidService extends Service {
 					mBssid = null;}
                 updateUiWifi();}
 			else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
-				mBatteryRemaining = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100);
-				Log.v(TAG,"battery:"+Double.toString(mBatteryRemaining));
+				mBatteryRemaining = Math.round(intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100));
+				Log.v(TAG,"battery:"+Integer.toString(mBatteryRemaining));
 				if (mBatteryOverride && (mBatteryRemaining < mBatteryPercentage)) {
 					mBatteryLock = true;
 					toggleWifi(false);}
@@ -201,6 +217,7 @@ public class WapdroidService extends Service {
 		 * boot and wake will wakelock and should set the alarm,
 		 * others should release the lock and cancel the alarm
 		 */
+		// setting the wifi state is done in onCreate also, but it's need here for running in the background
 		mWifiState = mWifiManager.getWifiState();
 		mWifiIsEnabled = (mWifiState == WifiManager.WIFI_STATE_ENABLED);
 		if (mWifiIsEnabled) setWifiInfo();
@@ -236,7 +253,12 @@ public class WapdroidService extends Service {
 		mPhoneType = mTeleManager.getPhoneType();
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		// notify in onCreate, instead of init, as init will be called by each UI activity
 		if (mNotify) {
+			// wifi state is needed for the notification, though it'll be set again in init
+			mWifiState = mWifiManager.getWifiState();
+			mWifiIsEnabled = (mWifiState == WifiManager.WIFI_STATE_ENABLED);
+			if (mWifiIsEnabled) setWifiInfo();
 			CharSequence contentTitle = getString(mWifiIsEnabled ? R.string.label_enabled : R.string.label_disabled);
 		   	Notification notification = new Notification((mWifiIsEnabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
 			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);

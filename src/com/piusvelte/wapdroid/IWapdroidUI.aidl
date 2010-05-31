@@ -24,6 +24,6 @@ interface IWapdroidUI {
 	void setOperator(String operatorName, String country, String operator);
 	void setCellInfo(String cid, String lac);
 	void setCells(String cells);
-	void setBattery(double batteryPercentage);
+	void setBattery(int batteryPercentage);
 	void setWifiInfo(int state, String ssid, String bssid);
 	void setSignalStrength(int rssi);}

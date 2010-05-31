@@ -147,7 +147,7 @@ public class WapdroidUI extends Activity {
 	   		field_MNC.setText(operatorName);
 	   		field_MCC.setText(country);}
 
-		public void setBattery(double batteryPercentage) throws RemoteException {
-			field_battery.setText(Double.toString(batteryPercentage) + "%");}
+		public void setBattery(int batteryPercentage) throws RemoteException {
+			field_battery.setText(Integer.toString(batteryPercentage) + "%");}
 
 		public void setCells(String cells) throws RemoteException {}};}

@@ -28,6 +28,6 @@
 		android:layout_width="fill_parent"
   		android:layout_height="wrap_content"
 		android:padding="8dip"
-		android:textSize="18dip"
+		android:textSize="14dip"
   		android:text="@string/no_networks"/>
 </LinearLayout>

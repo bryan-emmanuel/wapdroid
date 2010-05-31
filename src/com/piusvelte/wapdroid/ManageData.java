@@ -206,7 +206,7 @@ public class ManageData extends ListActivity {
 			mOperator = operator;
 			mOperatorName = operatorName;}
 
-		public void setBattery(double batteryPercentage) throws RemoteException {}
+		public void setBattery(int batteryPercentage) throws RemoteException {}
 
 		public void setCells(String cells) throws RemoteException {
 			mCells = cells;}};}

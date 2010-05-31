@@ -27,16 +27,16 @@
 	<TableRow>
 		<TableLayout android:background="@drawable/field"
 			android:stretchColumns="0"
-			android:padding="16dip">
+			android:padding="12dip">
 			<TableRow>
 				<TextView android:textColor="@color/text_primary"
-					android:textSize="18dip"
+					android:textSize="16dip"
 					android:text="@string/label_CID"/>
 				<TextView android:id="@+id/cell_row_CID"
 					android:textStyle="bold"
 					android:textColor="@color/text_primary"
 					android:gravity="right"
-					android:textSize="18dip"/>
+					android:textSize="16dip"/>
 			</TableRow>
 			<TableRow>
 				<TextView android:textColor="@color/text_primary"
