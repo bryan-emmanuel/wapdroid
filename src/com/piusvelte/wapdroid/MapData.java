@@ -310,9 +310,7 @@ public class MapData extends MapActivity {
 					else {
 						paint.setAlpha(16);
 						paint.setStyle(Paint.Style.STROKE);
-						Log.v(TAG,"stroke:"+Long.toString(stroke));
 						paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));}}
-				Log.v(TAG,"draw:"+Integer.toString(radius));
 				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(Math.round(radius/mercator)), paint);}
 			super.draw(canvas, mapView, shadow);}
 		@Override

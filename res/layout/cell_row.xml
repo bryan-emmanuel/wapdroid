@@ -18,54 +18,48 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="wrap_content"
 	android:layout_height="wrap_content"
-	android:stretchColumns="0"
-	android:padding="4dip"
-	android:background="@color/background">
-	<TableRow>
-		<TableLayout android:background="@drawable/field"
-			android:stretchColumns="0"
-			android:padding="12dip">
-			<TableRow>
-				<TextView android:textColor="@color/text_primary"
-					android:textSize="16dip"
-					android:text="@string/label_CID"/>
-				<TextView android:id="@+id/cell_row_CID"
-					android:textStyle="bold"
-					android:textColor="@color/text_primary"
-					android:gravity="right"
-					android:textSize="16dip"/>
-			</TableRow>
-			<TableRow>
-				<TextView android:textColor="@color/text_primary"
-					android:textSize="14dip"
-					android:text="@string/label_LAC"/>
-				<TextView android:id="@+id/cell_row_LAC"
-					android:textColor="@color/text_primary"
-					android:gravity="right"
-					android:textSize="14dip"/>
-			</TableRow>
-			<TableRow>
-				<TextView android:textColor="@color/text_primary"
-					android:textSize="14dip"
-					android:text="@string/range"/>
-				<TextView android:id="@+id/cell_row_range"
-					android:textColor="@color/text_primary"
-					android:gravity="right"
-					android:textSize="14dip"/>
-			</TableRow>
-			<TableRow>
-				<TextView android:textColor="@color/text_primary"
-					android:textSize="14dip"
-					android:text="@string/status"/>
-				<TextView android:id="@+id/cell_row_status"
-					android:textColor="@color/text_primary"
-					android:gravity="right"
-					android:textSize="14dip"/>
-			</TableRow>
-		</TableLayout>
-    </TableRow>
-</TableLayout>
-
+	android:background="@color/background"
+	android:padding="4dip">
+	<TableLayout
+		android:layout_width="wrap_content"
+		android:layout_height="wrap_content"
+		android:background="@drawable/field"
+		android:stretchColumns="0"
+		android:paddingTop="10dip"
+		android:paddingRight="12dip"
+		android:paddingBottom="10dip"
+		android:paddingLeft="12dip">
+		<TableRow>
+			<TextView android:textColor="@color/text_primary"
+				android:text="@string/label_CID"/>
+			<TextView android:id="@+id/cell_row_CID"
+				android:textStyle="bold"
+				android:textColor="@color/text_primary"
+				android:gravity="right"/>
+		</TableRow>
+		<TableRow>
+			<TextView android:textColor="@color/text_primary"
+				android:text="@string/label_LAC"/>
+			<TextView android:id="@+id/cell_row_LAC"
+				android:textColor="@color/text_primary"
+				android:gravity="right"/>
+		</TableRow>
+		<TableRow>
+			<TextView android:textColor="@color/text_primary"
+				android:text="@string/range"/>
+			<TextView android:id="@+id/cell_row_range"
+				android:textColor="@color/text_primary"
+				android:gravity="right"/>
+		</TableRow>
+		<TableRow>
+			<TextView android:textColor="@color/text_primary"
+				android:text="@string/status"/>
+			<TextView android:id="@+id/cell_row_status"
+				android:textColor="@color/text_primary"
+				android:gravity="right"/>
+		</TableRow>
+	</TableLayout>
+</LinearLayout>

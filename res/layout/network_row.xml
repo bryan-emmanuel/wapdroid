@@ -23,26 +23,27 @@
 	android:layout_height="wrap_content"
 	android:background="@color/background"
 	android:padding="4dip">
-	<TableLayout android:background="@drawable/field"
+	<TableLayout
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
+		android:background="@drawable/field"
 		android:stretchColumns="0"
-		android:padding="12dip">
+		android:paddingTop="10dip"
+		android:paddingRight="12dip"
+		android:paddingBottom="10dip"
+		android:paddingLeft="12dip">
 		<TableRow>
 			<TextView android:textStyle="bold"
 				android:id="@+id/network_row_SSID"
-				android:textColor="@color/text_primary"
-				android:textSize="16dip"/>
+				android:textColor="@color/text_primary"/>
 	    </TableRow>
 		<TableRow>
 			<TextView android:id="@+id/network_row_BSSID"
-				android:textColor="@color/text_secondary"
-				android:textSize="14dip"/>
+				android:textColor="@color/text_secondary"/>
 	    </TableRow>
 		<TableRow>
 			<TextView android:id="@+id/network_row_status"
-				android:textColor="@color/text_secondary"
-				android:textSize="14dip"/>
+				android:textColor="@color/text_secondary"/>
 	    </TableRow>
 	</TableLayout>
 </LinearLayout>

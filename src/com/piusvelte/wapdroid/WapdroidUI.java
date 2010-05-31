@@ -43,7 +43,7 @@ public class WapdroidUI extends Activity {
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
 	public static final int ABOUT_ID = Menu.FIRST + 3;
-	private TextView field_CID, field_MNC, field_MCC, field_wifiState, field_wifiBSSID, field_signal, field_battery, field_LAC;
+	private TextView field_CID, field_wifiState, field_wifiBSSID, field_signal, field_battery, field_LAC, field_status;
 	private ServiceConn mServiceConn;
 	private String mCells = "";
 		
@@ -52,13 +52,12 @@ public class WapdroidUI extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
         field_CID = (TextView) findViewById(R.id.field_CID);
-		field_MNC = (TextView) findViewById(R.id.field_MNC);
-		field_MCC = (TextView) findViewById(R.id.field_MCC);
 		field_wifiState = (TextView) findViewById(R.id.field_wifiState);
 		field_wifiBSSID = (TextView) findViewById(R.id.field_wifiBSSID);
 		field_signal = (TextView) findViewById(R.id.field_signal);
 		field_battery = (TextView) findViewById(R.id.field_battery);
-		field_LAC = (TextView) findViewById(R.id.field_LAC);}
+		field_LAC = (TextView) findViewById(R.id.field_LAC);
+		field_status = (TextView) findViewById(R.id.field_status);}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -142,12 +141,13 @@ public class WapdroidUI extends Activity {
 		public void setSignalStrength(int rssi) throws RemoteException {
 			field_signal.setText((rssi != WapdroidDbAdapter.UNKNOWN_RSSI ? (Integer.toString(rssi) + getString(R.string.dbm)) : getString(R.string.scanning)));}
 
-		public void setOperator(String operatorName, String country,
-				String operator) throws RemoteException {
-	   		field_MNC.setText(operatorName);
-	   		field_MCC.setText(country);}
-
 		public void setBattery(int batteryPercentage) throws RemoteException {
 			field_battery.setText(Integer.toString(batteryPercentage) + "%");}
 
-		public void setCells(String cells) throws RemoteException {}};}
+		public void setCells(String cells) throws RemoteException {}
+
+		public void setOperator(String operator)
+				throws RemoteException {}
+
+		public void inRange(boolean inrange) throws RemoteException {
+			field_status.setText(getString(inrange ? R.string.withinarea : R.string.outofarea));}};}

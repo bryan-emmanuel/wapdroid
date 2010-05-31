@@ -50,7 +50,7 @@ public class ManageData extends ListActivity {
     private static final int FILTER_ID = Menu.FIRST + 3;
     private int mFilter = WapdroidDbAdapter.FILTER_ALL;
     private AlertDialog mAlertDialog;
-    private String mCells = "", mOperator = "", mOperatorName = "";
+    private String mCells = "", mOperator = "";
 	private ServiceConn mServiceConn;
 	private static final String TAG = "Wapdroid";
 	
@@ -153,7 +153,6 @@ public class ManageData extends ListActivity {
     			intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) mNetwork);
     			intent.putExtra(WapdroidDbAdapter.PAIRS_CELL, (int) info.id);}
     		intent.putExtra(MapData.OPERATOR, mOperator);
-    		intent.putExtra(MapData.CARRIER, mOperatorName);
     		startActivity(intent);
 			return true;
 		case DELETE_ID:
@@ -201,12 +200,12 @@ public class ManageData extends ListActivity {
 		
 		public void setSignalStrength(int rssi) throws RemoteException {}
 
-		public void setOperator(String operatorName, String country,
-				String operator) throws RemoteException {
-			mOperator = operator;
-			mOperatorName = operatorName;}
+		public void setOperator(String operator) throws RemoteException {
+			mOperator = operator;}
 
 		public void setBattery(int batteryPercentage) throws RemoteException {}
 
 		public void setCells(String cells) throws RemoteException {
-			mCells = cells;}};}
+			mCells = cells;}
+
+		public void inRange(boolean inrange) throws RemoteException {}};}
