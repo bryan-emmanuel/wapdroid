@@ -88,6 +88,7 @@
 					android:text="@string/status"/>
 				<TextView android:id="@+id/field_status"
 			    	android:textColor="@color/text_primary"
+					android:textStyle="bold"
 					android:gravity="right"
 					android:text="@string/scanning"/>
 		    </TableRow>
@@ -116,7 +117,6 @@
 		android:layout_height="fill_parent">
 		<com.admob.android.ads.AdView  
 			android:id="@+id/ad"
-			android:visibility="gone"
 			android:layout_width="fill_parent" 
 			android:layout_height="wrap_content"
 			android:layout_alignParentBottom="true"

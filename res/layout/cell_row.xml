@@ -33,31 +33,32 @@
 		android:paddingBottom="10dip"
 		android:paddingLeft="12dip">
 		<TableRow>
-			<TextView android:textColor="@color/text_primary"
+			<TextView android:textColor="@color/text_secondary"
 				android:text="@string/label_CID"/>
 			<TextView android:id="@+id/cell_row_CID"
 				android:textStyle="bold"
-				android:textColor="@color/text_primary"
+				android:textColor="@color/text_secondary"
 				android:gravity="right"/>
 		</TableRow>
 		<TableRow>
-			<TextView android:textColor="@color/text_primary"
+			<TextView android:textColor="@color/text_secondary"
 				android:text="@string/label_LAC"/>
 			<TextView android:id="@+id/cell_row_LAC"
-				android:textColor="@color/text_primary"
+				android:textColor="@color/text_secondary"
 				android:gravity="right"/>
 		</TableRow>
 		<TableRow>
-			<TextView android:textColor="@color/text_primary"
+			<TextView android:textColor="@color/text_secondary"
 				android:text="@string/range"/>
 			<TextView android:id="@+id/cell_row_range"
-				android:textColor="@color/text_primary"
+				android:textColor="@color/text_secondary"
 				android:gravity="right"/>
 		</TableRow>
 		<TableRow>
 			<TextView android:textColor="@color/text_primary"
 				android:text="@string/status"/>
 			<TextView android:id="@+id/cell_row_status"
+				android:textStyle="bold"
 				android:textColor="@color/text_primary"
 				android:gravity="right"/>
 		</TableRow>

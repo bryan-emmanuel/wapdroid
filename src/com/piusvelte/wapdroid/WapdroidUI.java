@@ -20,6 +20,8 @@
 
 package com.piusvelte.wapdroid;
 
+import com.admob.android.ads.AdListener;
+import com.admob.android.ads.AdView;
 import com.piusvelte.wapdroid.R;
 
 import android.app.Activity;
@@ -38,7 +40,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class WapdroidUI extends Activity {
+public class WapdroidUI extends Activity implements AdListener {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
@@ -150,4 +152,16 @@ public class WapdroidUI extends Activity {
 				throws RemoteException {}
 
 		public void inRange(boolean inrange) throws RemoteException {
-			field_status.setText(getString(inrange ? R.string.withinarea : R.string.outofarea));}};}
+			field_status.setText(getString(inrange ? R.string.withinarea : R.string.outofarea));}};
+
+	@Override
+	public void onFailedToReceiveAd(AdView arg0) {}
+
+	@Override
+	public void onFailedToReceiveRefreshedAd(AdView arg0) {}
+
+	@Override
+	public void onReceiveAd(AdView arg0) {}
+
+	@Override
+	public void onReceiveRefreshedAd(AdView arg0) {}}

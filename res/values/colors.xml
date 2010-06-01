@@ -19,7 +19,7 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <resources>
-	<color name="background">#d2e2e9</color>
+	<color name="background">#D2E2E9</color>
 	<color name="text_primary">#427279</color>
 	<color name="text_secondary">#629299</color>
 </resources>
