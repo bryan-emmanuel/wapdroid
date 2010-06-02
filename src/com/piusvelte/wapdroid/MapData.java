@@ -298,17 +298,17 @@ public class MapData extends MapActivity {
 				double mercator = Math.cos(Math.toRadians(gpt.getLatitudeE6()/1E6));
 				if (item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) {
 					radius = 70;
-					paint.setColor(getResources().getColor(R.color.text_primary));
-					paint.setAlpha(24);}
+					paint.setColor(getResources().getColor(R.color.primary));
+					paint.setAlpha(32);}
 				else {
 					long stroke = item.getStroke();
 					radius = item.getRadius();
-					paint.setColor(getResources().getColor(R.color.text_secondary));
+					paint.setColor(getResources().getColor(R.color.secondary));
 					if (stroke == 0) {
-						paint.setAlpha(12);
+						paint.setAlpha(16);
 						paint.setStyle(Paint.Style.FILL);}
 					else {
-						paint.setAlpha(16);
+						paint.setAlpha(24);
 						paint.setStyle(Paint.Style.STROKE);
 						paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));}}
 				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(Math.round(radius/mercator)), paint);}

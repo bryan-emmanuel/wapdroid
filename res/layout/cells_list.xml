@@ -21,7 +21,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-	android:background="@color/background"
+	android:background="@color/tertiary"
 	android:textSize="14dip">
 	<ListView android:id="@android:id/list"
 		android:layout_width="fill_parent"
@@ -29,6 +29,6 @@
 	<TextView android:id="@android:id/empty"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:textColor="@color/text_primary"
+		android:textColor="@color/primary"
 		android:text="@string/no_cells"/>
 </LinearLayout>

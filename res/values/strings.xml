@@ -24,7 +24,7 @@
     <string name="label_LAC">Location:</string>
     <string name="label_MNC">Carrier:</string>
     <string name="label_MCC">Country:</string>
-    <string name="label_WIFI">Wi-Fi:</string>
+    <string name="label_WIFI">Wi-Fi</string>
     <string name="label_wapdroidState">Manage Wi-Fi</string>
     <string name="no_networks">no networks</string>
     <string name="no_cells">no cells</string>

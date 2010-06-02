@@ -19,31 +19,40 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:layout_width="wrap_content"
+	android:orientation="horizontal"
+	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-	android:background="@color/background"
-	android:padding="4dip">
-	<TableLayout
+	android:background="@color/tertiary"
+	android:padding="8dip">
+	<ImageView
 		android:layout_width="wrap_content"
-		android:layout_height="wrap_content"
-		android:background="@drawable/field"
-		android:stretchColumns="0"
-		android:paddingTop="10dip"
-		android:paddingRight="12dip"
-		android:paddingBottom="10dip"
-		android:paddingLeft="12dip">
-		<TableRow>
-			<TextView android:textStyle="bold"
-				android:id="@+id/network_row_SSID"
-				android:textColor="@color/text_primary"/>
-	    </TableRow>
-		<TableRow>
-			<TextView android:id="@+id/network_row_BSSID"
-				android:textColor="@color/text_secondary"/>
-	    </TableRow>
-		<TableRow>
-			<TextView android:id="@+id/network_row_status"
-				android:textColor="@color/text_secondary"/>
-	    </TableRow>
-	</TableLayout>
+		android:layout_height="fill_parent"
+		android:gravity="center_vertical"
+		android:layout_marginRight="8dip"
+		android:src="@drawable/network"/>
+	<LinearLayout
+		android:orientation="vertical"
+		android:layout_width="wrap_content"
+		android:layout_height="fill_parent"
+		android:layout_weight="1">
+		<TextView
+			android:layout_height="fill_parent"
+			android:layout_width="wrap_content"
+			android:layout_weight="1"
+			android:textStyle="bold"
+			android:id="@+id/network_row_SSID"
+			android:textColor="@color/primary"/>
+		<TextView
+			android:layout_height="fill_parent"
+			android:layout_width="wrap_content"
+			android:layout_weight="1"
+			android:id="@+id/network_row_BSSID"
+			android:textColor="@color/secondary"/>
+		<TextView
+			android:layout_height="fill_parent"
+			android:layout_width="wrap_content"
+			android:layout_weight="1"
+			android:id="@+id/network_row_status"
+			android:textColor="@color/secondary"/>
+	</LinearLayout>
 </LinearLayout>

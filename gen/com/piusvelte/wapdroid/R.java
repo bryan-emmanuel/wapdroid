@@ -62,9 +62,9 @@ containing a value of this type.
         public static final int secondaryTextColor=0x7f010002;
     }
     public static final class color {
-        public static final int background=0x7f060000;
-        public static final int text_primary=0x7f060001;
-        public static final int text_secondary=0x7f060002;
+        public static final int primary=0x7f060000;
+        public static final int secondary=0x7f060001;
+        public static final int tertiary=0x7f060002;
     }
     public static final class drawable {
         public static final int cell=0x7f020000;
@@ -74,7 +74,6 @@ containing a value of this type.
         public static final int scanning=0x7f020004;
         public static final int status=0x7f020005;
         public static final int statuson=0x7f020006;
-        public static final int wifi=0x7f020007;
     }
     public static final class id {
         public static final int ad=0x7f08000c;
