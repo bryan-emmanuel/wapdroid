@@ -54,10 +54,10 @@ return true;
 case TRANSACTION_setCellInfo:
 {
 data.enforceInterface(DESCRIPTOR);
-java.lang.String _arg0;
-_arg0 = data.readString();
-java.lang.String _arg1;
-_arg1 = data.readString();
+int _arg0;
+_arg0 = data.readInt();
+int _arg1;
+_arg1 = data.readInt();
 this.setCellInfo(_arg0, _arg1);
 reply.writeNoException();
 return true;
@@ -144,14 +144,14 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public void setCellInfo(java.lang.String cid, java.lang.String lac) throws android.os.RemoteException
+public void setCellInfo(int cid, int lac) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
 try {
 _data.writeInterfaceToken(DESCRIPTOR);
-_data.writeString(cid);
-_data.writeString(lac);
+_data.writeInt(cid);
+_data.writeInt(lac);
 mRemote.transact(Stub.TRANSACTION_setCellInfo, _data, _reply, 0);
 _reply.readException();
 }
@@ -247,7 +247,7 @@ static final int TRANSACTION_setSignalStrength = (android.os.IBinder.FIRST_CALL_
 static final int TRANSACTION_inRange = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
 }
 public void setOperator(java.lang.String operator) throws android.os.RemoteException;
-public void setCellInfo(java.lang.String cid, java.lang.String lac) throws android.os.RemoteException;
+public void setCellInfo(int cid, int lac) throws android.os.RemoteException;
 public void setCells(java.lang.String cells) throws android.os.RemoteException;
 public void setBattery(int batteryPercentage) throws android.os.RemoteException;
 public void setWifiInfo(int state, java.lang.String ssid, java.lang.String bssid) throws android.os.RemoteException;

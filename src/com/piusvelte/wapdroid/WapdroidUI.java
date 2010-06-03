@@ -119,9 +119,9 @@ public class WapdroidUI extends Activity implements AdListener {
         bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);}
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void setCellInfo(String cid, String lac) throws RemoteException {
-	   		field_CID.setText(cid);
-	   		field_LAC.setText(lac);}
+		public void setCellInfo(int cid, int lac) throws RemoteException {
+	   		field_CID.setText(Integer.toString(cid));
+	   		field_LAC.setText(Integer.toString(lac));}
 		
 		public void setWifiInfo(int state, String ssid, String bssid)
 				throws RemoteException {
@@ -146,7 +146,8 @@ public class WapdroidUI extends Activity implements AdListener {
 		public void setBattery(int batteryPercentage) throws RemoteException {
 			field_battery.setText(Integer.toString(batteryPercentage) + "%");}
 
-		public void setCells(String cells) throws RemoteException {}
+		public void setCells(String cells) throws RemoteException {
+			mCells = cells;}
 
 		public void setOperator(String operator)
 				throws RemoteException {}

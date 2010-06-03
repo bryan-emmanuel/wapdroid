@@ -43,14 +43,14 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageData extends ListActivity {
 	private WapdroidDbAdapter mDbHelper;
-	private int mNetwork = 0;
+	private int mNetwork = 0, mCid;
 	private static final int REFRESH_ID = Menu.FIRST;
     private static final int DELETE_ID = Menu.FIRST + 1;
     private static final int GEO_ID = Menu.FIRST + 2;
     private static final int FILTER_ID = Menu.FIRST + 3;
     private int mFilter = WapdroidDbAdapter.FILTER_ALL;
     private AlertDialog mAlertDialog;
-    private String mCells = "", mOperator = "";
+    private String mCells = "", mOperator = "", mSsid = "";
 	private ServiceConn mServiceConn;
 	private static final String TAG = "Wapdroid";
 	
@@ -80,6 +80,7 @@ public class ManageData extends ListActivity {
     
 	@Override
 	protected void onResume() {
+		Log.v(TAG, "ManageData; onResume");
 		super.onResume();
 		Log.v(TAG, "ManageData; open db");
 		mDbHelper.open();
@@ -177,7 +178,7 @@ public class ManageData extends ListActivity {
     
     public void listData() throws RemoteException {
     	// filter results
-    	Cursor c = mNetwork == 0 ? mDbHelper.fetchNetworks(mFilter, mCells) : mDbHelper.fetchPairsByNetworkFilter(mNetwork, mFilter, mCells);
+    	Cursor c = mNetwork == 0 ? mDbHelper.fetchNetworks(mFilter, mSsid, mCells) : mDbHelper.fetchPairsByNetworkFilter(mFilter, mNetwork, mCid, mCells);
         startManagingCursor(c);
         SimpleCursorAdapter data = mNetwork == 0 ?
         		new SimpleCursorAdapter(this,
@@ -193,10 +194,13 @@ public class ManageData extends ListActivity {
         setListAdapter(data);}
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void setCellInfo(String cid, String lac) throws RemoteException {}
+		public void setCellInfo(int cid, int lac) throws RemoteException {
+			mCid = cid;
+			listData();}
 		
-		public void setWifiInfo(int state, String ssid, String bssid)
-				throws RemoteException {}
+		public void setWifiInfo(int state, String ssid, String bssid) throws RemoteException {
+			mSsid = ssid;
+			listData();}
 		
 		public void setSignalStrength(int rssi) throws RemoteException {}
 
@@ -206,6 +210,7 @@ public class ManageData extends ListActivity {
 		public void setBattery(int batteryPercentage) throws RemoteException {}
 
 		public void setCells(String cells) throws RemoteException {
-			mCells = cells;}
+			mCells = cells;
+			listData();}
 
 		public void inRange(boolean inrange) throws RemoteException {}};}

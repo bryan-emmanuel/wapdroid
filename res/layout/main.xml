@@ -25,7 +25,6 @@
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	android:background="@color/tertiary"
-	android:padding="4dip"
 	android:textSize="14dip">
 	<TableLayout
 		android:background="@drawable/field"

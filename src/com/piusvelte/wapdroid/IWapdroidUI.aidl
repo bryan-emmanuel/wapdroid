@@ -22,7 +22,7 @@ package com.piusvelte.wapdroid;
 
 interface IWapdroidUI {
 	void setOperator(String operator);
-	void setCellInfo(String cid, String lac);
+	void setCellInfo(int cid, int lac);
 	void setCells(String cells);
 	void setBattery(int batteryPercentage);
 	void setWifiInfo(int state, String ssid, String bssid);

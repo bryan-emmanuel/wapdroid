@@ -53,6 +53,6 @@
 			android:layout_width="wrap_content"
 			android:layout_weight="1"
 			android:id="@+id/network_row_status"
-			android:textColor="@color/secondary"/>
+			android:textColor="@color/primary"/>
 	</LinearLayout>
 </LinearLayout>
