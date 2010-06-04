@@ -80,7 +80,6 @@ public class ManageData extends ListActivity {
     
 	@Override
 	protected void onResume() {
-		Log.v(TAG, "ManageData; onResume");
 		super.onResume();
 		Log.v(TAG, "ManageData; open db");
 		mDbHelper.open();
@@ -195,12 +194,10 @@ public class ManageData extends ListActivity {
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(int cid, int lac) throws RemoteException {
-			mCid = cid;
-			listData();}
+			mCid = cid;}
 		
 		public void setWifiInfo(int state, String ssid, String bssid) throws RemoteException {
-			mSsid = ssid;
-			listData();}
+			mSsid = ssid;}
 		
 		public void setSignalStrength(int rssi) throws RemoteException {}
 
@@ -210,7 +207,6 @@ public class ManageData extends ListActivity {
 		public void setBattery(int batteryPercentage) throws RemoteException {}
 
 		public void setCells(String cells) throws RemoteException {
-			mCells = cells;
-			listData();}
+			mCells = cells;}
 
 		public void inRange(boolean inrange) throws RemoteException {}};}

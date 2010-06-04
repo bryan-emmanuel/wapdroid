@@ -287,8 +287,8 @@ public class WapdroidService extends Service {
     	 */
     	if (mScreenOff && !ManageWakeLocks.hasLock()) {
     		ManageWakeLocks.acquire(this);
-        	mAlarmMgr.cancel(mPendingIntent);
-    		startService(new Intent(this, WapdroidService.class));}}
+        	mAlarmMgr.cancel(mPendingIntent);}
+   		startService(new Intent(this, WapdroidService.class));}
     
     private void release() {
     	if (ManageWakeLocks.hasLock()) {
