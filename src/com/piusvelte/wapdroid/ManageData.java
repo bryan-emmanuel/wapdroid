@@ -31,7 +31,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -50,9 +49,8 @@ public class ManageData extends ListActivity {
     private static final int FILTER_ID = Menu.FIRST + 3;
     private int mFilter = WapdroidDbAdapter.FILTER_ALL;
     private AlertDialog mAlertDialog;
-    private String mCells = "", mOperator = "", mSsid = "";
+    private String mCells = "", mOperator = "", mBssid = "";
 	private ServiceConn mServiceConn;
-	private static final String TAG = "Wapdroid";
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -60,28 +58,16 @@ public class ManageData extends ListActivity {
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);
-			mCells = extras.getString(WapdroidDbAdapter.TABLE_CELLS);
-			Log.v(TAG,"ManageData,extras:"+Integer.toString(mNetwork)+","+mCells);}
+			mCid = extras.getInt(WapdroidDbAdapter.CELLS_CID);
+			mBssid = extras.getString(WapdroidDbAdapter.NETWORKS_BSSID);
+			mCells = extras.getString(WapdroidDbAdapter.TABLE_CELLS);}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
         registerForContextMenu(getListView());
         mDbHelper = new WapdroidDbAdapter(this);}
-	
-    @Override
-    public void onPause() {
-    	super.onPause();
-        if (mServiceConn != null) {
-            if (mServiceConn.mIService != null) {
-                try {
-                        mServiceConn.mIService.setCallback(null);}
-                catch (RemoteException e) {}}
-            unbindService(mServiceConn);
-            mServiceConn = null;}
-   		mDbHelper.close();}
     
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Log.v(TAG, "ManageData; open db");
 		mDbHelper.open();
     	SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
         if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
@@ -91,6 +77,18 @@ public class ManageData extends ListActivity {
 			listData();}
 		catch (RemoteException e) {
 			e.printStackTrace();}}
+	
+    @Override
+    protected void onPause() {
+    	super.onPause();
+        if (mServiceConn != null) {
+            if (mServiceConn.mIService != null) {
+                try {
+                        mServiceConn.mIService.setCallback(null);}
+                catch (RemoteException e) {}}
+            unbindService(mServiceConn);
+            mServiceConn = null;}
+   		mDbHelper.close();}
 	
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -177,7 +175,7 @@ public class ManageData extends ListActivity {
     
     public void listData() throws RemoteException {
     	// filter results
-    	Cursor c = mNetwork == 0 ? mDbHelper.fetchNetworks(mFilter, mSsid, mCells) : mDbHelper.fetchPairsByNetworkFilter(mFilter, mNetwork, mCid, mCells);
+    	Cursor c = mNetwork == 0 ? mDbHelper.fetchNetworks(mFilter, mBssid, mCells) : mDbHelper.fetchPairsByNetworkFilter(mFilter, mNetwork, mCid, mCells);
         startManagingCursor(c);
         SimpleCursorAdapter data = mNetwork == 0 ?
         		new SimpleCursorAdapter(this,
@@ -197,7 +195,7 @@ public class ManageData extends ListActivity {
 			mCid = cid;}
 		
 		public void setWifiInfo(int state, String ssid, String bssid) throws RemoteException {
-			mSsid = ssid;}
+			mBssid = bssid;}
 		
 		public void setSignalStrength(int rssi) throws RemoteException {}
 

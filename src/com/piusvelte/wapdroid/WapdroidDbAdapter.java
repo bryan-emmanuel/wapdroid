@@ -181,10 +181,10 @@ public class WapdroidDbAdapter {
 	private String filterText(int filter) {
 		return mContext.getString(filter == FILTER_CONNECTED ? R.string.connected : filter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea);}
 
-	public Cursor fetchNetworks(int filter, String ssid, String cells) {
+	public Cursor fetchNetworks(int filter, String bssid, String cells) {
 		return mDb.rawQuery("select " + tableIdAs(TABLE_NETWORKS) + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", "
 				+ ((filter == FILTER_ALL) ?
-						("CASE WHEN " + NETWORKS_SSID + "='" + ssid + "' then '" + mContext.getString(R.string.connected)
+						("CASE WHEN " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getString(R.string.connected)
 								+ "' else (CASE WHEN " + tableId(TABLE_NETWORKS) + inSelectNetworks(cells) + " then '" + mContext.getString(R.string.withinarea)
 								+ "' else '" + mContext.getString(R.string.outofarea) + "' end) end as ")
 								: "'" + (filterText(filter) + "' as "))
@@ -193,13 +193,13 @@ public class WapdroidDbAdapter {
 								+ (filter != FILTER_ALL ?
 										" where "
 										+ (filter == FILTER_CONNECTED ?
-												NETWORKS_SSID + "='" + ssid + "'"
+												NETWORKS_BSSID + "='" + bssid + "'"
 												: tableId(TABLE_NETWORKS) + (filter == FILTER_OUTRANGE ? " NOT" : "") + inSelectNetworks(cells))
-												: ""), null);}
+												: " order by " + STATUS), null);}
 
 	public int fetchLocationOrCreate(int lac) {
 		int location = UNKNOWN_CID;
-		if (lac != UNKNOWN_CID) {
+		if (lac > 0) {
 			Cursor c = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=" + lac, null);
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -321,7 +321,7 @@ public class WapdroidDbAdapter {
 										+ (filter == FILTER_CONNECTED ?
 												CELLS_CID + "='" + cid + "'"
 												: tableId(TABLE_CELLS) + (filter == FILTER_OUTRANGE ? " NOT" : "") + inSelectCells(network, cells))
-												: ""), null);}
+												: " order by " + STATUS), null);}
 
 	public int updateNetworkRange(String ssid, String bssid, int cid, int lac, int rssi) {
 		int network = fetchNetworkOrCreate(ssid, bssid);

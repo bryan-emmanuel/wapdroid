@@ -99,7 +99,6 @@ public class WapdroidService extends Service {
 		public void setCallback(IBinder mWapdroidUIBinder)
 				throws RemoteException {
             if (mWapdroidUIBinder != null) {
-    			Log.v(TAG, "setCallback, enable wifi control");
     			mControlWifi = true;
 				mScreenOff = false;
 		    	if (ManageWakeLocks.hasLock()) ManageWakeLocks.release();
@@ -115,38 +114,27 @@ public class WapdroidService extends Service {
                 		mWapdroidUI.inRange(mInRange);}
                     catch (RemoteException e) {}}}}
 		public void suspendWifiControl() throws RemoteException {
-			Log.v(TAG, "running wifi settings, disable wifi control");
 			mControlWifi = false;}};
 	
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
     	public void onCellLocationChanged(CellLocation location) {
     		getCellInfo(location);}
     	public void onSignalStrengthChanged(int asu) {
-    		Log.v(TAG,"onSignalStrengthChanged:"+Integer.toString(asu));
     		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
         		if (asu != WapdroidDbAdapter.UNKNOWN_RSSI) {
     				mRssi = 2 * asu - 113;
-        			signalStrengthChanged();}
-        		else Log.v(TAG,"unknown rssi, wait...");}
+        			signalStrengthChanged();}}
     		else release();}
     	public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-			Log.v(TAG, "onSignalStrengthsChanged");
-			Log.v(TAG, "GsmSignalStrength:"+Integer.toString(signalStrength.getGsmSignalStrength()));
-    		Log.v(TAG, "CdmaDbm:"+Integer.toString(signalStrength.getCdmaDbm()));
-			Log.v(TAG, "EvdoDbm:"+Integer.toString(signalStrength.getEvdoDbm()));
     		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
     			if (signalStrength.getGsmSignalStrength() != WapdroidDbAdapter.UNKNOWN_RSSI) {
     				mRssi = 2 * signalStrength.getGsmSignalStrength() - 113;
-        			signalStrengthChanged();}
-        		else Log.v(TAG,"unknown rssi, wait...");}
+        			signalStrengthChanged();}}
     		else if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_CDMA) {
-    			if (signalStrength.getEvdoDbm() < 0) {
-    				mRssi = signalStrength.getEvdoDbm();
-        			signalStrengthChanged();}
-    			else if (signalStrength.getCdmaDbm() < 0) {
-    				mRssi = signalStrength.getCdmaDbm();
-        			signalStrengthChanged();}
-    			else Log.v(TAG,"unknown rssi, wait...");}
+    			mRssi = signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ?
+    					signalStrength.getCdmaDbm()
+    					: signalStrength.getEvdoDbm();
+            	signalStrengthChanged();}
     		else release();}};
 	
 	private BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -266,7 +254,7 @@ public class WapdroidService extends Service {
 			if (mWifiIsEnabled) setWifiInfo();
 			CharSequence contentTitle = getString(mWifiIsEnabled ? R.string.label_enabled : R.string.label_disabled);
 		   	Notification notification = new Notification((mWifiIsEnabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
-			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
+			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidUI.class), 0);
 		   	notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
 			mNotificationManager.notify(NOTIFY_ID, notification);}}
     
@@ -285,10 +273,12 @@ public class WapdroidService extends Service {
     	 * so awakened by something
     	 * other than the alarm, lock and start
     	 */
+    	Log.v(TAG,"screen is "+(mScreenOff?"off":"on"));
+    	Log.v(TAG,"locked "+(ManageWakeLocks.hasLock()?"yes":"no"));
     	if (mScreenOff && !ManageWakeLocks.hasLock()) {
-    		ManageWakeLocks.acquire(this);
-        	mAlarmMgr.cancel(mPendingIntent);}
-   		startService(new Intent(this, WapdroidService.class));}
+    		Log.v(TAG,"awake, cancel alarm, broadcast");
+        	mAlarmMgr.cancel(mPendingIntent);
+        	sendBroadcast(new Intent(this, BootReceiver.class).setAction(WAKE_SERVICE));}}
     
     private void release() {
     	if (ManageWakeLocks.hasLock()) {
@@ -327,10 +317,10 @@ public class WapdroidService extends Service {
        			mWapdroidUI.setOperator(mOperator);
         		mWapdroidUI.setCellInfo(mCid, mLac);
         		mWapdroidUI.setCells(cellsQuery());}
-            catch (RemoteException e) {
-            	Log.e(TAG, "error in mWapdroidUI.setCellInfo"+mCid+","+mLac+","+mTeleManager.getNetworkOperatorName()+","+mTeleManager.getNetworkCountryIso());}}}
+            catch (RemoteException e) {}}}
     
     private void signalStrengthChanged() {
+    	Log.v(TAG,"signalStrengthChanged");
         if (mWapdroidUI != null) {
         	try {
         		mWapdroidUI.setSignalStrength(mRssi);}
@@ -348,9 +338,6 @@ public class WapdroidService extends Service {
 					int cid = n.getCid(),
 					lac = n.getLac(),
 					rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
-    				Log.v(TAG, "cid: "+cid);
-    				Log.v(TAG, "lac: "+lac);
-    				Log.v(TAG, "rssi: "+rssi);
 					if (mInRange && (cid > 0)) mInRange = mDbHelper.cellInRange(cid, lac, rssi);}}
 				if ((mInRange && (mBatteryRemaining >= mBatteryLimit) && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
 					Log.v(TAG, "set wifi:"+mInRange);
@@ -391,9 +378,6 @@ public class WapdroidService extends Service {
 			int cid = n.getCid(),
 			lac = n.getLac(),
 			rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
-			Log.v(TAG, "cid: "+cid);
-			Log.v(TAG, "lac: "+lac);
-			Log.v(TAG, "rssi: "+rssi);
 			if (cid > 0) mDbHelper.createPair(cid, lac, network, rssi);}}
 	
 	private void wifiChanged() {

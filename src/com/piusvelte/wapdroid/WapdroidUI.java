@@ -47,7 +47,8 @@ public class WapdroidUI extends Activity implements AdListener {
 	public static final int ABOUT_ID = Menu.FIRST + 3;
 	private TextView field_CID, field_wifiState, field_wifiBSSID, field_signal, field_battery, field_LAC, field_status;
 	private ServiceConn mServiceConn;
-	private String mCells = "";
+	private String mBssid = "", mCells = "";
+	private int mCid = 0;
 		
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -75,7 +76,9 @@ public class WapdroidUI extends Activity implements AdListener {
     	switch (item.getItemId()) {
     	case MANAGE_ID:
     		Intent intent = new Intent(this, ManageData.class);
+    		intent.putExtra(WapdroidDbAdapter.NETWORKS_BSSID, mBssid);
     		intent.putExtra(WapdroidDbAdapter.TABLE_CELLS, mCells);
+    		intent.putExtra(WapdroidDbAdapter.CELLS_CID, mCid);
         	startActivity(intent);
     		return true;
     	case SETTINGS_ID:
@@ -120,11 +123,13 @@ public class WapdroidUI extends Activity implements AdListener {
 
     private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(int cid, int lac) throws RemoteException {
+			mCid = cid;
 	   		field_CID.setText(Integer.toString(cid));
 	   		field_LAC.setText(Integer.toString(lac));}
 		
 		public void setWifiInfo(int state, String ssid, String bssid)
 				throws RemoteException {
+			mBssid = bssid;
 			if (state == WifiManager.WIFI_STATE_ENABLED) {
 				if (ssid != null) {
 					field_wifiState.setText(ssid);

@@ -214,14 +214,12 @@ public class MapData extends MapActivity {
 		DefaultHttpClient httpClient = new DefaultHttpClient();
 		ResponseHandler <String> responseHandler = new BasicResponseHandler();
 		HttpPost postMethod = new HttpPost("https://www.google.com/loc/json");
-		Log.v(TAG,"postMethod.setEntity");
 		try {
 			postMethod.setEntity(new StringEntity(query));}
 		catch (UnsupportedEncodingException e) {
 			Log.v(TAG, "post:setEntity error: "+e);}
 		postMethod.setHeader("Accept", "application/json");
 		postMethod.setHeader("Content-type", "application/json");
-		Log.v(TAG,"httpClient.execute");
 		try {
 			response = httpClient.execute(postMethod, responseHandler);}
 		catch (ClientProtocolException e) {
@@ -307,10 +305,10 @@ public class MapData extends MapActivity {
 					radius = item.getRadius();
 					paint.setColor(getResources().getColor(R.color.secondary));
 					if (stroke == 0) {
-						paint.setAlpha(16);
+						paint.setAlpha(12);
 						paint.setStyle(Paint.Style.FILL);}
 					else {
-						paint.setAlpha(24);
+						paint.setAlpha(20);
 						paint.setStyle(Paint.Style.STROKE);
 						paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));}}
 				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(Math.round(radius/mercator)), paint);}
