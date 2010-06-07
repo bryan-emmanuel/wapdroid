@@ -120,12 +120,12 @@ public class WapdroidService extends Service {
 									//acquire();
 									int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
 									if (mWifiState == WifiManager.WIFI_STATE_ENABLED) {
-										setWifiState(true);
+										getWifiState(true);
 									}
 									else if (mWifiState != WifiManager.WIFI_STATE_UNKNOWN) {
 										mSsid = null;
 										mBssid = null;
-										setWifiState(false);
+										getWifiState(false);
 									}
 									updateUiWifi();
 								}
@@ -246,7 +246,7 @@ public class WapdroidService extends Service {
 		// setting the wifi state is done in onCreate also, but it's need here for running in the background
 		Log.v(TAG,"initializing the service");
 		mWifiState = mWifiManager.getWifiState();
-		setWifiState(mWifiState == WifiManager.WIFI_STATE_ENABLED);
+		getWifiState(mWifiState == WifiManager.WIFI_STATE_ENABLED);
 		getCellInfo(mTeleManager.getCellLocation());
 	}
 
@@ -278,12 +278,12 @@ public class WapdroidService extends Service {
 									//acquire();
 									int mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
 									if (mWifiState == WifiManager.WIFI_STATE_ENABLED) {
-										setWifiState(true);
+										getWifiState(true);
 									}
 									else if (mWifiState != WifiManager.WIFI_STATE_UNKNOWN) {
 										mSsid = null;
 										mBssid = null;
-										setWifiState(false);
+										getWifiState(false);
 									}
 									updateUiWifi();
 								}
@@ -334,7 +334,7 @@ public class WapdroidService extends Service {
 		if (mNotify) {
 			// wifi state is needed for the notification, though it'll be set again in init
 			mWifiState = mWifiManager.getWifiState();
-			setWifiState(mWifiState == WifiManager.WIFI_STATE_ENABLED);
+			getWifiState(mWifiState == WifiManager.WIFI_STATE_ENABLED);
 			CharSequence contentTitle = getString(mWifiIsEnabled ? R.string.label_enabled : R.string.label_disabled);
 			Notification notification = new Notification((mWifiIsEnabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
 			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidUI.class), 0);
@@ -380,7 +380,7 @@ public class WapdroidService extends Service {
 							//acquire();
 							mBatteryRemaining = Math.round(intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100));
 							Log.v(TAG,"battery:"+Integer.toString(mBatteryRemaining));
-							if (mBatteryRemaining < mBatteryLimit) mWifiManager.setWifiEnabled(false);
+							if (mBatteryRemaining < mBatteryLimit) setWifiState(false);
 							if (mWapdroidUI != null) {
 								try {
 									mWapdroidUI.setBattery(mBatteryRemaining);
@@ -499,7 +499,7 @@ public class WapdroidService extends Service {
 			}
 			if ((mInRange && (mBatteryRemaining >= mBatteryLimit) && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mInRange && mWifiIsEnabled)) {
 				Log.v(TAG, "set wifi:"+mInRange);
-				mWifiManager.setWifiEnabled(mInRange);
+				setWifiState(mInRange);
 			}
 			mDbHelper.close();
 		}
@@ -533,8 +533,12 @@ public class WapdroidService extends Service {
 			if (cid > 0) mDbHelper.createPair(cid, lac, network, rssi);
 		}
 	}
+	
+	private void setWifiState(boolean enable) {
+		mWifiManager.setWifiEnabled(enable);
+		getWifiState(enable);}
 
-	private void setWifiState(boolean enabled) {
+	private void getWifiState(boolean enabled) {
 		if (enabled != mWifiIsEnabled){
 			if (enabled) {
 				if (mNetworkReceiver == null) {
