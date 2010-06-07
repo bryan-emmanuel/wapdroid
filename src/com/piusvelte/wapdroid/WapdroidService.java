@@ -459,7 +459,7 @@ public class WapdroidService extends Service {
 		}
 		if (mCid != WapdroidDbAdapter.UNKNOWN_CID) {
 			signalStrengthChanged();
-			if (mCid != WapdroidDbAdapter.UNKNOWN_CID) {
+			if (mWapdroidUI != null) {
 				try {
 					mWapdroidUI.setOperator(mOperator);
 					mWapdroidUI.setCellInfo(mCid, mLac);
