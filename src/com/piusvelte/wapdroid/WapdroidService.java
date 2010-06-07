@@ -186,18 +186,19 @@ public class WapdroidService extends Service {
 
 	private final PhoneStateListener mPhoneStateListener = new PhoneStateListener() {
 		public void onCellLocationChanged(CellLocation location) {
+			Log.v(TAG,"onCellLocationChanged");
 			getCellInfo(location);
 		}
 		public void onSignalStrengthChanged(int asu) {
+			Log.v(TAG,"onSignalStrengthChanged");
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-				if (asu != WapdroidDbAdapter.UNKNOWN_RSSI) {
-					mRssi = 2 * asu - 113;
-					signalStrengthChanged();
-				}
+				if (asu != WapdroidDbAdapter.UNKNOWN_RSSI) mRssi = 2 * asu - 113;
+				signalStrengthChanged();
 			}
 			else release();
 		}
 		public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+			Log.v(TAG,"onSignalStrengthsChanged");
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
 				if (signalStrength.getGsmSignalStrength() != WapdroidDbAdapter.UNKNOWN_RSSI) {
 					mRssi = 2 * signalStrength.getGsmSignalStrength() - 113;
@@ -437,6 +438,7 @@ public class WapdroidService extends Service {
 	}
 
 	private void getCellInfo(CellLocation location) {
+		mRssi = WapdroidDbAdapter.UNKNOWN_RSSI;
 		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 		if (mOperator == "") mOperator = mTeleManager.getNetworkOperator();
 		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
@@ -455,14 +457,19 @@ public class WapdroidService extends Service {
 				mLac = WapdroidDbAdapter.UNKNOWN_CID;
 			}
 		}
-		if ((mWapdroidUI != null) && (mCid != WapdroidDbAdapter.UNKNOWN_CID)) {
-			try {
-				mWapdroidUI.setOperator(mOperator);
-				mWapdroidUI.setCellInfo(mCid, mLac);
-				mWapdroidUI.setCells(cellsQuery());
+		if (mCid != WapdroidDbAdapter.UNKNOWN_CID) {
+			signalStrengthChanged();
+			if (mCid != WapdroidDbAdapter.UNKNOWN_CID) {
+				try {
+					mWapdroidUI.setOperator(mOperator);
+					mWapdroidUI.setCellInfo(mCid, mLac);
+					mWapdroidUI.setSignalStrength(mRssi);
+					mWapdroidUI.setCells(cellsQuery());
+				}
+				catch (RemoteException e) {}
 			}
-			catch (RemoteException e) {}
-		}}
+		}
+	}
 
 	private void signalStrengthChanged() {
 		Log.v(TAG,"signalStrengthChanged");
