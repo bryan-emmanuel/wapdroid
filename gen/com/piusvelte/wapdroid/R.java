@@ -74,7 +74,6 @@ containing a value of this type.
         public static final int scanning=0x7f020004;
         public static final int status=0x7f020005;
         public static final int statuson=0x7f020006;
-        public static final int wifi=0x7f020007;
     }
     public static final class id {
         public static final int ad=0x7f08000c;

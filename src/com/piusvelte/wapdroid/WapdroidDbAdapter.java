@@ -199,7 +199,7 @@ public class WapdroidDbAdapter {
 
 	public int fetchLocationOrCreate(int lac) {
 		int location = UNKNOWN_CID;
-		if (lac > 0) {
+		if (lac != UNKNOWN_CID) {
 			Cursor c = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=" + lac, null);
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -332,16 +332,20 @@ public class WapdroidDbAdapter {
 		boolean inRange = false;
 		Cursor c = mDb.rawQuery("select " + tableIdAs(TABLE_CELLS)
 				+ ", " + CELLS_LOCATION
-				+ ", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + tableId(TABLE_CELLS) + ") as " + PAIRS_RSSI_MIN
-				+ ", (select max(" + PAIRS_RSSI_MAX + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + tableId(TABLE_CELLS) + ") as " + PAIRS_RSSI_MAX
-				+ " from " + TABLE_CELLS
-				+ " left outer join " + TABLE_LOCATIONS
-				+ " on " + CELLS_LOCATION + "=" + tableId(TABLE_LOCATIONS)
-				+ " where "+ CELLS_CID + "=" + cid
-				+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
-				+ " and (" + rssi + "=" + UNKNOWN_RSSI + " or (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + rssi + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + rssi + "))))", null);
+				+ (rssi != UNKNOWN_RSSI ?
+						", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + tableId(TABLE_CELLS) + ") as " + PAIRS_RSSI_MIN
+						+ ", (select max(" + PAIRS_RSSI_MAX + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + tableId(TABLE_CELLS) + ") as " + PAIRS_RSSI_MAX
+						: "")
+						+ " from " + TABLE_CELLS
+						+ " left outer join " + TABLE_LOCATIONS
+						+ " on " + CELLS_LOCATION + "=" + tableId(TABLE_LOCATIONS)
+						+ " where "+ CELLS_CID + "=" + cid
+						+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
+						+ (rssi != UNKNOWN_RSSI ?
+								" and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + rssi + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + rssi + ")))"
+								: ""), null);
 		inRange = (c.getCount() > 0);
-		if (inRange && (lac != -1)) {
+		if (inRange && (lac != UNKNOWN_CID)) {
 			// check LAC, as this is a new column
 			c.moveToFirst();
 			if (c.isNull(c.getColumnIndex(CELLS_LOCATION)) && (lac != 0)) {
