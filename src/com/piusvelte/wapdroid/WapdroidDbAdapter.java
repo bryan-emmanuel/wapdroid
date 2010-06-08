@@ -184,8 +184,8 @@ public class WapdroidDbAdapter {
 	public Cursor fetchNetworks(int filter, String bssid, String cells) {
 		return mDb.rawQuery("select " + tableIdAs(TABLE_NETWORKS) + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", "
 				+ ((filter == FILTER_ALL) ?
-						("CASE WHEN " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getString(R.string.connected)
-								+ "' else (CASE WHEN " + tableId(TABLE_NETWORKS) + inSelectNetworks(cells) + " then '" + mContext.getString(R.string.withinarea)
+						("case when " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getString(R.string.connected)
+								+ "' else (case when " + tableId(TABLE_NETWORKS) + inSelectNetworks(cells) + " then '" + mContext.getString(R.string.withinarea)
 								+ "' else '" + mContext.getString(R.string.outofarea) + "' end) end as ")
 								: "'" + (filterText(filter) + "' as "))
 								+ STATUS
@@ -303,10 +303,10 @@ public class WapdroidDbAdapter {
 
 	public Cursor fetchPairsByNetworkFilter(int filter, int network, int cid, String cells) {
 		return mDb.rawQuery("select " + tableIdAs(TABLE_PAIRS) + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", "
-				+ "(" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') as " + PAIRS_RSSI_MIN + ", "
+				+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " then '" + mContext.getString(R.string.unknown) + "' else (" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') end as " + PAIRS_RSSI_MIN + ", "
 				+ ((filter == FILTER_ALL) ?
-						("CASE WHEN " + CELLS_CID + "='" + cid + "' then '" + mContext.getString(R.string.connected)
-								+ "' else (CASE WHEN " + tableId(TABLE_CELLS) + inSelectCells(network, cells) + " then '" + mContext.getString(R.string.withinarea)
+						("case when " + CELLS_CID + "='" + cid + "' then '" + mContext.getString(R.string.connected)
+								+ "' else (case when " + tableId(TABLE_CELLS) + inSelectCells(network, cells) + " then '" + mContext.getString(R.string.withinarea)
 								+ "' else '" + mContext.getString(R.string.outofarea) + "' end) end as ")
 								: "'" + (filterText(filter) + "' as "))
 								+ STATUS
