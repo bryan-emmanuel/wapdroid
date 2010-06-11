@@ -105,17 +105,18 @@ containing a value of this type.
         public static final int networks_list=0x7f030006;
     }
     public static final class string {
-        public static final int about=0x7f070036;
-        public static final int accessible=0x7f070038;
+        public static final int about=0x7f070037;
+        public static final int accessible=0x7f070039;
         public static final int app_name=0x7f070009;
         public static final int battery_override=0x7f070032;
         public static final int battery_percentage=0x7f070033;
         public static final int battery_remaining=0x7f070031;
+        public static final int cancel=0x7f070036;
         public static final int colon=0x7f07002f;
         public static final int connected=0x7f070034;
         public static final int dbm=0x7f07002e;
-        public static final int gpl=0x7f070037;
-        public static final int inaccessible=0x7f070039;
+        public static final int gpl=0x7f070038;
+        public static final int inaccessible=0x7f07003a;
         public static final int key_battery_override=0x7f070007;
         public static final int key_battery_percentage=0x7f070008;
         public static final int key_interval=0x7f070006;

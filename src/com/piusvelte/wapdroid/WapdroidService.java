@@ -59,12 +59,11 @@ public class WapdroidService extends Service {
 	private int mCid = WapdroidDbAdapter.UNKNOWN_CID,
 	mLac = WapdroidDbAdapter.UNKNOWN_CID,
 	mRssi = WapdroidDbAdapter.UNKNOWN_RSSI,
-	mWifiState,
+	mLastWifiState = WifiManager.WIFI_STATE_UNKNOWN,
 	mInterval,
 	mBatteryLimit = 0,
 	mLastBattPerc;
-	private boolean mWifiIsEnabled,
-	mNotify,
+	private boolean mNotify,
 	mVibrate,
 	mLed,
 	mRingtone,
@@ -124,10 +123,7 @@ public class WapdroidService extends Service {
 				// if wifi is toggling, then it was probably caused by wapdroid, don't wait for another cell change
 				//acquire();
 				// ignore unknown
-				if (intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4) != WifiManager.WIFI_STATE_UNKNOWN) {
-					mWifiState = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
-					wifiStateChanged(mWifiState == WifiManager.WIFI_STATE_ENABLED);
-				}
+				if (intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4) != WifiManager.WIFI_STATE_UNKNOWN) wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
 			}
 		}		
 	}
@@ -167,17 +163,15 @@ public class WapdroidService extends Service {
 				boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage)
 		throws RemoteException {
 			mInterval = interval;
-			if (mNotify && !notify) {
-				mNotificationManager.cancel(NOTIFY_ID);
-				mNotificationManager = null;
-			}
-			else if (!mNotify && notify) {
-				mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-				CharSequence contentTitle = getString(mWifiIsEnabled ? R.string.label_enabled : R.string.label_disabled);
-				Notification notification = new Notification((mWifiIsEnabled ? R.drawable.scanning : R.drawable.status), contentTitle, System.currentTimeMillis());
-				PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidService.class), 0);
-				notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-				mNotificationManager.notify(NOTIFY_ID, notification);
+			if (mNotify ^ notify) {
+				if (notify) {
+					if (mNotificationManager == null) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+					createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
+				}
+				else {
+					mNotificationManager.cancel(NOTIFY_ID);
+					mNotificationManager = null;
+				}
 			}
 			mNotify = notify;
 			mVibrate = vibrate;
@@ -210,7 +204,7 @@ public class WapdroidService extends Service {
 					try {
 						mWapdroidUI.setOperator(mOperator);
 						mWapdroidUI.setCellInfo(mCid, mLac);
-						mWapdroidUI.setWifiInfo(mWifiState, mSsid, mBssid);
+						mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
 						mWapdroidUI.setSignalStrength(mRssi);
 						mWapdroidUI.setCells(cellsQuery());
 						mWapdroidUI.setBattery(mLastBattPerc);
@@ -330,14 +324,13 @@ public class WapdroidService extends Service {
 		batteryLimitChanged(prefs.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) prefs.getString(getString(R.string.key_battery_percentage), "30")) : 0);
 		prefs = null;
 		mDbHelper = new WapdroidDbAdapter(this);
+		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		wifiStateChanged(mWifiManager.getWifiState());
+		networkStateChanged();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		mPhoneListener = new PhoneListener();
 		mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH| PhoneStateListener.LISTEN_SIGNAL_STRENGTHS));
-		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-		mWifiState = mWifiManager.getWifiState();
-		wifiStateChanged(mWifiState == WifiManager.WIFI_STATE_ENABLED);
-		networkStateChanged();
 	}
 
 	@Override
@@ -438,7 +431,6 @@ public class WapdroidService extends Service {
 				catch (RemoteException e) {}
 			}
 		}
-		else mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH| PhoneStateListener.LISTEN_SIGNAL_STRENGTHS));
 	}
 
 	private void signalStrengthChanged() {
@@ -459,7 +451,7 @@ public class WapdroidService extends Service {
 				}
 				catch (RemoteException e) {}
 			}
-			if (mWifiIsEnabled && (mSsid != null) && (mBssid != null)) updateRange();
+			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
 			else if (mControlWifi && mEnableWifi) {
 				for (NeighboringCellInfo n : mNeighboringCells) {
 					int cid = n.getCid() > 0 ? n.getCid() : WapdroidDbAdapter.UNKNOWN_CID,
@@ -468,7 +460,7 @@ public class WapdroidService extends Service {
 					if (mEnableWifi && (cid != WapdroidDbAdapter.UNKNOWN_CID)) mEnableWifi = mDbHelper.cellInRange(cid, lac, rssi);
 				}
 			}
-			if ((mEnableWifi && (mLastBattPerc >= mBatteryLimit) && !mWifiIsEnabled && (mWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mEnableWifi && mWifiIsEnabled)) {
+			if ((mEnableWifi && (mLastBattPerc >= mBatteryLimit) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mEnableWifi && (mLastWifiState == WifiManager.WIFI_STATE_ENABLED))) {
 				Log.v(TAG, "set wifi:"+mEnableWifi);
 				setWifiState(mEnableWifi);
 			}
@@ -537,21 +529,36 @@ public class WapdroidService extends Service {
 		}
 		if (mWapdroidUI != null) {
 			try {
-				mWapdroidUI.setWifiInfo(mWifiState, mSsid, mBssid);
+				mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
 			}
 			catch (RemoteException e) {}
 		}
 	}
 	
-	private void wifiStateChanged(boolean enabled) {
+	private void createNotification(boolean enabled, boolean update) {
+		CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
+		Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
+		Intent i = new Intent(getBaseContext(), WapdroidUI.class);
+		PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
+		notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
+		notification.flags |= Notification.FLAG_NO_CLEAR;
+		if (update) {
+			if (mVibrate) notification.defaults |= Notification.DEFAULT_VIBRATE;
+			if (mLed) notification.defaults |= Notification.DEFAULT_LIGHTS;
+			if (mRingtone) notification.defaults |= Notification.DEFAULT_SOUND;
+		}
+		mNotificationManager.notify(NOTIFY_ID, notification);		
+	}
+	
+	private void wifiStateChanged(int state) {
 		/*
 		 * get wifi state
 		 * when wifi enabled, register network receiver
 		 * when wifi not enabled, unregister network receiver
 		 */
-		if (enabled != mWifiIsEnabled) {
+		if ((state == WifiManager.WIFI_STATE_ENABLED) ^ (mLastWifiState == WifiManager.WIFI_STATE_ENABLED)) {
 			Log.v(TAG,"wifi state changed");
-			if (enabled) {
+			if (state == WifiManager.WIFI_STATE_ENABLED) {
 				if (mNetworkReceiver == null) {
 					Log.v(TAG,"register network receiver");
 					mNetworkReceiver = new NetworkReceiver();
@@ -567,22 +574,12 @@ public class WapdroidService extends Service {
 					mNetworkReceiver = null;
 				}
 			}
-			// only notify when disabled or enabled
-			if (mNotify && ((mWifiState == WifiManager.WIFI_STATE_DISABLED) || (mWifiState == WifiManager.WIFI_STATE_ENABLED))) {
-				CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
-				Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
-				Intent i = new Intent(getBaseContext(), WapdroidService.class);
-				PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
-				notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-				// in low memory conditions, the wapdroid may be restarted, skip the audible notifications
-				if ((mWifiIsEnabled == true) || (mWifiIsEnabled == false)) {
-					if (mVibrate) notification.defaults |= Notification.DEFAULT_VIBRATE;
-					if (mLed) notification.defaults |= Notification.DEFAULT_LIGHTS;
-					if (mRingtone) notification.defaults |= Notification.DEFAULT_SOUND;
-				}
-				mNotificationManager.notify(NOTIFY_ID, notification);
+			if (mNotify) {
+				// onCreate, create the initial notification, else update
+				if (mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN) createNotification((state == WifiManager.WIFI_STATE_ENABLED), false);
+				else if ((state == WifiManager.WIFI_STATE_DISABLED) || (state == WifiManager.WIFI_STATE_ENABLED)) createNotification((state == WifiManager.WIFI_STATE_ENABLED), true);
 			}
-			mWifiIsEnabled = enabled;
+			mLastWifiState = state;
 		}
 	}
 }

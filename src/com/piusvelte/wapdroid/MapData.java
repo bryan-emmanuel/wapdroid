@@ -35,6 +35,7 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -44,6 +45,8 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
@@ -55,6 +58,7 @@ import com.google.android.maps.OverlayItem;
 import com.google.android.maps.Projection;
 
 public class MapData extends MapActivity {
+	private static final int REFRESH_ID = Menu.FIRST;
 	public static final String OPERATOR = "operator";
 	public static final String CARRIER = "carrier";
 	private static final String TAG = "Wapdroid";
@@ -76,6 +80,7 @@ public class MapData extends MapActivity {
 	private static final String wifi_towers = "wifi_towers";
 	private static final String mac_address = "mac_address";
 	private static final String signal_strength = "signal_strength";
+	private WapdroidDbAdapter mDbHelper;
 	private Context mContext;
 	private int mNetwork, mCell = 0, mMCC = 0, mMNC = 0;
 	private String mCarrier = "", mToken = "", mMsg = "";
@@ -86,17 +91,20 @@ public class MapData extends MapActivity {
 	final Handler mHandler = new Handler();
 	final Runnable mUpdtDialog = new Runnable() {
 		public void run() {
-			updtDialog();}};
-	
+			updtDialog();
+		}
+	};
+
 	//@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.map);
 		mContext = this;
+		mDbHelper = new WapdroidDbAdapter(this);
 		mMView = (MapView) findViewById(R.id.mapview);
 		mMView.setBuiltInZoomControls(true);
 		mMController = mMView.getController();
-	   	mMController.setZoom(12);
+		mMController.setZoom(12);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			mNetwork = extras.getInt(WapdroidDbAdapter.PAIRS_NETWORK);
@@ -104,94 +112,72 @@ public class MapData extends MapActivity {
 			String operator = extras.getString(OPERATOR);
 			if (operator.length() > 0) {
 				mMCC = Integer.parseInt(operator.substring(0, 3));
-				mMNC = Integer.parseInt(operator.substring(3));}
-			mCarrier = extras.getString(CARRIER);}
-		mLoadingDialog = LoadingDialog.show(this, getString(R.string.loading), (mCell == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
-		mLoadingDialog.setCancelable(true);
-		mThread = new Thread() {
-			public void run() {
-				WapdroidDbAdapter db = new WapdroidDbAdapter(mContext);
-				db.open();
-				String ssid = "", bssid = "", towers = "", ct = "";
-				int ctr = 0;
-				List<Overlay> mapOverlays = mMView.getOverlays();
-				WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay(mContext.getResources().getDrawable(R.drawable.cell));
-				GeoPoint point = new GeoPoint(0, 0);
-				Cursor cells = mCell == 0 ? db.fetchNetworkData((int) mNetwork) : db.fetchCellData((int) mNetwork, (int) mCell);
-		    	if (cells.getCount() > 0) {
-		    		ct = Integer.toString(cells.getCount());
-		    		Log.v(TAG, "cell count: " + ct);
-		    		cells.moveToFirst();
-		    		while (!interrupted() && !cells.isAfterLast()) {
-		    			ctr++;
-			    		int cid = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.CELLS_CID)),
-			    			rssi_min = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)),
-			    			rssi_max = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MAX)),
-			    			rssi_avg = Math.round((rssi_min + rssi_max) / 2),
-			    			rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
-			    		mMsg = WapdroidDbAdapter.PAIRS_CELL + " " + Integer.toString(ctr) + " of " + ct;
-			    		mHandler.post(mUpdtDialog);
-			    		String tower = "{" + addInt(cell_id, cid) + "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
-			    		if (rssi_avg != WapdroidDbAdapter.UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
-			    		tower += "}";
-			    		if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
-			    		if (bssid == "") bssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_BSSID));
-			    		if (towers != "") towers += ",";
-			    		towers += tower;
-			    		Log.v(TAG,"cid:"+Integer.toString(cid));
-			    		Log.v(TAG,"lac:"+Integer.toString(cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))));
-			    		point = getGeoPoint(bldRequest(tower, bssid));
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL, Integer.toString(cid), rssi_avg, rssi_range));
-			    		cells.moveToNext();}
-		    		if (mCell == 0) {
-		    			mMsg = WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid;
-		    			mHandler.post(mUpdtDialog);
-		    			point = getGeoPoint(bldRequest(towers, bssid));
-		    			Location location = new Location("");
-		    			location.setLatitude(point.getLatitudeE6()/1e6);
-		    			location.setLongitude(point.getLongitudeE6()/1e6);
-		    			Log.v(TAG,"location:"+Double.toString(location.getLatitude())+","+Double.toString(location.getLongitude()));
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_NETWORK, ssid), mContext.getResources().getDrawable(R.drawable.network));
-						pinOverlays.setDistances(location);}}
-				cells.close();
-		   		db.close();
-				mapOverlays.add(pinOverlays);
-			   	mMController.setCenter(point);
-			   	mLoadingDialog.dismiss();
-			   	interrupt();}};
-		mThread.start();}
-	
-    @Override
-    public void onPause() {
-    	super.onPause();}
-    
+				mMNC = Integer.parseInt(operator.substring(3));
+			}
+			mCarrier = extras.getString(CARRIER);
+		}
+	}
+
 	@Override
 	protected void onResume() {
-		super.onResume();}
+		super.onResume();
+		mDbHelper.open();
+		mapData();
+	}
+
+
+	@Override
+	public void onPause() {
+		super.onPause();
+		mDbHelper.close();
+	}
+
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		boolean result = super.onCreateOptionsMenu(menu);
+		menu.add(0, REFRESH_ID, 0, R.string.menu_refreshNetworks).setIcon(android.R.drawable.ic_menu_rotate);
+		return result;
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		switch (item.getItemId()) {
+		case REFRESH_ID:
+			mapData();
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
 
 	@Override
 	protected boolean isRouteDisplayed() {
-		return false;}
-	
+		return false;
+	}
+
 	private void updtDialog() {
-		mLoadingDialog.setMessage(mMsg);}
-	
+		mLoadingDialog.setMessage(mMsg);
+	}
+
 	public String getRequestHeader() {
 		return addString(version, gmaps_version)
 		+ "," + addString(host, gmaps)
 		+ "," + addInt(home_mcc, mMCC)
 		+ "," + addInt(home_mnc, mMNC)
-		+ "," + addString(carrier, mCarrier);}
-	
+		+ "," + addString(carrier, mCarrier);
+	}
+
 	public String addInt(String key, int i) {
-		return "\"" + key + "\":" + Integer.toString(i);}
-	
+		return "\"" + key + "\":" + Integer.toString(i);
+	}
+
 	public String addString(String key, String s) {
-		return "\"" + key + "\":\"" + s + "\"";}
-	
+		return "\"" + key + "\":\"" + s + "\"";
+	}
+
 	public String addArray(String key, String a) {
-		return "\"" + key + "\":[" + a + "]";}
-	
+		return "\"" + key + "\":[" + a + "]";
+	}
+
 	public String getValue(String dictionary, String key) {
 		int key_index = dictionary.indexOf(key), end;
 		String value = "";
@@ -200,92 +186,182 @@ public class MapData extends MapActivity {
 			key_index = dictionary.indexOf(":", key_index) + 1;
 			end = dictionary.indexOf(",", key_index);
 			if (end == WapdroidDbAdapter.UNKNOWN_CID) end = dictionary.indexOf("}", key_index);
-			value = dictionary.substring(key_index, end);}
-		return value;}
-	
+			value = dictionary.substring(key_index, end);
+		}
+		return value;
+	}
+
 	public int parseCoordinate(String source, String key) {
 		String value = getValue(source, key);
 		int parsed = 0;
 		if (value != "") parsed = (int) (Double.parseDouble(value) * 1E6);
-		return parsed;}
-	
+		return parsed;
+	}
+
 	public GeoPoint getGeoPoint(String query) {
 		String response = "";
 		DefaultHttpClient httpClient = new DefaultHttpClient();
 		ResponseHandler <String> responseHandler = new BasicResponseHandler();
 		HttpPost postMethod = new HttpPost("https://www.google.com/loc/json");
 		try {
-			postMethod.setEntity(new StringEntity(query));}
+			postMethod.setEntity(new StringEntity(query));
+		}
 		catch (UnsupportedEncodingException e) {
-			Log.v(TAG, "post:setEntity error: "+e);}
+			Log.v(TAG, "post:setEntity error: "+e);
+		}
 		postMethod.setHeader("Accept", "application/json");
 		postMethod.setHeader("Content-type", "application/json");
 		try {
-			response = httpClient.execute(postMethod, responseHandler);}
+			response = httpClient.execute(postMethod, responseHandler);
+		}
 		catch (ClientProtocolException e) {
-			Log.v(TAG, "post:ClientProtocolException error: "+e);}
+			Log.v(TAG, "post:ClientProtocolException error: "+e);
+		}
 		catch (IOException e) {
-			Log.v(TAG, "post:IOException error: "+e);}
+			Log.v(TAG, "post:IOException error: "+e);
+		}
 		if (mToken == "") {
 			mToken = getValue(response, access_token);
 			if (mToken.length() > 0) {
 				mToken = mToken.substring(1);
-				mToken = mToken.substring(0, mToken.length()-1);}}
+				mToken = mToken.substring(0, mToken.length()-1);
+			}
+		}
 		int lat = parseCoordinate(response, latitude);
 		int lon = parseCoordinate(response, longitude);
 		Log.v(TAG,"lat:"+Integer.toString(lat));
 		Log.v(TAG,"lon:"+Integer.toString(lon));
-		return new GeoPoint(lat, lon);}
-	
+		return new GeoPoint(lat, lon);
+	}
+
 	private String bldRequest(String towers, String bssid) {
 		String request = "{" + getRequestHeader();
 		if (mToken != "") request += "," + addString(access_token, mToken);
 		if (towers != "") request += "," + addArray(cell_towers, towers);
 		if (bssid != "") request += "," + addArray(wifi_towers, "{" + addString(mac_address, bssid) + "}");
-		return request + "}";}
-	
-	class LoadingDialog extends ProgressDialog {
-		public LoadingDialog(Context context) {
-			super(context);}
-		@Override
-		public void onBackPressed() {
-			super.onBackPressed();
-			Log.v(TAG,"backpressed: interrupt thread");
-			mThread.interrupt();
-			return;}}
-	
+		return request + "}";
+	}
+
+	private void mapData() {
+
+		mLoadingDialog = ProgressDialog.show(this, getString(R.string.loading), (mCell == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
+		mLoadingDialog.setCancelable(true);
+		mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
+			@Override
+			public void onCancel(DialogInterface dialog) {
+				Log.v(TAG,"backpressed: interrupt thread");
+				mThread.interrupt();				
+			}
+		});
+		mThread = new Thread() {
+			public void run() {
+				String ssid = "", bssid = "", towers = "", ct = "";
+				int ctr = 0;
+				List<Overlay> mapOverlays = mMView.getOverlays();
+				WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay(mContext.getResources().getDrawable(R.drawable.cell));
+				GeoPoint point = new GeoPoint(0, 0);
+				Cursor cells = mCell == 0 ? mDbHelper.fetchNetworkData((int) mNetwork) : mDbHelper.fetchCellData((int) mNetwork, (int) mCell);
+				if (cells.getCount() > 0) {
+					ct = Integer.toString(cells.getCount());
+					Log.v(TAG, "cell count: " + ct);
+					cells.moveToFirst();
+					while (!interrupted() && !cells.isAfterLast()) {
+						ctr++;
+						int cid = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.CELLS_CID)),
+						rssi_min = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)),
+						rssi_max = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MAX)),
+						rssi_avg = Math.round((rssi_min + rssi_max) / 2),
+						rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
+						mMsg = WapdroidDbAdapter.PAIRS_CELL + " " + Integer.toString(ctr) + " of " + ct;
+						mHandler.post(mUpdtDialog);
+						String tower = "{" + addInt(cell_id, cid) + "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
+						if (rssi_avg != WapdroidDbAdapter.UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
+						tower += "}";
+						if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
+						if (bssid == "") bssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_BSSID));
+						if (towers != "") towers += ",";
+						towers += tower;
+						Log.v(TAG,"cid:"+Integer.toString(cid));
+						Log.v(TAG,"lac:"+Integer.toString(cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))));
+						point = getGeoPoint(bldRequest(tower, bssid));
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL, Integer.toString(cid), mNetwork, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.TABLE_ID)), rssi_avg, rssi_range));
+						cells.moveToNext();
+					}
+					if (mCell == 0) {
+						mMsg = WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid;
+						mHandler.post(mUpdtDialog);
+						point = getGeoPoint(bldRequest(towers, bssid));
+						Location location = new Location("");
+						location.setLatitude(point.getLatitudeE6()/1e6);
+						location.setLongitude(point.getLongitudeE6()/1e6);
+						Log.v(TAG,"location:"+Double.toString(location.getLatitude())+","+Double.toString(location.getLongitude()));
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_NETWORK, ssid, mNetwork), mContext.getResources().getDrawable(R.drawable.network));
+						pinOverlays.setDistances(location);
+					}
+				}
+				cells.close();
+				mapOverlays.add(pinOverlays);
+				mMController.setCenter(point);
+				mLoadingDialog.dismiss();
+				interrupt();
+			}
+		};
+		mThread.start();
+	}
+
 	class WapdroidOverlayItem extends OverlayItem {
 		protected GeoPoint mPoint;
 		protected String mSnippet;
 		protected String mTitle;
 		protected Drawable mMarker;
+		protected int mNetwork = 0;
+		protected int mPair = 0;
 		protected int mRssi_avg = 0;
 		protected int mRssi_range = 0;
 		protected int mRadius = 0;
 		protected long mStroke = 0;
-		public WapdroidOverlayItem(GeoPoint point, String title, String snippet) {
-			super(point, title, snippet);}
-		public WapdroidOverlayItem(GeoPoint point, String title, String snippet, int rssi_avg, int rssi_range) {
+		public WapdroidOverlayItem(GeoPoint point, String title, String snippet, int network) {
+			super(point, title, snippet);
+			mNetwork = network;
+		}
+		public WapdroidOverlayItem(GeoPoint point, String title, String snippet, int network, int pair, int rssi_avg, int rssi_range) {
 			super(point, title, snippet);
 			mRssi_avg = rssi_avg;
-			mRssi_range = rssi_range;}
+			mRssi_range = rssi_range;
+			mNetwork = network;
+			mPair = pair;
+		}
+		public int getNetwork() {
+			return mNetwork;
+		}
+		public int getPair() {
+			return mPair;
+		}
 		public int getRssiAvg() {
-			return mRssi_avg;}
+			return mRssi_avg;
+		}
 		public int getRssiRange() {
-			return mRssi_range;}
+			return mRssi_range;
+		}
 		public void setRadius(int radius) {
-			mRadius = radius;}
+			mRadius = radius;
+		}
 		public int getRadius() {
-			return mRadius;}
+			return mRadius;
+		}
 		public void setStroke(long stroke) {
-			mStroke = stroke;}
+			mStroke = stroke;
+		}
 		public long getStroke() {
-			return mStroke;}}
-	
+			return mStroke;
+		}
+	}
+
 	class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem> {
 		private ArrayList<WapdroidOverlayItem> mOverlays = new ArrayList<WapdroidOverlayItem>();
 		public WapdroidItemizedOverlay(Drawable defaultMarker) {
-			super(boundCenterBottom(defaultMarker));}
+			super(boundCenterBottom(defaultMarker));
+		}
 		@Override
 		public void draw(Canvas canvas, MapView mapView, boolean shadow) {
 			for (WapdroidOverlayItem item : mOverlays) {
@@ -299,32 +375,47 @@ public class MapData extends MapActivity {
 				if (item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) {
 					radius = 70;
 					paint.setColor(getResources().getColor(R.color.primary));
-					paint.setAlpha(32);}
+					paint.setAlpha(32);
+				}
 				else {
 					long stroke = item.getStroke();
 					radius = item.getRadius();
 					paint.setColor(getResources().getColor(R.color.secondary));
 					if (stroke == 0) {
 						paint.setAlpha(12);
-						paint.setStyle(Paint.Style.FILL);}
+						paint.setStyle(Paint.Style.FILL);
+					}
 					else {
 						paint.setAlpha(20);
 						paint.setStyle(Paint.Style.STROKE);
-						paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));}}
-				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(Math.round(radius/mercator)), paint);}
-			super.draw(canvas, mapView, shadow);}
+						paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));
+					}
+				}
+				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(Math.round(radius/mercator)), paint);
+			}
+			super.draw(canvas, mapView, shadow);
+		}
+
 		@Override
 		protected WapdroidOverlayItem createItem(int i) {
-			return mOverlays.get(i);}
+			return mOverlays.get(i);
+		}
+
 		@Override
 		public int size() {
-			return mOverlays.size();}
+			return mOverlays.size();
+		}
+
 		public void addOverlay(WapdroidOverlayItem overlay) {
 			mOverlays.add(overlay);
-			populate();}
+			populate();
+		}
+
 		public void addOverlay(WapdroidOverlayItem overlay, Drawable marker) {
 			overlay.setMarker(boundCenterBottom(marker));
-			addOverlay(overlay);}
+			addOverlay(overlay);
+		}
+
 		public void setDistances(Location location) {
 			for (WapdroidOverlayItem item : mOverlays) {
 				if (item.getTitle() != WapdroidDbAdapter.PAIRS_NETWORK) {
@@ -332,20 +423,51 @@ public class MapData extends MapActivity {
 					Location cell = new Location("");
 					cell.setLatitude(gpt.getLatitudeE6()/1e6);
 					cell.setLongitude(gpt.getLongitudeE6()/1e6);
-	    			int radius = Math.round(location.distanceTo(cell));
-	    			double scale = radius / (Math.abs(item.getRssiAvg()) - 51);
-	    			item.setRadius(radius);
-	    			Log.v(TAG,"lat:"+Double.toString(gpt.getLatitudeE6()/1e6));
-	    			Log.v(TAG,"lat:"+Double.toString(gpt.getLongitudeE6()/1e6));
-	    			Log.v(TAG,"rad:"+Integer.toString(radius));
-	    			Log.v(TAG,"scl:"+Double.toString(scale));
-	    			Log.v(TAG,"stk:"+Long.toString(Math.round(item.getRssiRange() * scale)));
-	    			item.setStroke(Math.round(item.getRssiRange() * scale));}}}
+					int radius = Math.round(location.distanceTo(cell));
+					double scale = radius / (Math.abs(item.getRssiAvg()) - 51);
+					item.setRadius(radius);
+					Log.v(TAG,"lat:"+Double.toString(gpt.getLatitudeE6()/1e6));
+					Log.v(TAG,"lat:"+Double.toString(gpt.getLongitudeE6()/1e6));
+					Log.v(TAG,"rad:"+Integer.toString(radius));
+					Log.v(TAG,"scl:"+Double.toString(scale));
+					Log.v(TAG,"stk:"+Long.toString(Math.round(item.getRssiRange() * scale)));
+					item.setStroke(Math.round(item.getRssiRange() * scale));
+				}
+			}
+		}
 		@Override
 		protected boolean onTap(int i) {
-			OverlayItem item = mOverlays.get(i);
+			final int item = i;
+			WapdroidOverlayItem overlay = mOverlays.get(item);
+			final int network = overlay.getNetwork();
+			final int pair = overlay.getPair();
 			AlertDialog.Builder dialog = new AlertDialog.Builder(mContext);
-			dialog.setTitle(item.getTitle());
-			dialog.setMessage(item.getSnippet());
+			dialog.setIcon(mContext.getResources().getDrawable(pair == 0 ? R.drawable.network : R.drawable.cell));
+			dialog.setTitle(overlay.getTitle());
+			dialog.setMessage(overlay.getSnippet());
+			dialog.setPositiveButton(mContext.getResources().getString(pair == 0 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell), new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					if (pair == 0) {
+						mDbHelper.deleteNetwork(network);
+						finish();
+					}
+					else {
+						mDbHelper.deletePair(network, pair);
+						mOverlays.remove(item);
+						mMView.invalidate();					
+						dialog.cancel();
+					}
+				}
+			});
+			dialog.setNegativeButton(mContext.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.cancel();					
+				}
+			});
 			dialog.show();
-			return true;}}}
+			return true;
+		}
+	}
+}
