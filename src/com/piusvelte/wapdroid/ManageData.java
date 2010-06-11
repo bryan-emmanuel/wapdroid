@@ -24,7 +24,6 @@ import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.app.AlertDialog.Builder;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -43,12 +42,13 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 public class ManageData extends ListActivity {
 	private WapdroidDbAdapter mDbHelper;
 	private int mNetwork = 0, mCid;
-	private static final int REFRESH_ID = Menu.FIRST;
-	private static final int DELETE_ID = Menu.FIRST + 1;
-	private static final int GEO_ID = Menu.FIRST + 2;
-	private static final int FILTER_ID = Menu.FIRST + 3;
+	private static final int MANAGE_ID = Menu.FIRST;
+	private static final int MAP_ID = Menu.FIRST + 1;
+	private static final int DELETE_ID = Menu.FIRST + 2;
+	private static final int CANCEL_ID = Menu.FIRST + 3;
+	private static final int REFRESH_ID = Menu.FIRST + 4;
+	private static final int FILTER_ID = Menu.FIRST + 5;
 	private int mFilter = WapdroidDbAdapter.FILTER_ALL;
-	private AlertDialog mAlertDialog;
 	private String mCells = "", mOperator = "", mBssid = "";
 	private ServiceConn mServiceConn;
 
@@ -57,7 +57,7 @@ public class ManageData extends ListActivity {
 		super.onCreate(savedInstanceState);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_ID);
+			mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_NETWORKS);
 			mCid = extras.getInt(WapdroidDbAdapter.CELLS_CID);
 			mBssid = extras.getString(WapdroidDbAdapter.NETWORKS_BSSID);
 			mCells = extras.getString(WapdroidDbAdapter.TABLE_CELLS);
@@ -128,14 +128,14 @@ public class ManageData extends ListActivity {
 					break;
 				}
 			}
-			Builder b = new AlertDialog.Builder(this);
-			b.setSingleChoiceItems(
+			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+			dialog.setSingleChoiceItems(
 					R.array.filter_entries,
 					which,
 					new DialogInterface.OnClickListener() {
 						//@Override
 						public void onClick(DialogInterface dialog, int which) {
-							mAlertDialog.dismiss();
+							dialog.dismiss();
 							mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
 							try {
 								listData();
@@ -144,8 +144,7 @@ public class ManageData extends ListActivity {
 								e.printStackTrace();
 							}
 						}});
-			mAlertDialog = b.create();
-			mAlertDialog.show();
+			dialog.show();
 			return true;
 		}
 		return super.onOptionsItemSelected(item);
@@ -154,46 +153,79 @@ public class ManageData extends ListActivity {
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, view, menuInfo);
-		menu.add(0, GEO_ID, 0, R.string.map);
+		if (mNetwork == 0) menu.add(0, MANAGE_ID, 0, R.string.menu_manageCells);
+		menu.add(0, MAP_ID, 0, mNetwork == 0 ? R.string.map_network : R.string.map_cell);
 		menu.add(0, DELETE_ID, 0, mNetwork == 0 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);
+		menu.add(0, CANCEL_ID, 0, R.string.cancel);
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		AdapterContextMenuInfo info;
-		switch(item.getItemId()) {
-		case GEO_ID:
-			// open gmaps
-			info = (AdapterContextMenuInfo) item.getMenuInfo();
-			Intent intent = new Intent(this, MapData.class);
-			intent.putExtra(WapdroidDbAdapter.PAIRS_NETWORK, (int) (mNetwork == 0 ? info.id : mNetwork));
-			if (mNetwork != 0) intent.putExtra(WapdroidDbAdapter.PAIRS_CELL, (int) info.id);
-			intent.putExtra(MapData.OPERATOR, mOperator);
-			startActivity(intent);
-			return true;
-		case DELETE_ID:
-			info = (AdapterContextMenuInfo) item.getMenuInfo();
-			if (mNetwork == 0) mDbHelper.deleteNetwork((int) info.id);
-			else mDbHelper.deletePair(mNetwork, (int) info.id);
-			try {
-				listData();
-			}
-			catch (RemoteException e) {
-				e.printStackTrace();
-			}
-			return true;
-		}
+		itemAction(item.getItemId(), (int) ((AdapterContextMenuInfo) item.getMenuInfo()).id);
 		return super.onContextItemSelected(item);
 	}
 
 	@Override
 	protected void onListItemClick(ListView list, View view, int position, long id) {
 		super.onListItemClick(list, view, position, id);
+		final int item = (int) id;
 		if (mNetwork == 0) {
-			Intent intent = new Intent(this, ManageData.class);
-			intent.putExtra(WapdroidDbAdapter.TABLE_ID, (int) id);
+			final CharSequence[] items = {getString(R.string.menu_manageCells), getString(R.string.map_network), getString(R.string.menu_deleteNetwork), getString(R.string.cancel)};
+			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+			dialog.setItems(items, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.cancel();
+					// +1 to reindex
+					itemAction(which + 1, item);
+				}
+			});
+			dialog.show();
+		}
+		else {
+			final CharSequence[] items = {getString(R.string.map_cell), getString(R.string.menu_deleteCell), getString(R.string.cancel)};
+			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+			dialog.setItems(items, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.cancel();
+					// +2 to reindex and as LIST_ID isn't an option here
+					itemAction(which + 2, item);
+				}
+			});
+			dialog.show();
+		}
+	}
+	
+	public void itemAction(int action, int id) {
+		Intent intent;
+		switch(action) {
+		case MANAGE_ID:
+			intent = new Intent(this, ManageData.class);
+			intent.putExtra(WapdroidDbAdapter.TABLE_NETWORKS, id);
 			intent.putExtra(WapdroidDbAdapter.TABLE_CELLS, mCells);
 			startActivity(intent);
+			return;
+		case MAP_ID:
+			// open gmaps
+			intent = new Intent(this, MapData.class);
+			intent.putExtra(WapdroidDbAdapter.TABLE_NETWORKS, (int) (mNetwork == 0 ? id : mNetwork));
+			if (mNetwork != 0) intent.putExtra(WapdroidDbAdapter.TABLE_PAIRS, id);
+			intent.putExtra(MapData.OPERATOR, mOperator);
+			startActivity(intent);
+			return;
+		case DELETE_ID:
+			if (mNetwork == 0) mDbHelper.deleteNetwork(id);
+			else mDbHelper.deletePair(mNetwork, id);
+			try {
+				listData();
+			}
+			catch (RemoteException e) {
+				e.printStackTrace();
+			}
+			return;
+		case CANCEL_ID:
+			return;
 		}
 	}
 

@@ -82,7 +82,7 @@ public class MapData extends MapActivity {
 	private static final String signal_strength = "signal_strength";
 	private WapdroidDbAdapter mDbHelper;
 	private Context mContext;
-	private int mNetwork, mCell = 0, mMCC = 0, mMNC = 0;
+	private int mNetwork, mPair = 0, mMCC = 0, mMNC = 0;
 	private String mCarrier = "", mToken = "", mMsg = "";
 	private MapView mMView;
 	private MapController mMController;
@@ -107,8 +107,8 @@ public class MapData extends MapActivity {
 		mMController.setZoom(12);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getInt(WapdroidDbAdapter.PAIRS_NETWORK);
-			mCell = extras.getInt(WapdroidDbAdapter.PAIRS_CELL);
+			mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_NETWORKS);
+			mPair = extras.getInt(WapdroidDbAdapter.TABLE_PAIRS);
 			String operator = extras.getString(OPERATOR);
 			if (operator.length() > 0) {
 				mMCC = Integer.parseInt(operator.substring(0, 3));
@@ -243,13 +243,11 @@ public class MapData extends MapActivity {
 	}
 
 	private void mapData() {
-
-		mLoadingDialog = ProgressDialog.show(this, getString(R.string.loading), (mCell == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
+		mLoadingDialog = ProgressDialog.show(this, getString(R.string.loading), (mPair == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
 		mLoadingDialog.setCancelable(true);
 		mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
 			@Override
 			public void onCancel(DialogInterface dialog) {
-				Log.v(TAG,"backpressed: interrupt thread");
 				mThread.interrupt();				
 			}
 		});
@@ -260,34 +258,34 @@ public class MapData extends MapActivity {
 				List<Overlay> mapOverlays = mMView.getOverlays();
 				WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay(mContext.getResources().getDrawable(R.drawable.cell));
 				GeoPoint point = new GeoPoint(0, 0);
-				Cursor cells = mCell == 0 ? mDbHelper.fetchNetworkData((int) mNetwork) : mDbHelper.fetchCellData((int) mNetwork, (int) mCell);
-				if (cells.getCount() > 0) {
-					ct = Integer.toString(cells.getCount());
-					Log.v(TAG, "cell count: " + ct);
-					cells.moveToFirst();
-					while (!interrupted() && !cells.isAfterLast()) {
+				Cursor pairs = mPair == 0 ? mDbHelper.fetchNetworkData(mNetwork) : mDbHelper.fetchPairData(mPair);
+				if (pairs.getCount() > 0) {
+					ct = Integer.toString(pairs.getCount());
+					Log.v(TAG, "pair count: " + ct);
+					pairs.moveToFirst();
+					while (!interrupted() && !pairs.isAfterLast()) {
 						ctr++;
-						int cid = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.CELLS_CID)),
-						rssi_min = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)),
-						rssi_max = cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MAX)),
+						int cid = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.CELLS_CID)),
+						rssi_min = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)),
+						rssi_max = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MAX)),
 						rssi_avg = Math.round((rssi_min + rssi_max) / 2),
 						rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
 						mMsg = WapdroidDbAdapter.PAIRS_CELL + " " + Integer.toString(ctr) + " of " + ct;
 						mHandler.post(mUpdtDialog);
-						String tower = "{" + addInt(cell_id, cid) + "," + addInt(lac, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
+						String tower = "{" + addInt(cell_id, cid) + "," + addInt(lac, pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
 						if (rssi_avg != WapdroidDbAdapter.UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
 						tower += "}";
-						if (ssid == "") ssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
-						if (bssid == "") bssid = cells.getString(cells.getColumnIndex(WapdroidDbAdapter.NETWORKS_BSSID));
+						if (ssid == "") ssid = pairs.getString(pairs.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
+						if (bssid == "") bssid = pairs.getString(pairs.getColumnIndex(WapdroidDbAdapter.NETWORKS_BSSID));
 						if (towers != "") towers += ",";
 						towers += tower;
 						Log.v(TAG,"cid:"+Integer.toString(cid));
-						Log.v(TAG,"lac:"+Integer.toString(cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))));
+						Log.v(TAG,"lac:"+Integer.toString(pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))));
 						point = getGeoPoint(bldRequest(tower, bssid));
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL, Integer.toString(cid), mNetwork, cells.getInt(cells.getColumnIndex(WapdroidDbAdapter.TABLE_ID)), rssi_avg, rssi_range));
-						cells.moveToNext();
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL, Integer.toString(cid), mNetwork, pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.TABLE_ID)), rssi_avg, rssi_range));
+						pairs.moveToNext();
 					}
-					if (mCell == 0) {
+					if (mPair == 0) {
 						mMsg = WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid;
 						mHandler.post(mUpdtDialog);
 						point = getGeoPoint(bldRequest(towers, bssid));
@@ -299,7 +297,7 @@ public class MapData extends MapActivity {
 						pinOverlays.setDistances(location);
 					}
 				}
-				cells.close();
+				pairs.close();
 				mapOverlays.add(pinOverlays);
 				mMController.setCenter(point);
 				mLoadingDialog.dismiss();

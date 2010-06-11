@@ -309,17 +309,13 @@ public class WapdroidDbAdapter {
 				+ " and " + PAIRS_NETWORK + "=" + network, null);
 	}
 
-	public Cursor fetchCellData(int network, int cell) {
+	public Cursor fetchPairData(int pair) {
 		return mDb.rawQuery("select " + tableIdAs(TABLE_PAIRS) + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
-				+ " from " + TABLE_PAIRS
-				+ " left join " + TABLE_NETWORKS
-				+ " on " + PAIRS_NETWORK + "=" + tableId(TABLE_NETWORKS)
-				+ " left join " + TABLE_CELLS
-				+ " on " + PAIRS_CELL + "=" + tableId(TABLE_CELLS)
-				+ " left outer join " + TABLE_LOCATIONS
-				+ " on " + CELLS_LOCATION + "=" + tableId(TABLE_LOCATIONS)
-				+ " and " + PAIRS_NETWORK + "=" + network
-				+ " and " + PAIRS_CELL + "=" + cell, null);
+				+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+				+ " where " + PAIRS_NETWORK + "=" + tableId(TABLE_NETWORKS)
+				+ " and " + PAIRS_CELL + "=" + tableId(TABLE_CELLS)
+				+ " and " + CELLS_LOCATION + "=" + tableId(TABLE_LOCATIONS)
+				+ " and " + tableId(TABLE_PAIRS) + "=" + pair, null);
 	}
 
 	public Cursor fetchPairsByNetwork(int network) {
