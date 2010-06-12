@@ -63,15 +63,17 @@ public class WapdroidService extends Service {
 	mInterval,
 	mBatteryLimit = 0,
 	mLastBattPerc;
-	private boolean mNotify,
+	private boolean mManageWifi,
+	mNotify,
 	mVibrate,
 	mLed,
 	mRingtone,
-	mEnableWifi = true;
+	mEnableWifi = true,
+	mRelease = false,
+	mManualOverride = false;
 	private AlarmManager mAlarmMgr;
 	private PendingIntent mPendingIntent;
 	private IWapdroidUI mWapdroidUI;
-	private boolean mControlWifi = true;
 	private static final String TAG = "Wapdroid";
 	private BroadcastReceiver mScreenReceiver, mNetworkReceiver, mWifiReceiver, mBatteryReceiver;
 	private PhoneStateListener mPhoneListener;
@@ -87,7 +89,7 @@ public class WapdroidService extends Service {
 			}
 			else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
 				Log.v(TAG, "ACTION_SCREEN_OFF");
-				mControlWifi = true;
+				mManualOverride = false;
 				if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
 			}
 		}
@@ -103,13 +105,18 @@ public class WapdroidService extends Service {
 					Log.v(TAG,"NETWORK_STATE_CHANGED_ACTION");
 					if (!ManageWakeLocks.hasLock()) {
 						Log.v(TAG,"grab a lock");
-						mAlarmMgr.cancel(mPendingIntent);
 						ManageWakeLocks.acquire(context);
-						context.startService(new Intent(context, WapdroidService.class));
+						mRelease = true;
 					}
-					networkStateChanged();
-					// only keep the wakelock if connected
-					if (!i.isConnected()) release();
+					networkStateChanged(i.isConnected());
+					if (mRelease) {
+						// if connection was lost, check cells, otherwise, release
+						if (!i.isConnected()) {
+							mAlarmMgr.cancel(mPendingIntent);
+							context.startService(new Intent(context, WapdroidService.class));
+						}
+						else release();
+					}
 				}
 			}
 		}		
@@ -120,10 +127,13 @@ public class WapdroidService extends Service {
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 				Log.v(TAG,"WIFI_STATE_CHANGED_ACTION");
-				// if wifi is toggling, then it was probably caused by wapdroid, don't wait for another cell change
-				//acquire();
+				if (!ManageWakeLocks.hasLock()) {
+					ManageWakeLocks.acquire(context);
+					mRelease = true;
+				}
 				// ignore unknown
 				if (intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4) != WifiManager.WIFI_STATE_UNKNOWN) wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
+				if (mRelease) ManageWakeLocks.release();
 			}
 		}		
 	}
@@ -136,7 +146,7 @@ public class WapdroidService extends Service {
 				int currectBattPerc = Math.round(intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100));
 				Log.v(TAG,"battery:"+Integer.toString(currectBattPerc));
 				// check if the threshold was crossed
-				if ((currectBattPerc < mBatteryLimit) && (mLastBattPerc >= mBatteryLimit)) {
+				if (mManageWifi && !mManualOverride && (currectBattPerc < mBatteryLimit) && (mLastBattPerc >= mBatteryLimit)) {
 					setWifiState(false);
 					if (mPhoneListener != null) {
 						mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
@@ -159,12 +169,11 @@ public class WapdroidService extends Service {
 	}
 
 	private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
-		public void updatePreferences(int interval, boolean notify,
+		public void updatePreferences(boolean manage, int interval, boolean notify,
 				boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage)
 		throws RemoteException {
-			mInterval = interval;
-			if (mNotify ^ notify) {
-				if (notify) {
+			if ((mManageWifi ^ manage) || (mNotify ^ notify)) {
+				if (manage && notify) {
 					if (mNotificationManager == null) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 					createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
 				}
@@ -173,6 +182,8 @@ public class WapdroidService extends Service {
 					mNotificationManager = null;
 				}
 			}
+			mManageWifi = manage;
+			mInterval = interval;
 			mNotify = notify;
 			mVibrate = vibrate;
 			mLed = led;
@@ -184,7 +195,7 @@ public class WapdroidService extends Service {
 		public void setCallback(IBinder mWapdroidUIBinder)
 		throws RemoteException {
 			if (mWapdroidUIBinder != null) {
-				mControlWifi = true;
+				mManualOverride = false;
 				if (ManageWakeLocks.hasLock()) ManageWakeLocks.release();
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 				if (mWapdroidUI != null) {
@@ -227,7 +238,7 @@ public class WapdroidService extends Service {
 			}
 		}
 		public void suspendWifiControl() throws RemoteException {
-			mControlWifi = false;
+			mManualOverride = false;
 		}
 	};
 	
@@ -293,6 +304,8 @@ public class WapdroidService extends Service {
 		//the receivers should handle this
 		//mWifiState = mWifiManager.getWifiState();
 		//wifiStateChanged(mWifiState == WifiManager.WIFI_STATE_ENABLED);
+		// if wifi or network receiver took a lock, and the alarm went off, stop them from releasing the lock
+		mRelease = false;
 		getCellInfo(mTeleManager.getCellLocation());
 	}
 
@@ -315,6 +328,7 @@ public class WapdroidService extends Service {
 		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
 		SharedPreferences prefs = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		// initialize preferences, updated by UI
+		mManageWifi = prefs.getBoolean(getString(R.string.key_manageWifi), true);
 		mInterval = Integer.parseInt((String) prefs.getString(getString(R.string.key_interval), "30000"));
 		mNotify = prefs.getBoolean(getString(R.string.key_notify), false);
 		if (mNotify) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
@@ -327,7 +341,8 @@ public class WapdroidService extends Service {
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		wifiStateChanged(mWifiManager.getWifiState());
-		networkStateChanged();
+		// the ssid from wifimanager may not be null, even if disconnected, so check against the wifi state
+		networkStateChanged(mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		mPhoneListener = new PhoneListener();
 		mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH| PhoneStateListener.LISTEN_SIGNAL_STRENGTHS));
@@ -388,7 +403,7 @@ public class WapdroidService extends Service {
 		String cells = "(" + WapdroidDbAdapter.CELLS_CID + "=" + Integer.toString(mCid)
 		+ " and (" + WapdroidDbAdapter.LOCATIONS_LAC + "=" + Integer.toString(mLac) + " or " + WapdroidDbAdapter.CELLS_LOCATION + "=" + WapdroidDbAdapter.UNKNOWN_CID + ")"
 		+ " and (" + Integer.toString(mRssi) + "=" + WapdroidDbAdapter.UNKNOWN_RSSI + " or (((" + WapdroidDbAdapter.PAIRS_RSSI_MIN + "=" + WapdroidDbAdapter.UNKNOWN_RSSI + ") or (" + WapdroidDbAdapter.PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and ((" + WapdroidDbAdapter.PAIRS_RSSI_MAX + "=" + WapdroidDbAdapter.UNKNOWN_RSSI + ") or (" + WapdroidDbAdapter.PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))))";
-		if (!mNeighboringCells.isEmpty()) {
+		if ((mNeighboringCells != null) && !mNeighboringCells.isEmpty()) {
 			for (NeighboringCellInfo n : mNeighboringCells) {
 				int rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
 				cells += " or (" + WapdroidDbAdapter.CELLS_CID + "=" + Integer.toString(n.getCid())
@@ -452,17 +467,17 @@ public class WapdroidService extends Service {
 				catch (RemoteException e) {}
 			}
 			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
-			else if (mControlWifi && mEnableWifi) {
+			else if (mManageWifi && !mManualOverride && mEnableWifi) {
 				for (NeighboringCellInfo n : mNeighboringCells) {
 					int cid = n.getCid() > 0 ? n.getCid() : WapdroidDbAdapter.UNKNOWN_CID,
 					lac = n.getLac() > 0 ? n.getLac() : WapdroidDbAdapter.UNKNOWN_CID,
 					rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
 					if (mEnableWifi && (cid != WapdroidDbAdapter.UNKNOWN_CID)) mEnableWifi = mDbHelper.cellInRange(cid, lac, rssi);
 				}
-			}
-			if ((mEnableWifi && (mLastBattPerc >= mBatteryLimit) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mEnableWifi && (mLastWifiState == WifiManager.WIFI_STATE_ENABLED))) {
-				Log.v(TAG, "set wifi:"+mEnableWifi);
-				setWifiState(mEnableWifi);
+				if ((mEnableWifi && (mLastBattPerc >= mBatteryLimit) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mEnableWifi && (mLastWifiState == WifiManager.WIFI_STATE_ENABLED))) {
+					Log.v(TAG, "set wifi:"+mEnableWifi);
+					setWifiState(mEnableWifi);
+				}
 			}
 			mDbHelper.close();
 		}
@@ -496,35 +511,39 @@ public class WapdroidService extends Service {
 		mWifiManager.setWifiEnabled(enable);
 	}
 	
-	private void networkStateChanged() {
+	private void networkStateChanged(boolean connected) {
 		/*
 		 * get network state
+		 * the ssid from wifimanager may not be null, even if disconnected, so taking boolean connected
 		 * when network connected, unregister wifi receiver
 		 * when network disconnected, register wifi receiver
 		 */
-		mSsid = mWifiManager.getConnectionInfo().getSSID();
-		mBssid = mWifiManager.getConnectionInfo().getBSSID();
+		mSsid = connected ? mWifiManager.getConnectionInfo().getSSID() : null;
+		mBssid = connected ? mWifiManager.getConnectionInfo().getBSSID() : null;
 		if (mSsid != null) {
-			// connected
-			if ((mSsid != null) && (mBssid != null) && (mCid != WapdroidDbAdapter.UNKNOWN_CID) && (mDbHelper != null)) {
+			// connected, implies that wifi is on
+			Log.v(TAG,"network connected:"+mSsid);
+			if ((mBssid != null) && (mCid != WapdroidDbAdapter.UNKNOWN_CID) && (mDbHelper != null)) {
 				mDbHelper.open();
 				updateRange();
 				mDbHelper.close();
 			}
+			// the network receiver will be registered if connected
+			if (mWifiReceiver != null) {
+				Log.v(TAG,"unregister wifi receiver");
+				unregisterReceiver(mWifiReceiver);
+				mWifiReceiver = null;
+			}
+		}
+		else {
+			// if there's no connection, then fallback onto wifi receiver
+			Log.v(TAG,"network not connected");
 			if (mWifiReceiver == null) {
 				Log.v(TAG,"register wifi receiver");
 				mWifiReceiver = new WifiReceiver();
 				IntentFilter f = new IntentFilter();
 				f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 				registerReceiver(mWifiReceiver, f);
-			}
-		}
-		else {
-			// lost connection
-			if (mWifiReceiver != null) {
-				Log.v(TAG,"unregister wifi receiver");
-				unregisterReceiver(mWifiReceiver);
-				mWifiReceiver = null;
 			}
 		}
 		if (mWapdroidUI != null) {
@@ -536,29 +555,33 @@ public class WapdroidService extends Service {
 	}
 	
 	private void createNotification(boolean enabled, boolean update) {
-		CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
-		Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
-		Intent i = new Intent(getBaseContext(), WapdroidUI.class);
-		PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
-		notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-		notification.flags |= Notification.FLAG_NO_CLEAR;
-		if (update) {
-			if (mVibrate) notification.defaults |= Notification.DEFAULT_VIBRATE;
-			if (mLed) notification.defaults |= Notification.DEFAULT_LIGHTS;
-			if (mRingtone) notification.defaults |= Notification.DEFAULT_SOUND;
+		if (mManageWifi) {
+			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
+			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
+			Intent i = new Intent(getBaseContext(), WapdroidUI.class);
+			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
+			notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
+			notification.flags |= Notification.FLAG_NO_CLEAR;
+			if (update) {
+				if (mVibrate) notification.defaults |= Notification.DEFAULT_VIBRATE;
+				if (mLed) notification.defaults |= Notification.DEFAULT_LIGHTS;
+				if (mRingtone) notification.defaults |= Notification.DEFAULT_SOUND;
+			}
+			mNotificationManager.notify(NOTIFY_ID, notification);
 		}
-		mNotificationManager.notify(NOTIFY_ID, notification);		
 	}
 	
 	private void wifiStateChanged(int state) {
 		/*
 		 * get wifi state
+		 * initially, lastWifiState is unknown, otherwise state is evaluated either enabled or not
 		 * when wifi enabled, register network receiver
 		 * when wifi not enabled, unregister network receiver
 		 */
-		if ((state == WifiManager.WIFI_STATE_ENABLED) ^ (mLastWifiState == WifiManager.WIFI_STATE_ENABLED)) {
-			Log.v(TAG,"wifi state changed");
+		if ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN) || ((state == WifiManager.WIFI_STATE_ENABLED) ^ (mLastWifiState == WifiManager.WIFI_STATE_ENABLED))) {
 			if (state == WifiManager.WIFI_STATE_ENABLED) {
+				// listen for a connection
+				Log.v(TAG,"wifi enabled");
 				if (mNetworkReceiver == null) {
 					Log.v(TAG,"register network receiver");
 					mNetworkReceiver = new NetworkReceiver();
@@ -568,6 +591,8 @@ public class WapdroidService extends Service {
 				}
 			}
 			else {
+				// network receiver isn't need if wifi is off
+				Log.v(TAG,"wifi not enabled");
 				if (mNetworkReceiver != null) {
 					Log.v(TAG,"unregister network receiver");
 					unregisterReceiver(mNetworkReceiver);
