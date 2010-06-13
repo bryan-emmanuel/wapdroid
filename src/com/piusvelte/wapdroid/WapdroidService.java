@@ -477,8 +477,8 @@ public class WapdroidService extends Service {
 				}
 				Log.v(TAG,"neighborsInRange:"+Boolean.toString(mEnableWifi));
 				// (enable xor enabling/enabled)
-				// and (enable xor battery below limit)
-				if ((mEnableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))) && (mEnableWifi ^ (mLastBattPerc < mBatteryLimit))) {
+				if ((mEnableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))
+						&& (!mEnableWifi || (mEnableWifi && (mLastBattPerc >= mBatteryLimit)))) {
 					Log.v(TAG, "enable wifi:"+Boolean.toString(mEnableWifi));
 					setWifiState(mEnableWifi);
 				}
