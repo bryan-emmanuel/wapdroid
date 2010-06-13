@@ -196,15 +196,15 @@ public class WapdroidDbAdapter {
 	}
 
 	private String filterText(int filter) {
-		return mContext.getString(filter == FILTER_CONNECTED ? R.string.connected : filter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea);
+		return mContext.getResources().getString(filter == FILTER_CONNECTED ? R.string.connected : filter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea);
 	}
 
 	public Cursor fetchNetworks(int filter, String bssid, String cells) {
 		return mDb.rawQuery("select " + tableIdAs(TABLE_NETWORKS) + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", "
 				+ ((filter == FILTER_ALL) ?
-						("case when " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getString(R.string.connected)
-								+ "' else (case when " + tableId(TABLE_NETWORKS) + inSelectNetworks(cells) + " then '" + mContext.getString(R.string.withinarea)
-								+ "' else '" + mContext.getString(R.string.outofarea) + "' end) end as ")
+						("case when " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getResources().getString(R.string.connected)
+								+ "' else (case when " + tableId(TABLE_NETWORKS) + inSelectNetworks(cells) + " then '" + mContext.getResources().getString(R.string.withinarea)
+								+ "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as ")
 								: "'" + (filterText(filter) + "' as "))
 								+ STATUS
 								+ " from " + TABLE_NETWORKS
@@ -336,12 +336,12 @@ public class WapdroidDbAdapter {
 
 	public Cursor fetchPairsByNetworkFilter(int filter, int network, int cid, String cells) {
 		return mDb.rawQuery("select " + tableIdAs(TABLE_PAIRS) + ", " + CELLS_CID + ", "
-				+ "case when " + LOCATIONS_LAC + "=" + UNKNOWN_CID + " then '" + mContext.getString(R.string.unknown) + "' else " + LOCATIONS_LAC + " end as " + LOCATIONS_LAC + ", "
-				+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " then '" + mContext.getString(R.string.unknown) + "' else (" + PAIRS_RSSI_MIN + "||'" + mContext.getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getString(R.string.dbm) + "') end as " + PAIRS_RSSI_MIN + ", "
+				+ "case when " + LOCATIONS_LAC + "=" + UNKNOWN_CID + " then '" + mContext.getResources().getString(R.string.unknown) + "' else " + LOCATIONS_LAC + " end as " + LOCATIONS_LAC + ", "
+				+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " then '" + mContext.getResources().getString(R.string.unknown) + "' else (" + PAIRS_RSSI_MIN + "||'" + mContext.getResources().getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getResources().getString(R.string.dbm) + "') end as " + PAIRS_RSSI_MIN + ", "
 				+ ((filter == FILTER_ALL) ?
-						("case when " + CELLS_CID + "='" + cid + "' then '" + mContext.getString(R.string.connected)
-								+ "' else (case when " + tableId(TABLE_CELLS) + inSelectCells(network, cells) + " then '" + mContext.getString(R.string.withinarea)
-								+ "' else '" + mContext.getString(R.string.outofarea) + "' end) end as ")
+						("case when " + CELLS_CID + "='" + cid + "' then '" + mContext.getResources().getString(R.string.connected)
+								+ "' else (case when " + tableId(TABLE_CELLS) + inSelectCells(network, cells) + " then '" + mContext.getResources().getString(R.string.withinarea)
+								+ "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as ")
 								: "'" + (filterText(filter) + "' as "))
 								+ STATUS
 								+ " from " + TABLE_PAIRS

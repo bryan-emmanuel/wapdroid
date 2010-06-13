@@ -460,6 +460,7 @@ public class WapdroidService extends Service {
 		if ((mCid != WapdroidDbAdapter.UNKNOWN_CID) && (mDbHelper != null)) {
 			mDbHelper.open();
 			mEnableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
+			Log.v(TAG,"cellInRange:"+Boolean.toString(mEnableWifi));
 			if (mWapdroidUI != null) {
 				try {
 					mWapdroidUI.inRange(mEnableWifi);
@@ -467,15 +468,18 @@ public class WapdroidService extends Service {
 				catch (RemoteException e) {}
 			}
 			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
-			else if (mManageWifi && !mManualOverride && mEnableWifi) {
+			else if (mManageWifi && !mManualOverride) {
 				for (NeighboringCellInfo n : mNeighboringCells) {
 					int cid = n.getCid() > 0 ? n.getCid() : WapdroidDbAdapter.UNKNOWN_CID,
 					lac = n.getLac() > 0 ? n.getLac() : WapdroidDbAdapter.UNKNOWN_CID,
 					rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
 					if (mEnableWifi && (cid != WapdroidDbAdapter.UNKNOWN_CID)) mEnableWifi = mDbHelper.cellInRange(cid, lac, rssi);
 				}
-				if ((mEnableWifi && (mLastBattPerc >= mBatteryLimit) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLING)) || (!mEnableWifi && (mLastWifiState == WifiManager.WIFI_STATE_ENABLED))) {
-					Log.v(TAG, "set wifi:"+mEnableWifi);
+				Log.v(TAG,"neighborsInRange:"+Boolean.toString(mEnableWifi));
+				// (enable xor enabling/enabled)
+				// and (enable xor battery below limit)
+				if ((mEnableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))) && (mEnableWifi ^ (mLastBattPerc < mBatteryLimit))) {
+					Log.v(TAG, "enable wifi:"+Boolean.toString(mEnableWifi));
 					setWifiState(mEnableWifi);
 				}
 			}
@@ -605,6 +609,12 @@ public class WapdroidService extends Service {
 				else if ((state == WifiManager.WIFI_STATE_DISABLED) || (state == WifiManager.WIFI_STATE_ENABLED)) createNotification((state == WifiManager.WIFI_STATE_ENABLED), true);
 			}
 			mLastWifiState = state;
+			if (mWapdroidUI != null) {
+				try {
+					mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+				}
+				catch (RemoteException e) {}
+			}
 		}
 	}
 }

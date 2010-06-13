@@ -71,7 +71,7 @@ public class MapData extends MapActivity {
 	private static final String home_mnc = "home_mobile_network_code";
 	private static final String carrier = "carrier";
 	private static final String cell_id = "cell_id";
-	private static final String lac = "location_area_code";
+	private static final String location_area_code = "location_area_code";
 	private static final String mcc = "mobile_country_code";
 	private static final String mnc = "mobile_network_code";
 	private static final String cell_towers = "cell_towers";
@@ -80,9 +80,10 @@ public class MapData extends MapActivity {
 	private static final String wifi_towers = "wifi_towers";
 	private static final String mac_address = "mac_address";
 	private static final String signal_strength = "signal_strength";
+	private static final int mNetwork_alpha = 32;
 	private WapdroidDbAdapter mDbHelper;
 	private Context mContext;
-	private int mNetwork, mPair = 0, mMCC = 0, mMNC = 0;
+	private int mNetwork, mPair = 0, mMCC = 0, mMNC = 0, mCell_alpha = 32;
 	private String mCarrier = "", mToken = "", mMsg = "";
 	private MapView mMView;
 	private MapController mMController;
@@ -253,26 +254,28 @@ public class MapData extends MapActivity {
 		});
 		mThread = new Thread() {
 			public void run() {
-				String ssid = "", bssid = "", towers = "", ct = "";
+				String ssid = "", bssid = "", towers = "";
 				int ctr = 0;
 				List<Overlay> mapOverlays = mMView.getOverlays();
 				WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay(mContext.getResources().getDrawable(R.drawable.cell));
 				GeoPoint point = new GeoPoint(0, 0);
 				Cursor pairs = mPair == 0 ? mDbHelper.fetchNetworkData(mNetwork) : mDbHelper.fetchPairData(mPair);
-				if (pairs.getCount() > 0) {
-					ct = Integer.toString(pairs.getCount());
-					Log.v(TAG, "pair count: " + ct);
+				int ct = pairs.getCount();
+				if (ct > 0) {
+					mCell_alpha = mNetwork_alpha / ct;
+					Log.v(TAG, "pair count: " + Integer.toString(ct));
 					pairs.moveToFirst();
 					while (!interrupted() && !pairs.isAfterLast()) {
 						ctr++;
 						int cid = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.CELLS_CID)),
+						lac = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)),
 						rssi_min = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)),
 						rssi_max = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MAX)),
 						rssi_avg = Math.round((rssi_min + rssi_max) / 2),
 						rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
-						mMsg = WapdroidDbAdapter.PAIRS_CELL + " " + Integer.toString(ctr) + " of " + ct;
+						mMsg = WapdroidDbAdapter.PAIRS_CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
 						mHandler.post(mUpdtDialog);
-						String tower = "{" + addInt(cell_id, cid) + "," + addInt(lac, pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
+						String tower = "{" + addInt(cell_id, cid) + "," + addInt(location_area_code, lac) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
 						if (rssi_avg != WapdroidDbAdapter.UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
 						tower += "}";
 						if (ssid == "") ssid = pairs.getString(pairs.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
@@ -282,7 +285,11 @@ public class MapData extends MapActivity {
 						Log.v(TAG,"cid:"+Integer.toString(cid));
 						Log.v(TAG,"lac:"+Integer.toString(pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))));
 						point = getGeoPoint(bldRequest(tower, bssid));
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL, Integer.toString(cid), mNetwork, pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.TABLE_ID)), rssi_avg, rssi_range));
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL,
+								mContext.getResources().getString(R.string.label_CID) + Integer.toString(cid)
+								+ mContext.getResources().getString(R.string.linefeed) + mContext.getResources().getString(R.string.label_LAC) + Integer.toString(lac)
+								+ mContext.getResources().getString(R.string.linefeed) + mContext.getResources().getString(R.string.range) + Integer.toString(rssi_min) + mContext.getString(R.string.colon) + Integer.toString(rssi_max),
+								mNetwork, pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.TABLE_ID)), rssi_avg, rssi_range));
 						pairs.moveToNext();
 					}
 					if (mPair == 0) {
@@ -373,18 +380,18 @@ public class MapData extends MapActivity {
 				if (item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) {
 					radius = 70;
 					paint.setColor(getResources().getColor(R.color.primary));
-					paint.setAlpha(32);
+					paint.setAlpha(mNetwork_alpha);
 				}
 				else {
 					long stroke = item.getStroke();
 					radius = item.getRadius();
 					paint.setColor(getResources().getColor(R.color.secondary));
 					if (stroke == 0) {
-						paint.setAlpha(12);
+						paint.setAlpha(mCell_alpha);
 						paint.setStyle(Paint.Style.FILL);
 					}
 					else {
-						paint.setAlpha(20);
+						paint.setAlpha(mCell_alpha);
 						paint.setStyle(Paint.Style.STROKE);
 						paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));
 					}
