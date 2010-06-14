@@ -237,7 +237,8 @@ public class WapdroidService extends Service {
 				}
 			}
 		}
-		public void suspendWifiControl() throws RemoteException {
+		public void manualOverride() throws RemoteException {
+			Log.v(TAG,"manual override");
 			mManualOverride = false;
 		}
 	};
@@ -468,7 +469,7 @@ public class WapdroidService extends Service {
 				catch (RemoteException e) {}
 			}
 			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
-			else if (mManageWifi && !mManualOverride) {
+			else if (mManageWifi && !mManualOverride && (mEnableWifi || (mLastBattPerc >= mBatteryLimit))) {
 				for (NeighboringCellInfo n : mNeighboringCells) {
 					int cid = n.getCid() > 0 ? n.getCid() : WapdroidDbAdapter.UNKNOWN_CID,
 					lac = n.getLac() > 0 ? n.getLac() : WapdroidDbAdapter.UNKNOWN_CID,
@@ -476,12 +477,12 @@ public class WapdroidService extends Service {
 					if (mEnableWifi && (cid != WapdroidDbAdapter.UNKNOWN_CID)) mEnableWifi = mDbHelper.cellInRange(cid, lac, rssi);
 				}
 				Log.v(TAG,"neighborsInRange:"+Boolean.toString(mEnableWifi));
-				// (enable xor enabling/enabled)
-				if ((mEnableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))
-						&& (!mEnableWifi || (mEnableWifi && (mLastBattPerc >= mBatteryLimit)))) {
-					Log.v(TAG, "enable wifi:"+Boolean.toString(mEnableWifi));
-					setWifiState(mEnableWifi);
-				}
+				/* conditions:
+				 * 			enabled	enabling	disabling	disabled
+				 * enable	-		-			+			+
+				 * disable	+		+			-			-
+				 */
+				if ((mEnableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) setWifiState(mEnableWifi);
 			}
 			mDbHelper.close();
 		}
@@ -503,6 +504,7 @@ public class WapdroidService extends Service {
 		 *  when a low battery disabled occurs,
 		 *  register the wifi receiver in case the network is connected at the time
 		 */
+		Log.v(TAG, "enable wifi:"+Boolean.toString(mEnableWifi));
 		if (!enable && (mSsid != null)) {
 			if (mWifiReceiver == null) {
 				Log.v(TAG,"register wifi receiver");

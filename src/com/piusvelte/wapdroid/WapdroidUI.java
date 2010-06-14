@@ -88,7 +88,7 @@ public class WapdroidUI extends Activity implements AdListener {
     		return true;
     	case WIFI_ID:
     		try {
-    			mServiceConn.mIService.suspendWifiControl();}
+    			mServiceConn.mIService.manualOverride();}
     		catch (RemoteException e) {}
 			startActivity(new Intent().setComponent(new ComponentName("com.android.settings", "com.android.settings.wifi.WifiSettings")));
 			return true;

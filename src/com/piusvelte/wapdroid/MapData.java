@@ -262,7 +262,7 @@ public class MapData extends MapActivity {
 				Cursor pairs = mPair == 0 ? mDbHelper.fetchNetworkData(mNetwork) : mDbHelper.fetchPairData(mPair);
 				int ct = pairs.getCount();
 				if (ct > 0) {
-					mCell_alpha = mNetwork_alpha / ct;
+					mCell_alpha = Math.round(mNetwork_alpha / ct);
 					Log.v(TAG, "pair count: " + Integer.toString(ct));
 					pairs.moveToFirst();
 					while (!interrupted() && !pairs.isAfterLast()) {
