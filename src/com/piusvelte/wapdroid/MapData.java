@@ -244,14 +244,23 @@ public class MapData extends MapActivity {
 	}
 
 	private void mapData() {
-		mLoadingDialog = ProgressDialog.show(this, getString(R.string.loading), (mPair == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
+		mLoadingDialog = new ProgressDialog(this);
+		mLoadingDialog.setTitle(R.string.loading);
+		mLoadingDialog.setMessage((mPair == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
 		mLoadingDialog.setCancelable(true);
 		mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
 			@Override
 			public void onCancel(DialogInterface dialog) {
-				mThread.interrupt();				
+				mThread.interrupt();
 			}
 		});
+		mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(R.string.cancel), new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				mThread.interrupt();
+			}
+		});
+		mLoadingDialog.show();
 		mThread = new Thread() {
 			public void run() {
 				String ssid = "", bssid = "", towers = "";
@@ -468,7 +477,7 @@ public class MapData extends MapActivity {
 			dialog.setNegativeButton(mContext.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					dialog.cancel();					
+					dialog.cancel();
 				}
 			});
 			dialog.show();

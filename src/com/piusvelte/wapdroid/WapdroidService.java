@@ -239,7 +239,7 @@ public class WapdroidService extends Service {
 		}
 		public void manualOverride() throws RemoteException {
 			Log.v(TAG,"manual override");
-			mManualOverride = false;
+			mManualOverride = true;
 		}
 	};
 	
