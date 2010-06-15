@@ -20,6 +20,8 @@
 
 package com.piusvelte.wapdroid;
 
+import com.admob.android.ads.AdListener;
+import com.admob.android.ads.AdView;
 import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
@@ -39,7 +41,7 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageData extends ListActivity {
+public class ManageData extends ListActivity implements AdListener {
 	private WapdroidDbAdapter mDbHelper;
 	private int mNetwork = 0, mCid;
 	private static final int MANAGE_ID = Menu.FIRST;
@@ -270,4 +272,28 @@ public class ManageData extends ListActivity {
 
 		public void inRange(boolean inrange) throws RemoteException {}
 	};
+
+	@Override
+	public void onFailedToReceiveAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onFailedToReceiveRefreshedAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReceiveAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReceiveRefreshedAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 }

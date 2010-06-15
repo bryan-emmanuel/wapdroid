@@ -76,19 +76,19 @@ containing a value of this type.
         public static final int statuson=0x7f020006;
     }
     public static final class id {
-        public static final int ad=0x7f08000c;
+        public static final int ad=0x7f080005;
         public static final int button_donate=0x7f080000;
         public static final int cell_row_CID=0x7f080001;
         public static final int cell_row_LAC=0x7f080002;
         public static final int cell_row_range=0x7f080003;
         public static final int cell_row_status=0x7f080004;
-        public static final int field_CID=0x7f080007;
-        public static final int field_LAC=0x7f080008;
-        public static final int field_battery=0x7f08000b;
-        public static final int field_signal=0x7f080009;
-        public static final int field_status=0x7f08000a;
-        public static final int field_wifiBSSID=0x7f080006;
-        public static final int field_wifiState=0x7f080005;
+        public static final int field_CID=0x7f080008;
+        public static final int field_LAC=0x7f080009;
+        public static final int field_battery=0x7f08000c;
+        public static final int field_signal=0x7f08000a;
+        public static final int field_status=0x7f08000b;
+        public static final int field_wifiBSSID=0x7f080007;
+        public static final int field_wifiState=0x7f080006;
         public static final int mapview=0x7f08000d;
         public static final int network_row_BSSID=0x7f08000f;
         public static final int network_row_SSID=0x7f08000e;

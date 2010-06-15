@@ -48,6 +48,8 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.admob.android.ads.AdListener;
+import com.admob.android.ads.AdView;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapActivity;
@@ -57,7 +59,7 @@ import com.google.android.maps.Overlay;
 import com.google.android.maps.OverlayItem;
 import com.google.android.maps.Projection;
 
-public class MapData extends MapActivity {
+public class MapData extends MapActivity implements AdListener {
 	private static final int REFRESH_ID = Menu.FIRST;
 	public static final String OPERATOR = "operator";
 	public static final String CARRIER = "carrier";
@@ -483,5 +485,29 @@ public class MapData extends MapActivity {
 			dialog.show();
 			return true;
 		}
+	}
+
+	@Override
+	public void onFailedToReceiveAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onFailedToReceiveRefreshedAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReceiveAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReceiveRefreshedAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 }
