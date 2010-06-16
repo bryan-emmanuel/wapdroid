@@ -22,6 +22,8 @@ package com.piusvelte.wapdroid;
 
 import com.piusvelte.wapdroid.R;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
@@ -33,57 +35,79 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	private SharedPreferences mSharedPreferences;
 	private ServiceConn mServiceConn;
 	private Intent mServiceIntent;
-	
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-        getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
+		getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
 		addPreferencesFromResource(R.xml.preferences);
 		mSharedPreferences = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-		mServiceIntent = new Intent(this, WapdroidService.class);}
+		mServiceIntent = new Intent(this, WapdroidService.class);
+	}
 
-    @Override
-    public void onPause() {
-    	super.onPause();
-    	mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
-   		if (mServiceConn != null) releaseService();}
-    
 	@Override
-    public void onResume() {
-    	super.onResume();
-        mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
-        if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
-        	startService(mServiceIntent);
-        	if (mServiceConn == null) captureService();}}
-	
+	public void onPause() {
+		super.onPause();
+		mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+		if (mServiceConn != null) releaseService();
+	}
+
+	@Override
+	public void onResume() {
+		super.onResume();
+		mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
+		if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
+			startService(mServiceIntent);
+			if (mServiceConn == null) captureService();
+		}
+	}
+
 	public void captureService() {
-    	mServiceConn = new ServiceConn();
-    	android.util.Log.v("Wapdroid", "bindService");
-    	bindService(mServiceIntent, mServiceConn, BIND_AUTO_CREATE);}
-	
+		mServiceConn = new ServiceConn();
+		android.util.Log.v("Wapdroid", "bindService");
+		bindService(mServiceIntent, mServiceConn, BIND_AUTO_CREATE);
+	}
+
 	public void releaseService() {
-    	android.util.Log.v("Wapdroid", "unbindService");
-   		unbindService(mServiceConn);
-   		mServiceConn = null;}
-	
+		android.util.Log.v("Wapdroid", "unbindService");
+		unbindService(mServiceConn);
+		mServiceConn = null;
+	}
+
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
 			if (sharedPreferences.getBoolean(key, true)) {
-		    	android.util.Log.v("Wapdroid", "startService");
+				android.util.Log.v("Wapdroid", "startService");
+				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+				dialog.setMessage(R.string.background_info);
+				dialog.setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface arg0, int arg1) {
+						arg0.cancel();
+					}
+				});
+				dialog.show();
 				startService(mServiceIntent);
-				captureService();}
+				captureService();
+			}
 			else {
 				releaseService();
-		    	android.util.Log.v("Wapdroid", "stopService");
-				stopService(mServiceIntent);}}
+				android.util.Log.v("Wapdroid", "stopService");
+				stopService(mServiceIntent);
+			}
+		}
 		else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
 			try {
 				mServiceConn.mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), true),
-					Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "30000")),
-					sharedPreferences.getBoolean(getString(R.string.key_notify), true),
-					sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
-					sharedPreferences.getBoolean(getString(R.string.key_led), false),
-					sharedPreferences.getBoolean(getString(R.string.key_ringtone), false),
-					sharedPreferences.getBoolean(getString(R.string.key_battery_override), false),
-					Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_battery_percentage), "30")));}
-			catch (RemoteException e) {}}}}
+						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "30000")),
+						sharedPreferences.getBoolean(getString(R.string.key_notify), true),
+						sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
+						sharedPreferences.getBoolean(getString(R.string.key_led), false),
+						sharedPreferences.getBoolean(getString(R.string.key_ringtone), false),
+						sharedPreferences.getBoolean(getString(R.string.key_battery_override), false),
+						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_battery_percentage), "30")));
+			}
+			catch (RemoteException e) {}
+		}
+	}
+}

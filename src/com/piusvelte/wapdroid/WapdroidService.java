@@ -68,7 +68,6 @@ public class WapdroidService extends Service {
 	mVibrate,
 	mLed,
 	mRingtone,
-	mEnableWifi = true,
 	mRelease = false,
 	mManualOverride = false;
 	private AlarmManager mAlarmMgr;
@@ -132,7 +131,7 @@ public class WapdroidService extends Service {
 					mRelease = true;
 				}
 				// ignore unknown
-				if (intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4) != WifiManager.WIFI_STATE_UNKNOWN) wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
+				wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
 				if (mRelease) ManageWakeLocks.release();
 			}
 		}		
@@ -219,7 +218,6 @@ public class WapdroidService extends Service {
 						mWapdroidUI.setSignalStrength(mRssi);
 						mWapdroidUI.setCells(cellsQuery());
 						mWapdroidUI.setBattery(mLastBattPerc);
-						mWapdroidUI.inRange(mEnableWifi);
 					}
 					catch (RemoteException e) {}
 				}
@@ -460,29 +458,18 @@ public class WapdroidService extends Service {
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		if ((mCid != WapdroidDbAdapter.UNKNOWN_CID) && (mDbHelper != null)) {
 			mDbHelper.open();
-			mEnableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
-			Log.v(TAG,"cellInRange:"+Boolean.toString(mEnableWifi));
-			if (mWapdroidUI != null) {
-				try {
-					mWapdroidUI.inRange(mEnableWifi);
-				}
-				catch (RemoteException e) {}
-			}
+			boolean enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
+			Log.v(TAG,"cellInRange:"+Boolean.toString(enableWifi));
 			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
-			else if (mManageWifi && !mManualOverride && (mEnableWifi || (mLastBattPerc >= mBatteryLimit))) {
+			else if (mManageWifi && !mManualOverride && (enableWifi || (mLastBattPerc >= mBatteryLimit))) {
 				for (NeighboringCellInfo n : mNeighboringCells) {
 					int cid = n.getCid() > 0 ? n.getCid() : WapdroidDbAdapter.UNKNOWN_CID,
 					lac = n.getLac() > 0 ? n.getLac() : WapdroidDbAdapter.UNKNOWN_CID,
 					rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
-					if (mEnableWifi && (cid != WapdroidDbAdapter.UNKNOWN_CID)) mEnableWifi = mDbHelper.cellInRange(cid, lac, rssi);
+					if (enableWifi && (cid != WapdroidDbAdapter.UNKNOWN_CID)) enableWifi = mDbHelper.cellInRange(cid, lac, rssi);
 				}
-				Log.v(TAG,"neighborsInRange:"+Boolean.toString(mEnableWifi));
-				/* conditions:
-				 * 			enabled	enabling	disabling	disabled
-				 * enable	-		-			+			+
-				 * disable	+		+			-			-
-				 */
-				if ((mEnableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) setWifiState(mEnableWifi);
+				Log.v(TAG,"neighborsInRange:"+Boolean.toString(enableWifi));
+				if ((enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) setWifiState(enableWifi);
 			}
 			mDbHelper.close();
 		}
@@ -504,7 +491,7 @@ public class WapdroidService extends Service {
 		 *  when a low battery disabled occurs,
 		 *  register the wifi receiver in case the network is connected at the time
 		 */
-		Log.v(TAG, "enable wifi:"+Boolean.toString(mEnableWifi));
+		Log.v(TAG, "enable wifi:"+Boolean.toString(enable));
 		if (!enable && (mSsid != null)) {
 			if (mWifiReceiver == null) {
 				Log.v(TAG,"register wifi receiver");
@@ -584,7 +571,7 @@ public class WapdroidService extends Service {
 		 * when wifi enabled, register network receiver
 		 * when wifi not enabled, unregister network receiver
 		 */
-		if ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN) || ((state == WifiManager.WIFI_STATE_ENABLED) ^ (mLastWifiState == WifiManager.WIFI_STATE_ENABLED))) {
+		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
 			if (state == WifiManager.WIFI_STATE_ENABLED) {
 				// listen for a connection
 				Log.v(TAG,"wifi enabled");

@@ -269,8 +269,6 @@ public class ManageData extends ListActivity implements AdListener {
 		public void setCells(String cells) throws RemoteException {
 			mCells = cells;
 		}
-
-		public void inRange(boolean inrange) throws RemoteException {}
 	};
 
 	@Override

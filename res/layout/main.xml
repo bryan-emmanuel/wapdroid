@@ -25,7 +25,7 @@
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	android:background="@color/tertiary"
-	android:textSize="14dip">
+	android:textSize="16dip">
 	<TableLayout
 		android:background="@drawable/field"
 		android:layout_width="fill_parent"
@@ -93,17 +93,6 @@
 			<TextView
 				android:id="@+id/field_signal"
 		    	android:textColor="@color/secondary"
-				android:gravity="right"
-				android:text="@string/scanning"/>
-	    </TableRow>
-		<TableRow>
-			<TextView
-				android:textColor="@color/primary"
-				android:text="@string/status"/>
-			<TextView
-				android:id="@+id/field_status"
-		    	android:textColor="@color/primary"
-				android:textStyle="bold"
 				android:gravity="right"
 				android:text="@string/scanning"/>
 	    </TableRow>

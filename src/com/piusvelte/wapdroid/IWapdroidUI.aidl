@@ -26,5 +26,4 @@ interface IWapdroidUI {
 	void setCells(String cells);
 	void setBattery(int batteryPercentage);
 	void setWifiInfo(int state, String ssid, String bssid);
-	void setSignalStrength(int rssi);
-	void inRange(boolean inrange);}
+	void setSignalStrength(int rssi);}

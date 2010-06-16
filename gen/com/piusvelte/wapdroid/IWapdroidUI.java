@@ -102,15 +102,6 @@ this.setSignalStrength(_arg0);
 reply.writeNoException();
 return true;
 }
-case TRANSACTION_inRange:
-{
-data.enforceInterface(DESCRIPTOR);
-boolean _arg0;
-_arg0 = (0!=data.readInt());
-this.inRange(_arg0);
-reply.writeNoException();
-return true;
-}
 }
 return super.onTransact(code, data, reply, flags);
 }
@@ -222,21 +213,6 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public void inRange(boolean inrange) throws android.os.RemoteException
-{
-android.os.Parcel _data = android.os.Parcel.obtain();
-android.os.Parcel _reply = android.os.Parcel.obtain();
-try {
-_data.writeInterfaceToken(DESCRIPTOR);
-_data.writeInt(((inrange)?(1):(0)));
-mRemote.transact(Stub.TRANSACTION_inRange, _data, _reply, 0);
-_reply.readException();
-}
-finally {
-_reply.recycle();
-_data.recycle();
-}
-}
 }
 static final int TRANSACTION_setOperator = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
 static final int TRANSACTION_setCellInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
@@ -244,7 +220,6 @@ static final int TRANSACTION_setCells = (android.os.IBinder.FIRST_CALL_TRANSACTI
 static final int TRANSACTION_setBattery = (android.os.IBinder.FIRST_CALL_TRANSACTION + 3);
 static final int TRANSACTION_setWifiInfo = (android.os.IBinder.FIRST_CALL_TRANSACTION + 4);
 static final int TRANSACTION_setSignalStrength = (android.os.IBinder.FIRST_CALL_TRANSACTION + 5);
-static final int TRANSACTION_inRange = (android.os.IBinder.FIRST_CALL_TRANSACTION + 6);
 }
 public void setOperator(java.lang.String operator) throws android.os.RemoteException;
 public void setCellInfo(int cid, int lac) throws android.os.RemoteException;
@@ -252,5 +227,4 @@ public void setCells(java.lang.String cells) throws android.os.RemoteException;
 public void setBattery(int batteryPercentage) throws android.os.RemoteException;
 public void setWifiInfo(int state, java.lang.String ssid, java.lang.String bssid) throws android.os.RemoteException;
 public void setSignalStrength(int rssi) throws android.os.RemoteException;
-public void inRange(boolean inrange) throws android.os.RemoteException;
 }

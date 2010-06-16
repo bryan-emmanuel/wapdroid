@@ -84,15 +84,14 @@ containing a value of this type.
         public static final int cell_row_status=0x7f080004;
         public static final int field_CID=0x7f080008;
         public static final int field_LAC=0x7f080009;
-        public static final int field_battery=0x7f08000c;
+        public static final int field_battery=0x7f08000b;
         public static final int field_signal=0x7f08000a;
-        public static final int field_status=0x7f08000b;
         public static final int field_wifiBSSID=0x7f080007;
         public static final int field_wifiState=0x7f080006;
-        public static final int mapview=0x7f08000d;
-        public static final int network_row_BSSID=0x7f08000f;
-        public static final int network_row_SSID=0x7f08000e;
-        public static final int network_row_status=0x7f080010;
+        public static final int mapview=0x7f08000c;
+        public static final int network_row_BSSID=0x7f08000e;
+        public static final int network_row_SSID=0x7f08000d;
+        public static final int network_row_status=0x7f08000f;
     }
     public static final class layout {
         public static final int about=0x7f030000;
@@ -104,18 +103,20 @@ containing a value of this type.
         public static final int networks_list=0x7f030006;
     }
     public static final class string {
-        public static final int about=0x7f070039;
-        public static final int accessible=0x7f07003b;
+        public static final int about=0x7f07003b;
+        public static final int accessible=0x7f07003d;
         public static final int app_name=0x7f070009;
+        public static final int background_info=0x7f07003a;
         public static final int battery_override=0x7f070031;
         public static final int battery_percentage=0x7f070032;
         public static final int battery_remaining=0x7f070030;
         public static final int cancel=0x7f070035;
+        public static final int close=0x7f070039;
         public static final int colon=0x7f07002e;
         public static final int connected=0x7f070033;
         public static final int dbm=0x7f07002d;
-        public static final int gpl=0x7f07003a;
-        public static final int inaccessible=0x7f07003c;
+        public static final int gpl=0x7f07003c;
+        public static final int inaccessible=0x7f07003e;
         public static final int key_battery_override=0x7f070007;
         public static final int key_battery_percentage=0x7f070008;
         public static final int key_interval=0x7f070006;
@@ -146,7 +147,7 @@ containing a value of this type.
         public static final int label_wapdroidState=0x7f07000f;
         public static final int linefeed=0x7f070038;
         public static final int loading=0x7f07002b;
-        public static final int map=0x7f07003d;
+        public static final int map=0x7f07003f;
         public static final int map_cell=0x7f070037;
         public static final int map_network=0x7f070036;
         public static final int menu_deleteCell=0x7f070015;
