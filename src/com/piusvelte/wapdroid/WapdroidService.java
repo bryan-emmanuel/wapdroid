@@ -130,7 +130,6 @@ public class WapdroidService extends Service {
 					ManageWakeLocks.acquire(context);
 					mRelease = true;
 				}
-				// ignore unknown
 				wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
 				if (mRelease) ManageWakeLocks.release();
 			}
@@ -549,7 +548,6 @@ public class WapdroidService extends Service {
 	
 	private void createNotification(boolean enabled, boolean update) {
 		if (mManageWifi) {
-			Log.v(TAG,"notify:state:"+Integer.toString(mLastWifiState));
 			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
 			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
 			Intent i = new Intent(getBaseContext(), WapdroidUI.class);
@@ -557,7 +555,6 @@ public class WapdroidService extends Service {
 			notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
 			notification.flags |= Notification.FLAG_NO_CLEAR;
 			if (update) {
-				Log.v(TAG,"notify, audible");
 				if (mVibrate) notification.defaults |= Notification.DEFAULT_VIBRATE;
 				if (mLed) notification.defaults |= Notification.DEFAULT_LIGHTS;
 				if (mRingtone) notification.defaults |= Notification.DEFAULT_SOUND;
@@ -585,7 +582,7 @@ public class WapdroidService extends Service {
 					registerReceiver(mNetworkReceiver, f);
 				}
 			}
-			else {
+			else if (state != WifiManager.WIFI_STATE_ENABLING) {
 				// network receiver isn't need if wifi is off
 				Log.v(TAG,"wifi not enabled");
 				if (mNetworkReceiver != null) {
@@ -594,11 +591,11 @@ public class WapdroidService extends Service {
 					mNetworkReceiver = null;
 				}
 			}
-			if (mNotify) {
-				// onCreate, create the initial notification, else update
-				if (mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN) createNotification((state == WifiManager.WIFI_STATE_ENABLED), false);
-				else if ((state == WifiManager.WIFI_STATE_DISABLED) || (state == WifiManager.WIFI_STATE_ENABLED)) createNotification((state == WifiManager.WIFI_STATE_ENABLED), true);
-			}
+			// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
+			if (mNotify
+					&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
+							|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
+							|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED))))  createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
 			mLastWifiState = state;
 			if (mWapdroidUI != null) {
 				try {
