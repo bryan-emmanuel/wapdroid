@@ -549,6 +549,7 @@ public class WapdroidService extends Service {
 	
 	private void createNotification(boolean enabled, boolean update) {
 		if (mManageWifi) {
+			Log.v(TAG,"notify:state:"+Integer.toString(mLastWifiState));
 			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
 			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
 			Intent i = new Intent(getBaseContext(), WapdroidUI.class);
@@ -556,6 +557,7 @@ public class WapdroidService extends Service {
 			notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
 			notification.flags |= Notification.FLAG_NO_CLEAR;
 			if (update) {
+				Log.v(TAG,"notify, audible");
 				if (mVibrate) notification.defaults |= Notification.DEFAULT_VIBRATE;
 				if (mLed) notification.defaults |= Notification.DEFAULT_LIGHTS;
 				if (mRingtone) notification.defaults |= Notification.DEFAULT_SOUND;
