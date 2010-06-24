@@ -465,11 +465,13 @@ public class MapData extends MapActivity implements AdListener {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					if (pair == 0) {
-						mDbHelper.deleteNetwork(network);
+						Log.v(TAG,"deleteNetwork:"+Integer.toString(network));
+						//mDbHelper.deleteNetwork(network);
 						finish();
 					}
 					else {
-						mDbHelper.deletePair(network, pair);
+						Log.v(TAG,"deletePair:"+Integer.toString(network)+","+Integer.toString(network));
+						//mDbHelper.deletePair(network, pair);
 						mOverlays.remove(item);
 						mMView.invalidate();					
 						dialog.cancel();

@@ -25,8 +25,10 @@ import com.admob.android.ads.AdView;
 import com.piusvelte.wapdroid.R;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.ComponentName;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -129,8 +131,19 @@ public class WapdroidUI extends Activity implements AdListener {
 	public void onResume() {
 		super.onResume();
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-		Log.v(TAG,"UI resuming,"+(prefs.getBoolean(getString(R.string.key_manageWifi), true)?"startService":"bind service only"));
-		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
+		Log.v(TAG,"UI resuming,"+(prefs.getBoolean(getString(R.string.key_manageWifi), false)?"startService":"bind service only"));
+		if (prefs.getBoolean(getString(R.string.key_manageWifi), false)) startService(new Intent(this, WapdroidService.class));
+		else {
+			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+			dialog.setMessage(R.string.service_info);
+			dialog.setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface arg0, int arg1) {
+					arg0.cancel();
+				}
+			});
+			dialog.show();			
+		}
 		mServiceConn = new ServiceConn(mWapdroidUI);
 		bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
 	}

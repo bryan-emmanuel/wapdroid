@@ -326,7 +326,7 @@ public class WapdroidService extends Service {
 		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
 		SharedPreferences prefs = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		// initialize preferences, updated by UI
-		mManageWifi = prefs.getBoolean(getString(R.string.key_manageWifi), true);
+		mManageWifi = prefs.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) prefs.getString(getString(R.string.key_interval), "30000"));
 		mNotify = prefs.getBoolean(getString(R.string.key_notify), false);
 		if (mNotify) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);

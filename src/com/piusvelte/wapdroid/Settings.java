@@ -96,11 +96,11 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 				stopService(mServiceIntent);
 			}
 		}
-		else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
+		else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false)) {
 			try {
-				mServiceConn.mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), true),
+				mServiceConn.mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false),
 						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "30000")),
-						sharedPreferences.getBoolean(getString(R.string.key_notify), true),
+						sharedPreferences.getBoolean(getString(R.string.key_notify), false),
 						sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
 						sharedPreferences.getBoolean(getString(R.string.key_led), false),
 						sharedPreferences.getBoolean(getString(R.string.key_ringtone), false),
