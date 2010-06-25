@@ -193,10 +193,12 @@ public class WapdroidService extends Service {
 		public void setCallback(IBinder mWapdroidUIBinder)
 		throws RemoteException {
 			if (mWapdroidUIBinder != null) {
-				mManualOverride = false;
 				if (ManageWakeLocks.hasLock()) ManageWakeLocks.release();
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 				if (mWapdroidUI != null) {
+					// may have returned from wifi systems
+					Log.v(TAG,"mManualOverride = false;");
+					mManualOverride = false;
 					// register battery receiver for ui, if not already registered
 					if (mBatteryReceiver == null) {
 						Log.v(TAG,"register battery receiver for UI");
@@ -235,7 +237,7 @@ public class WapdroidService extends Service {
 			}
 		}
 		public void manualOverride() throws RemoteException {
-			Log.v(TAG,"manual override");
+			Log.v(TAG,"mManualOverride = true;");
 			mManualOverride = true;
 		}
 	};

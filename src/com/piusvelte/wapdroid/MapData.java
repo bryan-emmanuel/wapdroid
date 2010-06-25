@@ -453,6 +453,8 @@ public class MapData extends MapActivity implements AdListener {
 		}
 		@Override
 		protected boolean onTap(int i) {
+			Log.v(TAG,"onTap("+Integer.toString(i)+")");
+			Log.v(TAG,"mOverlays.size()"+Integer.toString(mOverlays.size()));
 			final int item = i;
 			WapdroidOverlayItem overlay = mOverlays.get(item);
 			final int network = overlay.getNetwork();
@@ -464,16 +466,19 @@ public class MapData extends MapActivity implements AdListener {
 			dialog.setPositiveButton(mContext.getResources().getString(pair == 0 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell), new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
+					Log.v(TAG,"onClick("+Integer.toString(which)+")");
 					if (pair == 0) {
 						Log.v(TAG,"deleteNetwork:"+Integer.toString(network));
 						//mDbHelper.deleteNetwork(network);
 						finish();
 					}
 					else {
-						Log.v(TAG,"deletePair:"+Integer.toString(network)+","+Integer.toString(network));
+						Log.v(TAG,"deletePair:"+Integer.toString(network)+","+Integer.toString(pair));
 						//mDbHelper.deletePair(network, pair);
+						Log.v(TAG,"mOverlays.size()"+Integer.toString(mOverlays.size()));
+						Log.v(TAG,"mOverlays.remove("+Integer.toString(item)+")");
 						mOverlays.remove(item);
-						mMView.invalidate();					
+						mMView.invalidate();
 						dialog.cancel();
 					}
 				}
