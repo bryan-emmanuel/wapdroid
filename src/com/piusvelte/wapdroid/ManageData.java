@@ -32,7 +32,6 @@ import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -54,7 +53,6 @@ public class ManageData extends ListActivity implements AdListener {
 	private int mFilter = WapdroidDbAdapter.FILTER_ALL;
 	private String mCells = "", mOperator = "", mBssid = "";
 	private ServiceConn mServiceConn;
-	private static final String TAG = "Wapdroid";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -205,7 +203,6 @@ public class ManageData extends ListActivity implements AdListener {
 		Intent intent;
 		switch(action) {
 		case MANAGE_ID:
-			Log.v(TAG,"manage:"+Integer.toString(id));
 			intent = new Intent(this, ManageData.class);
 			intent.putExtra(WapdroidDbAdapter.TABLE_NETWORKS, id);
 			intent.putExtra(WapdroidDbAdapter.TABLE_CELLS, mCells);
@@ -213,7 +210,6 @@ public class ManageData extends ListActivity implements AdListener {
 			return;
 		case MAP_ID:
 			// open gmaps
-			Log.v(TAG,"map:"+Integer.toString(id));
 			intent = new Intent(this, MapData.class);
 			intent.putExtra(WapdroidDbAdapter.TABLE_NETWORKS, (int) (mNetwork == 0 ? id : mNetwork));
 			if (mNetwork != 0) intent.putExtra(WapdroidDbAdapter.TABLE_PAIRS, id);
@@ -221,7 +217,6 @@ public class ManageData extends ListActivity implements AdListener {
 			startActivity(intent);
 			return;
 		case DELETE_ID:
-			Log.v(TAG,"delete:"+Integer.toString(id));
 			if (mNetwork == 0) mDbHelper.deleteNetwork(id);
 			else mDbHelper.deletePair(mNetwork, id);
 			try {

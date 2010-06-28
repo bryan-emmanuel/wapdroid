@@ -43,7 +43,6 @@ import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
-import android.util.Log;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
@@ -73,7 +72,6 @@ public class WapdroidService extends Service {
 	private AlarmManager mAlarmMgr;
 	private PendingIntent mPendingIntent;
 	private IWapdroidUI mWapdroidUI;
-	private static final String TAG = "Wapdroid";
 	private BroadcastReceiver mScreenReceiver, mNetworkReceiver, mWifiReceiver, mBatteryReceiver;
 	private PhoneStateListener mPhoneListener;
 
@@ -81,13 +79,11 @@ public class WapdroidService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-				Log.v(TAG,"ACTION_SCREEN_ON");
 				mAlarmMgr.cancel(mPendingIntent);
 				ManageWakeLocks.release();
 				context.startService(new Intent(context, WapdroidService.class));
 			}
 			else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-				Log.v(TAG, "ACTION_SCREEN_OFF");
 				mManualOverride = false;
 				if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
 			}
@@ -101,9 +97,7 @@ public class WapdroidService extends Service {
 				NetworkInfo i = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 				if (i.isConnected() ^ (mSsid != null)) {
 					// a connection was gained or lost
-					Log.v(TAG,"NETWORK_STATE_CHANGED_ACTION");
 					if (!ManageWakeLocks.hasLock()) {
-						Log.v(TAG,"grab a lock");
 						ManageWakeLocks.acquire(context);
 						mRelease = true;
 					}
@@ -125,7 +119,6 @@ public class WapdroidService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-				Log.v(TAG,"WIFI_STATE_CHANGED_ACTION");
 				if (!ManageWakeLocks.hasLock()) {
 					ManageWakeLocks.acquire(context);
 					mRelease = true;
@@ -140,9 +133,7 @@ public class WapdroidService extends Service {
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
-				Log.v(TAG,"ACTION_BATTERY_CHANGED");
 				int currectBattPerc = Math.round(intent.getIntExtra(BatteryManager.EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BatteryManager.EXTRA_SCALE, 100));
-				Log.v(TAG,"battery:"+Integer.toString(currectBattPerc));
 				// check if the threshold was crossed
 				if (mManageWifi && !mManualOverride && (currectBattPerc < mBatteryLimit) && (mLastBattPerc >= mBatteryLimit)) {
 					setWifiState(false);
@@ -197,11 +188,9 @@ public class WapdroidService extends Service {
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 				if (mWapdroidUI != null) {
 					// may have returned from wifi systems
-					Log.v(TAG,"mManualOverride = false;");
 					mManualOverride = false;
 					// register battery receiver for ui, if not already registered
 					if (mBatteryReceiver == null) {
-						Log.v(TAG,"register battery receiver for UI");
 						mBatteryReceiver = new BatteryReceiver();
 						IntentFilter f = new IntentFilter();
 						f.addAction(Intent.ACTION_BATTERY_CHANGED);
@@ -225,7 +214,6 @@ public class WapdroidService extends Service {
 				else {
 					// stop any receivers or listeners that were starting just for ui
 					if ((mBatteryReceiver != null) && (mBatteryLimit == 0)) {
-						Log.v(TAG,"unregister battery receiver for UI");
 						unregisterReceiver(mBatteryReceiver);
 						mBatteryReceiver = null;
 					}
@@ -237,18 +225,15 @@ public class WapdroidService extends Service {
 			}
 		}
 		public void manualOverride() throws RemoteException {
-			Log.v(TAG,"mManualOverride = true;");
 			mManualOverride = true;
 		}
 	};
 	
 	class PhoneListener extends PhoneStateListener {
 		public void onCellLocationChanged(CellLocation location) {
-			Log.v(TAG,"onCellLocationChanged");
 			getCellInfo(location);
 		}
 		public void onSignalStrengthChanged(int asu) {
-			Log.v(TAG,"onSignalStrengthChanged");
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
 				if (asu != WapdroidDbAdapter.UNKNOWN_RSSI) mRssi = 2 * asu - 113;
 				signalStrengthChanged();
@@ -256,7 +241,6 @@ public class WapdroidService extends Service {
 			else release();
 		}
 		public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-			Log.v(TAG,"onSignalStrengthsChanged");
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
 				if (signalStrength.getGsmSignalStrength() != WapdroidDbAdapter.UNKNOWN_RSSI) {
 					mRssi = 2 * signalStrength.getGsmSignalStrength() - 113;
@@ -300,7 +284,6 @@ public class WapdroidService extends Service {
 		 * others should release the lock and cancel the alarm
 		 */
 		// setting the wifi state is done in onCreate also, but it's need here for running in the background
-		Log.v(TAG,"initializing the service");
 		//the receivers should handle this
 		//mWifiState = mWifiManager.getWifiState();
 		//wifiStateChanged(mWifiState == WifiManager.WIFI_STATE_ENABLED);
@@ -378,7 +361,6 @@ public class WapdroidService extends Service {
 		mBatteryLimit = limit;
 		if (mBatteryLimit > 0) {
 			if (mBatteryReceiver == null) {
-				Log.v(TAG,"register battery receiver");
 				mBatteryReceiver = new BatteryReceiver();
 				IntentFilter f = new IntentFilter();
 				f.addAction(Intent.ACTION_BATTERY_CHANGED);
@@ -386,7 +368,6 @@ public class WapdroidService extends Service {
 			}
 		}
 		else if (mBatteryReceiver != null){
-			Log.v(TAG,"unregister battery receiver");
 			unregisterReceiver(mBatteryReceiver);
 			mBatteryReceiver = null;
 		}
@@ -449,7 +430,6 @@ public class WapdroidService extends Service {
 	}
 
 	private void signalStrengthChanged() {
-		Log.v(TAG,"signalStrengthChanged");
 		if (mWapdroidUI != null) {
 			try {
 				mWapdroidUI.setSignalStrength(mRssi);
@@ -460,7 +440,6 @@ public class WapdroidService extends Service {
 		if ((mCid != WapdroidDbAdapter.UNKNOWN_CID) && (mDbHelper != null)) {
 			mDbHelper.open();
 			boolean enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
-			Log.v(TAG,"cellInRange:"+Boolean.toString(enableWifi));
 			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
 			else if (mManageWifi && !mManualOverride && (enableWifi || (mLastBattPerc >= mBatteryLimit))) {
 				for (NeighboringCellInfo n : mNeighboringCells) {
@@ -469,7 +448,6 @@ public class WapdroidService extends Service {
 					rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
 					if (enableWifi && (cid != WapdroidDbAdapter.UNKNOWN_CID)) enableWifi = mDbHelper.cellInRange(cid, lac, rssi);
 				}
-				Log.v(TAG,"neighborsInRange:"+Boolean.toString(enableWifi));
 				if ((enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) setWifiState(enableWifi);
 			}
 			mDbHelper.close();
@@ -492,10 +470,8 @@ public class WapdroidService extends Service {
 		 *  when a low battery disabled occurs,
 		 *  register the wifi receiver in case the network is connected at the time
 		 */
-		Log.v(TAG, "enable wifi:"+Boolean.toString(enable));
 		if (!enable && (mSsid != null)) {
 			if (mWifiReceiver == null) {
-				Log.v(TAG,"register wifi receiver");
 				mWifiReceiver = new WifiReceiver();
 				IntentFilter f = new IntentFilter();
 				f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
@@ -516,7 +492,6 @@ public class WapdroidService extends Service {
 		mBssid = connected ? mWifiManager.getConnectionInfo().getBSSID() : null;
 		if (mSsid != null) {
 			// connected, implies that wifi is on
-			Log.v(TAG,"network connected:"+mSsid);
 			if ((mBssid != null) && (mCid != WapdroidDbAdapter.UNKNOWN_CID) && (mDbHelper != null)) {
 				mDbHelper.open();
 				updateRange();
@@ -524,16 +499,13 @@ public class WapdroidService extends Service {
 			}
 			// the network receiver will be registered if connected
 			if (mWifiReceiver != null) {
-				Log.v(TAG,"unregister wifi receiver");
 				unregisterReceiver(mWifiReceiver);
 				mWifiReceiver = null;
 			}
 		}
 		else {
 			// if there's no connection, then fallback onto wifi receiver
-			Log.v(TAG,"network not connected");
 			if (mWifiReceiver == null) {
-				Log.v(TAG,"register wifi receiver");
 				mWifiReceiver = new WifiReceiver();
 				IntentFilter f = new IntentFilter();
 				f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
@@ -575,9 +547,7 @@ public class WapdroidService extends Service {
 		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
 			if (state == WifiManager.WIFI_STATE_ENABLED) {
 				// listen for a connection
-				Log.v(TAG,"wifi enabled");
 				if (mNetworkReceiver == null) {
-					Log.v(TAG,"register network receiver");
 					mNetworkReceiver = new NetworkReceiver();
 					IntentFilter f = new IntentFilter();
 					f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -586,9 +556,7 @@ public class WapdroidService extends Service {
 			}
 			else if (state != WifiManager.WIFI_STATE_ENABLING) {
 				// network receiver isn't need if wifi is off
-				Log.v(TAG,"wifi not enabled");
 				if (mNetworkReceiver != null) {
-					Log.v(TAG,"unregister network receiver");
 					unregisterReceiver(mNetworkReceiver);
 					mNetworkReceiver = null;
 				}

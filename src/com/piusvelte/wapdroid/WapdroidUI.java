@@ -35,7 +35,6 @@ import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -52,7 +51,6 @@ public class WapdroidUI extends Activity implements AdListener {
 	private ServiceConn mServiceConn;
 	private String mBssid = "", mCells = "";
 	private int mCid = 0;
-	private static final String TAG = "Wapdroid";
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -131,7 +129,6 @@ public class WapdroidUI extends Activity implements AdListener {
 	public void onResume() {
 		super.onResume();
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-		Log.v(TAG,"UI resuming,"+(prefs.getBoolean(getString(R.string.key_manageWifi), false)?"startService":"bind service only"));
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), false)) startService(new Intent(this, WapdroidService.class));
 		else {
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);

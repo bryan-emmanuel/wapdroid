@@ -210,7 +210,7 @@ public class MapData extends MapActivity implements AdListener {
 			postMethod.setEntity(new StringEntity(query));
 		}
 		catch (UnsupportedEncodingException e) {
-			Log.v(TAG, "post:setEntity error: "+e);
+			Log.e(TAG, "post:setEntity error: "+e);
 		}
 		postMethod.setHeader("Accept", "application/json");
 		postMethod.setHeader("Content-type", "application/json");
@@ -218,10 +218,10 @@ public class MapData extends MapActivity implements AdListener {
 			response = httpClient.execute(postMethod, responseHandler);
 		}
 		catch (ClientProtocolException e) {
-			Log.v(TAG, "post:ClientProtocolException error: "+e);
+			Log.e(TAG, "post:ClientProtocolException error: "+e);
 		}
 		catch (IOException e) {
-			Log.v(TAG, "post:IOException error: "+e);
+			Log.e(TAG, "post:IOException error: "+e);
 		}
 		if (mToken == "") {
 			mToken = getValue(response, access_token);
@@ -232,8 +232,6 @@ public class MapData extends MapActivity implements AdListener {
 		}
 		int lat = parseCoordinate(response, latitude);
 		int lon = parseCoordinate(response, longitude);
-		Log.v(TAG,"lat:"+Integer.toString(lat));
-		Log.v(TAG,"lon:"+Integer.toString(lon));
 		return new GeoPoint(lat, lon);
 	}
 
@@ -274,7 +272,6 @@ public class MapData extends MapActivity implements AdListener {
 				int ct = pairs.getCount();
 				if (ct > 0) {
 					mCell_alpha = Math.round(mNetwork_alpha / ct);
-					Log.v(TAG, "pair count: " + Integer.toString(ct));
 					pairs.moveToFirst();
 					while (!interrupted() && !pairs.isAfterLast()) {
 						ctr++;
@@ -284,7 +281,7 @@ public class MapData extends MapActivity implements AdListener {
 						rssi_max = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MAX)),
 						rssi_avg = Math.round((rssi_min + rssi_max) / 2),
 						rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
-						mMsg = WapdroidDbAdapter.PAIRS_CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
+						mMsg = mContext.getResources().getString(R.string.cellwarning) + WapdroidDbAdapter.PAIRS_CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
 						mHandler.post(mUpdtDialog);
 						String tower = "{" + addInt(cell_id, cid) + "," + addInt(location_area_code, lac) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
 						if (rssi_avg != WapdroidDbAdapter.UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
@@ -293,8 +290,6 @@ public class MapData extends MapActivity implements AdListener {
 						if (bssid == "") bssid = pairs.getString(pairs.getColumnIndex(WapdroidDbAdapter.NETWORKS_BSSID));
 						if (towers != "") towers += ",";
 						towers += tower;
-						Log.v(TAG,"cid:"+Integer.toString(cid));
-						Log.v(TAG,"lac:"+Integer.toString(pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC))));
 						point = getGeoPoint(bldRequest(tower, bssid));
 						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL,
 								mContext.getResources().getString(R.string.label_CID) + Integer.toString(cid)
@@ -310,7 +305,6 @@ public class MapData extends MapActivity implements AdListener {
 						Location location = new Location("");
 						location.setLatitude(point.getLatitudeE6()/1e6);
 						location.setLongitude(point.getLongitudeE6()/1e6);
-						Log.v(TAG,"location:"+Double.toString(location.getLatitude())+","+Double.toString(location.getLongitude()));
 						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_NETWORK, ssid, mNetwork), mContext.getResources().getDrawable(R.drawable.network));
 						pinOverlays.setDistances(location);
 					}
@@ -442,19 +436,12 @@ public class MapData extends MapActivity implements AdListener {
 					int radius = Math.round(location.distanceTo(cell));
 					double scale = radius / (Math.abs(item.getRssiAvg()) - 51);
 					item.setRadius(radius);
-					Log.v(TAG,"lat:"+Double.toString(gpt.getLatitudeE6()/1e6));
-					Log.v(TAG,"lat:"+Double.toString(gpt.getLongitudeE6()/1e6));
-					Log.v(TAG,"rad:"+Integer.toString(radius));
-					Log.v(TAG,"scl:"+Double.toString(scale));
-					Log.v(TAG,"stk:"+Long.toString(Math.round(item.getRssiRange() * scale)));
 					item.setStroke(Math.round(item.getRssiRange() * scale));
 				}
 			}
 		}
 		@Override
 		protected boolean onTap(int i) {
-			Log.v(TAG,"onTap("+Integer.toString(i)+")");
-			Log.v(TAG,"mOverlays.size()"+Integer.toString(mOverlays.size()));
 			final int item = i;
 			WapdroidOverlayItem overlay = mOverlays.get(item);
 			final int network = overlay.getNetwork();
@@ -468,17 +455,14 @@ public class MapData extends MapActivity implements AdListener {
 				public void onClick(DialogInterface dialog, int which) {
 					Log.v(TAG,"onClick("+Integer.toString(which)+")");
 					if (pair == 0) {
-						Log.v(TAG,"deleteNetwork:"+Integer.toString(network));
-						//mDbHelper.deleteNetwork(network);
+						mDbHelper.deleteNetwork(network);
 						finish();
 					}
 					else {
-						Log.v(TAG,"deletePair:"+Integer.toString(network)+","+Integer.toString(pair));
-						//mDbHelper.deletePair(network, pair);
-						Log.v(TAG,"mOverlays.size()"+Integer.toString(mOverlays.size()));
-						Log.v(TAG,"mOverlays.remove("+Integer.toString(item)+")");
+						mDbHelper.deletePair(network, pair);
 						mOverlays.remove(item);
 						mMView.invalidate();
+						mapData();
 						dialog.cancel();
 					}
 				}

@@ -3,7 +3,6 @@ package com.piusvelte.wapdroid;
 import android.content.Context;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.util.Log;
 
 public class ManageWakeLocks {
 	private static final String TAG = "Wapdroid";
@@ -16,10 +15,8 @@ public class ManageWakeLocks {
 			sWakeLock.release();}
 		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
 		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-		Log.v(TAG,"acquire wakelock");
 		sWakeLock.acquire();}
 	static void release() {
 		if (hasLock()) {
-			Log.v(TAG,"release wakelock");
 			sWakeLock.release();
 			sWakeLock = null;}}}
