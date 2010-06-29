@@ -38,9 +38,7 @@ import android.os.Build;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.telephony.CellLocation;
-import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
-import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 
@@ -113,8 +111,7 @@ public class WapdroidService extends Service {
 						if (!i.isConnected()) {
 							mAlarmMgr.cancel(mPendingIntent);
 							context.startService(new Intent(context, WapdroidService.class));
-						}
-						else release();
+						} else release();
 					}
 				}
 			}
@@ -147,8 +144,7 @@ public class WapdroidService extends Service {
 						mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 						mPhoneListener = null;
 					}
-				}
-				else if ((currectBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit) && (mPhoneListener == null)) {
+				} else if ((currectBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit) && (mPhoneListener == null)) {
 					mPhoneListener = new PhoneListener();
 					mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 				}
@@ -156,8 +152,7 @@ public class WapdroidService extends Service {
 				if (mWapdroidUI != null) {
 					try {
 						mWapdroidUI.setBattery(mLastBattPerc);
-					}
-					catch (RemoteException e) {}
+					} catch (RemoteException e) {}
 				}
 			}
 		}
@@ -171,8 +166,7 @@ public class WapdroidService extends Service {
 				if (manage && notify) {
 					if (mNotificationManager == null) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 					createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
-				}
-				else {
+				} else {
 					mNotificationManager.cancel(NOTIFY_ID);
 					mNotificationManager = null;
 				}
@@ -214,10 +208,8 @@ public class WapdroidService extends Service {
 						mWapdroidUI.setSignalStrength(mRssi);
 						mWapdroidUI.setCells(cellsQuery());
 						mWapdroidUI.setBattery(mLastBattPerc);
-					}
-					catch (RemoteException e) {}
-				}
-				else {
+					} catch (RemoteException e) {}
+				} else {
 					// stop any receivers or listeners that were starting just for ui
 					if ((mBatteryReceiver != null) && (mBatteryLimit == 0)) {
 						unregisterReceiver(mBatteryReceiver);
@@ -243,8 +235,7 @@ public class WapdroidService extends Service {
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
 				if (asu != WapdroidDbAdapter.UNKNOWN_RSSI) mRssi = 2 * asu - 113;
 				signalStrengthChanged();
-			}
-			else release();
+			} else release();
 		}
 		public void onSignalStrengthsChanged(SignalStrength signalStrength) {
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
@@ -252,14 +243,12 @@ public class WapdroidService extends Service {
 					mRssi = 2 * signalStrength.getGsmSignalStrength() - 113;
 					signalStrengthChanged();
 				}
-			}
-			else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
+			} else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
 				mRssi = signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ?
 						signalStrength.getCdmaDbm()
 						: signalStrength.getEvdoDbm();
 						signalStrengthChanged();
-			}
-			else release();
+			} else release();
 		}
 	};
 
@@ -372,8 +361,7 @@ public class WapdroidService extends Service {
 				f.addAction(Intent.ACTION_BATTERY_CHANGED);
 				registerReceiver(mBatteryReceiver, f);
 			}
-		}
-		else if (mBatteryReceiver != null){
+		} else if (mBatteryReceiver != null){
 			unregisterReceiver(mBatteryReceiver);
 			mBatteryReceiver = null;
 		}
@@ -409,15 +397,13 @@ public class WapdroidService extends Service {
 			mCid = ((GsmCellLocation) location).getCid() > 0 ? ((GsmCellLocation) location).getCid() : WapdroidDbAdapter.UNKNOWN_CID;
 			// fix for api < 5
 			mLac = ((GsmCellLocation) location).getLac() > 0 ? ((GsmCellLocation) location).getLac() : WapdroidDbAdapter.UNKNOWN_CID;
-		}
-		else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
+		} else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
 			// check the phone type, cdma is not available before API 2.0, so use a wrapper
 			try {
 				CdmaCellLocation cdma = new CdmaCellLocation(location);
 				mCid = cdma.getBaseStationId() > 0 ? cdma.getBaseStationId() : WapdroidDbAdapter.UNKNOWN_CID;
 				mLac = cdma.getNetworkId() > 0 ? cdma.getNetworkId() : WapdroidDbAdapter.UNKNOWN_CID;
-			}
-			catch (Throwable t) {
+			} catch (Throwable t) {
 				mCid = WapdroidDbAdapter.UNKNOWN_CID;
 				mLac = WapdroidDbAdapter.UNKNOWN_CID;
 			}
@@ -430,8 +416,7 @@ public class WapdroidService extends Service {
 					mWapdroidUI.setCellInfo(mCid, mLac);
 					mWapdroidUI.setSignalStrength(mRssi);
 					mWapdroidUI.setCells(cellsQuery());
-				}
-				catch (RemoteException e) {}
+				} catch (RemoteException e) {}
 			}
 		}
 	}
@@ -440,8 +425,7 @@ public class WapdroidService extends Service {
 		if (mWapdroidUI != null) {
 			try {
 				mWapdroidUI.setSignalStrength(mRssi);
-			}
-			catch (RemoteException e) {}
+			} catch (RemoteException e) {}
 		}
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		if ((mCid != WapdroidDbAdapter.UNKNOWN_CID) && (mDbHelper != null)) {
@@ -513,8 +497,7 @@ public class WapdroidService extends Service {
 				unregisterReceiver(mWifiReceiver);
 				mWifiReceiver = null;
 			}
-		}
-		else {
+		} else {
 			// if there's no connection, then fallback onto wifi receiver
 			if (mWifiReceiver == null) {
 				mWifiReceiver = new WifiReceiver();
@@ -526,8 +509,7 @@ public class WapdroidService extends Service {
 		if (mWapdroidUI != null) {
 			try {
 				mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
-			}
-			catch (RemoteException e) {}
+			} catch (RemoteException e) {}
 		}
 	}
 	
@@ -564,8 +546,7 @@ public class WapdroidService extends Service {
 					f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
 					registerReceiver(mNetworkReceiver, f);
 				}
-			}
-			else if (state != WifiManager.WIFI_STATE_ENABLING) {
+			} else if (state != WifiManager.WIFI_STATE_ENABLING) {
 				// network receiver isn't need if wifi is off
 				if (mNetworkReceiver != null) {
 					unregisterReceiver(mNetworkReceiver);
@@ -581,8 +562,7 @@ public class WapdroidService extends Service {
 			if (mWapdroidUI != null) {
 				try {
 					mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
-				}
-				catch (RemoteException e) {}
+				} catch (RemoteException e) {}
 			}
 		}
 	}
