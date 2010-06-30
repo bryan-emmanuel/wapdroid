@@ -56,7 +56,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	public void onResume() {
 		super.onResume();
 		mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
-		if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), true)) {
+		if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), false)) {
 			startService(mServiceIntent);
 			if (mServiceConn == null) captureService();
 		}
@@ -64,12 +64,10 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 
 	public void captureService() {
 		mServiceConn = new ServiceConn();
-		android.util.Log.v("Wapdroid", "bindService");
 		bindService(mServiceIntent, mServiceConn, BIND_AUTO_CREATE);
 	}
 
 	public void releaseService() {
-		android.util.Log.v("Wapdroid", "unbindService");
 		unbindService(mServiceConn);
 		mServiceConn = null;
 	}
@@ -77,7 +75,6 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
 			if (sharedPreferences.getBoolean(key, true)) {
-				android.util.Log.v("Wapdroid", "startService");
 				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 				dialog.setMessage(R.string.background_info);
 				dialog.setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
@@ -89,14 +86,11 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 				dialog.show();
 				startService(mServiceIntent);
 				captureService();
-			}
-			else {
+			} else {
 				releaseService();
-				android.util.Log.v("Wapdroid", "stopService");
 				stopService(mServiceIntent);
 			}
-		}
-		else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false)) {
+		} else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false)) {
 			try {
 				mServiceConn.mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false),
 						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "30000")),
@@ -106,8 +100,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 						sharedPreferences.getBoolean(getString(R.string.key_ringtone), false),
 						sharedPreferences.getBoolean(getString(R.string.key_battery_override), false),
 						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_battery_percentage), "30")));
-			}
-			catch (RemoteException e) {}
+			} catch (RemoteException e) {}
 		}
 	}
 }

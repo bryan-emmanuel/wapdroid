@@ -20,6 +20,11 @@
 
 package com.piusvelte.wapdroid;
 
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.NETWORKS_BSSID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.UNKNOWN_RSSI;
+
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
 import com.piusvelte.wapdroid.R;
@@ -79,9 +84,9 @@ public class WapdroidUI extends Activity implements AdListener {
 		switch (item.getItemId()) {
 		case MANAGE_ID:
 			Intent intent = new Intent(this, ManageData.class);
-			intent.putExtra(WapdroidDbAdapter.NETWORKS_BSSID, mBssid);
-			intent.putExtra(WapdroidDbAdapter.TABLE_CELLS, mCells);
-			intent.putExtra(WapdroidDbAdapter.CELLS_CID, mCid);
+			intent.putExtra(NETWORKS_BSSID, mBssid);
+			intent.putExtra(TABLE_CELLS, mCells);
+			intent.putExtra(CELLS_CID, mCid);
 			startActivity(intent);
 			return true;
 		case SETTINGS_ID:
@@ -117,8 +122,7 @@ public class WapdroidUI extends Activity implements AdListener {
 			if (mServiceConn.mIService != null) {
 				try {
 					mServiceConn.mIService.setCallback(null);
-				}
-				catch (RemoteException e) {}
+				} catch (RemoteException e) {}
 			}
 			unbindService(mServiceConn);
 			mServiceConn = null;
@@ -159,13 +163,11 @@ public class WapdroidUI extends Activity implements AdListener {
 				if (ssid != null) {
 					field_wifiState.setText(ssid);
 					field_wifiBSSID.setText(bssid);
-				}
-				else {
+				} else {
 					field_wifiState.setText(getString(R.string.label_enabled));
 					field_wifiBSSID.setText("");
 				}
-			}
-			else if (state != WifiManager.WIFI_STATE_UNKNOWN) {
+			} else if (state != WifiManager.WIFI_STATE_UNKNOWN) {
 				field_wifiState.setText((state == WifiManager.WIFI_STATE_ENABLING ?
 						getString(R.string.label_enabling)
 						: (state == WifiManager.WIFI_STATE_DISABLING ?
@@ -176,7 +178,7 @@ public class WapdroidUI extends Activity implements AdListener {
 		}
 
 		public void setSignalStrength(int rssi) throws RemoteException {
-			field_signal.setText((rssi != WapdroidDbAdapter.UNKNOWN_RSSI ? (Integer.toString(rssi) + getString(R.string.dbm)) : getString(R.string.scanning)));
+			field_signal.setText((rssi != UNKNOWN_RSSI ? (Integer.toString(rssi) + getString(R.string.dbm)) : getString(R.string.scanning)));
 		}
 
 		public void setBattery(int batteryPercentage) throws RemoteException {

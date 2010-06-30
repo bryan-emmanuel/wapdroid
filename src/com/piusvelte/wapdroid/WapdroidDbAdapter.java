@@ -127,7 +127,8 @@ public class WapdroidDbAdapter {
 						+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "_bkp." + CELLS_CID + "=" + TABLE_CELLS + "." + CELLS_CID + ";");
 				db.execSQL(DROP + TABLE_CELLS + "_bkp;");
 			}
-		}}
+		}
+		}
 
 	public WapdroidDbAdapter(Context context) {
 		this.mContext = context;
@@ -172,8 +173,7 @@ public class WapdroidDbAdapter {
 			if (bssid_orig.equals("")) {
 				values.put(NETWORKS_BSSID, bssid);
 				mDb.update(TABLE_NETWORKS, values, TABLE_ID + "=" + network, null);
-			}
-			else if (!ssid_orig.equals(ssid)) {
+			} else if (!ssid_orig.equals(ssid)) {
 				values.put(NETWORKS_SSID, ssid);
 				mDb.update(TABLE_NETWORKS, values, TABLE_ID + "=" + network, null);
 			}
@@ -223,8 +223,7 @@ public class WapdroidDbAdapter {
 			if (c.getCount() > 0) {
 				c.moveToFirst();
 				location = c.getInt(c.getColumnIndex(TABLE_ID));
-			}
-			else {
+			} else {
 				ContentValues values = new ContentValues();
 				values.put(LOCATIONS_LAC, lac);
 				location = (int) mDb.insert(TABLE_LOCATIONS, null, values);
@@ -251,8 +250,7 @@ public class WapdroidDbAdapter {
 				values.put(CELLS_LOCATION, location);
 				mDb.update(TABLE_CELLS, values, TABLE_ID + "=" + cell, null);
 			}
-		}
-		else {
+		} else {
 			ContentValues values = new ContentValues();
 			values.put(CELLS_CID, cid);
 			values.put(CELLS_LOCATION, location);
@@ -280,15 +278,13 @@ public class WapdroidDbAdapter {
 				if (rssi_min > rssi) {
 					update = true;
 					values.put(PAIRS_RSSI_MIN, rssi);
-				}
-				else if ((rssi_max == UNKNOWN_RSSI) || (rssi_max < rssi)) {
+				} else if ((rssi_max == UNKNOWN_RSSI) || (rssi_max < rssi)) {
 					update = true;
 					values.put(PAIRS_RSSI_MAX, rssi);
 				}
 				if (update) mDb.update(TABLE_PAIRS, values, TABLE_ID + "=" + pair, null);
 			}
-		}
-		else {
+		} else {
 			ContentValues values = new ContentValues();
 			values.put(PAIRS_CELL, cell);
 			values.put(PAIRS_NETWORK, network);

@@ -11,12 +11,15 @@ public class ManageWakeLocks {
 	static boolean hasLock() {
 		return (sWakeLock != null);}
 	static void acquire(Context context) {
-		if (hasLock()) {
-			sWakeLock.release();}
+		if (hasLock()) sWakeLock.release();
 		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
 		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-		sWakeLock.acquire();}
+		sWakeLock.acquire();
+	}
 	static void release() {
 		if (hasLock()) {
 			sWakeLock.release();
-			sWakeLock = null;}}}
+			sWakeLock = null;
+		}
+	}
+}

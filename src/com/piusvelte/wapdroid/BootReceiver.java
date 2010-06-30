@@ -35,8 +35,13 @@ public class BootReceiver extends BroadcastReceiver {
 			if (sp.getBoolean(context.getString(R.string.key_manageWifi), true)) {
 				Log.v(TAG,"starting service on boot");
 				ManageWakeLocks.acquire(context);
-				context.startService(new Intent(context, WapdroidService.class));}}
+				context.startService(new Intent(context, WapdroidService.class));
+			}
+		}
 		else if (intent.getAction().equals(WapdroidService.WAKE_SERVICE)) {
 			Log.v(TAG,"waking service");
 			ManageWakeLocks.acquire(context);
-			context.startService(new Intent(context, WapdroidService.class));}}}
+			context.startService(new Intent(context, WapdroidService.class));
+		}
+	}
+}

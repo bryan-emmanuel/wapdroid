@@ -23,7 +23,7 @@
         <CheckBoxPreference
                 android:key="@string/key_manageWifi"
                 android:title="@string/label_wapdroidState"
-                android:defaultValue="true"/>
+                android:defaultValue="false"/>
         <ListPreference
         		android:key="@string/key_interval"
 	        	android:title="@string/label_interval"

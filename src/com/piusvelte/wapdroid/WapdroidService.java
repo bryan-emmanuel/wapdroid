@@ -20,6 +20,14 @@
 
 package com.piusvelte.wapdroid;
 
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_LOCATION;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.LOCATIONS_LAC;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MIN;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MAX;
+import static android.telephony.NeighboringCellInfo.UNKNOWN_CID;
+import static android.telephony.NeighboringCellInfo.UNKNOWN_RSSI;
+
 import java.util.List;
 
 import android.app.AlarmManager;
@@ -34,19 +42,23 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
-import android.os.Build;
 import android.os.IBinder;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.os.RemoteException;
 import android.telephony.CellLocation;
+import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
+import android.util.Log;
 
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
 	public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
 	private static final String BATTERY_EXTRA_LEVEL = "level";
 	private static final String BATTERY_EXTRA_SCALE = "scale";
+	private static final String TAG = "Wapdroid";
 	private static final int LISTEN_SIGNAL_STRENGTHS = 256;
 	private static final int PHONE_TYPE_CDMA = 2;
 	private static final int START_STICKY = 1;
@@ -58,9 +70,9 @@ public class WapdroidService extends Service {
 	mOperator = "";
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
-	private int mCid = WapdroidDbAdapter.UNKNOWN_CID,
-	mLac = WapdroidDbAdapter.UNKNOWN_CID,
-	mRssi = WapdroidDbAdapter.UNKNOWN_RSSI,
+	private int mCid = UNKNOWN_CID,
+	mLac = UNKNOWN_CID,
+	mRssi = UNKNOWN_RSSI,
 	mLastWifiState = WifiManager.WIFI_STATE_UNKNOWN,
 	mInterval,
 	mBatteryLimit = 0,
@@ -71,8 +83,7 @@ public class WapdroidService extends Service {
 	mLed,
 	mRingtone,
 	mRelease = false,
-	mManualOverride = false,
-	getLacSupported = Integer.parseInt(Build.VERSION.SDK) >= 5 ? true : false;
+	mManualOverride = false;
 	private AlarmManager mAlarmMgr;
 	private PendingIntent mPendingIntent;
 	private IWapdroidUI mWapdroidUI;
@@ -93,7 +104,7 @@ public class WapdroidService extends Service {
 			}
 		}
 	}
-	
+
 	class NetworkReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -117,7 +128,7 @@ public class WapdroidService extends Service {
 			}
 		}		
 	}
-	
+
 	class WifiReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -131,7 +142,7 @@ public class WapdroidService extends Service {
 			}
 		}		
 	}
-	
+
 	class BatteryReceiver extends BroadcastReceiver {
 		@Override
 		public void onReceive(Context context, Intent intent) {
@@ -180,7 +191,7 @@ public class WapdroidService extends Service {
 			int limit = batteryOverride ? batteryPercentage : 0;
 			if (limit != mBatteryLimit) batteryLimitChanged(limit);
 		}
-		
+
 		public void setCallback(IBinder mWapdroidUIBinder)
 		throws RemoteException {
 			if (mWapdroidUIBinder != null) {
@@ -226,20 +237,20 @@ public class WapdroidService extends Service {
 			mManualOverride = true;
 		}
 	};
-	
+
 	class PhoneListener extends PhoneStateListener {
 		public void onCellLocationChanged(CellLocation location) {
 			getCellInfo(location);
 		}
 		public void onSignalStrengthChanged(int asu) {
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-				if (asu != WapdroidDbAdapter.UNKNOWN_RSSI) mRssi = 2 * asu - 113;
+				if (asu != UNKNOWN_RSSI) mRssi = 2 * asu - 113;
 				signalStrengthChanged();
 			} else release();
 		}
 		public void onSignalStrengthsChanged(SignalStrength signalStrength) {
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-				if (signalStrength.getGsmSignalStrength() != WapdroidDbAdapter.UNKNOWN_RSSI) {
+				if (signalStrength.getGsmSignalStrength() != UNKNOWN_RSSI) {
 					mRssi = 2 * signalStrength.getGsmSignalStrength() - 113;
 					signalStrengthChanged();
 				}
@@ -375,40 +386,51 @@ public class WapdroidService extends Service {
 	}
 
 	private String cellsQuery() {
-		String cells = "(" + WapdroidDbAdapter.CELLS_CID + "=" + Integer.toString(mCid)
-		+ " and (" + WapdroidDbAdapter.LOCATIONS_LAC + "=" + Integer.toString(mLac) + " or " + WapdroidDbAdapter.CELLS_LOCATION + "=" + WapdroidDbAdapter.UNKNOWN_CID + ")"
-		+ " and (" + Integer.toString(mRssi) + "=" + WapdroidDbAdapter.UNKNOWN_RSSI + " or (((" + WapdroidDbAdapter.PAIRS_RSSI_MIN + "=" + WapdroidDbAdapter.UNKNOWN_RSSI + ") or (" + WapdroidDbAdapter.PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and ((" + WapdroidDbAdapter.PAIRS_RSSI_MAX + "=" + WapdroidDbAdapter.UNKNOWN_RSSI + ") or (" + WapdroidDbAdapter.PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))))";
+		String cells = "(" + CELLS_CID + "=" + Integer.toString(mCid)
+		+ " and (" + LOCATIONS_LAC + "=" + Integer.toString(mLac) + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
+		+ " and (" + Integer.toString(mRssi) + "=" + UNKNOWN_RSSI + " or (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))))";
 		if ((mNeighboringCells != null) && !mNeighboringCells.isEmpty()) {
-			for (NeighboringCellInfo n : mNeighboringCells) {
-				int rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
-				cells += " or (" + WapdroidDbAdapter.CELLS_CID + "=" + Integer.toString(n.getCid())
-				+ " and (" + WapdroidDbAdapter.LOCATIONS_LAC + "=" + (getLacSupported ? Integer.toString(n.getLac()) : WapdroidDbAdapter.UNKNOWN_CID) + " or " + WapdroidDbAdapter.CELLS_LOCATION + "=" + WapdroidDbAdapter.UNKNOWN_CID + ")"
-				+ " and (" + Integer.toString(rssi) + "=" + WapdroidDbAdapter.UNKNOWN_RSSI + " or (((" + WapdroidDbAdapter.PAIRS_RSSI_MIN + "=" + WapdroidDbAdapter.UNKNOWN_RSSI + ") or (" + WapdroidDbAdapter.PAIRS_RSSI_MIN + "<=" + Integer.toString(rssi) + ")) and ((" + WapdroidDbAdapter.PAIRS_RSSI_MAX + "=" + WapdroidDbAdapter.UNKNOWN_RSSI + ") or (" + WapdroidDbAdapter.PAIRS_RSSI_MAX + ">=" + Integer.toString(rssi) + ")))))";
+			for (android.telephony.NeighboringCellInfo n : mNeighboringCells) {
+				int rssi = UNKNOWN_RSSI,
+				lac = UNKNOWN_CID;
+				Parcel dest = Parcel.obtain();
+				try {
+				n.writeToParcel(dest, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+				NeighboringCellInfoWrapper nciw = new NeighboringCellInfoWrapper(dest);
+				rssi = (nciw.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nciw.getRssi() - 113 : nciw.getRssi();
+				lac = nciw.getLac() > 0 ? nciw.getLac() : UNKNOWN_CID;
+				} finally {
+					dest.recycle();
+				}
+				Log.v(TAG,"set lac " + Integer.toString(lac));
+				cells += " or (" + CELLS_CID + "=" + Integer.toString(n.getCid())
+				+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
+				+ " and (" + Integer.toString(rssi) + "=" + UNKNOWN_RSSI + " or (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(rssi) + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(rssi) + ")))))";
 			}
 		}
 		return cells;
 	}
 
 	private void getCellInfo(CellLocation location) {
-		mRssi = WapdroidDbAdapter.UNKNOWN_RSSI;
+		mRssi = UNKNOWN_RSSI;
 		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 		if (mOperator == "") mOperator = mTeleManager.getNetworkOperator();
 		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-			mCid = ((GsmCellLocation) location).getCid() > 0 ? ((GsmCellLocation) location).getCid() : WapdroidDbAdapter.UNKNOWN_CID;
+			mCid = ((GsmCellLocation) location).getCid() > 0 ? ((GsmCellLocation) location).getCid() : UNKNOWN_CID;
 			// fix for api < 5
-			mLac = ((GsmCellLocation) location).getLac() > 0 ? ((GsmCellLocation) location).getLac() : WapdroidDbAdapter.UNKNOWN_CID;
+			mLac = ((GsmCellLocation) location).getLac() > 0 ? ((GsmCellLocation) location).getLac() : UNKNOWN_CID;
 		} else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
 			// check the phone type, cdma is not available before API 2.0, so use a wrapper
 			try {
 				CdmaCellLocation cdma = new CdmaCellLocation(location);
-				mCid = cdma.getBaseStationId() > 0 ? cdma.getBaseStationId() : WapdroidDbAdapter.UNKNOWN_CID;
-				mLac = cdma.getNetworkId() > 0 ? cdma.getNetworkId() : WapdroidDbAdapter.UNKNOWN_CID;
+				mCid = cdma.getBaseStationId() > 0 ? cdma.getBaseStationId() : UNKNOWN_CID;
+				mLac = cdma.getNetworkId() > 0 ? cdma.getNetworkId() : UNKNOWN_CID;
 			} catch (Throwable t) {
-				mCid = WapdroidDbAdapter.UNKNOWN_CID;
-				mLac = WapdroidDbAdapter.UNKNOWN_CID;
+				mCid = UNKNOWN_CID;
+				mLac = UNKNOWN_CID;
 			}
 		}
-		if (mCid != WapdroidDbAdapter.UNKNOWN_CID) {
+		if (mCid != UNKNOWN_CID) {
 			signalStrengthChanged();
 			if (mWapdroidUI != null) {
 				try {
@@ -428,18 +450,27 @@ public class WapdroidService extends Service {
 			} catch (RemoteException e) {}
 		}
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
-		if ((mCid != WapdroidDbAdapter.UNKNOWN_CID) && (mDbHelper != null)) {
+		if ((mCid != UNKNOWN_CID) && (mDbHelper != null)) {
 			mDbHelper.open();
 			boolean enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
 			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
 			else if (mManageWifi && !mManualOverride && (enableWifi || (mLastBattPerc >= mBatteryLimit))) {
 				for (NeighboringCellInfo n : mNeighboringCells) {
-					int cid = n.getCid() > 0 ? n.getCid() : WapdroidDbAdapter.UNKNOWN_CID,
-					lac,
-					rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
-					if (getLacSupported) lac = n.getLac() > 0 ? n.getLac() : WapdroidDbAdapter.UNKNOWN_CID;
-					else lac = WapdroidDbAdapter.UNKNOWN_CID;
-					if (enableWifi && (cid != WapdroidDbAdapter.UNKNOWN_CID)) enableWifi = mDbHelper.cellInRange(cid, lac, rssi);
+					int cid = UNKNOWN_CID,
+					rssi = UNKNOWN_RSSI,
+					lac = UNKNOWN_CID;
+					Parcel dest = Parcel.obtain();
+					try {
+					n.writeToParcel(dest, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+					NeighboringCellInfoWrapper nciw = new NeighboringCellInfoWrapper(dest);
+					cid = nciw.getCid() > 0 ? nciw.getCid() : UNKNOWN_CID;
+					rssi = (nciw.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nciw.getRssi() - 113 : nciw.getRssi();
+					lac = nciw.getLac() > 0 ? nciw.getLac() : UNKNOWN_CID;
+					} finally {
+						dest.recycle();
+					}
+					Log.v(TAG,"lac is "+Integer.toString(lac));
+					if (enableWifi && (cid != UNKNOWN_CID)) enableWifi = mDbHelper.cellInRange(cid, lac, rssi);
 				}
 				if ((enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) setWifiState(enableWifi);
 			}
@@ -451,12 +482,21 @@ public class WapdroidService extends Service {
 	private void updateRange() {
 		int network = mDbHelper.updateNetworkRange(mSsid, mBssid, mCid, mLac, mRssi);
 		for (NeighboringCellInfo n : mNeighboringCells) {
-			int cid = n.getCid() > 0 ? n.getCid() : WapdroidDbAdapter.UNKNOWN_CID,
-			lac,
-			rssi = (n.getRssi() != WapdroidDbAdapter.UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * n.getRssi() - 113 : n.getRssi();
-			if (getLacSupported) lac = n.getLac() > 0 ? n.getLac() : WapdroidDbAdapter.UNKNOWN_CID;
-			else lac = WapdroidDbAdapter.UNKNOWN_CID;
-			if (cid != WapdroidDbAdapter.UNKNOWN_CID) mDbHelper.createPair(cid, lac, network, rssi);
+			int cid = UNKNOWN_CID,
+			rssi = UNKNOWN_RSSI,
+			lac = UNKNOWN_CID;
+			Parcel dest = Parcel.obtain();
+			try {
+			n.writeToParcel(dest, Parcelable.PARCELABLE_WRITE_RETURN_VALUE);
+			NeighboringCellInfoWrapper nciw = new NeighboringCellInfoWrapper(dest);
+			cid = nciw.getCid() > 0 ? nciw.getCid() : UNKNOWN_CID;
+			rssi = (nciw.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nciw.getRssi() - 113 : nciw.getRssi();
+			lac = nciw.getLac() > 0 ? nciw.getLac() : UNKNOWN_CID;
+			} finally {
+				dest.recycle();
+			}
+			Log.v(TAG,"update range, lac "+Integer.toString(lac));
+			if (cid != UNKNOWN_CID) mDbHelper.createPair(cid, lac, network, rssi);
 		}
 	}
 
@@ -475,7 +515,7 @@ public class WapdroidService extends Service {
 		}
 		mWifiManager.setWifiEnabled(enable);
 	}
-	
+
 	private void networkStateChanged(boolean connected) {
 		/*
 		 * get network state
@@ -487,7 +527,7 @@ public class WapdroidService extends Service {
 		mBssid = connected ? mWifiManager.getConnectionInfo().getBSSID() : null;
 		if (mSsid != null) {
 			// connected, implies that wifi is on
-			if ((mBssid != null) && (mCid != WapdroidDbAdapter.UNKNOWN_CID) && (mDbHelper != null)) {
+			if ((mBssid != null) && (mCid != UNKNOWN_CID) && (mDbHelper != null)) {
 				mDbHelper.open();
 				updateRange();
 				mDbHelper.close();
@@ -512,7 +552,7 @@ public class WapdroidService extends Service {
 			} catch (RemoteException e) {}
 		}
 	}
-	
+
 	private void createNotification(boolean enabled, boolean update) {
 		if (mManageWifi) {
 			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
@@ -529,7 +569,7 @@ public class WapdroidService extends Service {
 			mNotificationManager.notify(NOTIFY_ID, notification);
 		}
 	}
-	
+
 	private void wifiStateChanged(int state) {
 		/*
 		 * get wifi state

@@ -20,6 +20,20 @@
 
 package com.piusvelte.wapdroid;
 
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_ID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.NETWORKS_SSID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.NETWORKS_BSSID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.LOCATIONS_LAC;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_NETWORK;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_CELL;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MIN;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MAX;
+import static android.telephony.NeighboringCellInfo.UNKNOWN_CID;
+import static android.telephony.NeighboringCellInfo.UNKNOWN_RSSI;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -110,8 +124,8 @@ public class MapData extends MapActivity implements AdListener {
 		mMController.setZoom(12);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_NETWORKS);
-			mPair = extras.getInt(WapdroidDbAdapter.TABLE_PAIRS);
+			mNetwork = extras.getInt(TABLE_NETWORKS);
+			mPair = extras.getInt(TABLE_PAIRS);
 			String operator = extras.getString(OPERATOR);
 			if (operator.length() > 0) {
 				mMCC = Integer.parseInt(operator.substring(0, 3));
@@ -184,11 +198,11 @@ public class MapData extends MapActivity implements AdListener {
 	public String getValue(String dictionary, String key) {
 		int key_index = dictionary.indexOf(key), end;
 		String value = "";
-		if (key_index != WapdroidDbAdapter.UNKNOWN_CID) {
+		if (key_index != UNKNOWN_CID) {
 			key_index += key.length() + 1;
 			key_index = dictionary.indexOf(":", key_index) + 1;
 			end = dictionary.indexOf(",", key_index);
-			if (end == WapdroidDbAdapter.UNKNOWN_CID) end = dictionary.indexOf("}", key_index);
+			if (end == UNKNOWN_CID) end = dictionary.indexOf("}", key_index);
 			value = dictionary.substring(key_index, end);
 		}
 		return value;
@@ -208,19 +222,16 @@ public class MapData extends MapActivity implements AdListener {
 		HttpPost postMethod = new HttpPost("https://www.google.com/loc/json");
 		try {
 			postMethod.setEntity(new StringEntity(query));
-		}
-		catch (UnsupportedEncodingException e) {
+		} catch (UnsupportedEncodingException e) {
 			Log.e(TAG, "post:setEntity error: "+e);
 		}
 		postMethod.setHeader("Accept", "application/json");
 		postMethod.setHeader("Content-type", "application/json");
 		try {
 			response = httpClient.execute(postMethod, responseHandler);
-		}
-		catch (ClientProtocolException e) {
+		} catch (ClientProtocolException e) {
 			Log.e(TAG, "post:ClientProtocolException error: "+e);
-		}
-		catch (IOException e) {
+		} catch (IOException e) {
 			Log.e(TAG, "post:IOException error: "+e);
 		}
 		if (mToken == "") {
@@ -246,7 +257,7 @@ public class MapData extends MapActivity implements AdListener {
 	private void mapData() {
 		mLoadingDialog = new ProgressDialog(this);
 		mLoadingDialog.setTitle(R.string.loading);
-		mLoadingDialog.setMessage((mPair == 0 ? WapdroidDbAdapter.PAIRS_NETWORK : WapdroidDbAdapter.PAIRS_CELL));
+		mLoadingDialog.setMessage((mPair == 0 ? PAIRS_NETWORK : PAIRS_CELL));
 		mLoadingDialog.setCancelable(true);
 		mLoadingDialog.setOnCancelListener(new DialogInterface.OnCancelListener() {
 			@Override
@@ -275,37 +286,37 @@ public class MapData extends MapActivity implements AdListener {
 					pairs.moveToFirst();
 					while (!interrupted() && !pairs.isAfterLast()) {
 						ctr++;
-						int cid = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.CELLS_CID)),
-						lac = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.LOCATIONS_LAC)),
-						rssi_min = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MIN)),
-						rssi_max = pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.PAIRS_RSSI_MAX)),
+						int cid = pairs.getInt(pairs.getColumnIndex(CELLS_CID)),
+						lac = pairs.getInt(pairs.getColumnIndex(LOCATIONS_LAC)),
+						rssi_min = pairs.getInt(pairs.getColumnIndex(PAIRS_RSSI_MIN)),
+						rssi_max = pairs.getInt(pairs.getColumnIndex(PAIRS_RSSI_MAX)),
 						rssi_avg = Math.round((rssi_min + rssi_max) / 2),
 						rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
-						mMsg = mContext.getResources().getString(R.string.cellwarning) + WapdroidDbAdapter.PAIRS_CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
+						mMsg = mContext.getResources().getString(R.string.cellwarning) + PAIRS_CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
 						mHandler.post(mUpdtDialog);
 						String tower = "{" + addInt(cell_id, cid) + "," + addInt(location_area_code, lac) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
-						if (rssi_avg != WapdroidDbAdapter.UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
+						if (rssi_avg != UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
 						tower += "}";
-						if (ssid == "") ssid = pairs.getString(pairs.getColumnIndex(WapdroidDbAdapter.NETWORKS_SSID));
-						if (bssid == "") bssid = pairs.getString(pairs.getColumnIndex(WapdroidDbAdapter.NETWORKS_BSSID));
+						if (ssid == "") ssid = pairs.getString(pairs.getColumnIndex(NETWORKS_SSID));
+						if (bssid == "") bssid = pairs.getString(pairs.getColumnIndex(NETWORKS_BSSID));
 						if (towers != "") towers += ",";
 						towers += tower;
 						point = getGeoPoint(bldRequest(tower, bssid));
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_CELL,
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, PAIRS_CELL,
 								mContext.getResources().getString(R.string.label_CID) + Integer.toString(cid)
 								+ mContext.getResources().getString(R.string.linefeed) + mContext.getResources().getString(R.string.label_LAC) + Integer.toString(lac)
 								+ mContext.getResources().getString(R.string.linefeed) + mContext.getResources().getString(R.string.range) + Integer.toString(rssi_min) + mContext.getString(R.string.colon) + Integer.toString(rssi_max),
-								mNetwork, pairs.getInt(pairs.getColumnIndex(WapdroidDbAdapter.TABLE_ID)), rssi_avg, rssi_range));
+								mNetwork, pairs.getInt(pairs.getColumnIndex(TABLE_ID)), rssi_avg, rssi_range));
 						pairs.moveToNext();
 					}
 					if (mPair == 0) {
-						mMsg = WapdroidDbAdapter.PAIRS_NETWORK + ": " + ssid;
+						mMsg = PAIRS_NETWORK + ": " + ssid;
 						mHandler.post(mUpdtDialog);
 						point = getGeoPoint(bldRequest(towers, bssid));
 						Location location = new Location("");
 						location.setLatitude(point.getLatitudeE6()/1e6);
 						location.setLongitude(point.getLongitudeE6()/1e6);
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, WapdroidDbAdapter.PAIRS_NETWORK, ssid, mNetwork), mContext.getResources().getDrawable(R.drawable.network));
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, PAIRS_NETWORK, ssid, mNetwork), mContext.getResources().getDrawable(R.drawable.network));
 						pinOverlays.setDistances(location);
 					}
 				}
@@ -382,7 +393,7 @@ public class MapData extends MapActivity implements AdListener {
 				Projection projection = mapView.getProjection();
 				projection.toPixels(gpt, pt);
 				double mercator = Math.cos(Math.toRadians(gpt.getLatitudeE6()/1E6));
-				if (item.getTitle() == WapdroidDbAdapter.PAIRS_NETWORK) {
+				if (item.getTitle() == PAIRS_NETWORK) {
 					radius = 70;
 					paint.setColor(getResources().getColor(R.color.primary));
 					paint.setAlpha(mNetwork_alpha);
@@ -428,7 +439,7 @@ public class MapData extends MapActivity implements AdListener {
 
 		public void setDistances(Location location) {
 			for (WapdroidOverlayItem item : mOverlays) {
-				if (item.getTitle() != WapdroidDbAdapter.PAIRS_NETWORK) {
+				if (item.getTitle() != PAIRS_NETWORK) {
 					GeoPoint gpt = item.getPoint();
 					Location cell = new Location("");
 					cell.setLatitude(gpt.getLatitudeE6()/1e6);

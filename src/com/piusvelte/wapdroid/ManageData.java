@@ -20,6 +20,17 @@
 
 package com.piusvelte.wapdroid;
 
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.NETWORKS_SSID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.NETWORKS_BSSID;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.LOCATIONS_LAC;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MIN;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.FILTER_ALL;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.STATUS;
+
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
 import com.piusvelte.wapdroid.R;
@@ -50,7 +61,7 @@ public class ManageData extends ListActivity implements AdListener {
 	private static final int CANCEL_ID = Menu.FIRST + 3;
 	private static final int REFRESH_ID = Menu.FIRST + 4;
 	private static final int FILTER_ID = Menu.FIRST + 5;
-	private int mFilter = WapdroidDbAdapter.FILTER_ALL;
+	private int mFilter = FILTER_ALL;
 	private String mCells = "", mOperator = "", mBssid = "";
 	private ServiceConn mServiceConn;
 
@@ -59,10 +70,10 @@ public class ManageData extends ListActivity implements AdListener {
 		super.onCreate(savedInstanceState);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getInt(WapdroidDbAdapter.TABLE_NETWORKS);
-			mCid = extras.getInt(WapdroidDbAdapter.CELLS_CID);
-			mBssid = extras.getString(WapdroidDbAdapter.NETWORKS_BSSID);
-			mCells = extras.getString(WapdroidDbAdapter.TABLE_CELLS);
+			mNetwork = extras.getInt(TABLE_NETWORKS);
+			mCid = extras.getInt(CELLS_CID);
+			mBssid = extras.getString(NETWORKS_BSSID);
+			mCells = extras.getString(TABLE_CELLS);
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
@@ -79,8 +90,7 @@ public class ManageData extends ListActivity implements AdListener {
 		bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
 		try {
 			listData();
-		}
-		catch (RemoteException e) {
+		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
 	}
@@ -92,8 +102,7 @@ public class ManageData extends ListActivity implements AdListener {
 			if (mServiceConn.mIService != null) {
 				try {
 					mServiceConn.mIService.setCallback(null);
-				}
-				catch (RemoteException e) {}
+				} catch (RemoteException e) {}
 			}
 			unbindService(mServiceConn);
 			mServiceConn = null;
@@ -115,8 +124,7 @@ public class ManageData extends ListActivity implements AdListener {
 		case REFRESH_ID:
 			try {
 				listData();
-			}
-			catch (RemoteException e1) {
+			} catch (RemoteException e1) {
 				e1.printStackTrace();
 			}
 			return true;
@@ -141,8 +149,7 @@ public class ManageData extends ListActivity implements AdListener {
 							mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
 							try {
 								listData();
-							}
-							catch (RemoteException e) {
+							} catch (RemoteException e) {
 								e.printStackTrace();
 							}
 						}});
@@ -204,15 +211,15 @@ public class ManageData extends ListActivity implements AdListener {
 		switch(action) {
 		case MANAGE_ID:
 			intent = new Intent(this, ManageData.class);
-			intent.putExtra(WapdroidDbAdapter.TABLE_NETWORKS, id);
-			intent.putExtra(WapdroidDbAdapter.TABLE_CELLS, mCells);
+			intent.putExtra(TABLE_NETWORKS, id);
+			intent.putExtra(TABLE_CELLS, mCells);
 			startActivity(intent);
 			return;
 		case MAP_ID:
 			// open gmaps
 			intent = new Intent(this, MapData.class);
-			intent.putExtra(WapdroidDbAdapter.TABLE_NETWORKS, (int) (mNetwork == 0 ? id : mNetwork));
-			if (mNetwork != 0) intent.putExtra(WapdroidDbAdapter.TABLE_PAIRS, id);
+			intent.putExtra(TABLE_NETWORKS, (int) (mNetwork == 0 ? id : mNetwork));
+			if (mNetwork != 0) intent.putExtra(TABLE_PAIRS, id);
 			intent.putExtra(MapData.OPERATOR, mOperator);
 			startActivity(intent);
 			return;
@@ -239,12 +246,12 @@ public class ManageData extends ListActivity implements AdListener {
 				new SimpleCursorAdapter(this,
 						R.layout.network_row,
 						c,
-						new String[] {WapdroidDbAdapter.NETWORKS_SSID, WapdroidDbAdapter.NETWORKS_BSSID, WapdroidDbAdapter.STATUS},
+						new String[] {NETWORKS_SSID, NETWORKS_BSSID, STATUS},
 						new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status})
 		: new SimpleCursorAdapter(this,
 				R.layout.cell_row,
 				c,
-				new String[] {WapdroidDbAdapter.CELLS_CID, WapdroidDbAdapter.LOCATIONS_LAC, WapdroidDbAdapter.PAIRS_RSSI_MIN, WapdroidDbAdapter.STATUS},
+				new String[] {CELLS_CID, LOCATIONS_LAC, PAIRS_RSSI_MIN, STATUS},
 				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status});
 				setListAdapter(data);
 	}
