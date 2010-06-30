@@ -177,8 +177,7 @@ public class WapdroidDbAdapter {
 				values.put(NETWORKS_SSID, ssid);
 				mDb.update(TABLE_NETWORKS, values, TABLE_ID + "=" + network, null);
 			}
-		}
-		else {
+		} else {
 			values.put(NETWORKS_SSID, ssid);
 			values.put(NETWORKS_BSSID, bssid);
 			network = (int) mDb.insert(TABLE_NETWORKS, null, values);
