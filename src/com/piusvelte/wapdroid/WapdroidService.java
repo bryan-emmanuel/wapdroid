@@ -86,7 +86,8 @@ public class WapdroidService extends Service {
 	mLed,
 	mRingtone,
 	mRelease = false,
-	mManualOverride = false;
+	mManualOverride = false,
+	mLastScanEnableWifi = false;
 	private AlarmManager mAlarmMgr;
 	private PendingIntent mPendingIntent;
 	private IWapdroidUI mWapdroidUI;
@@ -243,6 +244,7 @@ public class WapdroidService extends Service {
 
 	class PhoneListener extends PhoneStateListener {
 		public void onCellLocationChanged(CellLocation location) {
+			// this also calls signalStrengthChanged, since signalStrengthChanged isn't reliable enough by itself
 			getCellInfo(location);
 		}
 
@@ -252,7 +254,6 @@ public class WapdroidService extends Service {
 				// convert gsm
 				if (asu > 0) mRssi = 2 * asu - 113;
 				else mRssi = asu;
-				Log.v(TAG,"mRssi "+Integer.toString(mRssi));
 				signalStrengthChanged();
 			} else release();
 		}
@@ -369,9 +370,13 @@ public class WapdroidService extends Service {
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		wifiStateChanged(mWifiManager.getWifiState());
+		// to help avoid hysteresis, make sure that at least 2 consecutive scans were in/out of range
+		mLastScanEnableWifi = (mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
 		// the ssid from wifimanager may not be null, even if disconnected, so check against the wifi state
 		networkStateChanged(mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+		// initialize the cell info
+		getCellInfo(mTeleManager.getCellLocation());
 		mPhoneListener = new PhoneListener();
 		mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 	}
@@ -440,7 +445,6 @@ public class WapdroidService extends Service {
 						Log.e(TAG, "unexpected " + ie);
 					}
 				}
-				Log.v(TAG,"query "+Integer.toString(lac));
 				cells += " or (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
 				+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
 				+ " and (" + Integer.toString(rssi) + "=" + UNKNOWN_RSSI + " or (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(rssi) + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(rssi) + ")))))";
@@ -469,6 +473,7 @@ public class WapdroidService extends Service {
 			}
 		}
 		if (mCid != UNKNOWN_CID) {
+			// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 			signalStrengthChanged();
 			if (mWapdroidUI != null) {
 				try {
@@ -487,10 +492,12 @@ public class WapdroidService extends Service {
 				mWapdroidUI.setSignalStrength(mRssi);
 			} catch (RemoteException e) {}
 		}
+		// initialize enableWifi as mLastScanEnableWifi, so that wakelock is released by default
+		boolean enableWifi = mLastScanEnableWifi;
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		if ((mCid != UNKNOWN_CID) && (mDbHelper != null)) {
 			mDbHelper.open();
-			boolean enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
+			enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
 			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
 			else if (mManageWifi && !mManualOverride && (enableWifi || (mLastBattPerc >= mBatteryLimit))) {
 				for (NeighboringCellInfo nci : mNeighboringCells) {
@@ -505,14 +512,16 @@ public class WapdroidService extends Service {
 									Log.e(TAG, "unexpected " + ie);
 								}
 							}
-							Log.v(TAG,"strength "+Integer.toString(lac));
 							if (enableWifi && (cid != UNKNOWN_CID)) enableWifi = mDbHelper.cellInRange(cid, lac, rssi);
 				}
-				if ((enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) setWifiState(enableWifi);
+				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
+				if ((mLastScanEnableWifi == enableWifi) && (enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) setWifiState(enableWifi);
 			}
 			mDbHelper.close();
 		}
-		release();
+		// only release the service if it doesn't appear that we're entering or leaving a network
+		if (enableWifi == mLastScanEnableWifi) release();
+		else mLastScanEnableWifi = enableWifi;
 	}
 
 	private void updateRange() {
@@ -529,7 +538,6 @@ public class WapdroidService extends Service {
 							Log.e(TAG, "unexpected " + ie);
 						}
 					}
-					Log.v(TAG,"range "+Integer.toString(lac));
 					if (cid != UNKNOWN_CID) mDbHelper.createPair(cid, lac, network, rssi);
 		}
 	}
