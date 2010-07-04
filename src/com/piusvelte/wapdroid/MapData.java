@@ -464,17 +464,22 @@ public class MapData extends MapActivity implements AdListener {
 			dialog.setPositiveButton(mContext.getResources().getString(pair == 0 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell), new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					Log.v(TAG,"onClick("+Integer.toString(which)+")");
 					if (pair == 0) {
 						mDbHelper.deleteNetwork(network);
 						finish();
 					}
-					else {
+					else if (mPair == 0) {
+						// delete one pair from the mapped network
 						mDbHelper.deletePair(network, pair);
 						mOverlays.remove(item);
 						mMView.invalidate();
 						mapData();
 						dialog.cancel();
+					}
+					else {
+						// delete an individually mapped cell
+						mDbHelper.deletePair(network, pair);
+						finish();
 					}
 				}
 			});

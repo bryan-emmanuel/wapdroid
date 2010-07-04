@@ -506,13 +506,11 @@ public class WapdroidService extends Service {
 			// needs to be !enableWifi, either turning off, or (turning on && battery is above limit)
 			// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
 			// make sure that the wifi isn't already in the correct state
-			else if ((!enableWifi
-					|| (mLastBattPerc >= mBatteryLimit))
+			else if ((!enableWifi || (mLastBattPerc >= mBatteryLimit))
 					&& (mLastScanEnableWifi == enableWifi)
-					&& (enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED)
-							|| (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) {
-				// confirm neighbors before enabling as cell tower range is greater than that of wifi, disabling will be unaffected
+					&& (enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) {
 				if (enableWifi) {
+					// confirm neighbors before enabling as cell tower range is greater than that of wifi
 					boolean neighborsInRange = enableWifi;
 					for (NeighboringCellInfo nci : mNeighboringCells) {
 						int cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID,
