@@ -495,13 +495,25 @@ public class WapdroidService extends Service {
 		// initialize enableWifi as mLastScanEnableWifi, so that wakelock is released by default
 		boolean enableWifi = mLastScanEnableWifi;
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
-		if ((mCid != UNKNOWN_CID) && (mDbHelper != null)) {
+		// check that the service is in control, and minimum values are set
+		if (mManageWifi
+				&& !mManualOverride
+				&& (mCid != UNKNOWN_CID)
+				&& (mDbHelper != null)) {
 			mDbHelper.open();
 			enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
 			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
-			else if (mManageWifi && !mManualOverride && (enableWifi || (mLastBattPerc >= mBatteryLimit))) {
-				// confirm neighbors before enabling
+			// needs to be !enableWifi, either turning off, or (turning on && battery is above limit)
+			// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
+			// make sure that the wifi isn't already in the correct state
+			else if ((!enableWifi
+					|| (mLastBattPerc >= mBatteryLimit))
+					&& (mLastScanEnableWifi == enableWifi)
+					&& (enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED)
+							|| (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) {
+				// confirm neighbors before enabling as cell tower range is greater than that of wifi, disabling will be unaffected
 				if (enableWifi) {
+					boolean neighborsInRange = enableWifi;
 					for (NeighboringCellInfo nci : mNeighboringCells) {
 						int cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID,
 								rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(),
@@ -515,12 +527,12 @@ public class WapdroidService extends Service {
 									}
 								}
 								// break on out of range result
-								if (cid != UNKNOWN_CID) enableWifi = mDbHelper.cellInRange(cid, lac, rssi);
-								if (!enableWifi) break;
+								if (cid != UNKNOWN_CID) neighborsInRange = mDbHelper.cellInRange(cid, lac, rssi);
+								if (!neighborsInRange) break;
 					}
+					if (neighborsInRange == enableWifi) setWifiState(enableWifi);
 				}
-				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
-				if ((mLastScanEnableWifi == enableWifi) && (enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) setWifiState(enableWifi);
+				else setWifiState(enableWifi);
 			}
 			mDbHelper.close();
 		}
