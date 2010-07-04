@@ -500,19 +500,24 @@ public class WapdroidService extends Service {
 			enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
 			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
 			else if (mManageWifi && !mManualOverride && (enableWifi || (mLastBattPerc >= mBatteryLimit))) {
-				for (NeighboringCellInfo nci : mNeighboringCells) {
-					int cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID,
-							rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(),
-									lac = UNKNOWN_CID;
-							if (mNciReflectGetLac != null) {
-								/* feature is supported */
-								try {
-									lac = nciGetLac(nci);
-								} catch (IOException ie) {
-									Log.e(TAG, "unexpected " + ie);
+				// confirm neighbors before enabling
+				if (enableWifi) {
+					for (NeighboringCellInfo nci : mNeighboringCells) {
+						int cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID,
+								rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(),
+										lac = UNKNOWN_CID;
+								if (mNciReflectGetLac != null) {
+									/* feature is supported */
+									try {
+										lac = nciGetLac(nci);
+									} catch (IOException ie) {
+										Log.e(TAG, "unexpected " + ie);
+									}
 								}
-							}
-							if (enableWifi && (cid != UNKNOWN_CID)) enableWifi = mDbHelper.cellInRange(cid, lac, rssi);
+								// break on out of range result
+								if (cid != UNKNOWN_CID) enableWifi = mDbHelper.cellInRange(cid, lac, rssi);
+								if (!enableWifi) break;
+					}
 				}
 				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
 				if ((mLastScanEnableWifi == enableWifi) && (enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) setWifiState(enableWifi);
