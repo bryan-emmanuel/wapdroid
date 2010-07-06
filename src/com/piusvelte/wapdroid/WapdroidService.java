@@ -275,6 +275,15 @@ public class WapdroidService extends Service {
 			getCellInfo(location);
 		}
 
+		public void onSignalStrengthChanged(int asu) {
+			// add cdma support
+			if ((mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA)) {
+				// convert gsm
+				mRssi = asu > 0 ? (2 * asu - 113) : asu;
+				signalStrengthChanged();
+			} else release();
+		}
+
 		public void onSignalStrengthsChanged(SignalStrength signalStrength) {
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
 				if (signalStrength.getGsmSignalStrength() != UNKNOWN_RSSI) {
