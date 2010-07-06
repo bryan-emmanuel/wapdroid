@@ -50,8 +50,7 @@ import android.os.RemoteException;
 import android.telephony.CellLocation;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
-// not supported in older apis
-//import android.telephony.SignalStrength;
+import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
@@ -158,7 +157,13 @@ public class WapdroidService extends Service {
 						mPhoneListener = null;
 					}
 				} else if ((currectBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit) && (mPhoneListener == null)) {
-					mPhoneListener = new PhoneListener();
+					try {
+						Class.forName("android.telephony.SignalStrength");
+						mPhoneListener = new PhoneListenerApi7();
+					} catch (Exception ex) {
+						Log.e(TAG, "api < 7, " + ex);
+						mPhoneListener = new PhoneListenerApi3();
+					}
 					mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 				}
 				mLastBattPerc = currectBattPerc;
@@ -209,7 +214,13 @@ public class WapdroidService extends Service {
 					}
 					// listen to phone changes if a low battery condition caused this to stop
 					if (mPhoneListener == null) {
-						mPhoneListener = new PhoneListener();
+						try {
+							Class.forName("android.telephony.SignalStrength");
+							mPhoneListener = new PhoneListenerApi7();
+						} catch (Exception ex) {
+							Log.e(TAG, "api < 7, " + ex);
+							mPhoneListener = new PhoneListenerApi3();
+						}
 						mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 					}
 					try {
@@ -237,10 +248,11 @@ public class WapdroidService extends Service {
 			mManualOverride = true;
 		}
 	};
-
-	class PhoneListener extends PhoneStateListener {
+	
+	// PhoneStateListener for 3 <= api < 7
+	class PhoneListenerApi3 extends PhoneStateListener {
 		public void onCellLocationChanged(CellLocation location) {
-			// this also calls signalStrengthChanged, since signalStrengthChanged isn't reliable enough by itself
+			// this also calls signalStrengthChanged, since onSignalStrengthChanged isn't reliable enough by itself
 			getCellInfo(location);
 		}
 
@@ -248,26 +260,33 @@ public class WapdroidService extends Service {
 			// add cdma support
 			if ((mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA)) {
 				// convert gsm
-				if (asu > 0) mRssi = 2 * asu - 113;
-				else mRssi = asu;
+				mRssi = asu > 0 ? (2 * asu - 113) : asu;
 				signalStrengthChanged();
 			} else release();
 		}
+	}
+	
+	// PhoneStateListener for 7 <= api
+	class PhoneListenerApi7 extends PhoneStateListener {
+		public void onCellLocationChanged(CellLocation location) {
+			// this also calls signalStrengthChanged, since signalStrengthChanged isn't reliable enough by itself
+			getCellInfo(location);
+		}
 
-		//		public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-		//			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-		//				if (signalStrength.getGsmSignalStrength() != UNKNOWN_RSSI) {
-		//					mRssi = 2 * signalStrength.getGsmSignalStrength() - 113;
-		//					signalStrengthChanged();
-		//				}
-		//			} else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
-		//				mRssi = signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ?
-		//						signalStrength.getCdmaDbm()
-		//						: signalStrength.getEvdoDbm();
-		//						signalStrengthChanged();
-		//			} else release();
-		//		}
-	};
+		public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+				if (signalStrength.getGsmSignalStrength() != UNKNOWN_RSSI) {
+					mRssi = 2 * signalStrength.getGsmSignalStrength() - 113;
+					signalStrengthChanged();
+				}
+			} else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
+				mRssi = signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ?
+						signalStrength.getCdmaDbm()
+						: signalStrength.getEvdoDbm();
+						signalStrengthChanged();
+			} else release();
+		}
+	}
 
 	private static Method mNciReflectGetLac;
 
@@ -279,7 +298,7 @@ public class WapdroidService extends Service {
 		try {
 			mNciReflectGetLac = android.telephony.NeighboringCellInfo.class.getMethod("getLac", new Class[] {} );
 		} catch (NoSuchMethodException nsme) {
-			Log.e(TAG, "older api, " + nsme);
+			Log.e(TAG, "api < 5, " + nsme);
 		}
 	}
 
@@ -371,7 +390,13 @@ public class WapdroidService extends Service {
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		// initialize the cell info
 		getCellInfo(mTeleManager.getCellLocation());
-		mPhoneListener = new PhoneListener();
+		try {
+			Class.forName("android.telephony.SignalStrength");
+			mPhoneListener = new PhoneListenerApi7();
+		} catch (Exception ex) {
+			Log.e(TAG, "api < 7, " + ex);
+			mPhoneListener = new PhoneListenerApi3();
+		}
 		mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 	}
 
@@ -468,6 +493,7 @@ public class WapdroidService extends Service {
 				mCid = cdma.getBaseStationId() > 0 ? cdma.getBaseStationId() : UNKNOWN_CID;
 				mLac = cdma.getNetworkId() > 0 ? cdma.getNetworkId() : UNKNOWN_CID;
 			} catch (Throwable t) {
+				Log.e(TAG, "unexpected " + t);
 				mCid = UNKNOWN_CID;
 				mLac = UNKNOWN_CID;
 			}
