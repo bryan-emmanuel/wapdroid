@@ -79,12 +79,10 @@ public class WapdroidService extends Service {
 	mLastWifiState = WifiManager.WIFI_STATE_UNKNOWN,
 	mInterval,
 	mBatteryLimit = 0,
-	mLastBattPerc;
+	mLastBattPerc,
+	mNotifications = 0;
 	private boolean mManageWifi,
 	mNotify,
-	mVibrate,
-	mLed,
-	mRingtone,
 	mRelease = false,
 	mManualOverride = false,
 	mLastScanEnableWifi = false;
@@ -189,9 +187,7 @@ public class WapdroidService extends Service {
 			mManageWifi = manage;
 			mInterval = interval;
 			mNotify = notify;
-			mVibrate = vibrate;
-			mLed = led;
-			mRingtone = ringtone;// override && limit == 0, !override && limit > 0
+			mNotifications = setNotifications(vibrate, led, ringtone);
 			int limit = batteryOverride ? batteryPercentage : 0;
 			if (limit != mBatteryLimit) batteryLimitChanged(limit);
 		}
@@ -361,9 +357,7 @@ public class WapdroidService extends Service {
 		mInterval = Integer.parseInt((String) prefs.getString(getString(R.string.key_interval), "30000"));
 		mNotify = prefs.getBoolean(getString(R.string.key_notify), false);
 		if (mNotify) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mVibrate = prefs.getBoolean(getString(R.string.key_vibrate), false);
-		mLed = prefs.getBoolean(getString(R.string.key_led), false);
-		mRingtone = prefs.getBoolean(getString(R.string.key_ringtone), false);
+		mNotifications = setNotifications(prefs.getBoolean(getString(R.string.key_vibrate), false), prefs.getBoolean(getString(R.string.key_led), false), prefs.getBoolean(getString(R.string.key_ringtone), false));
 		batteryLimitChanged(prefs.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) prefs.getString(getString(R.string.key_battery_percentage), "30")) : 0);
 		prefs = null;
 		mDbHelper = new WapdroidDbAdapter(this);
@@ -452,6 +446,12 @@ public class WapdroidService extends Service {
 		}
 		return cells;
 	}
+	
+	private int setNotifications(boolean vibrate, boolean led, boolean ringtone) {
+		return (vibrate ? Notification.DEFAULT_VIBRATE : 0)
+		| (led ? Notification.DEFAULT_LIGHTS : 0)
+		| (ringtone ? Notification.DEFAULT_SOUND : 0);
+	}
 
 	private void getCellInfo(CellLocation location) {
 		mRssi = UNKNOWN_RSSI;
@@ -511,7 +511,6 @@ public class WapdroidService extends Service {
 					&& (enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) {
 				if (enableWifi) {
 					// confirm neighbors before enabling as cell tower range is greater than that of wifi
-					boolean neighborsInRange = enableWifi;
 					for (NeighboringCellInfo nci : mNeighboringCells) {
 						int cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID,
 								rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(),
@@ -525,10 +524,11 @@ public class WapdroidService extends Service {
 									}
 								}
 								// break on out of range result
-								if (cid != UNKNOWN_CID) neighborsInRange = mDbHelper.cellInRange(cid, lac, rssi);
-								if (!neighborsInRange) break;
+								if (cid != UNKNOWN_CID) enableWifi = mDbHelper.cellInRange(cid, lac, rssi);
+								if (!enableWifi) break;
 					}
-					if (neighborsInRange == enableWifi) setWifiState(enableWifi);
+					// still in range?
+					if (enableWifi) setWifiState(enableWifi);
 				}
 				else setWifiState(enableWifi);
 			}
@@ -618,11 +618,7 @@ public class WapdroidService extends Service {
 			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
 			notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
 			notification.flags |= Notification.FLAG_NO_CLEAR;
-			if (update) {
-				if (mVibrate) notification.defaults |= Notification.DEFAULT_VIBRATE;
-				if (mLed) notification.defaults |= Notification.DEFAULT_LIGHTS;
-				if (mRingtone) notification.defaults |= Notification.DEFAULT_SOUND;
-			}
+			if (update) notification.defaults = mNotifications;
 			mNotificationManager.notify(NOTIFY_ID, notification);
 		}
 	}
