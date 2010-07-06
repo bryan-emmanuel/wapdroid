@@ -85,6 +85,7 @@ public class WapdroidService extends Service {
 	mRelease = false,
 	mManualOverride = false,
 	mLastScanEnableWifi = false;
+	private static boolean mApi7;
 	private AlarmManager mAlarmMgr;
 	private PendingIntent mPendingIntent;
 	private IWapdroidUI mWapdroidUI;
@@ -157,13 +158,8 @@ public class WapdroidService extends Service {
 						mPhoneListener = null;
 					}
 				} else if ((currectBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit) && (mPhoneListener == null)) {
-					try {
-						Class.forName("android.telephony.SignalStrength");
-						mPhoneListener = new PhoneListenerApi7();
-					} catch (Exception ex) {
-						Log.e(TAG, "api < 7, " + ex);
-						mPhoneListener = new PhoneListenerApi3();
-					}
+					if (mApi7) mPhoneListener = new PhoneListenerApi7();
+					else mPhoneListener = new PhoneListenerApi3();
 					mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 				}
 				mLastBattPerc = currectBattPerc;
@@ -214,13 +210,8 @@ public class WapdroidService extends Service {
 					}
 					// listen to phone changes if a low battery condition caused this to stop
 					if (mPhoneListener == null) {
-						try {
-							Class.forName("android.telephony.SignalStrength");
-							mPhoneListener = new PhoneListenerApi7();
-						} catch (Exception ex) {
-							Log.e(TAG, "api < 7, " + ex);
-							mPhoneListener = new PhoneListenerApi3();
-						}
+						if (mApi7) mPhoneListener = new PhoneListenerApi7();
+						else mPhoneListener = new PhoneListenerApi3();
 						mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 					}
 					try {
@@ -248,7 +239,7 @@ public class WapdroidService extends Service {
 			mManualOverride = true;
 		}
 	};
-	
+
 	// PhoneStateListener for 3 <= api < 7
 	class PhoneListenerApi3 extends PhoneStateListener {
 		public void onCellLocationChanged(CellLocation location) {
@@ -265,7 +256,18 @@ public class WapdroidService extends Service {
 			} else release();
 		}
 	}
-	
+
+	// add onSignalStrengthsChanged for api >= 7
+	static {
+		try {
+			Class.forName("android.telephony.SignalStrength");
+			mApi7 = true;
+		} catch (Exception ex) {
+			Log.e(TAG, "api < 7, " + ex);
+			mApi7 = false;
+		}
+	}
+
 	// PhoneStateListener for 7 <= api
 	class PhoneListenerApi7 extends PhoneStateListener {
 		public void onCellLocationChanged(CellLocation location) {
@@ -390,13 +392,8 @@ public class WapdroidService extends Service {
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		// initialize the cell info
 		getCellInfo(mTeleManager.getCellLocation());
-		try {
-			Class.forName("android.telephony.SignalStrength");
-			mPhoneListener = new PhoneListenerApi7();
-		} catch (Exception ex) {
-			Log.e(TAG, "api < 7, " + ex);
-			mPhoneListener = new PhoneListenerApi3();
-		}
+		if (mApi7) mPhoneListener = new PhoneListenerApi7();
+		else mPhoneListener = new PhoneListenerApi3();
 		mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 	}
 
@@ -471,7 +468,7 @@ public class WapdroidService extends Service {
 		}
 		return cells;
 	}
-	
+
 	private int setNotifications(boolean vibrate, boolean led, boolean ringtone) {
 		return (vibrate ? Notification.DEFAULT_VIBRATE : 0)
 		| (led ? Notification.DEFAULT_LIGHTS : 0)
