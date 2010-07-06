@@ -24,22 +24,18 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 public class BootReceiver extends BroadcastReceiver {
-	private static final String TAG = "Wapdroid";
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
 			SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 			if (sp.getBoolean(context.getString(R.string.key_manageWifi), true)) {
-				Log.v(TAG,"starting service on boot");
 				ManageWakeLocks.acquire(context);
 				context.startService(new Intent(context, WapdroidService.class));
 			}
 		}
 		else if (intent.getAction().equals(WapdroidService.WAKE_SERVICE)) {
-			Log.v(TAG,"waking service");
 			ManageWakeLocks.acquire(context);
 			context.startService(new Intent(context, WapdroidService.class));
 		}

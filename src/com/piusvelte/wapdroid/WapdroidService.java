@@ -268,7 +268,7 @@ public class WapdroidService extends Service {
 		}
 	}
 
-	// PhoneStateListener for 7 <= api
+	// PhoneStateListener for api >= 7
 	class PhoneListenerApi7 extends PhoneStateListener {
 		public void onCellLocationChanged(CellLocation location) {
 			// this also calls signalStrengthChanged, since signalStrengthChanged isn't reliable enough by itself
