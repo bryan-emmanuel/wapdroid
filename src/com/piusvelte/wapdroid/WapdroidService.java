@@ -81,7 +81,6 @@ public class WapdroidService extends Service {
 	mLastBattPerc,
 	mNotifications = 0;
 	private boolean mManageWifi,
-	mNotify,
 	mRelease = false,
 	mManualOverride = false,
 	mLastScanEnableWifi = false;
@@ -173,21 +172,19 @@ public class WapdroidService extends Service {
 	}
 
 	private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
-		public void updatePreferences(boolean manage, int interval, boolean notify,
-				boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage)
+		public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage)
 		throws RemoteException {
-			if ((mManageWifi ^ manage) || (mNotify ^ notify)) {
+			if ((mManageWifi ^ manage) || ((mNotificationManager != null) ^ notify)) {
 				if (manage && notify) {
 					if (mNotificationManager == null) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 					createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
-				} else {
+				} else if (mNotificationManager != null) {
 					mNotificationManager.cancel(NOTIFY_ID);
 					mNotificationManager = null;
 				}
 			}
 			mManageWifi = manage;
 			mInterval = interval;
-			mNotify = notify;
 			mNotifications = setNotifications(vibrate, led, ringtone);
 			int limit = batteryOverride ? batteryPercentage : 0;
 			if (limit != mBatteryLimit) batteryLimitChanged(limit);
@@ -385,8 +382,7 @@ public class WapdroidService extends Service {
 		// initialize preferences, updated by UI
 		mManageWifi = prefs.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) prefs.getString(getString(R.string.key_interval), "30000"));
-		mNotify = prefs.getBoolean(getString(R.string.key_notify), false);
-		if (mNotify) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		if (prefs.getBoolean(getString(R.string.key_notify), false)) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		mNotifications = setNotifications(prefs.getBoolean(getString(R.string.key_vibrate), false), prefs.getBoolean(getString(R.string.key_led), false), prefs.getBoolean(getString(R.string.key_ringtone), false));
 		batteryLimitChanged(prefs.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) prefs.getString(getString(R.string.key_battery_percentage), "30")) : 0);
 		prefs = null;
@@ -431,7 +427,7 @@ public class WapdroidService extends Service {
 			mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 			mPhoneListener = null;
 		}
-		if (mNotify && (mNotificationManager != null)) mNotificationManager.cancel(NOTIFY_ID);
+		if (mNotificationManager != null) mNotificationManager.cancel(NOTIFY_ID);
 	}
 
 	private void batteryLimitChanged(int limit) {
@@ -681,7 +677,7 @@ public class WapdroidService extends Service {
 				}
 			}
 			// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
-			if (mNotify
+			if ((mNotificationManager != null)
 					&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
 							|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
 							|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED))))  createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));

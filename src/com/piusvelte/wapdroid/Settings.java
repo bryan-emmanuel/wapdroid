@@ -49,7 +49,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	public void onPause() {
 		super.onPause();
 		mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
-		if (mServiceConn != null) releaseService();
+		releaseService();
 	}
 
 	@Override
@@ -68,8 +68,10 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	}
 
 	public void releaseService() {
-		unbindService(mServiceConn);
-		mServiceConn = null;
+		if (mServiceConn != null) {
+			unbindService(mServiceConn);
+			mServiceConn = null;
+		}
 	}
 
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
@@ -90,7 +92,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 				releaseService();
 				stopService(mServiceIntent);
 			}
-		} else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false)) {
+		} else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false) && (mServiceConn != null)) {
 			try {
 				mServiceConn.mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false),
 						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "30000")),
