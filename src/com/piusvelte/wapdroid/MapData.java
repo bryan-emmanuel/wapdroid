@@ -49,6 +49,7 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -87,6 +88,19 @@ public class MapData extends MapActivity implements AdListener {
 	private static final String wifi_towers = "wifi_towers";
 	private static final String mac_address = "mac_address";
 	private static final String signal_strength = "signal_strength";
+	public static int color_primary;
+	public static int color_secondary;
+	public static Drawable drawable_cell;
+	public static Drawable drawable_network;
+	public static String string_cancel;
+	public static String string_deleteCell;
+	public static String string_deleteNetwork;
+	public static String string_cellWarning;
+	public static String string_cid;
+	public static String string_linefeed;
+	public static String string_lac;
+	public static String string_range;
+	public static String string_colon;
 	private WapdroidDbAdapter mDbHelper;
 	private Context mContext;
 	private int mNetwork, mPair = 0, mMCC = 0, mMNC = 0;
@@ -123,6 +137,19 @@ public class MapData extends MapActivity implements AdListener {
 			}
 			mCarrier = extras.getString(CARRIER);
 		}
+		color_primary = getResources().getColor(R.color.primary);
+		color_secondary = getResources().getColor(R.color.secondary);
+		drawable_cell = getResources().getDrawable(R.drawable.cell);
+		drawable_network = getResources().getDrawable(R.drawable.network);
+		string_cancel = getResources().getString(R.string.cancel);
+		string_deleteCell = getResources().getString(R.string.menu_deleteCell);
+		string_deleteNetwork = getResources().getString(R.string.menu_deleteNetwork);
+		string_cellWarning = getResources().getString(R.string.cellwarning);
+		string_cid = getResources().getString(R.string.label_CID);
+		string_linefeed = getResources().getString(R.string.linefeed);
+		string_lac = getResources().getString(R.string.label_LAC);
+		string_range = getResources().getString(R.string.range);
+		string_colon = getResources().getString(R.string.colon);
 	}
 
 	@Override
@@ -281,7 +308,7 @@ public class MapData extends MapActivity implements AdListener {
 						rssi_max = pairs.getInt(pairs.getColumnIndex(PAIRS_RSSI_MAX)),
 						rssi_avg = Math.round((rssi_min + rssi_max) / 2),
 						rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
-						mMsg = mContext.getResources().getString(R.string.cellwarning) + PAIRS_CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
+						mMsg = string_cellWarning + PAIRS_CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
 						mHandler.post(mUpdtDialog);
 						String tower = "{" + addInt(cell_id, cid) + "," + addInt(location_area_code, lac) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
 						if (rssi_avg != UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
@@ -292,9 +319,9 @@ public class MapData extends MapActivity implements AdListener {
 						towers += tower;
 						point = getGeoPoint(bldRequest(tower, bssid));
 						pinOverlays.addOverlay(new WapdroidOverlayItem(point, PAIRS_CELL,
-								mContext.getResources().getString(R.string.label_CID) + Integer.toString(cid)
-								+ mContext.getResources().getString(R.string.linefeed) + mContext.getResources().getString(R.string.label_LAC) + Integer.toString(lac)
-								+ mContext.getResources().getString(R.string.linefeed) + mContext.getResources().getString(R.string.range) + Integer.toString(rssi_min) + mContext.getString(R.string.colon) + Integer.toString(rssi_max),
+								string_cid + Integer.toString(cid)
+								+ string_linefeed + string_lac + Integer.toString(lac)
+								+ string_linefeed + string_range + Integer.toString(rssi_min) + string_colon + Integer.toString(rssi_max),
 								mNetwork, pairs.getInt(pairs.getColumnIndex(TABLE_ID)), rssi_avg, rssi_range));
 						pairs.moveToNext();
 					}
@@ -305,7 +332,7 @@ public class MapData extends MapActivity implements AdListener {
 						Location location = new Location("");
 						location.setLatitude(point.getLatitudeE6()/1e6);
 						location.setLongitude(point.getLongitudeE6()/1e6);
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, PAIRS_NETWORK, ssid, mNetwork), mContext.getResources().getDrawable(R.drawable.network));
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, PAIRS_NETWORK, ssid, mNetwork), drawable_network);
 						pinOverlays.setDistances(location);
 					}
 				}

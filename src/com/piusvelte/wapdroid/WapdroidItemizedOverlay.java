@@ -1,6 +1,13 @@
 package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_NETWORK;
+import static com.piusvelte.wapdroid.MapData.color_primary;
+import static com.piusvelte.wapdroid.MapData.color_secondary;
+import static com.piusvelte.wapdroid.MapData.drawable_cell;
+import static com.piusvelte.wapdroid.MapData.drawable_network;
+import static com.piusvelte.wapdroid.MapData.string_deleteCell;
+import static com.piusvelte.wapdroid.MapData.string_deleteNetwork;
+import static com.piusvelte.wapdroid.MapData.string_cancel;
 
 import java.util.ArrayList;
 
@@ -22,12 +29,13 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 	private MapData mMap;
 	private static final int mNetworkAlpha = 32;
 	private int mCellAlpha = 32;
-	
+
 	public WapdroidItemizedOverlay(MapData map, int cellCount) {
-		super(boundCenterBottom(map.getResources().getDrawable(R.drawable.cell)));
+		super(boundCenterBottom(drawable_cell));
+		mMap = map;
 		mCellAlpha = Math.round(mNetworkAlpha / cellCount);
 	}
-	
+
 	@Override
 	public void draw(Canvas canvas, MapView mapView, boolean shadow) {
 		for (WapdroidOverlayItem item : mOverlays) {
@@ -40,13 +48,12 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 			double mercator = Math.cos(Math.toRadians(gpt.getLatitudeE6()/1E6));
 			if (item.getTitle() == PAIRS_NETWORK) {
 				radius = 70;
-				paint.setColor(mMap.getResources().getColor(R.color.primary));
+				paint.setColor(color_primary);
 				paint.setAlpha(mNetworkAlpha);
-			}
-			else {
+			} else {
 				long stroke = item.getStroke();
 				radius = item.getRadius();
-				paint.setColor(mMap.getResources().getColor(R.color.secondary));
+				paint.setColor(color_secondary);
 				if (stroke == 0) {
 					paint.setAlpha(mCellAlpha);
 					paint.setStyle(Paint.Style.FILL);
@@ -96,7 +103,7 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 			}
 		}
 	}
-	
+
 	@Override
 	protected boolean onTap(int i) {
 		final int item = i;
@@ -104,10 +111,10 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 		final int network = overlay.getNetwork();
 		final int pair = overlay.getPair();
 		AlertDialog.Builder dialog = new AlertDialog.Builder(mMap);
-		dialog.setIcon(mMap.getResources().getDrawable(pair == 0 ? R.drawable.network : R.drawable.cell));
+		dialog.setIcon(pair == 0 ? drawable_network : drawable_cell);
 		dialog.setTitle(overlay.getTitle());
 		dialog.setMessage(overlay.getSnippet());
-		dialog.setPositiveButton(mMap.getResources().getString(pair == 0 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell), new DialogInterface.OnClickListener() {
+		dialog.setPositiveButton(pair == 0 ? string_deleteNetwork : string_deleteCell, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				WapdroidDbAdapter db = new WapdroidDbAdapter(mMap);
@@ -133,7 +140,7 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 				db = null;
 			}
 		});
-		dialog.setNegativeButton(mMap.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
+		dialog.setNegativeButton(string_cancel, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				dialog.cancel();
