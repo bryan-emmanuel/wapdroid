@@ -36,7 +36,6 @@ import static android.telephony.NeighboringCellInfo.UNKNOWN_RSSI;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.http.client.ClientProtocolException;
@@ -46,15 +45,10 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 
-import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
-import android.graphics.Canvas;
-import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
@@ -65,13 +59,10 @@ import android.view.MenuItem;
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
 import com.google.android.maps.GeoPoint;
-import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
-import com.google.android.maps.OverlayItem;
-import com.google.android.maps.Projection;
 
 public class MapData extends MapActivity implements AdListener {
 	private static final int REFRESH_ID = Menu.FIRST;
@@ -96,10 +87,9 @@ public class MapData extends MapActivity implements AdListener {
 	private static final String wifi_towers = "wifi_towers";
 	private static final String mac_address = "mac_address";
 	private static final String signal_strength = "signal_strength";
-	private static final int mNetwork_alpha = 32;
 	private WapdroidDbAdapter mDbHelper;
 	private Context mContext;
-	private int mNetwork, mPair = 0, mMCC = 0, mMNC = 0, mCell_alpha = 32;
+	private int mNetwork, mPair = 0, mMCC = 0, mMNC = 0;
 	private String mCarrier = "", mToken = "", mMsg = "";
 	private MapView mMView;
 	private MapController mMController;
@@ -254,7 +244,7 @@ public class MapData extends MapActivity implements AdListener {
 		return request + "}";
 	}
 
-	private void mapData() {
+	public void mapData() {
 		mLoadingDialog = new ProgressDialog(this);
 		mLoadingDialog.setTitle(R.string.loading);
 		mLoadingDialog.setMessage((mPair == 0 ? PAIRS_NETWORK : PAIRS_CELL));
@@ -277,12 +267,11 @@ public class MapData extends MapActivity implements AdListener {
 				String ssid = "", bssid = "", towers = "";
 				int ctr = 0;
 				List<Overlay> mapOverlays = mMView.getOverlays();
-				WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay(mContext.getResources().getDrawable(R.drawable.cell));
 				GeoPoint point = new GeoPoint(0, 0);
 				Cursor pairs = mPair == 0 ? mDbHelper.fetchNetworkData(mNetwork) : mDbHelper.fetchPairData(mPair);
 				int ct = pairs.getCount();
+				WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);
 				if (ct > 0) {
-					mCell_alpha = Math.round(mNetwork_alpha / ct);
 					pairs.moveToFirst();
 					while (!interrupted() && !pairs.isAfterLast()) {
 						ctr++;
@@ -329,192 +318,24 @@ public class MapData extends MapActivity implements AdListener {
 		};
 		mThread.start();
 	}
-
-	class WapdroidOverlayItem extends OverlayItem {
-		protected GeoPoint mPoint;
-		protected String mSnippet;
-		protected String mTitle;
-		protected Drawable mMarker;
-		protected int mNetwork = 0;
-		protected int mPair = 0;
-		protected int mRssi_avg = 0;
-		protected int mRssi_range = 0;
-		protected int mRadius = 0;
-		protected long mStroke = 0;
-		public WapdroidOverlayItem(GeoPoint point, String title, String snippet, int network) {
-			super(point, title, snippet);
-			mNetwork = network;
-		}
-		public WapdroidOverlayItem(GeoPoint point, String title, String snippet, int network, int pair, int rssi_avg, int rssi_range) {
-			super(point, title, snippet);
-			mRssi_avg = rssi_avg;
-			mRssi_range = rssi_range;
-			mNetwork = network;
-			mPair = pair;
-		}
-		public int getNetwork() {
-			return mNetwork;
-		}
-		public int getPair() {
-			return mPair;
-		}
-		public int getRssiAvg() {
-			return mRssi_avg;
-		}
-		public int getRssiRange() {
-			return mRssi_range;
-		}
-		public void setRadius(int radius) {
-			mRadius = radius;
-		}
-		public int getRadius() {
-			return mRadius;
-		}
-		public void setStroke(long stroke) {
-			mStroke = stroke;
-		}
-		public long getStroke() {
-			return mStroke;
-		}
+	
+	public int getPair() {
+		return mPair;
 	}
-
-	class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem> {
-		private ArrayList<WapdroidOverlayItem> mOverlays = new ArrayList<WapdroidOverlayItem>();
-		public WapdroidItemizedOverlay(Drawable defaultMarker) {
-			super(boundCenterBottom(defaultMarker));
-		}
-		@Override
-		public void draw(Canvas canvas, MapView mapView, boolean shadow) {
-			for (WapdroidOverlayItem item : mOverlays) {
-				int radius = 0;
-				Paint paint = new Paint();
-				GeoPoint gpt = item.getPoint();
-				Point pt = new Point();
-				Projection projection = mapView.getProjection();
-				projection.toPixels(gpt, pt);
-				double mercator = Math.cos(Math.toRadians(gpt.getLatitudeE6()/1E6));
-				if (item.getTitle() == PAIRS_NETWORK) {
-					radius = 70;
-					paint.setColor(getResources().getColor(R.color.primary));
-					paint.setAlpha(mNetwork_alpha);
-				}
-				else {
-					long stroke = item.getStroke();
-					radius = item.getRadius();
-					paint.setColor(getResources().getColor(R.color.secondary));
-					if (stroke == 0) {
-						paint.setAlpha(mCell_alpha);
-						paint.setStyle(Paint.Style.FILL);
-					}
-					else {
-						paint.setAlpha(mCell_alpha);
-						paint.setStyle(Paint.Style.STROKE);
-						paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));
-					}
-				}
-				canvas.drawCircle(pt.x, pt.y, projection.metersToEquatorPixels(Math.round(radius/mercator)), paint);
-			}
-			super.draw(canvas, mapView, shadow);
-		}
-
-		@Override
-		protected WapdroidOverlayItem createItem(int i) {
-			return mOverlays.get(i);
-		}
-
-		@Override
-		public int size() {
-			return mOverlays.size();
-		}
-
-		public void addOverlay(WapdroidOverlayItem overlay) {
-			mOverlays.add(overlay);
-			populate();
-		}
-
-		public void addOverlay(WapdroidOverlayItem overlay, Drawable marker) {
-			overlay.setMarker(boundCenterBottom(marker));
-			addOverlay(overlay);
-		}
-
-		public void setDistances(Location location) {
-			for (WapdroidOverlayItem item : mOverlays) {
-				if (item.getTitle() != PAIRS_NETWORK) {
-					GeoPoint gpt = item.getPoint();
-					Location cell = new Location("");
-					cell.setLatitude(gpt.getLatitudeE6()/1e6);
-					cell.setLongitude(gpt.getLongitudeE6()/1e6);
-					int radius = Math.round(location.distanceTo(cell));
-					double scale = radius / (Math.abs(item.getRssiAvg()) - 51);
-					item.setRadius(radius);
-					item.setStroke(Math.round(item.getRssiRange() * scale));
-				}
-			}
-		}
-		@Override
-		protected boolean onTap(int i) {
-			final int item = i;
-			WapdroidOverlayItem overlay = mOverlays.get(item);
-			final int network = overlay.getNetwork();
-			final int pair = overlay.getPair();
-			AlertDialog.Builder dialog = new AlertDialog.Builder(mContext);
-			dialog.setIcon(mContext.getResources().getDrawable(pair == 0 ? R.drawable.network : R.drawable.cell));
-			dialog.setTitle(overlay.getTitle());
-			dialog.setMessage(overlay.getSnippet());
-			dialog.setPositiveButton(mContext.getResources().getString(pair == 0 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell), new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					if (pair == 0) {
-						mDbHelper.deleteNetwork(network);
-						finish();
-					}
-					else if (mPair == 0) {
-						// delete one pair from the mapped network
-						mDbHelper.deletePair(network, pair);
-						mOverlays.remove(item);
-						mMView.invalidate();
-						mapData();
-						dialog.cancel();
-					}
-					else {
-						// delete an individually mapped cell
-						mDbHelper.deletePair(network, pair);
-						finish();
-					}
-				}
-			});
-			dialog.setNegativeButton(mContext.getResources().getString(R.string.cancel), new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.cancel();
-				}
-			});
-			dialog.show();
-			return true;
-		}
+	
+	public void invalidateView() {
+		mMView.invalidate();
 	}
 
 	@Override
-	public void onFailedToReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onFailedToReceiveAd(AdView arg0) {}
 
 	@Override
-	public void onFailedToReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onFailedToReceiveRefreshedAd(AdView arg0) {}
 
 	@Override
-	public void onReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onReceiveAd(AdView arg0) {}
 
 	@Override
-	public void onReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onReceiveRefreshedAd(AdView arg0) {}
 }

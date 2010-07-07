@@ -25,12 +25,8 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 
 public class WapdroidDbAdapter {
-	private static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 3;
-	private static final String DROP = "drop table if exists ";
 	public static final String TABLE_ID = "_id";
 	public static final String TABLE_CODE = "code";
 	private static final String ID_TYPE = " integer primary key autoincrement, ";
@@ -55,24 +51,24 @@ public class WapdroidDbAdapter {
 	public static final int UNKNOWN_CID = -1;
 	public static final int UNKNOWN_RSSI = 99;
 
-	private static final String CREATE_NETWORKS = "create table "
+	public static final String CREATE_NETWORKS = "create table "
 		+ TABLE_NETWORKS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ NETWORKS_SSID + " text not null, "
 		+ NETWORKS_BSSID + " text not null);";
-	private static final String CREATE_CELLS = "create table "
+	public static final String CREATE_CELLS = "create table "
 		+ TABLE_CELLS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ CELLS_CID + " integer, "
 		+ CELLS_LOCATION + " integer);";
-	private static final String CREATE_PAIRS = "create table "
+	public static final String CREATE_PAIRS = "create table "
 		+ TABLE_PAIRS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ PAIRS_CELL + " integer, "
 		+ PAIRS_NETWORK + " integer, "
 		+ PAIRS_RSSI_MIN + " integer, "
 		+ PAIRS_RSSI_MAX + " integer);";
-	private static final String CREATE_LOCATIONS = "create table "
+	public static final String CREATE_LOCATIONS = "create table "
 		+ TABLE_LOCATIONS + " ("
 		+ TABLE_ID + ID_TYPE
 		+ LOCATIONS_LAC + " integer);";
@@ -81,54 +77,6 @@ public class WapdroidDbAdapter {
 	private SQLiteDatabase mDb;
 
 	public final Context mContext;
-
-	private static class DatabaseHelper extends SQLiteOpenHelper {
-		DatabaseHelper(Context context) {
-			super(context, DATABASE_NAME, null, DATABASE_VERSION);
-		}
-		@Override
-		public void onCreate(SQLiteDatabase db) {
-			db.execSQL(CREATE_NETWORKS);
-			db.execSQL(CREATE_CELLS);
-			db.execSQL(CREATE_PAIRS);
-			db.execSQL(CREATE_LOCATIONS);
-		}
-
-		@Override
-		public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-			if (oldVersion < 2) {
-				// add BSSID
-				db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
-				db.execSQL("create temporary table " + TABLE_NETWORKS + "_bkp as select * from " + TABLE_NETWORKS + ";");
-				db.execSQL(DROP + TABLE_NETWORKS + ";");
-				db.execSQL(CREATE_NETWORKS);
-				db.execSQL("insert into " + TABLE_NETWORKS + " select "
-						+ TABLE_ID + ", " + NETWORKS_SSID + ", \"\""
-						+ " from " + TABLE_NETWORKS + "_bkp;");
-				db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
-			}
-			if (oldVersion < 3) {
-				// add locations
-				db.execSQL(CREATE_LOCATIONS);
-				// first backup cells to create pairs
-				db.execSQL(DROP + TABLE_CELLS + "_bkp;");
-				db.execSQL("create temporary table " + TABLE_CELLS + "_bkp as select * from " + TABLE_CELLS + ";");
-				// update cells, dropping network column, making unique
-				db.execSQL(DROP + TABLE_CELLS + ";");
-				db.execSQL(CREATE_CELLS);
-				db.execSQL("insert into " + TABLE_CELLS + " (" + CELLS_CID + ", " + CELLS_LOCATION
-						+ ") select " + CELLS_CID + ", " + UNKNOWN_CID + " from " + TABLE_CELLS + "_bkp group by " + CELLS_CID + ";");
-				// create pairs
-				db.execSQL(CREATE_PAIRS);
-				db.execSQL("insert into " + TABLE_PAIRS
-						+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
-						+ ") select " + TABLE_CELLS + "." + TABLE_ID + ", " + TABLE_CELLS + "_bkp." + PAIRS_NETWORK + ", " + UNKNOWN_RSSI + ", " + UNKNOWN_RSSI
-						+ " from " + TABLE_CELLS + "_bkp"
-						+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "_bkp." + CELLS_CID + "=" + TABLE_CELLS + "." + CELLS_CID + ";");
-				db.execSQL(DROP + TABLE_CELLS + "_bkp;");
-			}
-		}
-		}
 
 	public WapdroidDbAdapter(Context context) {
 		this.mContext = context;
