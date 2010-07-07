@@ -400,7 +400,9 @@ public class WapdroidService extends Service {
 		networkStateChanged(mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		// initialize the cell info
-		getCellInfo(mTeleManager.getCellLocation());
+		// celllocation may be null
+		CellLocation cl = mTeleManager.getCellLocation();
+		if (cl != null) getCellInfo(cl);
 		if (mApi7) mPhoneListener = new PhoneListenerApi7();
 		else mPhoneListener = new PhoneListenerApi3();
 		mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
