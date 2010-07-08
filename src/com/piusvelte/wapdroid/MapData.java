@@ -103,9 +103,10 @@ public class MapData extends MapActivity implements AdListener {
 	public static String string_colon;
 	private WapdroidDbAdapter mDbHelper;
 	private Context mContext;
-	private int mNetwork, mPair = 0, mMCC = 0, mMNC = 0;
+	private int mNetwork, mMCC = 0, mMNC = 0;
+	public int mPair = 0;
 	private String mCarrier = "", mToken = "", mMsg = "";
-	private MapView mMView;
+	public MapView mMView;
 	private MapController mMController;
 	private ProgressDialog mLoadingDialog;
 	private Thread mThread;
@@ -344,14 +345,6 @@ public class MapData extends MapActivity implements AdListener {
 			}
 		};
 		mThread.start();
-	}
-	
-	public int getPair() {
-		return mPair;
-	}
-	
-	public void invalidateView() {
-		mMView.invalidate();
 	}
 
 	@Override

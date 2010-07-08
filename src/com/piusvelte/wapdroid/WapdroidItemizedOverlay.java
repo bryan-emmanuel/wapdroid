@@ -122,16 +122,14 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 				if (pair == 0) {
 					db.deleteNetwork(network);
 					mMap.finish();
-				}
-				else if (mMap.getPair() == 0) {
+				} else if (mMap.mPair == 0) {
 					// delete one pair from the mapped network
 					db.deletePair(network, pair);
 					mOverlays.remove(item);
-					mMap.invalidateView();
+					mMap.mMView.invalidate();
 					mMap.mapData();
 					dialog.cancel();
-				}
-				else {
+				} else {
 					// delete an individually mapped cell
 					db.deletePair(network, pair);
 					mMap.finish();

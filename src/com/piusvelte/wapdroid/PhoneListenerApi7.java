@@ -21,13 +21,13 @@ public class PhoneListenerApi7 extends PhoneStateListener {
 
 	public void onSignalStrengthChanged(int asu) {
 		// add cdma support, convert signal from gsm
-		if ((mService.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mService.getPhoneType() == PHONE_TYPE_CDMA)) mService.signalStrengthChanged(asu > 0 ? (2 * asu - 113) : asu);
+		if ((mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA)) mService.signalStrengthChanged(asu > 0 ? (2 * asu - 113) : asu);
 		else mService.release();
 	}
 
 	public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-		if (mService.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) mService.signalStrengthChanged(2 * signalStrength.getGsmSignalStrength() - 113);
-		else if (mService.getPhoneType() == PHONE_TYPE_CDMA) mService.signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ?
+		if (mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) mService.signalStrengthChanged(2 * signalStrength.getGsmSignalStrength() - 113);
+		else if (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) mService.signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ?
 				signalStrength.getCdmaDbm()
 				: signalStrength.getEvdoDbm());
 		else mService.release();

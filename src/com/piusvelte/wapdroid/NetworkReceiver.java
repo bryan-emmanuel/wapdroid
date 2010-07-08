@@ -22,7 +22,7 @@ public class NetworkReceiver extends BroadcastReceiver {
 				if (ws.getRelease()) {
 					// if connection was lost, check cells, otherwise, release
 					if (!i.isConnected()) {
-						ws.cancelAlarm();
+						ws.mAlarmMgr.cancel(ws.mPendingIntent);
 						context.startService(new Intent(context, WapdroidService.class));
 					} else ws.release();
 				}

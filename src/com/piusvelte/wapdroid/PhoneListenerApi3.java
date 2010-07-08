@@ -21,7 +21,7 @@ public class PhoneListenerApi3 extends PhoneStateListener {
 
 	public void onSignalStrengthChanged(int asu) {
 		// add cdma support, convert signal from gsm
-		if ((mService.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mService.getPhoneType() == PHONE_TYPE_CDMA)) mService.signalStrengthChanged(asu > 0 ? (2 * asu - 113) : asu);
+		if ((mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA)) mService.signalStrengthChanged(asu > 0 ? (2 * asu - 113) : asu);
 		else mService.release();
 	}
 }
