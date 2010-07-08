@@ -165,7 +165,7 @@ public class WapdroidDbAdapter {
 
 	public int fetchLocationOrCreate(int lac) {
 		int location = UNKNOWN_CID;
-		if (lac != UNKNOWN_CID) {
+		if (lac > 0) {
 			Cursor c = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=" + lac, null);
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -324,10 +324,10 @@ public class WapdroidDbAdapter {
 								" and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + rssi + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + rssi + ")))"
 								: ""), null);
 		inRange = (c.getCount() > 0);
-		if (inRange && (lac != UNKNOWN_CID)) {
+		if (inRange && (lac > 0)) {
 			// check LAC, as this is a new column
 			c.moveToFirst();
-			if (c.isNull(c.getColumnIndex(CELLS_LOCATION)) && (lac != 0)) {
+			if (c.isNull(c.getColumnIndex(CELLS_LOCATION))) {
 				int location = fetchLocationOrCreate(lac);
 				ContentValues values = new ContentValues();
 				int cell = c.getInt(c.getColumnIndex(TABLE_ID));

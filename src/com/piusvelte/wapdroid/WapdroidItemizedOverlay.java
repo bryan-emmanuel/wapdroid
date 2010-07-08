@@ -27,8 +27,8 @@ import com.google.android.maps.Projection;
 public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem> {
 	private ArrayList<WapdroidOverlayItem> mOverlays = new ArrayList<WapdroidOverlayItem>();
 	private MapData mMap;
-	private static final int mNetworkAlpha = 32;
-	private int mCellAlpha = 32;
+	private static final int mNetworkAlpha = 48;
+	private int mCellAlpha = 48;
 
 	public WapdroidItemizedOverlay(MapData map, int cellCount) {
 		super(boundCenterBottom(drawable_cell));

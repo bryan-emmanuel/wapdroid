@@ -17,14 +17,17 @@ import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_CELL;
 import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_NETWORK;
 import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MAX;
 import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MIN;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_LOCATIONS;
+import static com.piusvelte.wapdroid.WapdroidDbAdapter.LOCATIONS_LAC;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 3;
+	private static final int DATABASE_VERSION = 4;
 	private static final String DROP = "drop table if exists ";
 
 	DatabaseHelper(Context context) {
@@ -71,6 +74,25 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 					+ " from " + TABLE_CELLS + "_bkp"
 					+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "_bkp." + CELLS_CID + "=" + TABLE_CELLS + "." + CELLS_CID + ";");
 			db.execSQL(DROP + TABLE_CELLS + "_bkp;");
+		}
+		if (oldVersion < 4) {
+			// clean lac=0 locations
+			Cursor locations = db.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=0", null);
+			if (locations.getCount() > 0) {
+				locations.moveToFirst();
+				while (!locations.isAfterLast()) {
+					int location = locations.getInt(locations.getColumnIndex(TABLE_ID));
+					// clean pairs
+					db.execSQL("delete from " + TABLE_PAIRS + " where " + TABLE_ID + " in (select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + " from " + TABLE_PAIRS
+							+ " left join " + TABLE_CELLS + " on " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+							+ " where " + CELLS_LOCATION + "=" + location + ");");
+					// clean cells
+					db.execSQL("delete from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location + ";");
+					locations.moveToNext();
+				}
+				// clean locations
+				db.execSQL("delete from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=0;");
+			}
 		}
 	}
 }

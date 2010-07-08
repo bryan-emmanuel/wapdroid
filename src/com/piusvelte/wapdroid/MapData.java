@@ -281,12 +281,16 @@ public class MapData extends MapActivity implements AdListener {
 			@Override
 			public void onCancel(DialogInterface dialog) {
 				mThread.interrupt();
+				// if a cell was deleted, an array out of bounds error will be thrown if the map isn't redrawn, so finish if the redraw is cancelled
+				finish();
 			}
 		});
 		mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(R.string.cancel), new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				mThread.interrupt();
+				// if a cell was deleted, an array out of bounds error will be thrown if the map isn't redrawn, so finish if the redraw is cancelled
+				finish();
 			}
 		});
 		mLoadingDialog.show();
