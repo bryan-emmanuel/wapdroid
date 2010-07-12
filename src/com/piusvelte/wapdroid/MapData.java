@@ -302,8 +302,8 @@ public class MapData extends MapActivity implements AdListener {
 				GeoPoint point = new GeoPoint(0, 0);
 				Cursor pairs = mPair == 0 ? mDbHelper.fetchNetworkData(mNetwork) : mDbHelper.fetchPairData(mPair);
 				int ct = pairs.getCount();
-				WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);
 				if (ct > 0) {
+					WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);
 					pairs.moveToFirst();
 					while (!interrupted() && !pairs.isAfterLast()) {
 						ctr++;
@@ -340,10 +340,10 @@ public class MapData extends MapActivity implements AdListener {
 						pinOverlays.addOverlay(new WapdroidOverlayItem(point, PAIRS_NETWORK, ssid, mNetwork), drawable_network);
 						pinOverlays.setDistances(location);
 					}
+					mapOverlays.add(pinOverlays);
+					mMController.setCenter(point);
 				}
 				pairs.close();
-				mapOverlays.add(pinOverlays);
-				mMController.setCenter(point);
 				mLoadingDialog.dismiss();
 				interrupt();
 			}

@@ -102,7 +102,9 @@ public class WapdroidService extends Service {
 			}
 			mManageWifi = manage;
 			mInterval = interval;
-			mNotifications = setNotifications(vibrate, led, ringtone);
+			mNotifications = (vibrate ? Notification.DEFAULT_VIBRATE : 0)
+			| (led ? Notification.DEFAULT_LIGHTS : 0)
+			| (ringtone ? Notification.DEFAULT_SOUND : 0);
 			int limit = batteryOverride ? batteryPercentage : 0;
 			if (limit != mBatteryLimit) batteryLimitChanged(limit);
 		}
@@ -249,7 +251,9 @@ public class WapdroidService extends Service {
 		mManageWifi = prefs.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) prefs.getString(getString(R.string.key_interval), "30000"));
 		if (prefs.getBoolean(getString(R.string.key_notify), false)) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mNotifications = setNotifications(prefs.getBoolean(getString(R.string.key_vibrate), false), prefs.getBoolean(getString(R.string.key_led), false), prefs.getBoolean(getString(R.string.key_ringtone), false));
+		mNotifications = (prefs.getBoolean(getString(R.string.key_vibrate), false) ? Notification.DEFAULT_VIBRATE : 0)
+		| (prefs.getBoolean(getString(R.string.key_led), false) ? Notification.DEFAULT_LIGHTS : 0)
+		| (prefs.getBoolean(getString(R.string.key_ringtone), false) ? Notification.DEFAULT_SOUND : 0);
 		batteryLimitChanged(prefs.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) prefs.getString(getString(R.string.key_battery_percentage), "30")) : 0);
 		prefs = null;
 		mDbHelper = new WapdroidDbAdapter(this);
@@ -346,12 +350,6 @@ public class WapdroidService extends Service {
 			}
 		}
 		return cells;
-	}
-
-	private int setNotifications(boolean vibrate, boolean led, boolean ringtone) {
-		return (vibrate ? Notification.DEFAULT_VIBRATE : 0)
-		| (led ? Notification.DEFAULT_LIGHTS : 0)
-		| (ringtone ? Notification.DEFAULT_SOUND : 0);
 	}
 
 	public void getCellInfo(CellLocation location) {
