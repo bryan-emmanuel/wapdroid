@@ -15,7 +15,7 @@ public class BatteryReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+		if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED) && (context != null)) {
 			int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
 			WapdroidService ws = (WapdroidService) context;
 			// check the threshold

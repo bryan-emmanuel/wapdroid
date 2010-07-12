@@ -16,12 +16,14 @@ public class PhoneListenerApi3 extends PhoneStateListener {
 
 	public void onCellLocationChanged(CellLocation location) {
 		// this also calls signalStrengthChanged, since onSignalStrengthChanged isn't reliable enough by itself
-		mService.getCellInfo(location);
+		if (mService != null) mService.getCellInfo(location);
 	}
 
 	public void onSignalStrengthChanged(int asu) {
 		// add cdma support, convert signal from gsm
-		if ((mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA)) mService.signalStrengthChanged(asu > 0 ? (2 * asu - 113) : asu);
-		else mService.release();
+		if (mService != null) {
+			if ((mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA)) mService.signalStrengthChanged(asu > 0 ? (2 * asu - 113) : asu);
+			else mService.release();
+		}
 	}
 }
