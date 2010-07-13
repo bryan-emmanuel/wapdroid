@@ -16,24 +16,20 @@ public class PhoneListenerApi7 extends PhoneStateListener {
 
 	public void onCellLocationChanged(CellLocation location) {
 		// this also calls signalStrengthChanged, since signalStrengthChanged isn't reliable enough by itself
-		if (mService != null) mService.getCellInfo(location);
+		mService.getCellInfo(location);
 	}
 
 	public void onSignalStrengthChanged(int asu) {
 		// add cdma support, convert signal from gsm
-		if (mService != null) {
-			if ((mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA)) mService.signalStrengthChanged(asu > 0 ? (2 * asu - 113) : asu);
-			else mService.release();
-		}
+		if ((mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA)) mService.signalStrengthChanged(asu > 0 ? (2 * asu - 113) : asu);
+		else mService.release();
 	}
 
 	public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-		if (mService != null) {
-			if (mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) mService.signalStrengthChanged(2 * signalStrength.getGsmSignalStrength() - 113);
-			else if (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) mService.signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ?
-					signalStrength.getCdmaDbm()
-					: signalStrength.getEvdoDbm());
-			else mService.release();
-		}
+		if (mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) mService.signalStrengthChanged(2 * signalStrength.getGsmSignalStrength() - 113);
+		else if (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) mService.signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ?
+				signalStrength.getCdmaDbm()
+				: signalStrength.getEvdoDbm());
+		else mService.release();
 	}
 }

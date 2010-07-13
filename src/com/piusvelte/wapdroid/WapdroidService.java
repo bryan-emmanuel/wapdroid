@@ -226,7 +226,10 @@ public class WapdroidService extends Service {
 		//wifiStateChanged(mWifiState == WifiManager.WIFI_STATE_ENABLED);
 		// if wifi or network receiver took a lock, and the alarm went off, stop them from releasing the lock
 		mRelease = false;
-		getCellInfo(mTeleManager.getCellLocation());
+		// initialize the cell info
+		// celllocation may be null
+		CellLocation cl = mTeleManager.getCellLocation();
+		if (cl != null) getCellInfo(cl);
 	}
 
 	@Override
@@ -266,10 +269,6 @@ public class WapdroidService extends Service {
 		// the ssid from wifimanager may not be null, even if disconnected, so check against the wifi state
 		networkStateChanged(mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		// initialize the cell info
-		// celllocation may be null
-		CellLocation cl = mTeleManager.getCellLocation();
-		if (cl != null) getCellInfo(cl);
 		mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7(mService)) : (new PhoneListenerApi3(mService))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 	}
 
@@ -358,7 +357,6 @@ public class WapdroidService extends Service {
 		if (mOperator == "") mOperator = mTeleManager.getNetworkOperator();
 		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
 			mCid = ((GsmCellLocation) location).getCid() > 0 ? ((GsmCellLocation) location).getCid() : UNKNOWN_CID;
-			// fix for api < 5
 			mLac = ((GsmCellLocation) location).getLac() > 0 ? ((GsmCellLocation) location).getLac() : UNKNOWN_CID;
 		} else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
 			// check the phone type, cdma is not available before API 2.0, so use a wrapper
