@@ -56,7 +56,7 @@ import android.util.Log;
 public class WapdroidService extends Service {
 	private static int NOTIFY_ID = 1;
 	public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
-	private static final String TAG = "Wapdroid";
+	public static final String TAG = "Wapdroid";
 	public static final int LISTEN_SIGNAL_STRENGTHS = 256;
 	public static final int PHONE_TYPE_CDMA = 2;
 	private static final int START_STICKY = 1;
@@ -102,9 +102,10 @@ public class WapdroidService extends Service {
 			}
 			mManageWifi = manage;
 			mInterval = interval;
-			mNotifications = (vibrate ? Notification.DEFAULT_VIBRATE : 0)
-			| (led ? Notification.DEFAULT_LIGHTS : 0)
-			| (ringtone ? Notification.DEFAULT_SOUND : 0);
+			mNotifications = 0;
+			if (vibrate) mNotifications |= Notification.DEFAULT_VIBRATE;
+			if (led) mNotifications |= Notification.DEFAULT_LIGHTS;
+			if (ringtone) mNotifications |= Notification.DEFAULT_SOUND;
 			int limit = batteryOverride ? batteryPercentage : 0;
 			if (limit != mBatteryLimit) batteryLimitChanged(limit);
 		}
@@ -251,9 +252,9 @@ public class WapdroidService extends Service {
 		mManageWifi = prefs.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) prefs.getString(getString(R.string.key_interval), "30000"));
 		if (prefs.getBoolean(getString(R.string.key_notify), false)) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		mNotifications = (prefs.getBoolean(getString(R.string.key_vibrate), false) ? Notification.DEFAULT_VIBRATE : 0)
-		| (prefs.getBoolean(getString(R.string.key_led), false) ? Notification.DEFAULT_LIGHTS : 0)
-		| (prefs.getBoolean(getString(R.string.key_ringtone), false) ? Notification.DEFAULT_SOUND : 0);
+		if (prefs.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;
+		if (prefs.getBoolean(getString(R.string.key_led), false)) mNotifications |= Notification.DEFAULT_LIGHTS;
+		if (prefs.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
 		batteryLimitChanged(prefs.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) prefs.getString(getString(R.string.key_battery_percentage), "30")) : 0);
 		prefs = null;
 		mDbHelper = new WapdroidDbAdapter(this);

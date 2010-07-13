@@ -20,6 +20,7 @@
 
 package com.piusvelte.wapdroid;
 
+import static com.piusvelte.wapdroid.WapdroidService.TAG;
 import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_CID;
 import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_PAIRS;
 import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_NETWORKS;
@@ -69,7 +70,6 @@ public class MapData extends MapActivity implements AdListener {
 	private static final int REFRESH_ID = Menu.FIRST;
 	public static final String OPERATOR = "operator";
 	public static final String CARRIER = "carrier";
-	private static final String TAG = "Wapdroid";
 	private static final String version = "version";
 	private static final String gmaps_version = "1.1.0";
 	private static final String host = "host";
