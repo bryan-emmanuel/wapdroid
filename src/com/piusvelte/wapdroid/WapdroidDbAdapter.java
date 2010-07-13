@@ -29,7 +29,6 @@ import android.database.sqlite.SQLiteDatabase;
 public class WapdroidDbAdapter {
 	public static final String TABLE_ID = "_id";
 	public static final String TABLE_CODE = "code";
-	private static final String ID_TYPE = " integer primary key autoincrement, ";
 	public static final String TABLE_NETWORKS = "networks";
 	public static final String NETWORKS_SSID = "SSID";
 	public static final String NETWORKS_BSSID = "BSSID";
@@ -50,28 +49,10 @@ public class WapdroidDbAdapter {
 	public static final String PAIRS_RSSI_MAX = "RSSI_max";
 	public static final int UNKNOWN_CID = -1;
 	public static final int UNKNOWN_RSSI = 99;
-
-	public static final String CREATE_NETWORKS = "create table "
-		+ TABLE_NETWORKS + " ("
-		+ TABLE_ID + ID_TYPE
-		+ NETWORKS_SSID + " text not null, "
-		+ NETWORKS_BSSID + " text not null);";
-	public static final String CREATE_CELLS = "create table "
-		+ TABLE_CELLS + " ("
-		+ TABLE_ID + ID_TYPE
-		+ CELLS_CID + " integer, "
-		+ CELLS_LOCATION + " integer);";
-	public static final String CREATE_PAIRS = "create table "
-		+ TABLE_PAIRS + " ("
-		+ TABLE_ID + ID_TYPE
-		+ PAIRS_CELL + " integer, "
-		+ PAIRS_NETWORK + " integer, "
-		+ PAIRS_RSSI_MIN + " integer, "
-		+ PAIRS_RSSI_MAX + " integer);";
-	public static final String CREATE_LOCATIONS = "create table "
-		+ TABLE_LOCATIONS + " ("
-		+ TABLE_ID + ID_TYPE
-		+ LOCATIONS_LAC + " integer);";
+	public static final String CREATE_NETWORKS = "create table if not exists networks (_id  integer primary key autoincrement, SSID text not null, BSSID text not null);";
+	public static final String CREATE_CELLS = "create table if not exists cells (_id  integer primary key autoincrement, CID integer, location integer);";
+	public static final String CREATE_PAIRS = "create table if not exists pairs (_id  integer primary key autoincrement, cell integer, network integer, RSSI_min integer, RSSI_max  integer);";
+	public static final String CREATE_LOCATIONS = "create table if not exists locations (_id  integer primary key autoincrement, LAC integer);";
 
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDb;
