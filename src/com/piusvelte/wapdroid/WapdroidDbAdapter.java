@@ -52,7 +52,6 @@ public class WapdroidDbAdapter {
 	public static final String CREATE_CELLS = "create table if not exists cells (_id  integer primary key autoincrement, CID integer, location integer);";
 	public static final String CREATE_PAIRS = "create table if not exists pairs (_id  integer primary key autoincrement, cell integer, network integer, RSSI_min integer, RSSI_max  integer);";
 	public static final String CREATE_LOCATIONS = "create table if not exists locations (_id  integer primary key autoincrement, LAC integer);";
-	static final Object[] sDataLock = new Object[0];
 
 	private DatabaseHelper mDbHelper;
 	private SQLiteDatabase mDb;
@@ -64,10 +63,8 @@ public class WapdroidDbAdapter {
 	}
 
 	public WapdroidDbAdapter open() throws SQLException {
-		synchronized (WapdroidDbAdapter.sDataLock) {
-			mDbHelper = new DatabaseHelper(mContext);
-			mDb = mDbHelper.getWritableDatabase();				
-		}
+		mDbHelper = new DatabaseHelper(mContext);
+		mDb = mDbHelper.getWritableDatabase();
 		return this;
 	}
 
