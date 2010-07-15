@@ -30,14 +30,13 @@ public class BootReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		// on boot, or package upgrade, start the service
-		if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED) || intent.getAction().equals(Intent.ACTION_PACKAGE_REPLACED)) {
+		if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED) || intent.getAction().equals(Intent.ACTION_PACKAGE_REPLACED) || intent.getAction().equals(Intent.ACTION_PACKAGE_ADDED)) {
 			SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 			if (sp.getBoolean(context.getString(R.string.key_manageWifi), true)) {
 				ManageWakeLocks.acquire(context);
 				context.startService(new Intent(context, WapdroidService.class));
 			}
-		}
-		else if (intent.getAction().equals(WapdroidService.WAKE_SERVICE)) {
+		} else if (intent.getAction().equals(WapdroidService.WAKE_SERVICE)) {
 			ManageWakeLocks.acquire(context);
 			context.startService(new Intent(context, WapdroidService.class));
 		}

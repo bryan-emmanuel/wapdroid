@@ -20,7 +20,7 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.piusvelte.wapdroid"
-      android:versionCode="215" android:versionName="2.4">
+      android:versionCode="216" android:versionName="2.4">
     <application android:icon="@drawable/icon" android:label="@string/app_name"
     android:backupAgent="BackupAgentWrapper">
         <activity android:name=".WapdroidUI"
@@ -39,6 +39,7 @@
 				<action android:name="com.piusvelte.wapdroid.WAKE_SERVICE" />
 			</intent-filter>
 			<intent-filter>
+				<action android:name="android.intent.action.PACKAGE_ADDED" />
 				<action android:name="android.intent.action.PACKAGE_REPLACED" />
 				<data android:scheme="package" android:path="com.piusvelte.wapdroid" />
 			</intent-filter>
