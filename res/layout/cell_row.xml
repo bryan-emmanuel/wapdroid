@@ -22,7 +22,6 @@
 	android:orientation="horizontal"
 	android:layout_width="fill_parent"
 	android:layout_height="wrap_content"
-	android:background="@color/tertiary"
 	android:padding="8dip">
 	<ImageView
 		android:layout_width="wrap_content"

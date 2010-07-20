@@ -17,6 +17,7 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
+
 package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_CID;
@@ -343,7 +344,7 @@ public class WapdroidService extends Service {
 						Log.e(TAG, "unexpected " + ie);
 					}
 				}
-				cells += " or (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
+				cells += " and (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
 				+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
 				+ " and (" + Integer.toString(rssi) + "=" + UNKNOWN_RSSI + " or (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(rssi) + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(rssi) + ")))))";
 			}
@@ -425,7 +426,6 @@ public class WapdroidService extends Service {
 								if (cid != UNKNOWN_CID) enableWifi = mDbHelper.cellInRange(cid, lac, nci_rssi);
 								if (!enableWifi) break;
 					}
-					// still in range?
 					if (enableWifi) setWifiState(enableWifi);
 				}
 				else setWifiState(enableWifi);
@@ -561,15 +561,4 @@ public class WapdroidService extends Service {
 			}
 		}
 	}
-	
-//	public void createPhoneListener() {
-//		if (mApi7) mPhoneListener = new PhoneListenerApi7(this);
-//		else mPhoneListener = new PhoneListenerApi3(this);
-//		mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
-//	}
-//
-//	public void destroyPhoneListener() {
-//		mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
-//		mPhoneListener = null;
-//	}
 }

@@ -52,9 +52,15 @@ public class WapdroidUI extends Activity implements AdListener {
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
 	public static final int ABOUT_ID = Menu.FIRST + 3;
-	private TextView field_CID, field_wifiState, field_wifiBSSID, field_signal, field_battery, field_LAC;
+	private TextView field_CID,
+	field_wifiState, 
+	field_wifiBSSID,
+	field_signal,
+	field_battery,
+	field_LAC;
 	private ServiceConn mServiceConn;
-	private String mBssid = "", mCells = "";
+	private String mBssid = "",
+	mCells = "";
 	private int mCid = 0;
 
 	@Override

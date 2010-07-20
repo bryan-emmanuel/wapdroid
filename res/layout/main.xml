@@ -24,10 +24,8 @@
 	android:orientation="vertical"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
-	android:background="@color/tertiary"
 	android:textSize="16dip">
 	<TableLayout
-		android:background="@drawable/field"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:paddingTop="10dip"
@@ -58,7 +56,6 @@
 		</TableRow>
 	</TableLayout>
 	<TableLayout
-		android:background="@drawable/field"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:paddingTop="10dip"
@@ -98,7 +95,6 @@
 	    </TableRow>
 	</TableLayout>
 	<TableLayout
-		android:background="@drawable/field"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:paddingTop="10dip"
@@ -124,7 +120,6 @@
 			android:layout_width="fill_parent" 
 			android:layout_height="wrap_content"
 			android:layout_alignParentBottom="true"
-			app:backgroundColor="@color/tertiary"
 			app:primaryTextColor="@color/primary"
 			app:secondaryTextColor="@color/secondary"/>
 	</RelativeLayout>

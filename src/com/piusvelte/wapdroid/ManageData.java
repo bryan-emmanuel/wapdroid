@@ -279,26 +279,14 @@ public class ManageData extends ListActivity implements AdListener {
 	};
 
 	@Override
-	public void onFailedToReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onFailedToReceiveAd(AdView arg0) {}
 
 	@Override
-	public void onFailedToReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onFailedToReceiveRefreshedAd(AdView arg0) {}
 
 	@Override
-	public void onReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onReceiveAd(AdView arg0) {}
 
 	@Override
-	public void onReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void onReceiveRefreshedAd(AdView arg0) {}
 }

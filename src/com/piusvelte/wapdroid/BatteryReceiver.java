@@ -17,6 +17,7 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
+
 package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.WapdroidService.LISTEN_SIGNAL_STRENGTHS;
