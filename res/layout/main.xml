@@ -26,6 +26,7 @@
 	android:layout_height="fill_parent"
 	android:textSize="16dip">
 	<TableLayout
+		android:background="@drawable/field"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:paddingTop="10dip"
@@ -56,6 +57,7 @@
 		</TableRow>
 	</TableLayout>
 	<TableLayout
+		android:background="@drawable/field"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:paddingTop="10dip"
@@ -95,6 +97,7 @@
 	    </TableRow>
 	</TableLayout>
 	<TableLayout
+		android:background="@drawable/field"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
 		android:paddingTop="10dip"
