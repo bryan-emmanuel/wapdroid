@@ -32,7 +32,7 @@ public class NetworkReceiver extends BroadcastReceiver {
 		if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 			NetworkInfo i = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 			WapdroidService ws = (WapdroidService) context;
-			if (i.isConnected() ^ (ws.getSsid() != null)) {
+			if (i.isConnected() ^ (ws.mSsid != null)) {
 				// a connection was gained or lost
 				if (!ManageWakeLocks.hasLock()) {
 					ManageWakeLocks.acquire(context);

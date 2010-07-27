@@ -67,7 +67,6 @@
 				android:text="@string/status"/>
 			<TextView
 				android:id="@+id/cell_row_status"
-				android:textStyle="bold"
 				android:textColor="@color/primary"
 				android:gravity="right"/>
 		</TableRow>

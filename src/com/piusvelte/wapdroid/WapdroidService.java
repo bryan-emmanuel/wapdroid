@@ -63,8 +63,8 @@ public class WapdroidService extends Service {
 	private WapdroidDbAdapter mDbHelper;
 	private NotificationManager mNotificationManager;
 	public TelephonyManager mTeleManager;
-	private String mSsid = "",
-	mBssid = "",
+	public String mSsid = "";
+	private String mBssid = "",
 	mOperator = "";
 	private List<NeighboringCellInfo> mNeighboringCells;
 	private WifiManager mWifiManager;
@@ -144,7 +144,7 @@ public class WapdroidService extends Service {
 					if ((mLastBattPerc < mBatteryLimit) && (mPhoneListener != null)) {
 						mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 						mPhoneListener = null;
-						}
+					}
 				}
 			}
 		}
@@ -356,14 +356,14 @@ public class WapdroidService extends Service {
 		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 		if (mOperator == "") mOperator = mTeleManager.getNetworkOperator();
 		if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-			mCid = ((GsmCellLocation) location).getCid() > 0 ? ((GsmCellLocation) location).getCid() : UNKNOWN_CID;
-			mLac = ((GsmCellLocation) location).getLac() > 0 ? ((GsmCellLocation) location).getLac() : UNKNOWN_CID;
+			mCid = ((GsmCellLocation) location).getCid();
+			mLac = ((GsmCellLocation) location).getLac();
 		} else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
 			// check the phone type, cdma is not available before API 2.0, so use a wrapper
 			try {
 				CdmaCellLocation cdma = new CdmaCellLocation(location);
-				mCid = cdma.getBaseStationId() > 0 ? cdma.getBaseStationId() : UNKNOWN_CID;
-				mLac = cdma.getNetworkId() > 0 ? cdma.getNetworkId() : UNKNOWN_CID;
+				mCid = cdma.getBaseStationId();
+				mLac = cdma.getNetworkId();
 			} catch (Throwable t) {
 				Log.e(TAG, "unexpected " + t);
 				mCid = UNKNOWN_CID;
@@ -396,20 +396,16 @@ public class WapdroidService extends Service {
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		// check that the service is in control, and minimum values are set
 		if (mManageWifi
-				&& !mManualOverride
 				&& (mCid != UNKNOWN_CID)
 				&& (mDbHelper != null)) {
 			mDbHelper.open();
 			enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
-			if ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) && (mSsid != null) && (mBssid != null)) updateRange();
-			// needs to be !enableWifi, either turning off, or (turning on && battery is above limit)
-			// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
-			// make sure that the wifi isn't already in the correct state
-			else if ((!enableWifi || (mLastBattPerc >= mBatteryLimit))
-					&& (mLastScanEnableWifi == enableWifi)
-					&& (enableWifi ^ ((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))) {
+			// if connected, only update the range
+			if (mSsid != null) updateRange();
+			// always allow disabling, but only enable if above the battery limit
+			else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
 				if (enableWifi) {
-					// confirm neighbors before enabling as cell tower range is greater than that of wifi
+					// check neighbors if it appears that we're in range, for both enabling and disabling
 					for (NeighboringCellInfo nci : mNeighboringCells) {
 						int cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID,
 								nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(),
@@ -426,9 +422,10 @@ public class WapdroidService extends Service {
 								if (cid != UNKNOWN_CID) enableWifi = mDbHelper.cellInRange(cid, lac, nci_rssi);
 								if (!enableWifi) break;
 					}
-					if (enableWifi) setWifiState(enableWifi);
 				}
-				else setWifiState(enableWifi);
+				// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
+				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
+				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (!enableWifi != (mLastWifiState == WifiManager.WIFI_STATE_DISABLING)) && (mLastScanEnableWifi == enableWifi)) setWifiState(enableWifi);
 			}
 			mDbHelper.close();
 		}
@@ -506,10 +503,6 @@ public class WapdroidService extends Service {
 				mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
 			} catch (RemoteException e) {}
 		}
-	}
-
-	public String getSsid() {
-		return mSsid;
 	}
 
 	private void createNotification(boolean enabled, boolean update) {
