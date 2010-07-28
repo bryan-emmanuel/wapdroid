@@ -32,10 +32,10 @@ public class WifiReceiver extends BroadcastReceiver {
 			WapdroidService ws = (WapdroidService) context;
 			if (!ManageWakeLocks.hasLock()) {
 				ManageWakeLocks.acquire(context);
-				ws.setRelease(true);
+				ws.mRelease = true;
 			}
 			ws.wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
-			if (ws.getRelease()) ManageWakeLocks.release();
+			if (ws.mRelease) ManageWakeLocks.release();
 		}
 	}		
 }

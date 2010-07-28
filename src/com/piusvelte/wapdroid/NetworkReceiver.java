@@ -36,10 +36,10 @@ public class NetworkReceiver extends BroadcastReceiver {
 				// a connection was gained or lost
 				if (!ManageWakeLocks.hasLock()) {
 					ManageWakeLocks.acquire(context);
-					ws.setRelease(true);
+					ws.mRelease = true;
 				}
 				ws.networkStateChanged(i.isConnected());
-				if (ws.getRelease()) {
+				if (ws.mRelease) {
 					// if connection was lost, check cells, otherwise, release
 					if (!i.isConnected()) {
 						ws.mAlarmMgr.cancel(ws.mPendingIntent);

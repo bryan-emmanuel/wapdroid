@@ -316,16 +316,12 @@ public class WapdroidService extends Service {
 	public void release() {
 		if (ManageWakeLocks.hasLock()) {
 			if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+			// if sleeping, invalidate cell info
+			mCid = UNKNOWN_CID;
+			mLac = UNKNOWN_CID;
+			mRssi = UNKNOWN_RSSI;
 			ManageWakeLocks.release();
 		}
-	}
-
-	public boolean getRelease() {
-		return mRelease;
-	}
-
-	public void setRelease(boolean release) {
-		mRelease = release;
 	}
 
 	private String cellsQuery() {
@@ -385,7 +381,8 @@ public class WapdroidService extends Service {
 	}
 
 	public void signalStrengthChanged(int rssi) {
-		mRssi = rssi;
+		// keep last known rssi
+		if (rssi != UNKNOWN_RSSI) mRssi = rssi;
 		if (mWapdroidUI != null) {
 			try {
 				mWapdroidUI.setSignalStrength(mRssi);
@@ -395,9 +392,7 @@ public class WapdroidService extends Service {
 		boolean enableWifi = mLastScanEnableWifi;
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		// check that the service is in control, and minimum values are set
-		if (mManageWifi
-				&& (mCid != UNKNOWN_CID)
-				&& (mDbHelper != null)) {
+		if (mManageWifi && (mCid != UNKNOWN_CID) && (mDbHelper != null)) {
 			mDbHelper.open();
 			enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
 			// if connected, only update the range
@@ -425,7 +420,7 @@ public class WapdroidService extends Service {
 				}
 				// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
 				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
-				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (!enableWifi != (mLastWifiState == WifiManager.WIFI_STATE_DISABLING)) && (mLastScanEnableWifi == enableWifi)) setWifiState(enableWifi);
+				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) setWifiState(enableWifi);
 			}
 			mDbHelper.close();
 		}
