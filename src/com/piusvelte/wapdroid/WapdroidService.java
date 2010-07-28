@@ -357,7 +357,6 @@ public class WapdroidService extends Service {
 				+ " and (" + Integer.toString(rssi) + "=" + UNKNOWN_RSSI + " or (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(rssi) + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(rssi) + ")))))";
 			}
 		}
-		Log.v(TAG,"cells="+cells);
 		return cells;
 	}
 
@@ -477,7 +476,6 @@ public class WapdroidService extends Service {
 	}
 
 	public void networkStateChanged(boolean connected) {
-		Log.v(TAG,"networkStateChanged");
 		/*
 		 * get network state
 		 * the ssid from wifimanager may not be null, even if disconnected, so taking boolean connected
@@ -528,7 +526,6 @@ public class WapdroidService extends Service {
 	}
 
 	public void wifiStateChanged(int state) {
-		Log.v(TAG,"wifiStateChanged");
 		/*
 		 * get wifi state
 		 * initially, lastWifiState is unknown, otherwise state is evaluated either enabled or not
