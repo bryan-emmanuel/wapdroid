@@ -47,7 +47,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 	public static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 4;
+	private static final int DATABASE_VERSION = 5;
 	private static final String DROP = "drop table if exists ";
 
 	DatabaseHelper(Context context) {
@@ -113,6 +113,11 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 				// clean locations
 				db.execSQL("delete from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=0;");
 			}
+		}
+		if (oldVersion < 5) {
+			// fix bad rssi values
+			db.execSQL("update pairs set " + PAIRS_RSSI_MIN + "=-1*" + PAIRS_RSSI_MIN + " where " + PAIRS_RSSI_MIN + " >0 and " + PAIRS_RSSI_MIN + " !=" + UNKNOWN_RSSI);
+			db.execSQL("update pairs set " + PAIRS_RSSI_MAX + "=-1*" + PAIRS_RSSI_MAX + " where " + PAIRS_RSSI_MAX + " >0 and " + PAIRS_RSSI_MAX + " !=" + UNKNOWN_RSSI);
 		}
 	}
 }

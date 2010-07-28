@@ -117,7 +117,6 @@ public class WapdroidService extends Service {
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 				if (mWapdroidUI != null) {
 					// may have returned from wifi systems
-					Log.v(TAG,"release manual override");
 					mManualOverride = false;
 					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 					SharedPreferences.Editor spe = sp.edit();
@@ -156,7 +155,6 @@ public class WapdroidService extends Service {
 		public void manualOverride() throws RemoteException {
 			// if the service is killed, such as in a low memory situation, this override will be lost
 			// store in preferences for persistence
-			Log.v(TAG,"set override");
 			mManualOverride = true;
 			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 			SharedPreferences.Editor spe = sp.edit();
@@ -272,7 +270,6 @@ public class WapdroidService extends Service {
 		if (sp.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
 		batteryLimitChanged(sp.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30")) : 0);
 		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
-		Log.v(TAG,"Create() overridden? "+Boolean.toString(mManualOverride));
 		mDbHelper = new WapdroidDbAdapter(this);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -436,7 +433,6 @@ public class WapdroidService extends Service {
 				}
 				// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
 				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
-				Log.v(TAG,"overridden? "+Boolean.toString(mManualOverride));
 				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) setWifiState(enableWifi);
 			}
 			mDbHelper.close();
