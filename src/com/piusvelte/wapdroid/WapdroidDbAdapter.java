@@ -20,11 +20,14 @@
 
 package com.piusvelte.wapdroid;
 
+import static com.piusvelte.wapdroid.WapdroidService.TAG;
+
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 public class WapdroidDbAdapter {
 	public static final String TABLE_ID = "_id";
@@ -251,6 +254,28 @@ public class WapdroidDbAdapter {
 	}
 
 	public Cursor fetchPairsByNetworkFilter(int filter, int network, int cid, String cells) {
+		Log.v(TAG,"fetching...");
+		Log.v(TAG,"select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID + ", "
+				+ "case when " + LOCATIONS_LAC + "=" + UNKNOWN_CID + " then '" + mContext.getResources().getString(R.string.unknown) + "' else " + LOCATIONS_LAC + " end as " + LOCATIONS_LAC + ", "
+				+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " then '" + mContext.getResources().getString(R.string.unknown) + "' else (" + PAIRS_RSSI_MIN + "||'" + mContext.getResources().getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getResources().getString(R.string.dbm) + "') end as " + PAIRS_RSSI_MIN + ", ");
+		Log.v(TAG,((filter == FILTER_ALL) ?
+				("case when " + CELLS_CID + "='" + cid + "' then '" + mContext.getResources().getString(R.string.connected)
+						+ "' else (case when " + TABLE_CELLS + "." + TABLE_ID + inSelectCells(network, cells) + " then '" + mContext.getResources().getString(R.string.withinarea)
+						+ "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as ")
+						: "'" + (filterText(filter) + "' as "))
+						+ STATUS
+						+ " from " + TABLE_PAIRS
+						+ " left join " + TABLE_CELLS
+						+ " on " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+						+ " left outer join " + TABLE_LOCATIONS
+						+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+						+ " where "+ PAIRS_NETWORK + "=" + network
+						+ (filter != FILTER_ALL ?
+								" and "
+								+ (filter == FILTER_CONNECTED ?
+										CELLS_CID + "='" + cid + "'"
+										: TABLE_CELLS + "." + TABLE_ID + (filter == FILTER_OUTRANGE ? " NOT" : "") + inSelectCells(network, cells))
+										: " order by " + STATUS));
 		return mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID + ", "
 				+ "case when " + LOCATIONS_LAC + "=" + UNKNOWN_CID + " then '" + mContext.getResources().getString(R.string.unknown) + "' else " + LOCATIONS_LAC + " end as " + LOCATIONS_LAC + ", "
 				+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " then '" + mContext.getResources().getString(R.string.unknown) + "' else (" + PAIRS_RSSI_MIN + "||'" + mContext.getResources().getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getResources().getString(R.string.dbm) + "') end as " + PAIRS_RSSI_MIN + ", "

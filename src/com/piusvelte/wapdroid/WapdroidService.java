@@ -118,6 +118,9 @@ public class WapdroidService extends Service {
 				if (mWapdroidUI != null) {
 					// may have returned from wifi systems
 					mManualOverride = false;
+					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+					SharedPreferences.Editor spe = sp.edit();
+					spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
 					// register battery receiver for ui, if not already registered
 					if (mBatteryReceiver == null) {
 						mBatteryReceiver = new BatteryReceiver();
@@ -149,7 +152,12 @@ public class WapdroidService extends Service {
 			}
 		}
 		public void manualOverride() throws RemoteException {
+			// if the service is killed, such as in a low memory situation, this override will be lost
+			// store in preferences for persistence
 			mManualOverride = true;
+			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+			SharedPreferences.Editor spe = sp.edit();
+			spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
 		}
 	};
 
@@ -250,16 +258,16 @@ public class WapdroidService extends Service {
 		Intent i = new Intent(this, BootReceiver.class);
 		i.setAction(WAKE_SERVICE);
 		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
-		SharedPreferences prefs = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		// initialize preferences, updated by UI
-		mManageWifi = prefs.getBoolean(getString(R.string.key_manageWifi), false);
-		mInterval = Integer.parseInt((String) prefs.getString(getString(R.string.key_interval), "30000"));
-		if (prefs.getBoolean(getString(R.string.key_notify), false)) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		if (prefs.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;
-		if (prefs.getBoolean(getString(R.string.key_led), false)) mNotifications |= Notification.DEFAULT_LIGHTS;
-		if (prefs.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
-		batteryLimitChanged(prefs.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) prefs.getString(getString(R.string.key_battery_percentage), "30")) : 0);
-		prefs = null;
+		mManageWifi = sp.getBoolean(getString(R.string.key_manageWifi), false);
+		mInterval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), "30000"));
+		if (sp.getBoolean(getString(R.string.key_notify), false)) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		if (sp.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;
+		if (sp.getBoolean(getString(R.string.key_led), false)) mNotifications |= Notification.DEFAULT_LIGHTS;
+		if (sp.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
+		batteryLimitChanged(sp.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30")) : 0);
+		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
 		mDbHelper = new WapdroidDbAdapter(this);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
@@ -316,10 +324,12 @@ public class WapdroidService extends Service {
 	public void release() {
 		if (ManageWakeLocks.hasLock()) {
 			if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
-			// if sleeping, invalidate cell info
+			// if sleeping, re-initialize
 			mCid = UNKNOWN_CID;
 			mLac = UNKNOWN_CID;
 			mRssi = UNKNOWN_RSSI;
+			mSsid = null;
+			mBssid = null;
 			ManageWakeLocks.release();
 		}
 	}
@@ -345,6 +355,7 @@ public class WapdroidService extends Service {
 				+ " and (" + Integer.toString(rssi) + "=" + UNKNOWN_RSSI + " or (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(rssi) + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(rssi) + ")))))";
 			}
 		}
+		Log.v(TAG,"cells="+cells);
 		return cells;
 	}
 
@@ -420,6 +431,7 @@ public class WapdroidService extends Service {
 				}
 				// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
 				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
+				Log.v(TAG,"overridden? "+Boolean.toString(mManualOverride));
 				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) setWifiState(enableWifi);
 			}
 			mDbHelper.close();
@@ -464,6 +476,7 @@ public class WapdroidService extends Service {
 	}
 
 	public void networkStateChanged(boolean connected) {
+		Log.v(TAG,"networkStateChanged");
 		/*
 		 * get network state
 		 * the ssid from wifimanager may not be null, even if disconnected, so taking boolean connected
@@ -514,6 +527,7 @@ public class WapdroidService extends Service {
 	}
 
 	public void wifiStateChanged(int state) {
+		Log.v(TAG,"wifiStateChanged");
 		/*
 		 * get wifi state
 		 * initially, lastWifiState is unknown, otherwise state is evaluated either enabled or not
