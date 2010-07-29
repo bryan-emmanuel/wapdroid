@@ -351,7 +351,7 @@ public class WapdroidService extends Service {
 						Log.e(TAG, "unexpected " + ie);
 					}
 				}
-				cells += " and (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
+				cells += " or (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
 				+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
 				+ ((rssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(rssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(rssi) + ")))");
 			}
