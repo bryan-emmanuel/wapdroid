@@ -43,6 +43,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.net.wifi.SupplicantState;
+import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -281,8 +283,9 @@ public class WapdroidService extends Service {
 		wifiStateChanged(mWifiManager.getWifiState());
 		// to help avoid hysteresis, make sure that at least 2 consecutive scans were in/out of range
 		mLastScanEnableWifi = (mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
-		// the ssid from wifimanager may not be null, even if disconnected, so check against the wifi state
-		networkStateChanged(mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
+		// the ssid from wifimanager may not be null, even if disconnected, so check against the supplicant state
+		WifiInfo wi = mWifiManager.getConnectionInfo();
+		networkStateChanged(wi != null ? wi.getSupplicantState() == SupplicantState.COMPLETED : false);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7(mService)) : (new PhoneListenerApi3(mService))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 	}
@@ -295,10 +298,12 @@ public class WapdroidService extends Service {
 			mScreenReceiver = null;
 		}
 		if (mWifiReceiver != null) {
+			Log.v(TAG,"onDestroy, kill wifi receiver");
 			unregisterReceiver(mWifiReceiver);
 			mWifiReceiver = null;
 		}
 		if (mNetworkReceiver != null) {
+			Log.v(TAG,"onDestroy, kill network receiver");
 			unregisterReceiver(mNetworkReceiver);
 			mNetworkReceiver = null;
 		}
@@ -470,6 +475,7 @@ public class WapdroidService extends Service {
 		 */
 		if (!enable && (mSsid != null)) {
 			if (mWifiReceiver == null) {
+				Log.v(TAG,"disabling, create wifi receiver");
 				mWifiReceiver = new WifiReceiver();
 				IntentFilter f = new IntentFilter();
 				f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
@@ -497,12 +503,14 @@ public class WapdroidService extends Service {
 				mDbHelper.close();
 			}
 			// the network receiver will be registered if connected
+			Log.v(TAG,"connected, kill wifi receiver:"+mSsid);
 			if (mWifiReceiver != null) {
 				unregisterReceiver(mWifiReceiver);
 				mWifiReceiver = null;
 			}
 		} else {
 			// if there's no connection, then fallback onto wifi receiver
+			Log.v(TAG,"connected, create wifi receiver");
 			if (mWifiReceiver == null) {
 				mWifiReceiver = new WifiReceiver();
 				IntentFilter f = new IntentFilter();
@@ -542,6 +550,7 @@ public class WapdroidService extends Service {
 			if (state == WifiManager.WIFI_STATE_ENABLED) {
 				// listen for a connection
 				if (mNetworkReceiver == null) {
+					Log.v(TAG,"wifi enable, create wifi receiver");
 					mNetworkReceiver = new NetworkReceiver();
 					IntentFilter f = new IntentFilter();
 					f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -550,6 +559,7 @@ public class WapdroidService extends Service {
 			} else if (state != WifiManager.WIFI_STATE_ENABLING) {
 				// network receiver isn't need if wifi is off
 				if (mNetworkReceiver != null) {
+					Log.v(TAG,"wifi disabled, kill network receiver");
 					unregisterReceiver(mNetworkReceiver);
 					mNetworkReceiver = null;
 				}
