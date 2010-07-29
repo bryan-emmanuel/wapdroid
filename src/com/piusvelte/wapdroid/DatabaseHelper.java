@@ -47,7 +47,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 	public static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 5;
+	private static final int DATABASE_VERSION = 6;
 	private static final String DROP = "drop table if exists ";
 
 	DatabaseHelper(Context context) {
@@ -116,8 +116,12 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		}
 		if (oldVersion < 5) {
 			// fix bad rssi values
-			db.execSQL("update pairs set " + PAIRS_RSSI_MIN + "=-1*" + PAIRS_RSSI_MIN + " where " + PAIRS_RSSI_MIN + " >0 and " + PAIRS_RSSI_MIN + " !=" + UNKNOWN_RSSI);
-			db.execSQL("update pairs set " + PAIRS_RSSI_MAX + "=-1*" + PAIRS_RSSI_MAX + " where " + PAIRS_RSSI_MAX + " >0 and " + PAIRS_RSSI_MAX + " !=" + UNKNOWN_RSSI);
+			db.execSQL("update pairs set " + PAIRS_RSSI_MIN + "=-1*" + PAIRS_RSSI_MIN + " where " + PAIRS_RSSI_MIN + " >0 and " + PAIRS_RSSI_MIN + " !=" + UNKNOWN_RSSI + ";");
+			db.execSQL("update pairs set " + PAIRS_RSSI_MAX + "=-1*" + PAIRS_RSSI_MAX + " where " + PAIRS_RSSI_MAX + " >0 and " + PAIRS_RSSI_MAX + " !=" + UNKNOWN_RSSI + ";");
+		}
+		if (oldVersion < 6) {
+			// revert incorrect unknown rssi's
+			db.execSQL("update pairs set " + PAIRS_RSSI_MIN + "=99," + PAIRS_RSSI_MAX + "=99 where " + PAIRS_RSSI_MAX + "<" + PAIRS_RSSI_MIN + " and RSSI_max=-85;");
 		}
 	}
 }
