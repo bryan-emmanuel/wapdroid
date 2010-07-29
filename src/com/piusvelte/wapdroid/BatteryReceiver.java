@@ -22,12 +22,15 @@ package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.WapdroidService.LISTEN_SIGNAL_STRENGTHS;
 import static com.piusvelte.wapdroid.WapdroidService.mApi7;
+import static com.piusvelte.wapdroid.WapdroidService.TAG;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
+import android.util.Log;
 
 public class BatteryReceiver extends BroadcastReceiver {
 	private static final String BATTERY_EXTRA_LEVEL = "level";
@@ -52,6 +55,17 @@ public class BatteryReceiver extends BroadcastReceiver {
 					ws.mWapdroidUI.setBattery(currentBattPerc);
 				} catch (RemoteException e) {};
 			}
+		}
+		else if (intent.getAction().equals(Intent.ACTION_POWER_CONNECTED)) {
+			Log.v(TAG,"power connected");
+			// override the battery limit while charging
+			((WapdroidService) context).mBatteryLimit = 0;
+		}
+		else if (intent.getAction().equals(Intent.ACTION_POWER_DISCONNECTED)) {
+			Log.v(TAG,"power disconnected");
+			// stop the override
+			SharedPreferences sp = (SharedPreferences) context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+			if (sp.getBoolean(context.getString(R.string.key_battery_override), false)) ((WapdroidService) context).mBatteryLimit = Integer.parseInt((String) sp.getString(context.getString(R.string.key_battery_percentage), "30"));
 		}
 	}
 }

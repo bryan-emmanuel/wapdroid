@@ -113,26 +113,26 @@ public class WapdroidDbAdapter {
 	public Cursor fetchNetworks(int filter, String bssid, String cells) {
 		Log.v(TAG,"fetchNetworks");
 		Log.v(TAG,"select " + TABLE_NETWORKS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", ");
-		Log.v(TAG,"case when " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getResources().getString(R.string.connected));
-		Log.v(TAG,"' else (case when " + TABLE_NETWORKS + "." + TABLE_ID + " in (select ");
+		Log.v(TAG,"case when " + TABLE_NETWORKS + "." + TABLE_ID + " in (select ");
 		Log.v(TAG,PAIRS_NETWORK
 				+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
 				+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
 				+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID);
-		Log.v(TAG,		" and (" + cells + "))" + " then '" + mContext.getResources().getString(R.string.withinarea));
-		Log.v(TAG, "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as "+ STATUS);
+		Log.v(TAG, " and (" + cells + "))" + " then '" + mContext.getResources().getString(R.string.withinarea));
+		Log.v(TAG, "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end as "+ STATUS);
 		Log.v(TAG, " from " + TABLE_NETWORKS + " order by " + STATUS);
 		return mDb.rawQuery("select " + TABLE_NETWORKS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", "
 				+ ((filter == FILTER_ALL) ?
-						("case when " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getResources().getString(R.string.connected)
-								+ "' else (case when " + TABLE_NETWORKS + "." + TABLE_ID + " in (select " + PAIRS_NETWORK
+						(bssid != null ?
+								"'" + mContext.getResources().getString(R.string.connected) + "'"
+								: "case when " + TABLE_NETWORKS + "." + TABLE_ID + " in (select " + PAIRS_NETWORK
 								+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
 								+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
 								+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
 								+ " and (" + cells + "))" + " then '" + mContext.getResources().getString(R.string.withinarea)
-								+ "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as ")
-								: "'" + (mContext.getResources().getString(filter == FILTER_CONNECTED ? R.string.connected : filter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + "' as "))
-								+ STATUS
+								+ "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end")
+								: "'" + (mContext.getResources().getString(filter == FILTER_CONNECTED ? R.string.connected : filter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + "'"))
+								+ " as " + STATUS
 								+ " from " + TABLE_NETWORKS
 								+ (filter != FILTER_ALL ?
 										" where "

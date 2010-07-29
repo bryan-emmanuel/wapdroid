@@ -75,7 +75,7 @@ public class WapdroidService extends Service {
 	mNotifications = 0;
 	public int mInterval,
 	mBatteryLimit = 0,
-	mLastBattPerc;
+	mLastBattPerc = 0;
 	public boolean mManageWifi,
 	mRelease = false,
 	mManualOverride = false,
