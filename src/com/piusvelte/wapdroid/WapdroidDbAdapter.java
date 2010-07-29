@@ -17,14 +17,16 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-
 package com.piusvelte.wapdroid;
+
+import static com.piusvelte.wapdroid.WapdroidService.TAG;
 
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 public class WapdroidDbAdapter {
 	public static final String TABLE_ID = "_id";
@@ -107,11 +109,19 @@ public class WapdroidDbAdapter {
 		return network;
 	}
 
-	private String filterText(int filter) {
-		return mContext.getResources().getString(filter == FILTER_CONNECTED ? R.string.connected : filter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea);
-	}
 
 	public Cursor fetchNetworks(int filter, String bssid, String cells) {
+		Log.v(TAG,"fetchNetworks");
+		Log.v(TAG,"select " + TABLE_NETWORKS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", ");
+		Log.v(TAG,"case when " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getResources().getString(R.string.connected));
+		Log.v(TAG,"' else (case when " + TABLE_NETWORKS + "." + TABLE_ID + " in (select ");
+		Log.v(TAG,PAIRS_NETWORK
+						+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+						+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+						+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID);
+		Log.v(TAG,		" and (" + cells + "))" + " then '" + mContext.getResources().getString(R.string.withinarea));
+		Log.v(TAG, "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as "+ STATUS);
+		Log.v(TAG, " from " + TABLE_NETWORKS + " order by " + STATUS);
 		return mDb.rawQuery("select " + TABLE_NETWORKS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", "
 				+ ((filter == FILTER_ALL) ?
 						("case when " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getResources().getString(R.string.connected)
@@ -121,7 +131,7 @@ public class WapdroidDbAdapter {
 								+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
 								+ " and (" + cells + "))" + " then '" + mContext.getResources().getString(R.string.withinarea)
 								+ "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as ")
-								: "'" + (filterText(filter) + "' as "))
+								: "'" + (mContext.getResources().getString(filter == FILTER_CONNECTED ? R.string.connected : filter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + "' as "))
 								+ STATUS
 								+ " from " + TABLE_NETWORKS
 								+ (filter != FILTER_ALL ?
@@ -258,7 +268,7 @@ public class WapdroidDbAdapter {
 						("case when " + CELLS_CID + "='" + cid + "' then '" + mContext.getResources().getString(R.string.connected)
 								+ "' else (case when " + TABLE_CELLS + "." + TABLE_ID + inSelectCells(network, cells) + " then '" + mContext.getResources().getString(R.string.withinarea)
 								+ "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as ")
-								: "'" + (filterText(filter) + "' as "))
+								: "'" + (mContext.getResources().getString(filter == FILTER_CONNECTED ? R.string.connected : filter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + "' as "))
 								+ STATUS
 								+ " from " + TABLE_PAIRS
 								+ " left join " + TABLE_CELLS
