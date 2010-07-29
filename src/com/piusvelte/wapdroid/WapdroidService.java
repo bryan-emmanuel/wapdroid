@@ -119,8 +119,6 @@ public class WapdroidService extends Service {
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 				if (mWapdroidUI != null) {
 					// may have returned from wifi systems
-					Log.v(TAG,"mNetworkReceiver:"+Boolean.toString(mNetworkReceiver==null));
-					Log.v(TAG,"mWifiReceiver:"+Boolean.toString(mWifiReceiver==null));
 					mManualOverride = false;
 					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 					SharedPreferences.Editor spe = sp.edit();
@@ -159,9 +157,6 @@ public class WapdroidService extends Service {
 		public void manualOverride() throws RemoteException {
 			// if the service is killed, such as in a low memory situation, this override will be lost
 			// store in preferences for persistence
-			Log.v(TAG,"manual override");
-			Log.v(TAG,"mNetworkReceiver:"+Boolean.toString(mNetworkReceiver==null));
-			Log.v(TAG,"mWifiReceiver:"+Boolean.toString(mWifiReceiver==null));
 			mManualOverride = true;
 			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 			SharedPreferences.Editor spe = sp.edit();
@@ -298,12 +293,10 @@ public class WapdroidService extends Service {
 			mScreenReceiver = null;
 		}
 		if (mWifiReceiver != null) {
-			Log.v(TAG,"onDestroy, kill wifi receiver");
 			unregisterReceiver(mWifiReceiver);
 			mWifiReceiver = null;
 		}
 		if (mNetworkReceiver != null) {
-			Log.v(TAG,"onDestroy, kill network receiver");
 			unregisterReceiver(mNetworkReceiver);
 			mNetworkReceiver = null;
 		}
@@ -475,7 +468,6 @@ public class WapdroidService extends Service {
 		 */
 		if (!enable && (mSsid != null)) {
 			if (mWifiReceiver == null) {
-				Log.v(TAG,"disabling, create wifi receiver");
 				mWifiReceiver = new WifiReceiver();
 				IntentFilter f = new IntentFilter();
 				f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
@@ -492,7 +484,6 @@ public class WapdroidService extends Service {
 		 * when network connected, unregister wifi receiver
 		 * when network disconnected, register wifi receiver
 		 */
-		Log.v(TAG,"networkStateChanged:"+Boolean.toString(connected));
 		mSsid = connected ? mWifiManager.getConnectionInfo().getSSID() : null;
 		mBssid = connected ? mWifiManager.getConnectionInfo().getBSSID() : null;
 		if (mSsid != null) {
@@ -503,14 +494,12 @@ public class WapdroidService extends Service {
 				mDbHelper.close();
 			}
 			// the network receiver will be registered if connected
-			Log.v(TAG,"connected, kill wifi receiver:"+mSsid);
 			if (mWifiReceiver != null) {
 				unregisterReceiver(mWifiReceiver);
 				mWifiReceiver = null;
 			}
 		} else {
 			// if there's no connection, then fallback onto wifi receiver
-			Log.v(TAG,"connected, create wifi receiver");
 			if (mWifiReceiver == null) {
 				mWifiReceiver = new WifiReceiver();
 				IntentFilter f = new IntentFilter();
@@ -545,12 +534,10 @@ public class WapdroidService extends Service {
 		 * when wifi enabled, register network receiver
 		 * when wifi not enabled, unregister network receiver
 		 */
-		Log.v(TAG,"wifiStateChanged:"+Integer.toString(state));
 		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
 			if (state == WifiManager.WIFI_STATE_ENABLED) {
 				// listen for a connection
 				if (mNetworkReceiver == null) {
-					Log.v(TAG,"wifi enable, create wifi receiver");
 					mNetworkReceiver = new NetworkReceiver();
 					IntentFilter f = new IntentFilter();
 					f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -559,7 +546,6 @@ public class WapdroidService extends Service {
 			} else if (state != WifiManager.WIFI_STATE_ENABLING) {
 				// network receiver isn't need if wifi is off
 				if (mNetworkReceiver != null) {
-					Log.v(TAG,"wifi disabled, kill network receiver");
 					unregisterReceiver(mNetworkReceiver);
 					mNetworkReceiver = null;
 				}
