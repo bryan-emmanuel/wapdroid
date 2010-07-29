@@ -116,9 +116,9 @@ public class WapdroidDbAdapter {
 		Log.v(TAG,"case when " + NETWORKS_BSSID + "='" + bssid + "' then '" + mContext.getResources().getString(R.string.connected));
 		Log.v(TAG,"' else (case when " + TABLE_NETWORKS + "." + TABLE_ID + " in (select ");
 		Log.v(TAG,PAIRS_NETWORK
-						+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-						+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-						+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID);
+				+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+				+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+				+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID);
 		Log.v(TAG,		" and (" + cells + "))" + " then '" + mContext.getResources().getString(R.string.withinarea));
 		Log.v(TAG, "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as "+ STATUS);
 		Log.v(TAG, " from " + TABLE_NETWORKS + " order by " + STATUS);
@@ -251,22 +251,18 @@ public class WapdroidDbAdapter {
 				+ " and "+ PAIRS_NETWORK + "=" + network, null);
 	}
 
-	private String inSelectCells(int network, String cells) {
-		return " in (select " + TABLE_CELLS + "." + TABLE_ID
-		+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-		+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-		+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-		+ " and " + PAIRS_NETWORK + "=" + network
-		+ " and " + cells + ")";
-	}
-
 	public Cursor fetchPairsByNetworkFilter(int filter, int network, int cid, String cells) {
 		return mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID + ", "
 				+ "case when " + LOCATIONS_LAC + "=" + UNKNOWN_CID + " then '" + mContext.getResources().getString(R.string.unknown) + "' else " + LOCATIONS_LAC + " end as " + LOCATIONS_LAC + ", "
 				+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " then '" + mContext.getResources().getString(R.string.unknown) + "' else (" + PAIRS_RSSI_MIN + "||'" + mContext.getResources().getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + mContext.getResources().getString(R.string.dbm) + "') end as " + PAIRS_RSSI_MIN + ", "
 				+ ((filter == FILTER_ALL) ?
 						("case when " + CELLS_CID + "='" + cid + "' then '" + mContext.getResources().getString(R.string.connected)
-								+ "' else (case when " + TABLE_CELLS + "." + TABLE_ID + inSelectCells(network, cells) + " then '" + mContext.getResources().getString(R.string.withinarea)
+								+ "' else (case when " + TABLE_CELLS + "." + TABLE_ID + " in (select " + TABLE_CELLS + "." + TABLE_ID
+								+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+								+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+								+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+								+ " and " + PAIRS_NETWORK + "=" + network
+								+ " and " + cells + ")" + " then '" + mContext.getResources().getString(R.string.withinarea)
 								+ "' else '" + mContext.getResources().getString(R.string.outofarea) + "' end) end as ")
 								: "'" + (mContext.getResources().getString(filter == FILTER_CONNECTED ? R.string.connected : filter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + "' as "))
 								+ STATUS
@@ -280,7 +276,12 @@ public class WapdroidDbAdapter {
 										" and "
 										+ (filter == FILTER_CONNECTED ?
 												CELLS_CID + "='" + cid + "'"
-												: TABLE_CELLS + "." + TABLE_ID + (filter == FILTER_OUTRANGE ? " NOT" : "") + inSelectCells(network, cells))
+												: TABLE_CELLS + "." + TABLE_ID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + TABLE_CELLS + "." + TABLE_ID
+												+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+												+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+												+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+												+ " and " + PAIRS_NETWORK + "=" + network
+												+ " and " + cells + ")")
 												: " order by " + STATUS), null);
 	}
 
@@ -303,9 +304,7 @@ public class WapdroidDbAdapter {
 						+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
 						+ " where "+ CELLS_CID + "=" + cid
 						+ " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
-						+ (rssi != UNKNOWN_RSSI ?
-								" and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + rssi + ")) and ((" + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MAX + ">=" + rssi + ")))"
-								: ""), null);
+						+ (rssi == UNKNOWN_RSSI ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + rssi + ")) and (" + PAIRS_RSSI_MAX + ">=" + rssi + "))"), null);
 		inRange = (c.getCount() > 0);
 		if (inRange && (lac > 0)) {
 			// check LAC, as this is a new column
