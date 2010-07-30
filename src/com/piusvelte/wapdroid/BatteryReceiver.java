@@ -33,12 +33,22 @@ import android.telephony.PhoneStateListener;
 public class BatteryReceiver extends BroadcastReceiver {
 	private static final String BATTERY_EXTRA_LEVEL = "level";
 	private static final String BATTERY_EXTRA_SCALE = "scale";
+	private static final String BATTERY_EXTRA_PLUGGED = "plugged";
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
-			int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
 			WapdroidService ws = (WapdroidService) context;
+			// override low battery when charging
+			if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) {
+				// plugged in
+				ws.mBatteryLimit = 0;
+			} else {
+				// unplugged
+				SharedPreferences sp = (SharedPreferences) context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+				if (sp.getBoolean(context.getString(R.string.key_battery_override), false)) ws.mBatteryLimit = Integer.parseInt((String) sp.getString(context.getString(R.string.key_battery_percentage), "30"));
+			}
+			int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
 			// check the threshold
 			if (ws.mManageWifi && !ws.mManualOverride && (currentBattPerc < ws.mBatteryLimit) && (ws.mLastBattPerc >= ws.mBatteryLimit)) {
 				ws.setWifiState(false);
@@ -53,15 +63,6 @@ public class BatteryReceiver extends BroadcastReceiver {
 					ws.mWapdroidUI.setBattery(currentBattPerc);
 				} catch (RemoteException e) {};
 			}
-		}
-		else if (intent.getAction().equals(Intent.ACTION_POWER_CONNECTED)) {
-			// override the battery limit while charging
-			((WapdroidService) context).mBatteryLimit = 0;
-		}
-		else if (intent.getAction().equals(Intent.ACTION_POWER_DISCONNECTED)) {
-			// stop the override
-			SharedPreferences sp = (SharedPreferences) context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-			if (sp.getBoolean(context.getString(R.string.key_battery_override), false)) ((WapdroidService) context).mBatteryLimit = Integer.parseInt((String) sp.getString(context.getString(R.string.key_battery_percentage), "30"));
 		}
 	}
 }

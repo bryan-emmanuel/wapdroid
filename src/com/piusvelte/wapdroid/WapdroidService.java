@@ -81,7 +81,8 @@ public class WapdroidService extends Service {
 	public boolean mManageWifi,
 	mRelease = false,
 	mManualOverride = false,
-	mLastScanEnableWifi = false;
+	mLastScanEnableWifi = false,
+	mConnected = false;
 	public static boolean mApi7;
 	public AlarmManager mAlarmMgr;
 	public PendingIntent mPendingIntent;
@@ -232,10 +233,6 @@ public class WapdroidService extends Service {
 		 * boot and wake will wakelock and should set the alarm,
 		 * others should release the lock and cancel the alarm
 		 */
-		// setting the wifi state is done in onCreate also, but it's need here for running in the background
-		//the receivers should handle this
-		//mWifiState = mWifiManager.getWifiState();
-		//wifiStateChanged(mWifiState == WifiManager.WIFI_STATE_ENABLED);
 		// if wifi or network receiver took a lock, and the alarm went off, stop them from releasing the lock
 		mRelease = false;
 		// initialize the cell info
@@ -280,7 +277,8 @@ public class WapdroidService extends Service {
 		mLastScanEnableWifi = (mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
 		// the ssid from wifimanager may not be null, even if disconnected, so check against the supplicant state
 		WifiInfo wi = mWifiManager.getConnectionInfo();
-		networkStateChanged(wi != null ? wi.getSupplicantState() == SupplicantState.COMPLETED : false);
+		mConnected = wi != null ? wi.getSupplicantState() == SupplicantState.COMPLETED : false;
+		networkStateChanged();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7(mService)) : (new PhoneListenerApi3(mService))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 	}
@@ -329,12 +327,10 @@ public class WapdroidService extends Service {
 	public void release() {
 		if (ManageWakeLocks.hasLock()) {
 			if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
-			// if sleeping, re-initialize
+			// if sleeping, re-initialize phone info
 			mCid = UNKNOWN_CID;
 			mLac = UNKNOWN_CID;
 			mRssi = UNKNOWN_RSSI;
-			mSsid = null;
-			mBssid = null;
 			ManageWakeLocks.release();
 		}
 	}
@@ -410,7 +406,9 @@ public class WapdroidService extends Service {
 			mDbHelper.open();
 			enableWifi = mDbHelper.cellInRange(mCid, mLac, mRssi);
 			// if connected, only update the range
-			if (mSsid != null) updateRange();
+			if (mConnected) {
+				if ((mSsid != null) && (mBssid != null)) updateRange();
+			}
 			// always allow disabling, but only enable if above the battery limit
 			else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
 				if (enableWifi) {
@@ -466,7 +464,7 @@ public class WapdroidService extends Service {
 		 *  when a low battery disabled occurs,
 		 *  register the wifi receiver in case the network is connected at the time
 		 */
-		if (!enable && (mSsid != null)) {
+		if (!enable && mConnected) {
 			if (mWifiReceiver == null) {
 				mWifiReceiver = new WifiReceiver();
 				IntentFilter f = new IntentFilter();
@@ -477,18 +475,18 @@ public class WapdroidService extends Service {
 		mWifiManager.setWifiEnabled(enable);
 	}
 
-	public void networkStateChanged(boolean connected) {
+	public void networkStateChanged() {
 		/*
 		 * get network state
 		 * the ssid from wifimanager may not be null, even if disconnected, so taking boolean connected
 		 * when network connected, unregister wifi receiver
 		 * when network disconnected, register wifi receiver
 		 */
-		mSsid = connected ? mWifiManager.getConnectionInfo().getSSID() : null;
-		mBssid = connected ? mWifiManager.getConnectionInfo().getBSSID() : null;
-		if (mSsid != null) {
+		mSsid = mConnected ? mWifiManager.getConnectionInfo().getSSID() : null;
+		mBssid = mConnected ? mWifiManager.getConnectionInfo().getBSSID() : null;
+		if (mConnected) {
 			// connected, implies that wifi is on
-			if ((mBssid != null) && (mCid != UNKNOWN_CID) && (mDbHelper != null)) {
+			if ((mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID) && (mDbHelper != null)) {
 				mDbHelper.open();
 				updateRange();
 				mDbHelper.close();
