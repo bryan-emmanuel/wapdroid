@@ -70,9 +70,7 @@ boolean _arg6;
 _arg6 = (0!=data.readInt());
 int _arg7;
 _arg7 = data.readInt();
-boolean _arg8;
-_arg8 = (0!=data.readInt());
-this.updatePreferences(_arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8);
+this.updatePreferences(_arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7);
 reply.writeNoException();
 return true;
 }
@@ -116,7 +114,7 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean noclear) throws android.os.RemoteException
+public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage) throws android.os.RemoteException
 {
 android.os.Parcel _data = android.os.Parcel.obtain();
 android.os.Parcel _reply = android.os.Parcel.obtain();
@@ -130,7 +128,6 @@ _data.writeInt(((led)?(1):(0)));
 _data.writeInt(((ringtone)?(1):(0)));
 _data.writeInt(((batteryOverride)?(1):(0)));
 _data.writeInt(batteryPercentage);
-_data.writeInt(((noclear)?(1):(0)));
 mRemote.transact(Stub.TRANSACTION_updatePreferences, _data, _reply, 0);
 _reply.readException();
 }
@@ -159,6 +156,6 @@ static final int TRANSACTION_updatePreferences = (android.os.IBinder.FIRST_CALL_
 static final int TRANSACTION_manualOverride = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
 }
 public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException;
-public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean noclear) throws android.os.RemoteException;
+public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage) throws android.os.RemoteException;
 public void manualOverride() throws android.os.RemoteException;
 }

@@ -101,8 +101,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 						sharedPreferences.getBoolean(getString(R.string.key_led), false),
 						sharedPreferences.getBoolean(getString(R.string.key_ringtone), false),
 						sharedPreferences.getBoolean(getString(R.string.key_battery_override), false),
-						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_battery_percentage), "30")),
-						sharedPreferences.getBoolean(getString(R.string.key_noclear), false));
+						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_battery_percentage), "30")));
 			} catch (RemoteException e) {}
 		}
 	}

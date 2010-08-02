@@ -103,21 +103,21 @@ containing a value of this type.
         public static final int networks_list=0x7f030006;
     }
     public static final class string {
-        public static final int about=0x7f070043;
-        public static final int accessible=0x7f070045;
+        public static final int about=0x7f070042;
+        public static final int accessible=0x7f070044;
         public static final int app_name=0x7f07000b;
-        public static final int background_info=0x7f070041;
+        public static final int background_info=0x7f070040;
         public static final int battery_override=0x7f070033;
         public static final int battery_percentage=0x7f070034;
         public static final int battery_remaining=0x7f070032;
         public static final int cancel=0x7f070037;
-        public static final int cellwarning=0x7f070040;
+        public static final int cellwarning=0x7f07003f;
         public static final int close=0x7f07003b;
         public static final int colon=0x7f070030;
         public static final int connected=0x7f070035;
         public static final int dbm=0x7f07002f;
-        public static final int gpl=0x7f070044;
-        public static final int inaccessible=0x7f070046;
+        public static final int gpl=0x7f070043;
+        public static final int inaccessible=0x7f070045;
         public static final int key_battery_override=0x7f070007;
         public static final int key_battery_percentage=0x7f070008;
         public static final int key_interval=0x7f070006;
@@ -150,7 +150,7 @@ containing a value of this type.
         public static final int label_wapdroidState=0x7f070011;
         public static final int linefeed=0x7f07003a;
         public static final int loading=0x7f07002d;
-        public static final int map=0x7f070047;
+        public static final int map=0x7f070046;
         public static final int map_cell=0x7f070039;
         public static final int map_network=0x7f070038;
         public static final int menu_deleteCell=0x7f070017;
@@ -165,12 +165,11 @@ containing a value of this type.
         public static final int no_networks=0x7f070012;
         public static final int outofarea=0x7f07002c;
         public static final int pref_battery=0x7f07003e;
-        public static final int pref_noclear=0x7f07003f;
         public static final int pref_notifications=0x7f07003d;
         public static final int pref_service=0x7f07003c;
         public static final int range=0x7f07002e;
         public static final int scanning=0x7f070026;
-        public static final int service_info=0x7f070042;
+        public static final int service_info=0x7f070041;
         public static final int signal=0x7f070031;
         public static final int status=0x7f07002a;
         public static final int unknown=0x7f070036;
