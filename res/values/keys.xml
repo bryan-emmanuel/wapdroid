@@ -29,4 +29,5 @@
     <string name="key_battery_override">battery_override</string>
     <string name="key_battery_percentage">battery_percentage</string>
     <string name="key_manual_override">manual_override</string>
+    <string name="key_noclear">noclear</string>
 </resources>

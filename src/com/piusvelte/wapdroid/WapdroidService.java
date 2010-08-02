@@ -78,6 +78,7 @@ public class WapdroidService extends Service {
 	public int mInterval,
 	mBatteryLimit = 0,
 	mLastBattPerc = 0;
+	private boolean mNoclear = false;
 	public boolean mManageWifi,
 	mRelease = false,
 	mManualOverride = false,
@@ -92,7 +93,7 @@ public class WapdroidService extends Service {
 	public WapdroidService mService;
 
 	private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
-		public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage)
+		public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean noclear)
 		throws RemoteException {
 			if ((mManageWifi ^ manage) || ((mNotificationManager != null) ^ notify)) {
 				if (manage && notify) {
@@ -105,6 +106,7 @@ public class WapdroidService extends Service {
 			}
 			mManageWifi = manage;
 			mInterval = interval;
+			mNoclear = noclear;
 			mNotifications = 0;
 			if (vibrate) mNotifications |= Notification.DEFAULT_VIBRATE;
 			if (led) mNotifications |= Notification.DEFAULT_LIGHTS;
@@ -263,6 +265,7 @@ public class WapdroidService extends Service {
 		// initialize preferences, updated by UI
 		mManageWifi = sp.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), "30000"));
+		mNoclear = sp.getBoolean(getString(R.string.key_noclear), false);
 		if (sp.getBoolean(getString(R.string.key_notify), false)) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 		if (sp.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;
 		if (sp.getBoolean(getString(R.string.key_led), false)) mNotifications |= Notification.DEFAULT_LIGHTS;
@@ -519,7 +522,7 @@ public class WapdroidService extends Service {
 			Intent i = new Intent(getBaseContext(), WapdroidUI.class);
 			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
 			notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-			notification.flags |= Notification.FLAG_NO_CLEAR;
+			if (mNoclear) notification.flags |= Notification.FLAG_NO_CLEAR;
 			if (update) notification.defaults = mNotifications;
 			mNotificationManager.notify(NOTIFY_ID, notification);
 		}
