@@ -43,6 +43,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+//import android.net.ConnectivityManager;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -284,6 +285,9 @@ public class WapdroidService extends Service {
 		networkStateChanged();
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7(mService)) : (new PhoneListenerApi3(mService))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
+		//ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+		//Log.v(TAG,"backgroundData "+(cm.getBackgroundDataSetting()?"enabled":"disabled"));
+		//Log.v(TAG,"preferred network "+Integer.toString(cm.getNetworkPreference()));
 	}
 
 	@Override
@@ -391,9 +395,11 @@ public class WapdroidService extends Service {
 				} catch (RemoteException e) {}
 			}
 		}
+		Log.v(TAG,"getCellInfo "+Integer.toString(mCid));
 	}
 
 	public void signalStrengthChanged(int rssi) {
+		Log.v(TAG,"signalStrengthChanged "+Integer.toString(rssi));
 		// keep last known rssi
 		if (rssi != UNKNOWN_RSSI) mRssi = rssi;
 		if (mWapdroidUI != null) {
@@ -485,6 +491,7 @@ public class WapdroidService extends Service {
 		 * when network connected, unregister wifi receiver
 		 * when network disconnected, register wifi receiver
 		 */
+		Log.v(TAG,"networkStateChanged "+(mConnected?"connected":"disconnected"));
 		mSsid = mConnected ? mWifiManager.getConnectionInfo().getSSID() : null;
 		mBssid = mConnected ? mWifiManager.getConnectionInfo().getBSSID() : null;
 		if (mConnected) {
@@ -535,6 +542,7 @@ public class WapdroidService extends Service {
 		 * when wifi enabled, register network receiver
 		 * when wifi not enabled, unregister network receiver
 		 */
+		Log.v(TAG,"wifiStateChanged "+(state==WifiManager.WIFI_STATE_ENABLED?"enabled":state==WifiManager.WIFI_STATE_ENABLING?"enabling":state==WifiManager.WIFI_STATE_DISABLING?"disabling":state==WifiManager.WIFI_STATE_DISABLED?"disabled":"unknown"));
 		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
 			if (state == WifiManager.WIFI_STATE_ENABLED) {
 				// listen for a connection
