@@ -51,9 +51,7 @@ public class PhoneListenerApi7 extends PhoneStateListener {
 			int asu = signalStrength.getGsmSignalStrength();
 			mService.signalStrengthChanged((asu > 0) && (asu != UNKNOWN_RSSI) ? (2 * asu - 113) : asu);
 		}
-		else if (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) mService.signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ?
-				signalStrength.getCdmaDbm()
-				: signalStrength.getEvdoDbm());
+		else if (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) mService.signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ? signalStrength.getCdmaDbm() : signalStrength.getEvdoDbm());
 		else mService.release();
 	}
 }
