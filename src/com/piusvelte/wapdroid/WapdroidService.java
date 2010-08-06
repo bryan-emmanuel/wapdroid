@@ -128,14 +128,6 @@ public class WapdroidService extends Service {
 					SharedPreferences.Editor spe = sp.edit();
 					spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
 					spe.commit();
-					// register battery receiver for ui, if not already registered
-// testing single receiver, always registered, to compare memory usage
-//					if (mBatteryReceiver == null) {
-//						mBatteryReceiver = new BatteryReceiver();
-//						IntentFilter f = new IntentFilter();
-//						f.addAction(Intent.ACTION_BATTERY_CHANGED);
-//						registerReceiver(mBatteryReceiver, f);
-//					}
 					// listen to phone changes if a low battery condition caused this to stop
 					if ((mPhoneListener == null)) mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7(mService)) : (new PhoneListenerApi3(mService))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 					try {
@@ -147,12 +139,6 @@ public class WapdroidService extends Service {
 						mWapdroidUI.setBattery(mLastBattPerc);
 					} catch (RemoteException e) {}
 				} else {
-					// stop any receivers or listeners that were starting just for ui
-// testing single receiver, always registered, to compare memory usage
-//					if ((mBatteryReceiver != null) && (mBatteryLimit == 0)) {
-//						unregisterReceiver(mBatteryReceiver);
-//						mBatteryReceiver = null;
-//					}
 					if ((mLastBattPerc < mBatteryLimit) && (mPhoneListener != null)) {
 						mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 						mPhoneListener = null;
@@ -256,13 +242,7 @@ public class WapdroidService extends Service {
 		 * listen to battery when: disabling on battery level, UI is in foreground
 		 */
 		mService = this;
-// testing single receiver, always registered, to compare memory usage
-//		mScreenReceiver = new ScreenReceiver();
-//		IntentFilter f = new IntentFilter();
-//		f.addAction(Intent.ACTION_SCREEN_OFF);
-//		f.addAction(Intent.ACTION_SCREEN_ON);
-//		registerReceiver(mScreenReceiver, f);
-		Intent i = new Intent(this, BootReceiver.class);
+		Intent i = new Intent(this, Receiver.class);
 		i.setAction(WAKE_SERVICE);
 		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
@@ -286,7 +266,6 @@ public class WapdroidService extends Service {
 		WifiInfo wi = mWifiManager.getConnectionInfo();
 		mConnected = wi != null ? wi.getSupplicantState() == SupplicantState.COMPLETED : false;
 		networkStateChanged();
-		// testing one receiver for all broadcasts to compare memory usage
 		IntentFilter f = new IntentFilter();
 		f.addAction(Intent.ACTION_BATTERY_CHANGED);
 		f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -305,22 +284,6 @@ public class WapdroidService extends Service {
 	@Override
 	public void onDestroy() {
 		super.onDestroy();
-//		if (mScreenReceiver != null) {
-//			unregisterReceiver(mScreenReceiver);
-//			mScreenReceiver = null;
-//		}
-//		if (mWifiReceiver != null) {
-//			unregisterReceiver(mWifiReceiver);
-//			mWifiReceiver = null;
-//		}
-//		if (mNetworkReceiver != null) {
-//			unregisterReceiver(mNetworkReceiver);
-//			mNetworkReceiver = null;
-//		}
-//		if (mBatteryReceiver != null) {
-//			unregisterReceiver(mBatteryReceiver);
-//			mBatteryReceiver = null;
-//		}
 		if (mReceiver != null) {
 			unregisterReceiver(mReceiver);
 			mReceiver = null;
@@ -334,18 +297,6 @@ public class WapdroidService extends Service {
 
 	private void batteryLimitChanged(int limit) {
 		mBatteryLimit = limit;
-// testing single receiver, always registered, to compare memory usage
-//		if (mBatteryLimit > 0) {
-//			if (mBatteryReceiver == null) {
-//				mBatteryReceiver = new BatteryReceiver();
-//				IntentFilter f = new IntentFilter();
-//				f.addAction(Intent.ACTION_BATTERY_CHANGED);
-//				registerReceiver(mBatteryReceiver, f);
-//			}
-//		} else if (mBatteryReceiver != null){
-//			unregisterReceiver(mBatteryReceiver);
-//			mBatteryReceiver = null;
-//		}
 	}
 
 	public void release() {
@@ -361,7 +312,7 @@ public class WapdroidService extends Service {
 
 	private String cellsQuery() {
 		String cells = "(" + CELLS_CID + "=" + Integer.toString(mCid) + " and (" + LOCATIONS_LAC + "=" + Integer.toString(mLac) + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
-			+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
+		+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
 		if ((mNeighboringCells != null) && !mNeighboringCells.isEmpty()) {
 			for (NeighboringCellInfo nci : mNeighboringCells) {
 				int rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(),
@@ -490,15 +441,6 @@ public class WapdroidService extends Service {
 		 *  when a low battery disabled occurs,
 		 *  register the wifi receiver in case the network is connected at the time
 		 */
-// testing single receiver, always registered, to compare memory usage
-//		if (!enable && mConnected) {
-//			if (mWifiReceiver == null) {
-//				mWifiReceiver = new WifiReceiver();
-//				IntentFilter f = new IntentFilter();
-//				f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-//				registerReceiver(mWifiReceiver, f);
-//			}			
-//		}
 		mWifiManager.setWifiEnabled(enable);
 	}
 
@@ -509,31 +451,12 @@ public class WapdroidService extends Service {
 		 * when network connected, unregister wifi receiver
 		 * when network disconnected, register wifi receiver
 		 */
-		Log.v(TAG,"networkStateChanged "+(mConnected?"connected":"disconnected"));
 		mSsid = mConnected ? mWifiManager.getConnectionInfo().getSSID() : null;
 		mBssid = mConnected ? mWifiManager.getConnectionInfo().getBSSID() : null;
-		if (mConnected) {
-			// connected, implies that wifi is on
-			if ((mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID) && (mDbHelper != null)) {
-				mDbHelper.open();
-				updateRange();
-				mDbHelper.close();
-			}
-			// the network receiver will be registered if connected
-// testing single receiver, always registered, to compare memory usage
-//			if (mWifiReceiver != null) {
-//				unregisterReceiver(mWifiReceiver);
-//				mWifiReceiver = null;
-//			}
-		} else {
-			// if there's no connection, then fallback onto wifi receiver
-// testing single receiver, always registered, to compare memory usage
-//			if (mWifiReceiver == null) {
-//				mWifiReceiver = new WifiReceiver();
-//				IntentFilter f = new IntentFilter();
-//				f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-//				registerReceiver(mWifiReceiver, f);
-//			}
+		if (mConnected && (mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID) && (mDbHelper != null)) {
+			mDbHelper.open();
+			updateRange();
+			mDbHelper.close();
 		}
 		if (mWapdroidUI != null) {
 			try {
@@ -562,25 +485,7 @@ public class WapdroidService extends Service {
 		 * when wifi enabled, register network receiver
 		 * when wifi not enabled, unregister network receiver
 		 */
-		Log.v(TAG,"wifiStateChanged "+(state==WifiManager.WIFI_STATE_ENABLED?"enabled":state==WifiManager.WIFI_STATE_ENABLING?"enabling":state==WifiManager.WIFI_STATE_DISABLING?"disabling":state==WifiManager.WIFI_STATE_DISABLED?"disabled":"unknown"));
 		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
-			if (state == WifiManager.WIFI_STATE_ENABLED) {
-				// listen for a connection
-// testing single receiver, always registered, to compare memory usage
-//				if (mNetworkReceiver == null) {
-//					mNetworkReceiver = new NetworkReceiver();
-//					IntentFilter f = new IntentFilter();
-//					f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
-//					registerReceiver(mNetworkReceiver, f);
-//				}
-			} else if (state != WifiManager.WIFI_STATE_ENABLING) {
-				// network receiver isn't need if wifi is off
-// testing single receiver, always registered, to compare memory usage
-//				if (mNetworkReceiver != null) {
-//					unregisterReceiver(mNetworkReceiver);
-//					mNetworkReceiver = null;
-//				}
-			}
 			// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
 			if ((mNotificationManager != null)
 					&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
