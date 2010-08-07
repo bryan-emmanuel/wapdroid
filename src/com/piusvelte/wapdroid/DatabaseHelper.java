@@ -20,25 +20,25 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.CREATE_CELLS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.CREATE_LOCATIONS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.CREATE_NETWORKS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.CREATE_PAIRS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_NETWORKS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_ID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.NETWORKS_SSID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_CELLS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_CID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_LOCATION;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.UNKNOWN_CID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.UNKNOWN_RSSI;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_PAIRS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_CELL;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_NETWORK;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MAX;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MIN;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_LOCATIONS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.LOCATIONS_LAC;
+import static com.piusvelte.wapdroid.WapdroidService.CREATE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidService.CREATE_LOCATIONS;
+import static com.piusvelte.wapdroid.WapdroidService.CREATE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidService.CREATE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_ID;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_SSID;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_LOCATION;
+import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_CID;
+import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_CELL;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_NETWORK;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MAX;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MIN;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_LOCATIONS;
+import static com.piusvelte.wapdroid.WapdroidService.LOCATIONS_LAC;
 
 import android.content.Context;
 import android.database.Cursor;

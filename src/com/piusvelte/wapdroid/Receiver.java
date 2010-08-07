@@ -52,12 +52,12 @@ public class Receiver extends BroadcastReceiver {
 			int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
 			// check the threshold
 			if (ws.mManageWifi && !ws.mManualOverride && (currentBattPerc < ws.mBatteryLimit) && (ws.mLastBattPerc >= ws.mBatteryLimit)) {
-				ws.setWifiState(false);
+				ws.mWifiManager.setWifiEnabled(false);
 				if (ws.mPhoneListener != null) {
 					ws.mTeleManager.listen(ws.mPhoneListener, PhoneStateListener.LISTEN_NONE);
 					ws.mPhoneListener = null;;
 				}
-			} else if ((currentBattPerc >= ws.mBatteryLimit) && (ws.mLastBattPerc < ws.mBatteryLimit) && (ws.mPhoneListener == null)) ws.mTeleManager.listen(ws.mPhoneListener = (mApi7 ? (new PhoneListenerApi7(ws.mService)) : (new PhoneListenerApi3(ws.mService))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
+			} else if ((currentBattPerc >= ws.mBatteryLimit) && (ws.mLastBattPerc < ws.mBatteryLimit) && (ws.mPhoneListener == null)) ws.mTeleManager.listen(ws.mPhoneListener = (mApi7 ? (new PhoneListenerApi7(ws.mContext)) : (new PhoneListenerApi3(ws.mContext))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 			ws.mLastBattPerc = currentBattPerc;
 			if (ws.mWapdroidUI != null) {
 				try {

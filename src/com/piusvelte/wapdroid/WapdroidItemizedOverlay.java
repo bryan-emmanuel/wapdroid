@@ -20,7 +20,7 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_NETWORK;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_NETWORK;
 import static com.piusvelte.wapdroid.MapData.color_primary;
 import static com.piusvelte.wapdroid.MapData.color_secondary;
 import static com.piusvelte.wapdroid.MapData.drawable_cell;
@@ -137,7 +137,7 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 		dialog.setPositiveButton(pair == 0 ? string_deleteNetwork : string_deleteCell, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				WapdroidDbAdapter db = new WapdroidDbAdapter(mMap);
+				UIDbAdapter db = new UIDbAdapter(mMap);
 				db.open();
 				if (pair == 0) {
 					db.deleteNetwork(network);

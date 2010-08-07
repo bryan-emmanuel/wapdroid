@@ -21,17 +21,17 @@
 package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.WapdroidService.TAG;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_CID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_PAIRS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_NETWORKS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_ID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.NETWORKS_SSID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.NETWORKS_BSSID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.LOCATIONS_LAC;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_NETWORK;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_CELL;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MIN;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.PAIRS_RSSI_MAX;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_ID;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_SSID;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_BSSID;
+import static com.piusvelte.wapdroid.WapdroidService.LOCATIONS_LAC;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_NETWORK;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_CELL;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MIN;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MAX;
 import static android.telephony.NeighboringCellInfo.UNKNOWN_CID;
 import static android.telephony.NeighboringCellInfo.UNKNOWN_RSSI;
 
@@ -101,7 +101,7 @@ public class MapData extends MapActivity implements AdListener {
 	public static String string_lac;
 	public static String string_range;
 	public static String string_colon;
-	private WapdroidDbAdapter mDbHelper;
+	private UIDbAdapter mDbHelper;
 	private Context mContext;
 	private int mNetwork, mMCC = 0, mMNC = 0;
 	public int mPair = 0;
@@ -122,7 +122,7 @@ public class MapData extends MapActivity implements AdListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.map);
 		mContext = this;
-		mDbHelper = new WapdroidDbAdapter(this);
+		mDbHelper = new UIDbAdapter(this);
 		mMView = (MapView) findViewById(R.id.mapview);
 		mMView.setBuiltInZoomControls(true);
 		mMController = mMView.getController();

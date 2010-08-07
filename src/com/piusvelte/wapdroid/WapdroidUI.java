@@ -20,10 +20,10 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.CELLS_CID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.TABLE_CELLS;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.NETWORKS_BSSID;
-import static com.piusvelte.wapdroid.WapdroidDbAdapter.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_BSSID;
+import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_RSSI;
 
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
