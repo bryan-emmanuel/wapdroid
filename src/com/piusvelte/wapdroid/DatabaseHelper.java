@@ -20,10 +20,6 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidService.CREATE_CELLS;
-import static com.piusvelte.wapdroid.WapdroidService.CREATE_LOCATIONS;
-import static com.piusvelte.wapdroid.WapdroidService.CREATE_NETWORKS;
-import static com.piusvelte.wapdroid.WapdroidService.CREATE_PAIRS;
 import static com.piusvelte.wapdroid.WapdroidService.TABLE_NETWORKS;
 import static com.piusvelte.wapdroid.WapdroidService.TABLE_ID;
 import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_SSID;
@@ -56,10 +52,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		db.execSQL(CREATE_NETWORKS);
-		db.execSQL(CREATE_CELLS);
-		db.execSQL(CREATE_PAIRS);
-		db.execSQL(CREATE_LOCATIONS);
+		db.execSQL(WapdroidService.createNetworks());
+		db.execSQL(WapdroidService.createCells());
+		db.execSQL(WapdroidService.createPairs());
+		db.execSQL(WapdroidService.createLocations());
 	}
 
 	@Override
@@ -69,7 +65,7 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 			db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
 			db.execSQL("create temporary table " + TABLE_NETWORKS + "_bkp as select * from " + TABLE_NETWORKS + ";");
 			db.execSQL(DROP + TABLE_NETWORKS + ";");
-			db.execSQL(CREATE_NETWORKS);
+			db.execSQL(WapdroidService.createNetworks());
 			db.execSQL("insert into " + TABLE_NETWORKS + " select "
 					+ TABLE_ID + ", " + NETWORKS_SSID + ", \"\""
 					+ " from " + TABLE_NETWORKS + "_bkp;");
@@ -77,17 +73,17 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		}
 		if (oldVersion < 3) {
 			// add locations
-			db.execSQL(CREATE_LOCATIONS);
+			db.execSQL(WapdroidService.createLocations());
 			// first backup cells to create pairs
 			db.execSQL(DROP + TABLE_CELLS + "_bkp;");
 			db.execSQL("create temporary table " + TABLE_CELLS + "_bkp as select * from " + TABLE_CELLS + ";");
 			// update cells, dropping network column, making unique
 			db.execSQL(DROP + TABLE_CELLS + ";");
-			db.execSQL(CREATE_CELLS);
+			db.execSQL(WapdroidService.createCells());
 			db.execSQL("insert into " + TABLE_CELLS + " (" + CELLS_CID + ", " + CELLS_LOCATION
 					+ ") select " + CELLS_CID + ", " + UNKNOWN_CID + " from " + TABLE_CELLS + "_bkp group by " + CELLS_CID + ";");
 			// create pairs
-			db.execSQL(CREATE_PAIRS);
+			db.execSQL(WapdroidService.createPairs());
 			db.execSQL("insert into " + TABLE_PAIRS
 					+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
 					+ ") select " + TABLE_CELLS + "." + TABLE_ID + ", " + TABLE_CELLS + "_bkp." + PAIRS_NETWORK + ", " + UNKNOWN_RSSI + ", " + UNKNOWN_RSSI
