@@ -60,64 +60,72 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (oldVersion < 2) {
-			// add BSSID
-			db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
-			db.execSQL("create temporary table " + TABLE_NETWORKS + "_bkp as select * from " + TABLE_NETWORKS + ";");
-			db.execSQL(DROP + TABLE_NETWORKS + ";");
-			db.execSQL(WapdroidService.createNetworks());
-			db.execSQL("insert into " + TABLE_NETWORKS + " select "
-					+ TABLE_ID + ", " + NETWORKS_SSID + ", \"\""
-					+ " from " + TABLE_NETWORKS + "_bkp;");
-			db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
-		}
-		if (oldVersion < 3) {
-			// add locations
-			db.execSQL(WapdroidService.createLocations());
-			// first backup cells to create pairs
-			db.execSQL(DROP + TABLE_CELLS + "_bkp;");
-			db.execSQL("create temporary table " + TABLE_CELLS + "_bkp as select * from " + TABLE_CELLS + ";");
-			// update cells, dropping network column, making unique
-			db.execSQL(DROP + TABLE_CELLS + ";");
-			db.execSQL(WapdroidService.createCells());
-			db.execSQL("insert into " + TABLE_CELLS + " (" + CELLS_CID + ", " + CELLS_LOCATION
-					+ ") select " + CELLS_CID + ", " + UNKNOWN_CID + " from " + TABLE_CELLS + "_bkp group by " + CELLS_CID + ";");
-			// create pairs
-			db.execSQL(WapdroidService.createPairs());
-			db.execSQL("insert into " + TABLE_PAIRS
-					+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
-					+ ") select " + TABLE_CELLS + "." + TABLE_ID + ", " + TABLE_CELLS + "_bkp." + PAIRS_NETWORK + ", " + UNKNOWN_RSSI + ", " + UNKNOWN_RSSI
-					+ " from " + TABLE_CELLS + "_bkp"
-					+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "_bkp." + CELLS_CID + "=" + TABLE_CELLS + "." + CELLS_CID + ";");
-			db.execSQL(DROP + TABLE_CELLS + "_bkp;");
-		}
-		if (oldVersion < 4) {
-			// clean lac=0 locations
-			Cursor locations = db.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=0", null);
-			if (locations.getCount() > 0) {
-				locations.moveToFirst();
-				while (!locations.isAfterLast()) {
-					int location = locations.getInt(locations.getColumnIndex(TABLE_ID));
-					// clean pairs
-					db.execSQL("delete from " + TABLE_PAIRS + " where " + TABLE_ID + " in (select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + " from " + TABLE_PAIRS
-							+ " left join " + TABLE_CELLS + " on " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-							+ " where " + CELLS_LOCATION + "=" + location + ");");
-					// clean cells
-					db.execSQL("delete from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location + ";");
-					locations.moveToNext();
-				}
-				// clean locations
-				db.execSQL("delete from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=0;");
-			}
-		}
-		if (oldVersion < 5) {
-			// fix bad rssi values
-			db.execSQL("update pairs set " + PAIRS_RSSI_MIN + "=-1*" + PAIRS_RSSI_MIN + " where " + PAIRS_RSSI_MIN + " >0 and " + PAIRS_RSSI_MIN + " !=" + UNKNOWN_RSSI + ";");
-			db.execSQL("update pairs set " + PAIRS_RSSI_MAX + "=-1*" + PAIRS_RSSI_MAX + " where " + PAIRS_RSSI_MAX + " >0 and " + PAIRS_RSSI_MAX + " !=" + UNKNOWN_RSSI + ";");
-		}
-		if (oldVersion < 6) {
-			// revert incorrect unknown rssi's
-			db.execSQL("update pairs set " + PAIRS_RSSI_MIN + "=99," + PAIRS_RSSI_MAX + "=99 where " + PAIRS_RSSI_MAX + "<" + PAIRS_RSSI_MIN + " and RSSI_max=-85;");
-		}
+		if (oldVersion < 2) upgrade1(db);
+		if (oldVersion < 3) upgrade2(db);
+		if (oldVersion < 4) upgrade3(db);
+		if (oldVersion < 5) upgrade4(db);
+		if (oldVersion < 6) upgrade5(db);
 	}
+	
+	private void upgrade1(SQLiteDatabase db) {
+		// add BSSID
+		db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
+		db.execSQL("create temporary table " + TABLE_NETWORKS + "_bkp as select * from " + TABLE_NETWORKS + ";");
+		db.execSQL(DROP + TABLE_NETWORKS + ";");
+		db.execSQL(WapdroidService.createNetworks());
+		db.execSQL("insert into " + TABLE_NETWORKS + " select " + TABLE_ID + ", " + NETWORKS_SSID + ", \"\"" + " from " + TABLE_NETWORKS + "_bkp;");
+		db.execSQL(DROP + TABLE_NETWORKS + "_bkp;");
+	}
+
+	private void upgrade2(SQLiteDatabase db) {
+		// add locations
+		db.execSQL(WapdroidService.createLocations());
+		// first backup cells to create pairs
+		db.execSQL(DROP + TABLE_CELLS + "_bkp;");
+		db.execSQL("create temporary table " + TABLE_CELLS + "_bkp as select * from " + TABLE_CELLS + ";");
+		// update cells, dropping network column, making unique
+		db.execSQL(DROP + TABLE_CELLS + ";");
+		db.execSQL(WapdroidService.createCells());
+		db.execSQL("insert into " + TABLE_CELLS + " (" + CELLS_CID + ", " + CELLS_LOCATION
+				+ ") select " + CELLS_CID + ", " + UNKNOWN_CID + " from " + TABLE_CELLS + "_bkp group by " + CELLS_CID + ";");
+		// create pairs
+		db.execSQL(WapdroidService.createPairs());
+		db.execSQL("insert into " + TABLE_PAIRS
+				+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
+				+ ") select " + TABLE_CELLS + "." + TABLE_ID + ", " + TABLE_CELLS + "_bkp." + PAIRS_NETWORK + ", " + UNKNOWN_RSSI + ", " + UNKNOWN_RSSI
+				+ " from " + TABLE_CELLS + "_bkp"
+				+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "_bkp." + CELLS_CID + "=" + TABLE_CELLS + "." + CELLS_CID + ";");
+		db.execSQL(DROP + TABLE_CELLS + "_bkp;");
+	}
+	
+	private void upgrade3(SQLiteDatabase db) {
+		// clean lac=0 locations
+		Cursor locations = db.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=0", null);
+		if (locations.getCount() > 0) {
+			locations.moveToFirst();
+			while (!locations.isAfterLast()) {
+				int location = locations.getInt(locations.getColumnIndex(TABLE_ID));
+				// clean pairs
+				db.execSQL("delete from " + TABLE_PAIRS + " where " + TABLE_ID + " in (select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + " from " + TABLE_PAIRS
+						+ " left join " + TABLE_CELLS + " on " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+						+ " where " + CELLS_LOCATION + "=" + location + ");");
+				// clean cells
+				db.execSQL("delete from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location + ";");
+				locations.moveToNext();
+			}
+			// clean locations
+			db.execSQL("delete from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=0;");
+		}		
+	}
+	
+	private void upgrade4(SQLiteDatabase db) {
+		// fix bad rssi values
+		db.execSQL("update pairs set " + PAIRS_RSSI_MIN + "=-1*" + PAIRS_RSSI_MIN + " where " + PAIRS_RSSI_MIN + " >0 and " + PAIRS_RSSI_MIN + " !=" + UNKNOWN_RSSI + ";");
+		db.execSQL("update pairs set " + PAIRS_RSSI_MAX + "=-1*" + PAIRS_RSSI_MAX + " where " + PAIRS_RSSI_MAX + " >0 and " + PAIRS_RSSI_MAX + " !=" + UNKNOWN_RSSI + ";");
+	}
+
+	private void upgrade5(SQLiteDatabase db) {
+		// revert incorrect unknown rssi's
+		db.execSQL("update pairs set " + PAIRS_RSSI_MIN + "=99," + PAIRS_RSSI_MAX + "=99 where " + PAIRS_RSSI_MAX + "<" + PAIRS_RSSI_MIN + " and RSSI_max=-85;");
+	}	
 }

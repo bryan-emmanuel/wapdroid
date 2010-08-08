@@ -61,9 +61,9 @@ public class WapdroidService extends Service {
 	private static final int START_STICKY = 1;
 	private NotificationManager mNotificationManager;
 	public TelephonyManager mTeleManager;
-	public String mSsid = "";
-	private String mBssid = "",
-	mOperator = "";
+	public String mSsid;
+	private String mBssid,
+	mOperator;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	public WifiManager mWifiManager;
 	private int mCid = UNKNOWN_CID,
@@ -112,10 +112,6 @@ public class WapdroidService extends Service {
 	public static final int UNKNOWN_RSSI = 99;
 	private SQLiteDatabase mDb;
 	private DatabaseHelper mDbHelper;
-	// share var
-	private int location, cell, nci_cid, nci_lac, nci_rssi;
-	private Cursor c;
-	private ContentValues cv;
 	
 	public static String createNetworks() {
 		return "create table if not exists networks (_id  integer primary key autoincrement, SSID text not null, BSSID text not null);";
@@ -366,7 +362,7 @@ public class WapdroidService extends Service {
 		+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
 		if ((mNeighboringCells != null) && !mNeighboringCells.isEmpty()) {
 			for (NeighboringCellInfo nci : mNeighboringCells) {
-				nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
+				int nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
 				if (mNciReflectGetLac != null) {
 					/* feature is supported */
 					try {
@@ -375,7 +371,7 @@ public class WapdroidService extends Service {
 						nci_lac = UNKNOWN_CID;
 						Log.e(TAG, "unexpected " + ie);
 					}
-				}
+				} else nci_lac = UNKNOWN_CID;
 				cells += " or (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
 				+ " and (" + LOCATIONS_LAC + "=" + nci_lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
 				+ ((nci_rssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(nci_rssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(nci_rssi) + ")))");
@@ -442,8 +438,7 @@ public class WapdroidService extends Service {
 				if (enableWifi) {
 					// check neighbors if it appears that we're in range, for both enabling and disabling
 					for (NeighboringCellInfo nci : mNeighboringCells) {
-						nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID;
-						nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
+						int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
 						if (mNciReflectGetLac != null) {
 							/* feature is supported */
 							try {
@@ -452,7 +447,7 @@ public class WapdroidService extends Service {
 								nci_lac = UNKNOWN_CID;
 								Log.e(TAG, "unexpected " + ie);
 							}
-						}
+						} else nci_lac = UNKNOWN_CID;
 						// break on out of range result
 						if (nci_cid != UNKNOWN_CID) enableWifi = cellInRange(nci_cid, nci_lac, nci_rssi);
 						if (!enableWifi) break;
@@ -476,31 +471,30 @@ public class WapdroidService extends Service {
 	private void updateRange() {
 		int network = UNKNOWN_CID;
 		String ssid_orig, bssid_orig;
-		ContentValues values = new ContentValues();
+		ContentValues cv = new ContentValues();
 		// upgrading, BSSID may not be set yet
-		c = mDb.rawQuery(mUpdateRange1 + mBssid + mUpdateRange2 + mSsid + mUpdateRange3, null);
+		Cursor c = mDb.rawQuery(mUpdateRange1 + mBssid + mUpdateRange2 + mSsid + mUpdateRange3, null);
 		if (c.getCount() > 0) {
 			c.moveToFirst();
 			network = c.getInt(c.getColumnIndex(TABLE_ID));
 			ssid_orig = c.getString(c.getColumnIndex(NETWORKS_SSID));
 			bssid_orig = c.getString(c.getColumnIndex(NETWORKS_BSSID));
 			if (bssid_orig.equals("")) {
-				values.put(NETWORKS_BSSID, mBssid);
-				mDb.update(TABLE_NETWORKS, values, TABLE_ID + "=" + network, null);
+				cv.put(NETWORKS_BSSID, mBssid);
+				mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
 			} else if (!ssid_orig.equals(mSsid)) {
-				values.put(NETWORKS_SSID, mSsid);
-				mDb.update(TABLE_NETWORKS, values, TABLE_ID + "=" + network, null);
+				cv.put(NETWORKS_SSID, mSsid);
+				mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
 			}
 		} else {
-			values.put(NETWORKS_SSID, mSsid);
-			values.put(NETWORKS_BSSID, mBssid);
-			network = (int) mDb.insert(TABLE_NETWORKS, null, values);
+			cv.put(NETWORKS_SSID, mSsid);
+			cv.put(NETWORKS_BSSID, mBssid);
+			network = (int) mDb.insert(TABLE_NETWORKS, null, cv);
 		}
 		c.close();
 		createPair(mCid, mLac, network, mRssi);
 		for (NeighboringCellInfo nci : mNeighboringCells) {
-			nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID;
-			nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
+			int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
 			if (mNciReflectGetLac != null) {
 				/* feature is supported */
 				try {
@@ -509,7 +503,7 @@ public class WapdroidService extends Service {
 					nci_lac = UNKNOWN_CID;
 					Log.e(TAG, "unexpected " + ie);
 				}
-			}
+			} else nci_lac = UNKNOWN_CID;
 			if (nci_cid != UNKNOWN_CID) createPair(nci_cid, nci_lac, network, nci_rssi);
 		}
 	}
@@ -571,13 +565,14 @@ public class WapdroidService extends Service {
 	}
 	
 	public int fetchLocationOrCreate(int lac) {
+		int location;
 		if (lac > 0) {
-			c = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=" + lac, null);
+			Cursor c = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=" + lac, null);
 			if (c.getCount() > 0) {
 				c.moveToFirst();
 				location = c.getInt(c.getColumnIndex(TABLE_ID));
 			} else {
-				cv = new ContentValues();
+				ContentValues cv = new ContentValues();
 				cv.put(LOCATIONS_LAC, lac);
 				location = (int) mDb.insert(TABLE_LOCATIONS, null, cv);
 			}
@@ -587,26 +582,25 @@ public class WapdroidService extends Service {
 	}
 	
 	public void createPair(int cid, int lac, int network, int rssi) {
-		location = fetchLocationOrCreate(lac);
+		int cell, pair, location = fetchLocationOrCreate(lac);
 		// if location==-1, then match only on cid, otherwise match on location or -1
-		c = mDb.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION + " from " + TABLE_CELLS + " where " + CELLS_CID + "=" + cid + (location == UNKNOWN_CID ? "" : " and (" + CELLS_LOCATION + "=" + UNKNOWN_CID + " or " + CELLS_LOCATION + "=" + location + ")"), null);
+		Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION + " from " + TABLE_CELLS + " where " + CELLS_CID + "=" + cid + (location == UNKNOWN_CID ? "" : " and (" + CELLS_LOCATION + "=" + UNKNOWN_CID + " or " + CELLS_LOCATION + "=" + location + ")"), null);
 		if (c.getCount() > 0) {
 			c.moveToFirst();
 			cell = c.getInt(c.getColumnIndex(TABLE_ID));
 			if ((location != UNKNOWN_CID) && (c.getInt(c.getColumnIndex(CELLS_LOCATION)) == UNKNOWN_CID)){
 				// update the location
-				cv = new ContentValues();
+				ContentValues cv = new ContentValues();
 				cv.put(CELLS_LOCATION, location);
 				mDb.update(TABLE_CELLS, cv, TABLE_ID + "=" + cell, null);
 			}
 		} else {
-			cv = new ContentValues();
+			ContentValues cv = new ContentValues();
 			cv.put(CELLS_CID, cid);
 			cv.put(CELLS_LOCATION, location);
 			cell = (int) mDb.insert(TABLE_CELLS, null, cv);
 		}
 		c.close();
-		int pair;
 		c = mDb.rawQuery("select " + TABLE_ID + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell + " and " + PAIRS_NETWORK + "=" + network, null);
 		if (c.getCount() > 0) {
 			if (rssi != UNKNOWN_RSSI) {
@@ -615,7 +609,7 @@ public class WapdroidService extends Service {
 				int rssi_min = c.getInt(c.getColumnIndex(PAIRS_RSSI_MIN));
 				int rssi_max = c.getInt(c.getColumnIndex(PAIRS_RSSI_MAX));
 				boolean update = false;
-				cv = new ContentValues();
+				ContentValues cv = new ContentValues();
 				if (rssi_min > rssi) {
 					update = true;
 					cv.put(PAIRS_RSSI_MIN, rssi);
@@ -626,7 +620,7 @@ public class WapdroidService extends Service {
 				if (update) mDb.update(TABLE_PAIRS, cv, TABLE_ID + "=" + pair, null);
 			}
 		} else {
-			cv = new ContentValues();
+			ContentValues cv = new ContentValues();
 			cv.put(PAIRS_CELL, cell);
 			cv.put(PAIRS_NETWORK, network);
 			cv.put(PAIRS_RSSI_MIN, rssi);
@@ -638,7 +632,7 @@ public class WapdroidService extends Service {
 	
 	public boolean cellInRange(int cid, int lac, int rssi) {
 		boolean inRange;
-		c = mDb.rawQuery("select " + TABLE_CELLS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_LOCATION + (rssi != UNKNOWN_RSSI ? ", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MIN + ", (select max(" + PAIRS_RSSI_MAX + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MAX : "") + " from " + TABLE_CELLS + " left outer join " + TABLE_LOCATIONS + " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID + " where "+ CELLS_CID + "=" + cid + " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
+		Cursor c = mDb.rawQuery("select " + TABLE_CELLS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_LOCATION + (rssi != UNKNOWN_RSSI ? ", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MIN + ", (select max(" + PAIRS_RSSI_MAX + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MAX : "") + " from " + TABLE_CELLS + " left outer join " + TABLE_LOCATIONS + " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID + " where "+ CELLS_CID + "=" + cid + " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
 						+ (rssi == UNKNOWN_RSSI ? "" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + rssi + ")) and (" + PAIRS_RSSI_MAX + ">=" + rssi + "))"), null);
 		inRange = (c.getCount() > 0);
 		if (inRange && (lac > 0)) {
@@ -646,10 +640,9 @@ public class WapdroidService extends Service {
 			c.moveToFirst();
 			if (c.isNull(c.getColumnIndex(CELLS_LOCATION))) {
 				int location = fetchLocationOrCreate(lac);
-				cv = new ContentValues();
-				cell = c.getInt(c.getColumnIndex(TABLE_ID));
+				ContentValues cv = new ContentValues();
 				cv.put(CELLS_LOCATION, location);
-				mDb.update(TABLE_CELLS, cv, TABLE_ID + "=" + cell, null);
+				mDb.update(TABLE_CELLS, cv, TABLE_ID + "=" + c.getInt(c.getColumnIndex(TABLE_ID)), null);
 			}
 		}
 		c.close();
