@@ -3,10 +3,10 @@ package com.piusvelte.wapdroid;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
-import static com.piusvelte.wapdroid.WapdroidService.LISTEN_SIGNAL_STRENGTHS;
 import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
-import static com.piusvelte.wapdroid.WapdroidService.mApi7;
 import static com.piusvelte.wapdroid.WapdroidService.TAG;
+import static com.piusvelte.wapdroid.WapdroidService.mApi7;
+import static com.piusvelte.wapdroid.WapdroidService.LISTEN_SIGNAL_STRENGTHS;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -66,19 +66,19 @@ public class Receiver extends BroadcastReceiver {
 			}
 		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 			Log.v(TAG,"NETWORK CHANGE received");
-			NetworkInfo i = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+			NetworkInfo ni = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 			WapdroidService ws = (WapdroidService) context;
-			if (i.isConnected() ^ (ws.mSsid != null)) {
+			if (ni.isConnected() ^ (ws.mSsid != null)) {
 				// a connection was gained or lost
 				if (!ManageWakeLocks.hasLock()) {
 					ManageWakeLocks.acquire(context);
 					ws.mRelease = true;
 				}
-				ws.mConnected = i.isConnected();
+				ws.mConnected = ni.isConnected();
 				ws.networkStateChanged();
 				if (ws.mRelease) {
 					// if connection was lost, check cells, otherwise, release
-					if (!i.isConnected()) {
+					if (!ni.isConnected()) {
 						ws.mAlarmMgr.cancel(ws.mPendingIntent);
 						context.startService(new Intent(context, WapdroidService.class));
 					} else ws.release();
