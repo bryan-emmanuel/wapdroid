@@ -265,8 +265,8 @@ public class WapdroidService extends Service {
 		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+		mDbHelper = new DatabaseHelper(mContext);
 		try {
-			mDbHelper = new DatabaseHelper(mContext);
 			mDb = mDbHelper.getWritableDatabase();
 		} catch (SQLException se) {
 			Log.e(TAG,"unexpected " + se);
@@ -301,6 +301,7 @@ public class WapdroidService extends Service {
 			mPhoneListener = null;
 		}
 		if (mDbHelper != null) {
+			if (mDb.isOpen()) mDb.close();
 			mDbHelper.close();
 		}
 		if (mNotificationManager != null) mNotificationManager.cancel(NOTIFY_ID);
@@ -313,6 +314,8 @@ public class WapdroidService extends Service {
 			mCid = UNKNOWN_CID;
 			mLac = UNKNOWN_CID;
 			mRssi = UNKNOWN_RSSI;
+			// close db
+			//if (mDb.isOpen()) mDb.close();
 			ManageWakeLocks.release();
 		}
 	}
@@ -391,38 +394,46 @@ public class WapdroidService extends Service {
 		boolean enableWifi = mLastScanEnableWifi;
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		// check that the service is in control, and minimum values are set
-		//openDb();
-		if (mManageWifi && (mCid != UNKNOWN_CID) && mDb.isOpen()) {
-			enableWifi = cellInRange(mCid, mLac, mRssi);
-			// if connected, only update the range
-			if (mConnected) {
-				if ((mSsid != null) && (mBssid != null)) updateRange();
-			}
-			// always allow disabling, but only enable if above the battery limit
-			else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
-				if (enableWifi) {
-					// check neighbors if it appears that we're in range, for both enabling and disabling
-					for (NeighboringCellInfo nci : mNeighboringCells) {
-						int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
-						if (mNciReflectGetLac != null) {
-							/* feature is supported */
-							try {
-								nci_lac = nciGetLac(nci);
-							} catch (IOException ie) {
-								nci_lac = UNKNOWN_CID;
-								Log.e(TAG, "unexpected " + ie);
-							}
-						} else nci_lac = UNKNOWN_CID;
-						// break on out of range result
-						if (nci_cid != UNKNOWN_CID) enableWifi = cellInRange(nci_cid, nci_lac, nci_rssi);
-						if (!enableWifi) break;
-					}
+		if (mManageWifi && (mCid != UNKNOWN_CID)) {
+//			if (!mDb.isOpen()) {
+//				try {
+//					mDb = mDbHelper.getWritableDatabase();
+//				} catch (SQLException se) {
+//					Log.e(TAG,"unexpected " + se);
+//				}
+//			}
+			if (mDb.isOpen()) {
+				//if (mManageWifi && (mCid != UNKNOWN_CID) && mDb.isOpen()) {
+				enableWifi = cellInRange(mCid, mLac, mRssi);
+				// if connected, only update the range
+				if (mConnected) {
+					if ((mSsid != null) && (mBssid != null)) updateRange();
 				}
-				// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
-				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
-				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) mWifiManager.setWifiEnabled(enableWifi);
+				// always allow disabling, but only enable if above the battery limit
+				else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
+					if (enableWifi) {
+						// check neighbors if it appears that we're in range, for both enabling and disabling
+						for (NeighboringCellInfo nci : mNeighboringCells) {
+							int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
+							if (mNciReflectGetLac != null) {
+								/* feature is supported */
+								try {
+									nci_lac = nciGetLac(nci);
+								} catch (IOException ie) {
+									nci_lac = UNKNOWN_CID;
+									Log.e(TAG, "unexpected " + ie);
+								}
+							} else nci_lac = UNKNOWN_CID;
+							// break on out of range result
+							if (nci_cid != UNKNOWN_CID) enableWifi = cellInRange(nci_cid, nci_lac, nci_rssi);
+							if (!enableWifi) break;
+						}
+					}
+					// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
+					// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
+					if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) mWifiManager.setWifiEnabled(enableWifi);
+				}
 			}
-			//closeDb();
 		}
 		// only release the service if it doesn't appear that we're entering or leaving a network
 		if (enableWifi == mLastScanEnableWifi) release();
@@ -479,9 +490,15 @@ public class WapdroidService extends Service {
 		mSsid = mConnected ? mWifiManager.getConnectionInfo().getSSID() : null;
 		mBssid = mConnected ? mWifiManager.getConnectionInfo().getBSSID() : null;
 		//openDb();
-		if (mConnected && (mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID) && mDb.isOpen()) {
-			updateRange();
-			//closeDb();
+		if (mConnected && (mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID)) {
+//			if (!mDb.isOpen()) {
+//				try {
+//					mDb = mDbHelper.getWritableDatabase();
+//				} catch (SQLException se) {
+//					Log.e(TAG,"unexpected " + se);
+//				}
+//			}
+			if (mDb.isOpen()) updateRange();
 		}
 		if (mWapdroidUI != null) {
 			try {
