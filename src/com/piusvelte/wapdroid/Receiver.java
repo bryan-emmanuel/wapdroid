@@ -4,7 +4,6 @@ import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
-import static com.piusvelte.wapdroid.WapdroidService.TAG;
 import static com.piusvelte.wapdroid.WapdroidService.mApi7;
 import static com.piusvelte.wapdroid.WapdroidService.LISTEN_SIGNAL_STRENGTHS;
 import android.app.AlarmManager;
@@ -16,7 +15,6 @@ import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
-import android.util.Log;
 
 public class Receiver extends BroadcastReceiver {
 	private static final String BATTERY_EXTRA_LEVEL = "level";
@@ -27,18 +25,15 @@ public class Receiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		// on boot, or package upgrade, start the service
 		if (intent.getAction().equals(ACTION_BOOT_COMPLETED) || intent.getAction().equals(ACTION_PACKAGE_ADDED) || intent.getAction().equals(ACTION_PACKAGE_REPLACED)) {
-			Log.v(TAG,"BOOT received");
 			SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 			if (sp.getBoolean(context.getString(R.string.key_manageWifi), true)) {
 				ManageWakeLocks.acquire(context);
 				context.startService(new Intent(context, WapdroidService.class));
 			}
 		} else if (intent.getAction().equals(WAKE_SERVICE)) {
-			Log.v(TAG,"WAKE received");
 			ManageWakeLocks.acquire(context);
 			context.startService(new Intent(context, WapdroidService.class));
 		} else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
-			Log.v(TAG,"BATTERY CHANGED received");
 			WapdroidService ws = (WapdroidService) context;
 			// override low battery when charging
 			if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) {
@@ -65,10 +60,9 @@ public class Receiver extends BroadcastReceiver {
 				} catch (RemoteException e) {};
 			}
 		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-			Log.v(TAG,"NETWORK CHANGE received");
 			NetworkInfo ni = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 			WapdroidService ws = (WapdroidService) context;
-			if (ni.isConnected() ^ (ws.mSsid != null)) {
+//			if (ni.isConnected() ^ (ws.mSsid != null)) {
 				// a connection was gained or lost
 				if (!ManageWakeLocks.hasLock()) {
 					ManageWakeLocks.acquire(context);
@@ -83,20 +77,17 @@ public class Receiver extends BroadcastReceiver {
 						context.startService(new Intent(context, WapdroidService.class));
 					} else ws.release();
 				}
-			}
+//			}
 		} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-			Log.v(TAG,"SCREEN ON received");
 			WapdroidService ws = (WapdroidService) context;
 			ws.mAlarmMgr.cancel(ws.mPendingIntent);
 			ManageWakeLocks.release();
 			context.startService(new Intent(context, WapdroidService.class));
 		} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-			Log.v(TAG,"SCREEN OFF received");
 			WapdroidService ws = (WapdroidService) context;
 			ws.mManualOverride = false;
 			if (ws.mInterval > 0) ws.mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + ws.mInterval, ws.mPendingIntent);
 		} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-			Log.v(TAG,"WIFI CHANGE received");
 			WapdroidService ws = (WapdroidService) context;
 			if (!ManageWakeLocks.hasLock()) {
 				ManageWakeLocks.acquire(context);

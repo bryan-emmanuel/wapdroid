@@ -59,8 +59,8 @@ public class WapdroidService extends Service {
 	private static final int START_STICKY = 1;
 	private NotificationManager mNotificationManager;
 	public TelephonyManager mTeleManager;
-	public String mSsid;
-	private String mBssid;
+	//public String mSsid;
+	//private String mBssid;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	public WifiManager mWifiManager;
 	private int mCid = UNKNOWN_CID,
@@ -357,7 +357,8 @@ public class WapdroidService extends Service {
 		try {
 			mWapdroidUI.setOperator(mTeleManager.getNetworkOperator());
 			mWapdroidUI.setCellInfo(mCid, mLac);
-			mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+//			mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+			mWapdroidUI.setWifiInfo(mLastWifiState, mWifiManager.getConnectionInfo().getSSID(), mWifiManager.getConnectionInfo().getBSSID());
 			mWapdroidUI.setSignalStrength(mRssi);
 			mWapdroidUI.setCells(cells);
 			mWapdroidUI.setBattery(mLastBattPerc);
@@ -391,11 +392,9 @@ public class WapdroidService extends Service {
 			signalStrengthChanged(UNKNOWN_RSSI);
 			if (mWapdroidUI != null) updateUI();
 		}
-		Log.v(TAG,"getCellInfo "+Integer.toString(mCid));
 	}
 
 	public void signalStrengthChanged(int rssi) {
-		Log.v(TAG,"signalStrengthChanged "+Integer.toString(rssi));
 		// keep last known rssi
 		if (rssi != UNKNOWN_RSSI) mRssi = rssi;
 		if (mWapdroidUI != null) {
@@ -410,9 +409,7 @@ public class WapdroidService extends Service {
 		if (mManageWifi && (mCid != UNKNOWN_CID) && mDb.isOpen()) {
 			enableWifi = cellInRange(mCid, mLac, mRssi);
 			// if connected, only update the range
-			if (mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) {
-				if ((mSsid != null) && (mBssid != null)) updateRange();
-			}
+			if (mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) updateRange();
 			// always allow disabling, but only enable if above the battery limit
 			else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
 				if (enableWifi) {
@@ -444,42 +441,50 @@ public class WapdroidService extends Service {
 	}
 
 	private void updateRange() {
-		int network = UNKNOWN_CID;
-		String ssid_orig, bssid_orig;
-		ContentValues cv = new ContentValues();
-		// upgrading, BSSID may not be set yet
-		Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " from " + TABLE_NETWORKS + " where " + NETWORKS_BSSID + "=\"" + mBssid + "\" OR (" + NETWORKS_SSID + "=\"" + mSsid + "\" and " + NETWORKS_BSSID + "=\"\")", null);
-		if (c.getCount() > 0) {
-			c.moveToFirst();
-			network = c.getInt(c.getColumnIndex(TABLE_ID));
-			ssid_orig = c.getString(c.getColumnIndex(NETWORKS_SSID));
-			bssid_orig = c.getString(c.getColumnIndex(NETWORKS_BSSID));
-			if (bssid_orig.equals("")) {
-				cv.put(NETWORKS_BSSID, mBssid);
-				mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
-			} else if (!ssid_orig.equals(mSsid)) {
-				cv.put(NETWORKS_SSID, mSsid);
-				mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
-			}
-		} else {
-			cv.put(NETWORKS_SSID, mSsid);
-			cv.put(NETWORKS_BSSID, mBssid);
-			network = (int) mDb.insert(TABLE_NETWORKS, null, cv);
-		}
-		c.close();
-		createPair(mCid, mLac, network, mRssi);
-		for (NeighboringCellInfo nci : mNeighboringCells) {
-			int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
-			if (mNciReflectGetLac != null) {
-				/* feature is supported */
-				try {
-					nci_lac = nciGetLac(nci);
-				} catch (IOException ie) {
-					nci_lac = UNKNOWN_CID;
-					Log.e(TAG, "unexpected " + ie);
+		if ((mWifiManager.getConnectionInfo().getSSID() != null) && (mWifiManager.getConnectionInfo().getBSSID() != null)) {
+			int network = UNKNOWN_CID;
+			String ssid_orig, bssid_orig;
+			ContentValues cv = new ContentValues();
+			// upgrading, BSSID may not be set yet
+			//		Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " from " + TABLE_NETWORKS + " where " + NETWORKS_BSSID + "=\"" + mBssid + "\" OR (" + NETWORKS_SSID + "=\"" + mSsid + "\" and " + NETWORKS_BSSID + "=\"\")", null);
+			Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " from " + TABLE_NETWORKS + " where " + NETWORKS_BSSID + "=\"" + mWifiManager.getConnectionInfo().getBSSID() + "\" OR (" + NETWORKS_SSID + "=\"" + mWifiManager.getConnectionInfo().getSSID() + "\" and " + NETWORKS_BSSID + "=\"\")", null);
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				network = c.getInt(c.getColumnIndex(TABLE_ID));
+				ssid_orig = c.getString(c.getColumnIndex(NETWORKS_SSID));
+				bssid_orig = c.getString(c.getColumnIndex(NETWORKS_BSSID));
+				if (bssid_orig.equals("")) {
+					//				cv.put(NETWORKS_BSSID, mBssid);
+					cv.put(NETWORKS_BSSID, mWifiManager.getConnectionInfo().getBSSID());
+					mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
+					//			} else if (!ssid_orig.equals(mSsid)) {
+				} else if (!ssid_orig.equals(mWifiManager.getConnectionInfo().getSSID())) {
+					//				cv.put(NETWORKS_SSID, mSsid);
+					cv.put(NETWORKS_SSID, mWifiManager.getConnectionInfo().getSSID());
+					mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
 				}
-			} else nci_lac = UNKNOWN_CID;
-			if (nci_cid != UNKNOWN_CID) createPair(nci_cid, nci_lac, network, nci_rssi);
+			} else {
+				//			cv.put(NETWORKS_SSID, mSsid);
+				//			cv.put(NETWORKS_BSSID, mBssid);
+				cv.put(NETWORKS_SSID, mWifiManager.getConnectionInfo().getSSID());
+				cv.put(NETWORKS_BSSID, mWifiManager.getConnectionInfo().getBSSID());
+				network = (int) mDb.insert(TABLE_NETWORKS, null, cv);
+			}
+			c.close();
+			createPair(mCid, mLac, network, mRssi);
+			for (NeighboringCellInfo nci : mNeighboringCells) {
+				int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
+				if (mNciReflectGetLac != null) {
+					/* feature is supported */
+					try {
+						nci_lac = nciGetLac(nci);
+					} catch (IOException ie) {
+						nci_lac = UNKNOWN_CID;
+						Log.e(TAG, "unexpected " + ie);
+					}
+				} else nci_lac = UNKNOWN_CID;
+				if (nci_cid != UNKNOWN_CID) createPair(nci_cid, nci_lac, network, nci_rssi);
+			}
 		}
 	}
 
@@ -491,16 +496,18 @@ public class WapdroidService extends Service {
 		 * when network disconnected, register wifi receiver
 		 */
 		if (mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) {
-			mSsid = mWifiManager.getConnectionInfo().getSSID();
-			mBssid = mWifiManager.getConnectionInfo().getBSSID();
-			if ((mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID) && mDb.isOpen()) updateRange();
+//			mSsid = mWifiManager.getConnectionInfo().getSSID();
+//			mBssid = mWifiManager.getConnectionInfo().getBSSID();
+//			if ((mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID) && mDb.isOpen()) updateRange();
+			if ((mCid != UNKNOWN_CID) && mDb.isOpen()) updateRange();
 		} else {
-			mSsid = null;
-			mBssid = null;			
+//			mSsid = null;
+//			mBssid = null;
 		}
 		if (mWapdroidUI != null) {
 			try {
-				mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+//				mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+				mWapdroidUI.setWifiInfo(mLastWifiState, mWifiManager.getConnectionInfo().getSSID(), mWifiManager.getConnectionInfo().getBSSID());
 			} catch (RemoteException e) {}
 		}
 	}
@@ -534,7 +541,8 @@ public class WapdroidService extends Service {
 			mLastWifiState = state;
 			if (mWapdroidUI != null) {
 				try {
-					mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+//					mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+					mWapdroidUI.setWifiInfo(mLastWifiState, mWifiManager.getConnectionInfo().getSSID(), mWifiManager.getConnectionInfo().getBSSID());
 				} catch (RemoteException e) {}
 			}
 		}

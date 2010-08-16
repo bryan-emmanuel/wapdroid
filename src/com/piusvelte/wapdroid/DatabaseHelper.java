@@ -48,10 +48,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 	private static final String create = "create table if not exists ";
 	private static final String createTemp =  "create temporary table ";
 	private static final String drop = "drop table if exists ";
-	private static final String createNetworks = create + TABLE_NETWORKS + " (_id  integer primary key autoincrement, " + NETWORKS_SSID + " text not null, " + NETWORKS_BSSID + " text not null);";
-	private static final String createCells = create + TABLE_CELLS + " (_id  integer primary key autoincrement, " + CELLS_CID + " integer, location integer);";
-	private static final String createPairs = create + TABLE_PAIRS + " (_id  integer primary key autoincrement, cell integer, network integer, " + PAIRS_RSSI_MIN + " integer, " + PAIRS_RSSI_MAX + " integer);";
-	private static final String createLocations = create + TABLE_LOCATIONS + " (_id  integer primary key autoincrement, " + LOCATIONS_LAC + " integer);";
+	//private static final String createNetworks = create + TABLE_NETWORKS + " (_id  integer primary key autoincrement, " + NETWORKS_SSID + " text not null, " + NETWORKS_BSSID + " text not null);";
+	//private static final String createCells = create + TABLE_CELLS + " (_id  integer primary key autoincrement, " + CELLS_CID + " integer, location integer);";
+	//private static final String createPairs = create + TABLE_PAIRS + " (_id  integer primary key autoincrement, cell integer, network integer, " + PAIRS_RSSI_MIN + " integer, " + PAIRS_RSSI_MAX + " integer);";
+	//private static final String createLocations = create + TABLE_LOCATIONS + " (_id  integer primary key autoincrement, " + LOCATIONS_LAC + " integer);";
 
 	DatabaseHelper(Context context) {
 		super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -59,10 +59,10 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		db.execSQL(createNetworks);
-		db.execSQL(createCells);
-		db.execSQL(createPairs);
-		db.execSQL(createLocations);
+		db.execSQL(create + TABLE_NETWORKS + " (_id  integer primary key autoincrement, " + NETWORKS_SSID + " text not null, " + NETWORKS_BSSID + " text not null);");
+		db.execSQL(create + TABLE_CELLS + " (_id  integer primary key autoincrement, " + CELLS_CID + " integer, location integer);");
+		db.execSQL(create + TABLE_PAIRS + " (_id  integer primary key autoincrement, cell integer, network integer, " + PAIRS_RSSI_MIN + " integer, " + PAIRS_RSSI_MAX + " integer);");
+		db.execSQL(create + TABLE_LOCATIONS + " (_id  integer primary key autoincrement, " + LOCATIONS_LAC + " integer);");
 	}
 
 	@Override
@@ -79,24 +79,24 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 		db.execSQL(drop + TABLE_NETWORKS + "_bkp;");
 		db.execSQL(createTemp + TABLE_NETWORKS + "_bkp as select * from " + TABLE_NETWORKS + ";");
 		db.execSQL(drop + TABLE_NETWORKS + ";");
-		db.execSQL(createNetworks);
+		db.execSQL(create + TABLE_NETWORKS + " (_id  integer primary key autoincrement, " + NETWORKS_SSID + " text not null, " + NETWORKS_BSSID + " text not null);");
 		db.execSQL("insert into " + TABLE_NETWORKS + " select " + TABLE_ID + ", " + NETWORKS_SSID + ", \"\"" + " from " + TABLE_NETWORKS + "_bkp;");
 		db.execSQL(drop + TABLE_NETWORKS + "_bkp;");
 	}
 
 	private void upgrade2(SQLiteDatabase db) {
 		// add locations
-		db.execSQL(createLocations);
+		db.execSQL(create + TABLE_LOCATIONS + " (_id  integer primary key autoincrement, " + LOCATIONS_LAC + " integer);");
 		// first backup cells to create pairs
 		db.execSQL(drop + TABLE_CELLS + "_bkp;");
 		db.execSQL(createTemp + TABLE_CELLS + "_bkp as select * from " + TABLE_CELLS + ";");
 		// update cells, dropping network column, making unique
 		db.execSQL(drop + TABLE_CELLS + ";");
-		db.execSQL(createCells);
+		db.execSQL(create + TABLE_CELLS + " (_id  integer primary key autoincrement, " + CELLS_CID + " integer, location integer);");
 		db.execSQL("insert into " + TABLE_CELLS + " (" + CELLS_CID + ", " + CELLS_LOCATION
 				+ ") select " + CELLS_CID + ", " + UNKNOWN_CID + " from " + TABLE_CELLS + "_bkp group by " + CELLS_CID + ";");
 		// create pairs
-		db.execSQL(createPairs);
+		db.execSQL(create + TABLE_PAIRS + " (_id  integer primary key autoincrement, cell integer, network integer, " + PAIRS_RSSI_MIN + " integer, " + PAIRS_RSSI_MAX + " integer);");
 		db.execSQL("insert into " + TABLE_PAIRS
 				+ " (" + PAIRS_CELL + ", " + PAIRS_NETWORK + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
 				+ ") select " + TABLE_CELLS + "." + TABLE_ID + ", " + TABLE_CELLS + "_bkp." + PAIRS_NETWORK + ", " + UNKNOWN_RSSI + ", " + UNKNOWN_RSSI
