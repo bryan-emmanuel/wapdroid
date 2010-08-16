@@ -25,6 +25,9 @@
 	<CheckBoxPreference android:key="@string/key_notify"
 		android:title="@string/label_notify" android:dependency="@string/key_manageWifi"
 		android:defaultValue="false" />
+	<CheckBoxPreference android:key="@string/key_persistent_status"
+		android:title="@string/label_persistent_status" android:dependency="@string/key_notify"
+		android:defaultValue="false" />
 	<CheckBoxPreference android:key="@string/key_vibrate"
 		android:title="@string/label_vibrate" android:dependency="@string/key_notify"
 		android:defaultValue="false" />

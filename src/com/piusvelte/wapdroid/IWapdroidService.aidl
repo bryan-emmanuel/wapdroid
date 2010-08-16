@@ -22,6 +22,6 @@ package com.piusvelte.wapdroid;
 
 interface IWapdroidService {
 	void setCallback(in IBinder mWapdroidUIBinder);
-	void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage);
+	void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean persistent_status);
 	void manualOverride();
 }

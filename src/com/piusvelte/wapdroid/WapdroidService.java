@@ -60,24 +60,23 @@ public class WapdroidService extends Service {
 	private NotificationManager mNotificationManager;
 	public TelephonyManager mTeleManager;
 	public String mSsid;
-	private String mBssid,
-	mOperator;
+	private String mBssid;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	public WifiManager mWifiManager;
 	private int mCid = UNKNOWN_CID,
 	mLac = UNKNOWN_CID,
 	mRssi = UNKNOWN_RSSI,
 	mLastWifiState = WifiManager.WIFI_STATE_UNKNOWN,
-	mNotifications ;
+	mNotifications;
 	public int mInterval,
 	mBatteryLimit,
 	mLastBattPerc = 0;
-	private boolean mNotify;
+	private boolean mPersistentStatus;
 	public boolean mManageWifi,
 	mRelease = false,
 	mManualOverride,
-	mLastScanEnableWifi,
-	mConnected;
+	mLastScanEnableWifi;//,
+	//mConnected;
 	public static boolean mApi7;
 	public AlarmManager mAlarmMgr;
 	public PendingIntent mPendingIntent;
@@ -112,9 +111,18 @@ public class WapdroidService extends Service {
 	private DatabaseHelper mDbHelper;
 
 	private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
-		public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage)
+		public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean persistent_status)
 		throws RemoteException {
+			mManageWifi = manage;
+			mInterval = interval;
+			int limit = batteryOverride ? batteryPercentage : 0;
+			if (limit != mBatteryLimit) mBatteryLimit = limit;
+			mNotifications = 0;
+			if (vibrate) mNotifications |= Notification.DEFAULT_VIBRATE;
+			if (led) mNotifications |= Notification.DEFAULT_LIGHTS;
+			if (ringtone) mNotifications |= Notification.DEFAULT_SOUND;
 			if ((mManageWifi ^ manage) || ((mNotificationManager != null) ^ notify)) {
+				mPersistentStatus = persistent_status;
 				if (manage && notify) {
 					if (mNotificationManager == null) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 					createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
@@ -122,13 +130,16 @@ public class WapdroidService extends Service {
 					mNotificationManager.cancel(NOTIFY_ID);
 					mNotificationManager = null;
 				}
+			} else if (mPersistentStatus ^ persistent_status) {
+				// changed the status icon persistence
+				mPersistentStatus = persistent_status;
+				if (mPersistentStatus) {
+					if (manage && notify) {
+						if (mNotificationManager == null) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+						createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);						
+					}
+				} else if (mNotificationManager != null) mNotificationManager.cancel(NOTIFY_ID);
 			}
-			mManageWifi = manage;
-			mInterval = interval;
-			mNotify = notify;
-			setNotifications(vibrate, led, ringtone);
-			int limit = batteryOverride ? batteryPercentage : 0;
-			if (limit != mBatteryLimit) mBatteryLimit = limit;
 		}
 
 		public void setCallback(IBinder mWapdroidUIBinder)
@@ -258,9 +269,14 @@ public class WapdroidService extends Service {
 		// initialize preferences, updated by UI
 		mManageWifi = sp.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), "30000"));
-		mNotify = sp.getBoolean(getString(R.string.key_notify), false);
-		if (mNotify) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-		setNotifications(sp.getBoolean(getString(R.string.key_vibrate), false),sp.getBoolean(getString(R.string.key_led), false), sp.getBoolean(getString(R.string.key_ringtone), false));
+		if (sp.getBoolean(getString(R.string.key_notify), false)) {
+			mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			mPersistentStatus = sp.getBoolean(getString(R.string.key_persistent_status), false);
+			mNotifications = 0;
+			if (sp.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;
+			if (sp.getBoolean(getString(R.string.key_led), false)) mNotifications |= Notification.DEFAULT_LIGHTS;
+			if (sp.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
+		}
 		mBatteryLimit = sp.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30")) : 0;
 		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -275,7 +291,7 @@ public class WapdroidService extends Service {
 		// to help avoid hysteresis, make sure that at least 2 consecutive scans were in/out of range
 		mLastScanEnableWifi = (mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
 		// the ssid from wifimanager may not be null, even if disconnected, so check against the supplicant state
-		mConnected = mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED;
+		//mConnected = mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED;
 		networkStateChanged();
 		IntentFilter f = new IntentFilter();
 		f.addAction(Intent.ACTION_BATTERY_CHANGED);
@@ -314,8 +330,6 @@ public class WapdroidService extends Service {
 			mCid = UNKNOWN_CID;
 			mLac = UNKNOWN_CID;
 			mRssi = UNKNOWN_RSSI;
-			// close db
-			//if (mDb.isOpen()) mDb.close();
 			ManageWakeLocks.release();
 		}
 	}
@@ -341,7 +355,7 @@ public class WapdroidService extends Service {
 			}
 		}
 		try {
-			mWapdroidUI.setOperator(mOperator);
+			mWapdroidUI.setOperator(mTeleManager.getNetworkOperator());
 			mWapdroidUI.setCellInfo(mCid, mLac);
 			mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
 			mWapdroidUI.setSignalStrength(mRssi);
@@ -352,7 +366,6 @@ public class WapdroidService extends Service {
 
 	public void getCellInfo(CellLocation location) {
 		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
-		if (mOperator == "") mOperator = mTeleManager.getNetworkOperator();
 		if (location != null) {
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
 				mCid = ((GsmCellLocation) location).getCid();
@@ -394,45 +407,35 @@ public class WapdroidService extends Service {
 		boolean enableWifi = mLastScanEnableWifi;
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		// check that the service is in control, and minimum values are set
-		if (mManageWifi && (mCid != UNKNOWN_CID)) {
-//			if (!mDb.isOpen()) {
-//				try {
-//					mDb = mDbHelper.getWritableDatabase();
-//				} catch (SQLException se) {
-//					Log.e(TAG,"unexpected " + se);
-//				}
-//			}
-			if (mDb.isOpen()) {
-				//if (mManageWifi && (mCid != UNKNOWN_CID) && mDb.isOpen()) {
-				enableWifi = cellInRange(mCid, mLac, mRssi);
-				// if connected, only update the range
-				if (mConnected) {
-					if ((mSsid != null) && (mBssid != null)) updateRange();
-				}
-				// always allow disabling, but only enable if above the battery limit
-				else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
-					if (enableWifi) {
-						// check neighbors if it appears that we're in range, for both enabling and disabling
-						for (NeighboringCellInfo nci : mNeighboringCells) {
-							int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
-							if (mNciReflectGetLac != null) {
-								/* feature is supported */
-								try {
-									nci_lac = nciGetLac(nci);
-								} catch (IOException ie) {
-									nci_lac = UNKNOWN_CID;
-									Log.e(TAG, "unexpected " + ie);
-								}
-							} else nci_lac = UNKNOWN_CID;
-							// break on out of range result
-							if (nci_cid != UNKNOWN_CID) enableWifi = cellInRange(nci_cid, nci_lac, nci_rssi);
-							if (!enableWifi) break;
-						}
+		if (mManageWifi && (mCid != UNKNOWN_CID) && mDb.isOpen()) {
+			enableWifi = cellInRange(mCid, mLac, mRssi);
+			// if connected, only update the range
+			if (mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) {
+				if ((mSsid != null) && (mBssid != null)) updateRange();
+			}
+			// always allow disabling, but only enable if above the battery limit
+			else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
+				if (enableWifi) {
+					// check neighbors if it appears that we're in range, for both enabling and disabling
+					for (NeighboringCellInfo nci : mNeighboringCells) {
+						int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
+						if (mNciReflectGetLac != null) {
+							/* feature is supported */
+							try {
+								nci_lac = nciGetLac(nci);
+							} catch (IOException ie) {
+								nci_lac = UNKNOWN_CID;
+								Log.e(TAG, "unexpected " + ie);
+							}
+						} else nci_lac = UNKNOWN_CID;
+						// break on out of range result
+						if (nci_cid != UNKNOWN_CID) enableWifi = cellInRange(nci_cid, nci_lac, nci_rssi);
+						if (!enableWifi) break;
 					}
-					// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
-					// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
-					if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) mWifiManager.setWifiEnabled(enableWifi);
 				}
+				// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
+				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
+				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) mWifiManager.setWifiEnabled(enableWifi);
 			}
 		}
 		// only release the service if it doesn't appear that we're entering or leaving a network
@@ -487,18 +490,13 @@ public class WapdroidService extends Service {
 		 * when network connected, unregister wifi receiver
 		 * when network disconnected, register wifi receiver
 		 */
-		mSsid = mConnected ? mWifiManager.getConnectionInfo().getSSID() : null;
-		mBssid = mConnected ? mWifiManager.getConnectionInfo().getBSSID() : null;
-		//openDb();
-		if (mConnected && (mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID)) {
-//			if (!mDb.isOpen()) {
-//				try {
-//					mDb = mDbHelper.getWritableDatabase();
-//				} catch (SQLException se) {
-//					Log.e(TAG,"unexpected " + se);
-//				}
-//			}
-			if (mDb.isOpen()) updateRange();
+		if (mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) {
+			mSsid = mWifiManager.getConnectionInfo().getSSID();
+			mBssid = mWifiManager.getConnectionInfo().getBSSID();
+			if ((mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID) && mDb.isOpen()) updateRange();
+		} else {
+			mSsid = null;
+			mBssid = null;			
 		}
 		if (mWapdroidUI != null) {
 			try {
@@ -507,13 +505,6 @@ public class WapdroidService extends Service {
 		}
 	}
 
-	private void setNotifications(boolean vibrate, boolean led, boolean ringtone) {
-		mNotifications = 0;
-		if (vibrate) mNotifications |= Notification.DEFAULT_VIBRATE;
-		if (led) mNotifications |= Notification.DEFAULT_LIGHTS;
-		if (ringtone) mNotifications |= Notification.DEFAULT_SOUND;
-	}
-	
 	private void createNotification(boolean enabled, boolean update) {
 		if (mManageWifi) {
 			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
@@ -521,8 +512,8 @@ public class WapdroidService extends Service {
 			Intent i = new Intent(getBaseContext(), WapdroidUI.class);
 			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
 			notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
-			if (mNotify) notification.flags |= Notification.FLAG_NO_CLEAR;
-			if (update) notification.defaults = mNotifications;
+			if (mPersistentStatus) notification.flags |= Notification.FLAG_NO_CLEAR;
+			if (update) notification.defaults |= mNotifications;
 			mNotificationManager.notify(NOTIFY_ID, notification);
 		}
 	}
