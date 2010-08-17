@@ -308,6 +308,7 @@ public class WapdroidService extends Service {
 			mDbHelper.close();
 		}
 		if (mNotificationManager != null) mNotificationManager.cancel(NOTIFY_ID);
+		if (ManageWakeLocks.hasLock()) ManageWakeLocks.release();
 	}
 
 //	public void release() {
@@ -528,6 +529,15 @@ public class WapdroidService extends Service {
 					mWapdroidUI.setWifiInfo(mLastWifiState, mWifiManager.getConnectionInfo().getSSID(), mWifiManager.getConnectionInfo().getBSSID());
 				} catch (RemoteException e) {}
 			}
+		}
+		// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
+		if (ManageWakeLocks.hasLock()) {
+			if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+			// if sleeping, re-initialize phone info
+			mCid = UNKNOWN_CID;
+			mLac = UNKNOWN_CID;
+			mRssi = UNKNOWN_RSSI;
+			ManageWakeLocks.release();
 		}
 	}
 

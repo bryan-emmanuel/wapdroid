@@ -90,7 +90,7 @@ public class Receiver extends BroadcastReceiver {
 			if (ws.mInterval > 0) ws.mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + ws.mInterval, ws.mPendingIntent);
 		} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 			Log.v(TAG,"WIFI CHANGED");
-			// grab a lock to wait for a cell change occur
+			// grab a lock to create notification
 			WapdroidService ws = (WapdroidService) context;
 			if (!ManageWakeLocks.hasLock()) {
 				ManageWakeLocks.acquire(context);
