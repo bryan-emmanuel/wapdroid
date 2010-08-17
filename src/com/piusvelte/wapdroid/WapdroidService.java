@@ -418,7 +418,10 @@ public class WapdroidService extends Service {
 				}
 				// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
 				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
-				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) mWifiManager.setWifiEnabled(enableWifi);
+				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) {
+					Log.v(TAG,"TOGGLE WIFI " + (enableWifi ? "ON" : "OFF"));
+					mWifiManager.setWifiEnabled(enableWifi);
+				}
 			}
 		}
 		// only release the service if it doesn't appear that we're entering or leaving a network
@@ -518,7 +521,7 @@ public class WapdroidService extends Service {
 			if ((mNotificationManager != null)
 					&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
 							|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
-							|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED))))  createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
+							|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED)))) createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
 			mLastWifiState = state;
 			if (mWapdroidUI != null) {
 				try {

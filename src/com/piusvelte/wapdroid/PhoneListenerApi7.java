@@ -21,10 +21,12 @@
 package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.WapdroidService.PHONE_TYPE_CDMA;
+import static com.piusvelte.wapdroid.WapdroidService.TAG;
 import static android.telephony.NeighboringCellInfo.UNKNOWN_RSSI;
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
 import android.telephony.SignalStrength;
+import android.util.Log;
 
 // PhoneStateListener for api >= 7
 public class PhoneListenerApi7 extends PhoneStateListener {
@@ -35,16 +37,19 @@ public class PhoneListenerApi7 extends PhoneStateListener {
 	}
 
 	public void onCellLocationChanged(CellLocation location) {
+		Log.v(TAG,"CELL CHANGED");
 		// this also calls signalStrengthChanged, since signalStrengthChanged isn't reliable enough by itself
 		mService.getCellInfo(location);
 	}
 
 	public void onSignalStrengthChanged(int asu) {
+		Log.v(TAG,"STRENGTH CHANGED");
 		// add cdma support, convert signal from gsm
 		mService.signalStrengthChanged((asu > 0) && (asu != UNKNOWN_RSSI) ? (2 * asu - 113) : asu);
 	}
 
 	public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+		Log.v(TAG,"STRENGTHS CHANGED");
 		if (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) mService.signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ? signalStrength.getCdmaDbm() : signalStrength.getEvdoDbm());
 		else mService.signalStrengthChanged((signalStrength.getGsmSignalStrength() > 0) && (signalStrength.getGsmSignalStrength() != UNKNOWN_RSSI) ? (2 * signalStrength.getGsmSignalStrength() - 113) : signalStrength.getGsmSignalStrength());
 	}

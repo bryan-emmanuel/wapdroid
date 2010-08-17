@@ -21,9 +21,11 @@
 package com.piusvelte.wapdroid;
 
 import static android.telephony.NeighboringCellInfo.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroid.WapdroidService.TAG;
 
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
+import android.util.Log;
 
 // PhoneStateListener for 3 <= api < 7
 public class PhoneListenerApi3 extends PhoneStateListener {
@@ -34,11 +36,13 @@ public class PhoneListenerApi3 extends PhoneStateListener {
 	}	
 
 	public void onCellLocationChanged(CellLocation location) {
+		Log.v(TAG,"CELL CHANGED");
 		// this also calls signalStrengthChanged, since onSignalStrengthChanged isn't reliable enough by itself
 		mService.getCellInfo(location);
 	}
 
 	public void onSignalStrengthChanged(int asu) {
+		Log.v(TAG,"STRENGTH CHANGED");
 		// add cdma support, convert signal from gsm
 		mService.signalStrengthChanged((asu > 0) && (asu != UNKNOWN_RSSI) ? (2 * asu - 113) : asu);
 	}
