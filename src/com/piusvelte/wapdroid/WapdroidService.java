@@ -59,8 +59,6 @@ public class WapdroidService extends Service {
 	private static final int START_STICKY = 1;
 	private NotificationManager mNotificationManager;
 	public TelephonyManager mTeleManager;
-	//public String mSsid;
-	//private String mBssid;
 	private List<NeighboringCellInfo> mNeighboringCells;
 	public WifiManager mWifiManager;
 	private int mCid = UNKNOWN_CID,
@@ -75,15 +73,13 @@ public class WapdroidService extends Service {
 	public boolean mManageWifi,
 	mRelease = false,
 	mManualOverride,
-	mLastScanEnableWifi;//,
-	//mConnected;
-	public static boolean mApi7;
+	mLastScanEnableWifi;
+	private static boolean mApi7;
 	public AlarmManager mAlarmMgr;
 	public PendingIntent mPendingIntent;
 	public IWapdroidUI mWapdroidUI;
 	private BroadcastReceiver mReceiver;
 	public PhoneStateListener mPhoneListener;
-	public WapdroidService mContext;
 	// db variables
 	public static final String TABLE_ID = "_id";
 	public static final String TABLE_CODE = "code";
@@ -155,14 +151,9 @@ public class WapdroidService extends Service {
 					spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
 					spe.commit();
 					// listen to phone changes if a low battery condition caused this to stop
-					if ((mPhoneListener == null)) mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7(mContext)) : (new PhoneListenerApi3(mContext))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
+					if (mLastBattPerc < mBatteryLimit) mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 					updateUI();
-				} else {
-					if ((mLastBattPerc < mBatteryLimit) && (mPhoneListener != null)) {
-						mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
-						mPhoneListener = null;
-					}
-				}
+				} else if (mLastBattPerc < mBatteryLimit) mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 			}
 		}
 
@@ -261,7 +252,6 @@ public class WapdroidService extends Service {
 		 * listen to wifi when: screenon
 		 * listen to battery when: disabling on battery level, UI is in foreground
 		 */
-		mContext = this;
 		Intent i = new Intent(this, Receiver.class);
 		i.setAction(WAKE_SERVICE);
 		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
@@ -281,7 +271,7 @@ public class WapdroidService extends Service {
 		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-		mDbHelper = new DatabaseHelper(mContext);
+		mDbHelper = new DatabaseHelper(this);
 		try {
 			mDb = mDbHelper.getWritableDatabase();
 		} catch (SQLException se) {
@@ -291,7 +281,6 @@ public class WapdroidService extends Service {
 		// to help avoid hysteresis, make sure that at least 2 consecutive scans were in/out of range
 		mLastScanEnableWifi = (mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
 		// the ssid from wifimanager may not be null, even if disconnected, so check against the supplicant state
-		//mConnected = mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED;
 		networkStateChanged();
 		IntentFilter f = new IntentFilter();
 		f.addAction(Intent.ACTION_BATTERY_CHANGED);
@@ -302,7 +291,7 @@ public class WapdroidService extends Service {
 		mReceiver = new Receiver();
 		registerReceiver(mReceiver, f);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7(mContext)) : (new PhoneListenerApi3(mContext))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
+		mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7(this)) : (new PhoneListenerApi3(this))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 	}
 
 	@Override
@@ -312,10 +301,7 @@ public class WapdroidService extends Service {
 			unregisterReceiver(mReceiver);
 			mReceiver = null;
 		}
-		if (mPhoneListener != null) {
-			mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
-			mPhoneListener = null;
-		}
+		mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 		if (mDbHelper != null) {
 			if (mDb.isOpen()) mDb.close();
 			mDbHelper.close();
@@ -357,7 +343,6 @@ public class WapdroidService extends Service {
 		try {
 			mWapdroidUI.setOperator(mTeleManager.getNetworkOperator());
 			mWapdroidUI.setCellInfo(mCid, mLac);
-//			mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
 			mWapdroidUI.setWifiInfo(mLastWifiState, mWifiManager.getConnectionInfo().getSSID(), mWifiManager.getConnectionInfo().getBSSID());
 			mWapdroidUI.setSignalStrength(mRssi);
 			mWapdroidUI.setCells(cells);
@@ -446,7 +431,6 @@ public class WapdroidService extends Service {
 			String ssid_orig, bssid_orig;
 			ContentValues cv = new ContentValues();
 			// upgrading, BSSID may not be set yet
-			//		Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " from " + TABLE_NETWORKS + " where " + NETWORKS_BSSID + "=\"" + mBssid + "\" OR (" + NETWORKS_SSID + "=\"" + mSsid + "\" and " + NETWORKS_BSSID + "=\"\")", null);
 			Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " from " + TABLE_NETWORKS + " where " + NETWORKS_BSSID + "=\"" + mWifiManager.getConnectionInfo().getBSSID() + "\" OR (" + NETWORKS_SSID + "=\"" + mWifiManager.getConnectionInfo().getSSID() + "\" and " + NETWORKS_BSSID + "=\"\")", null);
 			if (c.getCount() > 0) {
 				c.moveToFirst();
@@ -454,18 +438,13 @@ public class WapdroidService extends Service {
 				ssid_orig = c.getString(c.getColumnIndex(NETWORKS_SSID));
 				bssid_orig = c.getString(c.getColumnIndex(NETWORKS_BSSID));
 				if (bssid_orig.equals("")) {
-					//				cv.put(NETWORKS_BSSID, mBssid);
 					cv.put(NETWORKS_BSSID, mWifiManager.getConnectionInfo().getBSSID());
 					mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
-					//			} else if (!ssid_orig.equals(mSsid)) {
 				} else if (!ssid_orig.equals(mWifiManager.getConnectionInfo().getSSID())) {
-					//				cv.put(NETWORKS_SSID, mSsid);
 					cv.put(NETWORKS_SSID, mWifiManager.getConnectionInfo().getSSID());
 					mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
 				}
 			} else {
-				//			cv.put(NETWORKS_SSID, mSsid);
-				//			cv.put(NETWORKS_BSSID, mBssid);
 				cv.put(NETWORKS_SSID, mWifiManager.getConnectionInfo().getSSID());
 				cv.put(NETWORKS_BSSID, mWifiManager.getConnectionInfo().getBSSID());
 				network = (int) mDb.insert(TABLE_NETWORKS, null, cv);
@@ -495,18 +474,9 @@ public class WapdroidService extends Service {
 		 * when network connected, unregister wifi receiver
 		 * when network disconnected, register wifi receiver
 		 */
-		if (mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) {
-//			mSsid = mWifiManager.getConnectionInfo().getSSID();
-//			mBssid = mWifiManager.getConnectionInfo().getBSSID();
-//			if ((mSsid != null) && (mBssid != null) && (mCid != UNKNOWN_CID) && mDb.isOpen()) updateRange();
-			if ((mCid != UNKNOWN_CID) && mDb.isOpen()) updateRange();
-		} else {
-//			mSsid = null;
-//			mBssid = null;
-		}
+		if ((mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) && (mCid != UNKNOWN_CID) && mDb.isOpen()) updateRange();
 		if (mWapdroidUI != null) {
 			try {
-//				mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
 				mWapdroidUI.setWifiInfo(mLastWifiState, mWifiManager.getConnectionInfo().getSSID(), mWifiManager.getConnectionInfo().getBSSID());
 			} catch (RemoteException e) {}
 		}
@@ -541,7 +511,6 @@ public class WapdroidService extends Service {
 			mLastWifiState = state;
 			if (mWapdroidUI != null) {
 				try {
-//					mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
 					mWapdroidUI.setWifiInfo(mLastWifiState, mWifiManager.getConnectionInfo().getSSID(), mWifiManager.getConnectionInfo().getBSSID());
 				} catch (RemoteException e) {}
 			}
