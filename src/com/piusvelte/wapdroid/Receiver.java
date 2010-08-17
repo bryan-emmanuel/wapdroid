@@ -10,7 +10,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.net.NetworkInfo;
+//import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
@@ -56,21 +56,24 @@ public class Receiver extends BroadcastReceiver {
 				} catch (RemoteException e) {};
 			}
 		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-			NetworkInfo ni = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
+			// grab a lock to wait for a cell change occur
+//			NetworkInfo ni = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 			WapdroidService ws = (WapdroidService) context;
 			// a connection was gained or lost
 			if (!ManageWakeLocks.hasLock()) {
 				ManageWakeLocks.acquire(context);
-				ws.mRelease = true;
+				ws.mAlarmMgr.cancel(ws.mPendingIntent);
+//				ws.mRelease = true;
 			}
 			ws.networkStateChanged();
-			if (ws.mRelease) {
-				// if connection was lost, check cells, otherwise, release
-				if (!ni.isConnected()) {
-					ws.mAlarmMgr.cancel(ws.mPendingIntent);
-					context.startService(new Intent(context, WapdroidService.class));
-				} else ws.release();
-			}
+			// released by a cell change
+//			if (ws.mRelease) {
+//				// if connection was lost, check cells, otherwise, release
+//				if (!ni.isConnected()) {
+//					ws.mAlarmMgr.cancel(ws.mPendingIntent);
+//					context.startService(new Intent(context, WapdroidService.class));
+//				} else ws.release();
+//			}
 		} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
 			WapdroidService ws = (WapdroidService) context;
 			ws.mAlarmMgr.cancel(ws.mPendingIntent);
@@ -81,13 +84,16 @@ public class Receiver extends BroadcastReceiver {
 			ws.mManualOverride = false;
 			if (ws.mInterval > 0) ws.mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + ws.mInterval, ws.mPendingIntent);
 		} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+			// grab a lock to wait for a cell change occur
 			WapdroidService ws = (WapdroidService) context;
 			if (!ManageWakeLocks.hasLock()) {
 				ManageWakeLocks.acquire(context);
-				ws.mRelease = true;
+				ws.mAlarmMgr.cancel(ws.mPendingIntent);
+//				ws.mRelease = true;
 			}
 			ws.wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
-			if (ws.mRelease) ManageWakeLocks.release();
+			// released by a cell change
+//			if (ws.mRelease) ManageWakeLocks.release();
 		}
 	}
 }

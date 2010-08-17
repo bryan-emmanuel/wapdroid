@@ -20,12 +20,10 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidService.PHONE_TYPE_CDMA;
 import static android.telephony.NeighboringCellInfo.UNKNOWN_RSSI;
 
 import android.telephony.CellLocation;
 import android.telephony.PhoneStateListener;
-import android.telephony.TelephonyManager;
 
 // PhoneStateListener for 3 <= api < 7
 public class PhoneListenerApi3 extends PhoneStateListener {
@@ -42,7 +40,6 @@ public class PhoneListenerApi3 extends PhoneStateListener {
 
 	public void onSignalStrengthChanged(int asu) {
 		// add cdma support, convert signal from gsm
-		if ((mService.mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) || (mService.mTeleManager.getPhoneType() == PHONE_TYPE_CDMA)) mService.signalStrengthChanged((asu > 0) && (asu != UNKNOWN_RSSI) ? (2 * asu - 113) : asu);
-		else mService.release();
+		mService.signalStrengthChanged((asu > 0) && (asu != UNKNOWN_RSSI) ? (2 * asu - 113) : asu);
 	}
 }
