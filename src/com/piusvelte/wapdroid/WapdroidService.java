@@ -356,8 +356,9 @@ public class WapdroidService extends Service {
 		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 		if (location != null) {
 			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
-				mCid = ((GsmCellLocation) location).getCid();
-				mLac = ((GsmCellLocation) location).getLac();
+				GsmCellLocation gcl = (GsmCellLocation) location;
+				mCid = gcl.getCid();
+				mLac = gcl.getLac();
 			} else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
 				// check the phone type, cdma is not available before API 2.0, so use a wrapper
 				try {
@@ -374,17 +375,16 @@ public class WapdroidService extends Service {
 			mCid = UNKNOWN_CID;
 			mLac = UNKNOWN_CID;
 		}
-		if (mCid != UNKNOWN_CID) {
-			// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
-			signalStrengthChanged(UNKNOWN_RSSI);
-			if (mWapdroidUI != null) updateUI();
-		}
+		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
+		signalStrengthChanged(UNKNOWN_RSSI);
 	}
 
 	public void signalStrengthChanged(int rssi) {
+		// signalStrengthChanged releases any wakelocks IF mCid != UNKNOWN_CID && enableWif != mLastScanEnableWifi
 		// keep last known rssi
 		if (rssi != UNKNOWN_RSSI) mRssi = rssi;
 		if (mWapdroidUI != null) {
+			updateUI();
 			try {
 				mWapdroidUI.setSignalStrength(mRssi);
 			} catch (RemoteException e) {}
@@ -424,20 +424,20 @@ public class WapdroidService extends Service {
 					mWifiManager.setWifiEnabled(enableWifi);
 				}
 			}
-		}
-		// only release the service if it doesn't appear that we're entering or leaving a network
-//		if (enableWifi == mLastScanEnableWifi) release();
-		if (enableWifi == mLastScanEnableWifi) {
-			if (ManageWakeLocks.hasLock()) {
-				if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
-				// if sleeping, re-initialize phone info
-				mCid = UNKNOWN_CID;
-				mLac = UNKNOWN_CID;
-				mRssi = UNKNOWN_RSSI;
-				ManageWakeLocks.release();
+			// only release the service if it doesn't appear that we're entering or leaving a network
+			//		if (enableWifi == mLastScanEnableWifi) release();
+			if (enableWifi == mLastScanEnableWifi) {
+				if (ManageWakeLocks.hasLock()) {
+					if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+					// if sleeping, re-initialize phone info
+					mCid = UNKNOWN_CID;
+					mLac = UNKNOWN_CID;
+					mRssi = UNKNOWN_RSSI;
+					ManageWakeLocks.release();
+				}
 			}
+			else mLastScanEnableWifi = enableWifi;
 		}
-		else mLastScanEnableWifi = enableWifi;
 	}
 
 	private void updateRange() {
