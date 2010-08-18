@@ -71,7 +71,6 @@ public class WapdroidService extends Service {
 	mLastBattPerc = 0;
 	private boolean mPersistentStatus;
 	public boolean mManageWifi,
-//	mRelease = false,
 	mManualOverride,
 	mLastScanEnableWifi;
 	private static boolean mApi7;
@@ -237,9 +236,6 @@ public class WapdroidService extends Service {
 		 * boot and wake will wakelock and should set the alarm,
 		 * others should release the lock and cancel the alarm
 		 */
-		// if wifi or network receiver took a lock, and the alarm went off, stop them from releasing the lock
-		// receiver cancels alarm, this is obsolete
-//		mRelease = false;
 		// initialize the cell info
 		getCellInfo(mTeleManager.getCellLocation());
 	}
@@ -310,17 +306,6 @@ public class WapdroidService extends Service {
 		if (mNotificationManager != null) mNotificationManager.cancel(NOTIFY_ID);
 		if (ManageWakeLocks.hasLock()) ManageWakeLocks.release();
 	}
-
-//	public void release() {
-//		if (ManageWakeLocks.hasLock()) {
-//			if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
-//			// if sleeping, re-initialize phone info
-//			mCid = UNKNOWN_CID;
-//			mLac = UNKNOWN_CID;
-//			mRssi = UNKNOWN_RSSI;
-//			ManageWakeLocks.release();
-//		}
-//	}
 
 	private void updateUI() {
 		String cells = "(" + CELLS_CID + "=" + Integer.toString(mCid) + " and (" + LOCATIONS_LAC + "=" + Integer.toString(mLac) + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
@@ -419,13 +404,9 @@ public class WapdroidService extends Service {
 				}
 				// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
 				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
-				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) {
-					Log.v(TAG,"TOGGLE WIFI " + (enableWifi ? "ON" : "OFF"));
-					mWifiManager.setWifiEnabled(enableWifi);
-				}
+				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) mWifiManager.setWifiEnabled(enableWifi);
 			}
-			// only release the service if it doesn't appear that we're entering or leaving a network
-			//		if (enableWifi == mLastScanEnableWifi) release();
+			// release the service if it doesn't appear that we're entering or leaving a network
 			if (enableWifi == mLastScanEnableWifi) {
 				if (ManageWakeLocks.hasLock()) {
 					if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
@@ -498,7 +479,8 @@ public class WapdroidService extends Service {
 	}
 
 	private void createNotification(boolean enabled, boolean update) {
-//		if (mManageWifi) {
+		// service runs for ui, so if not managing, don't notify
+		if (mManageWifi) {
 			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
 			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
 			Intent i = new Intent(getBaseContext(), WapdroidUI.class);
@@ -507,7 +489,7 @@ public class WapdroidService extends Service {
 			if (mPersistentStatus) notification.flags |= Notification.FLAG_NO_CLEAR;
 			if (update) notification.defaults |= mNotifications;
 			mNotificationManager.notify(NOTIFY_ID, notification);
-//		}
+		}
 	}
 
 	public void wifiStateChanged(int state) {

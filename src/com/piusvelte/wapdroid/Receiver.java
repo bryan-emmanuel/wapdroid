@@ -5,7 +5,6 @@ import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
 import static com.piusvelte.wapdroid.WapdroidService.LISTEN_SIGNAL_STRENGTHS;
-import static com.piusvelte.wapdroid.WapdroidService.TAG;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -15,7 +14,6 @@ import android.content.SharedPreferences;
 import android.net.wifi.WifiManager;
 import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
-import android.util.Log;
 
 public class Receiver extends BroadcastReceiver {
 	private static final String BATTERY_EXTRA_LEVEL = "level";
@@ -32,11 +30,9 @@ public class Receiver extends BroadcastReceiver {
 				context.startService(new Intent(context, WapdroidService.class));
 			}
 		} else if (intent.getAction().equals(WAKE_SERVICE)) {
-			Log.v(TAG,"WAKE SERVICE");
 			ManageWakeLocks.acquire(context);
 			context.startService(new Intent(context, WapdroidService.class));
 		} else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
-			Log.v(TAG,"BATTERY CHANGED");
 			WapdroidService ws = (WapdroidService) context;
 			// override low battery when charging
 			if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) {
@@ -60,7 +56,6 @@ public class Receiver extends BroadcastReceiver {
 				} catch (RemoteException e) {};
 			}
 		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
-			Log.v(TAG,"NETWORK CHANGED");
 			// grab a lock to wait for a cell change occur
 //			NetworkInfo ni = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 			WapdroidService ws = (WapdroidService) context;
@@ -68,17 +63,8 @@ public class Receiver extends BroadcastReceiver {
 			if (!ManageWakeLocks.hasLock()) {
 				ManageWakeLocks.acquire(context);
 				ws.mAlarmMgr.cancel(ws.mPendingIntent);
-//				ws.mRelease = true;
 			}
 			ws.networkStateChanged();
-			// released by a cell change
-//			if (ws.mRelease) {
-//				// if connection was lost, check cells, otherwise, release
-//				if (!ni.isConnected()) {
-//					ws.mAlarmMgr.cancel(ws.mPendingIntent);
-//					context.startService(new Intent(context, WapdroidService.class));
-//				} else ws.release();
-//			}
 		} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
 			WapdroidService ws = (WapdroidService) context;
 			ws.mAlarmMgr.cancel(ws.mPendingIntent);
@@ -89,17 +75,13 @@ public class Receiver extends BroadcastReceiver {
 			ws.mManualOverride = false;
 			if (ws.mInterval > 0) ws.mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + ws.mInterval, ws.mPendingIntent);
 		} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-			Log.v(TAG,"WIFI CHANGED");
 			// grab a lock to create notification
 			WapdroidService ws = (WapdroidService) context;
 			if (!ManageWakeLocks.hasLock()) {
 				ManageWakeLocks.acquire(context);
 				ws.mAlarmMgr.cancel(ws.mPendingIntent);
-//				ws.mRelease = true;
 			}
 			ws.wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
-			// released by a cell change
-//			if (ws.mRelease) ManageWakeLocks.release();
 		}
 	}
 }
