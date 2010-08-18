@@ -24,7 +24,6 @@ import static com.piusvelte.wapdroid.WapdroidService.TAG;
 import android.content.Context;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.util.Log;
 
 public class ManageWakeLocks {
 	private static final String POWER_SERVICE = Context.POWER_SERVICE;
@@ -32,7 +31,6 @@ public class ManageWakeLocks {
 	static boolean hasLock() {
 		return (sWakeLock != null);}
 	static void acquire(Context context) {
-		Log.v(TAG,"ACQUIRE LOCK");
 		if (hasLock()) sWakeLock.release();
 		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
 		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
@@ -40,7 +38,6 @@ public class ManageWakeLocks {
 	}
 	static void release() {
 		if (hasLock()) {
-			Log.v(TAG,"RELEASE LOCK");
 			sWakeLock.release();
 			sWakeLock = null;
 		}
