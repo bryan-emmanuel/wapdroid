@@ -117,7 +117,8 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 				cell.setLatitude(gpt.getLatitudeE6()/1e6);
 				cell.setLongitude(gpt.getLongitudeE6()/1e6);
 				int radius = Math.round(location.distanceTo(cell));
-				double scale = radius / (Math.abs(item.getRssiAvg()) - 51);
+				// avoid divide by 0
+				double scale = (Math.abs(item.getRssiAvg()) - 51) > 0 ? radius / (Math.abs(item.getRssiAvg()) - 51) : radius;
 				item.setRadius(radius);
 				item.setStroke(Math.round(item.getRssiRange() * scale));
 			}
