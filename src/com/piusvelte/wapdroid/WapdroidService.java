@@ -424,23 +424,20 @@ public class WapdroidService extends Service {
 	private void updateRange() {
 		if ((mWifiManager.getConnectionInfo().getSSID() != null) && (mWifiManager.getConnectionInfo().getBSSID() != null)) {
 			int network = UNKNOWN_CID;
-			String ssid_orig, bssid_orig;
-			ContentValues cv = new ContentValues();
+			ContentValues cv;
 			// upgrading, BSSID may not be set yet
-			Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " from " + TABLE_NETWORKS + " where " + NETWORKS_BSSID + "=\"" + mWifiManager.getConnectionInfo().getBSSID() + "\" OR (" + NETWORKS_SSID + "=\"" + mWifiManager.getConnectionInfo().getSSID() + "\" and " + NETWORKS_BSSID + "=\"\")", null);
+			Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " from " + TABLE_NETWORKS + " where " + NETWORKS_SSID + "=\"" + mWifiManager.getConnectionInfo().getSSID() + "\" and (" + NETWORKS_BSSID + "=\"" + mWifiManager.getConnectionInfo().getBSSID() + "\" or " + NETWORKS_BSSID + "=\"\")", null);
 			if (c.getCount() > 0) {
+				// ssid matches, only concerned if bssid is empty
 				c.moveToFirst();
 				network = c.getInt(c.getColumnIndex(TABLE_ID));
-				ssid_orig = c.getString(c.getColumnIndex(NETWORKS_SSID));
-				bssid_orig = c.getString(c.getColumnIndex(NETWORKS_BSSID));
-				if (bssid_orig.equals("")) {
+				if (c.getString(c.getColumnIndex(NETWORKS_BSSID)).equals("")) {
+					cv = new ContentValues();
 					cv.put(NETWORKS_BSSID, mWifiManager.getConnectionInfo().getBSSID());
-					mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
-				} else if (!ssid_orig.equals(mWifiManager.getConnectionInfo().getSSID())) {
-					cv.put(NETWORKS_SSID, mWifiManager.getConnectionInfo().getSSID());
 					mDb.update(TABLE_NETWORKS, cv, TABLE_ID + "=" + network, null);
 				}
 			} else {
+				cv = new ContentValues();
 				cv.put(NETWORKS_SSID, mWifiManager.getConnectionInfo().getSSID());
 				cv.put(NETWORKS_BSSID, mWifiManager.getConnectionInfo().getBSSID());
 				network = (int) mDb.insert(TABLE_NETWORKS, null, cv);

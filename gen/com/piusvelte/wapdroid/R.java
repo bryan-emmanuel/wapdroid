@@ -104,7 +104,6 @@ containing a value of this type.
     }
     public static final class string {
         public static final int about=0x7f070044;
-        public static final int accessible=0x7f070046;
         public static final int app_name=0x7f07000c;
         public static final int background_info=0x7f070042;
         public static final int battery_override=0x7f070034;
@@ -117,7 +116,6 @@ containing a value of this type.
         public static final int connected=0x7f070036;
         public static final int dbm=0x7f070030;
         public static final int gpl=0x7f070045;
-        public static final int inaccessible=0x7f070047;
         public static final int key_battery_override=0x7f070007;
         public static final int key_battery_percentage=0x7f070008;
         public static final int key_interval=0x7f070006;
@@ -152,7 +150,6 @@ containing a value of this type.
         public static final int label_wapdroidState=0x7f070012;
         public static final int linefeed=0x7f07003b;
         public static final int loading=0x7f07002e;
-        public static final int map=0x7f070048;
         public static final int map_cell=0x7f07003a;
         public static final int map_network=0x7f070039;
         public static final int menu_deleteCell=0x7f070018;
