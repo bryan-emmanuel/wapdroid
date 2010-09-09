@@ -17,23 +17,29 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-
 package com.piusvelte.wapdroid;
+
+//import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_RSSI;
 
 import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+//import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.RemoteException;
 import android.preference.PreferenceActivity;
 
-public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
+public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener, ServiceConnection {
 	private SharedPreferences mSharedPreferences;
-	private ServiceConn mServiceConn;
+//	private ServiceConn mServiceConn;
+	public IWapdroidService mIService;
 	private Intent mServiceIntent;
 
 	@Override
@@ -58,20 +64,22 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 		mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
 		if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), false)) {
 			startService(mServiceIntent);
-			if (mServiceConn == null) captureService();
+//			if (mServiceConn == null) captureService();
 		}
 	}
 
 	public void captureService() {
-		mServiceConn = new ServiceConn();
-		bindService(mServiceIntent, mServiceConn, BIND_AUTO_CREATE);
+//		mServiceConn = new ServiceConn();
+//		bindService(mServiceIntent, mServiceConn, BIND_AUTO_CREATE);
+		bindService(mServiceIntent, this, BIND_AUTO_CREATE);
 	}
 
 	public void releaseService() {
-		if (mServiceConn != null) {
-			unbindService(mServiceConn);
-			mServiceConn = null;
-		}
+//		if (mServiceConn != null) {
+//			unbindService(mServiceConn);
+//			mServiceConn = null;
+//		}
+		unbindService(this);
 	}
 
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
@@ -92,9 +100,19 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 				releaseService();
 				stopService(mServiceIntent);
 			}
-		} else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false) && (mServiceConn != null)) {
+//		} else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false) && (mServiceConn != null)) {
+		} else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false) && (mIService != null)) {
 			try {
-				mServiceConn.mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false),
+//				mServiceConn.mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false),
+//						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "30000")),
+//						sharedPreferences.getBoolean(getString(R.string.key_notify), false),
+//						sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
+//						sharedPreferences.getBoolean(getString(R.string.key_led), false),
+//						sharedPreferences.getBoolean(getString(R.string.key_ringtone), false),
+//						sharedPreferences.getBoolean(getString(R.string.key_battery_override), false),
+//						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_battery_percentage), "30")),
+//						sharedPreferences.getBoolean(getString(R.string.key_persistent_status), false));
+				mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false),
 						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "30000")),
 						sharedPreferences.getBoolean(getString(R.string.key_notify), false),
 						sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
@@ -105,5 +123,15 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 						sharedPreferences.getBoolean(getString(R.string.key_persistent_status), false));
 			} catch (RemoteException e) {}
 		}
+	}
+
+	@Override
+	public void onServiceConnected(ComponentName name, IBinder service) {
+		mIService = IWapdroidService.Stub.asInterface((IBinder) service);
+	}
+
+	@Override
+	public void onServiceDisconnected(ComponentName name) {
+		mIService = null;
 	}
 }

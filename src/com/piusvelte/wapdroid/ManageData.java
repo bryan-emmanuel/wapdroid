@@ -37,11 +37,14 @@ import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.ContextMenu;
 import android.view.Menu;
@@ -52,7 +55,7 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageData extends ListActivity implements AdListener {
+public class ManageData extends ListActivity implements AdListener, ServiceConnection {
 	private UIDbAdapter mDbHelper;
 	private int mNetwork = 0, mCid;
 	private static final int MANAGE_ID = Menu.FIRST;
@@ -63,7 +66,8 @@ public class ManageData extends ListActivity implements AdListener {
 	private static final int FILTER_ID = Menu.FIRST + 5;
 	private int mFilter = FILTER_ALL;
 	private String mCells = "", mOperator = "", mBssid = "";
-	private ServiceConn mServiceConn;
+//	private ServiceConn mServiceConn;
+	public IWapdroidService mIService;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -86,8 +90,9 @@ public class ManageData extends ListActivity implements AdListener {
 		mDbHelper.open();
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
-		mServiceConn = new ServiceConn(mWapdroidUI);
-		bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
+//		mServiceConn = new ServiceConn(mWapdroidUI);
+//		bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
+		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
 		try {
 			listData();
 		} catch (RemoteException e) {
@@ -98,15 +103,21 @@ public class ManageData extends ListActivity implements AdListener {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if (mServiceConn != null) {
-			if (mServiceConn.mIService != null) {
-				try {
-					mServiceConn.mIService.setCallback(null);
-				} catch (RemoteException e) {}
-			}
-			unbindService(mServiceConn);
-			mServiceConn = null;
+//		if (mServiceConn != null) {
+//			if (mServiceConn.mIService != null) {
+//				try {
+//					mServiceConn.mIService.setCallback(null);
+//				} catch (RemoteException e) {}
+//			}
+//			unbindService(mServiceConn);
+//			mServiceConn = null;
+//		}
+		if (mIService != null) {
+			try {
+				mIService.setCallback(null);
+			} catch (RemoteException e) {}
 		}
+		unbindService(this);
 		mDbHelper.close();
 	}
 
@@ -205,7 +216,7 @@ public class ManageData extends ListActivity implements AdListener {
 			dialog.show();
 		}
 	}
-	
+
 	public void itemAction(int action, int id) {
 		Intent intent;
 		switch(action) {
@@ -289,4 +300,19 @@ public class ManageData extends ListActivity implements AdListener {
 
 	@Override
 	public void onReceiveRefreshedAd(AdView arg0) {}
+
+	@Override
+	public void onServiceConnected(ComponentName name, IBinder service) {
+		mIService = IWapdroidService.Stub.asInterface((IBinder) service);
+		if (mWapdroidUI != null) {
+			try {
+				mIService.setCallback(mWapdroidUI.asBinder());
+			} catch (RemoteException e) {}
+		}
+	}
+
+	@Override
+	public void onServiceDisconnected(ComponentName name) {
+		mIService = null;
+	}
 }

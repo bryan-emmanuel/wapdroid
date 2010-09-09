@@ -35,10 +35,12 @@ import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,7 +49,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class WapdroidUI extends Activity implements AdListener {
+public class WapdroidUI extends Activity implements AdListener, ServiceConnection {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
@@ -58,10 +60,11 @@ public class WapdroidUI extends Activity implements AdListener {
 	field_signal,
 	field_battery,
 	field_LAC;
-	private ServiceConn mServiceConn;
+//	private ServiceConn mServiceConn;
 	private String mBssid = "",
 	mCells = "";
 	private int mCid = 0;
+	public IWapdroidService mIService;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
@@ -100,7 +103,8 @@ public class WapdroidUI extends Activity implements AdListener {
 			return true;
 		case WIFI_ID:
 			try {
-				mServiceConn.mIService.manualOverride();
+//				mServiceConn.mIService.manualOverride();
+				mIService.manualOverride();
 			}
 			catch (RemoteException e) {}
 			startActivity(new Intent().setComponent(new ComponentName("com.android.settings", "com.android.settings.wifi.WifiSettings")));
@@ -124,15 +128,21 @@ public class WapdroidUI extends Activity implements AdListener {
 	@Override
 	public void onPause() {
 		super.onPause();
-		if (mServiceConn != null) {
-			if (mServiceConn.mIService != null) {
-				try {
-					mServiceConn.mIService.setCallback(null);
-				} catch (RemoteException e) {}
-			}
-			unbindService(mServiceConn);
-			mServiceConn = null;
+//		if (mServiceConn != null) {
+//			if (mServiceConn.mIService != null) {
+//				try {
+//					mServiceConn.mIService.setCallback(null);
+//				} catch (RemoteException e) {}
+//			}
+//			unbindService(mServiceConn);
+//			mServiceConn = null;
+//		}
+		if (mIService != null) {
+			try {
+				mIService.setCallback(null);
+			} catch (RemoteException e) {}
 		}
+		unbindService(this);
 	}
 
 	@Override
@@ -151,8 +161,9 @@ public class WapdroidUI extends Activity implements AdListener {
 			});
 			dialog.show();			
 		}
-		mServiceConn = new ServiceConn(mWapdroidUI);
-		bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
+//		mServiceConn = new ServiceConn(mWapdroidUI);
+//		bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
+		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
 	}
 
 	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
@@ -210,4 +221,19 @@ public class WapdroidUI extends Activity implements AdListener {
 
 	@Override
 	public void onReceiveRefreshedAd(AdView arg0) {}
+
+	@Override
+	public void onServiceConnected(ComponentName name, IBinder service) {
+		mIService = IWapdroidService.Stub.asInterface((IBinder) service);
+		if (mWapdroidUI != null) {
+			try {
+				mIService.setCallback(mWapdroidUI.asBinder());
+			} catch (RemoteException e) {}
+		}
+	}
+
+	@Override
+	public void onServiceDisconnected(ComponentName name) {
+		mIService = null;
+	}
 }
