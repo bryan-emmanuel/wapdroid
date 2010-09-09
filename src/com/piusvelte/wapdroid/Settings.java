@@ -55,7 +55,8 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	public void onPause() {
 		super.onPause();
 		mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
-		releaseService();
+//		releaseService();
+		unbindService(this);
 	}
 
 	@Override
@@ -65,22 +66,22 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 		if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), false)) {
 			startService(mServiceIntent);
 //			if (mServiceConn == null) captureService();
+			if (mIService == null) bindService(mServiceIntent, this, BIND_AUTO_CREATE);
 		}
 	}
 
-	public void captureService() {
+//	public void captureService() {
 //		mServiceConn = new ServiceConn();
 //		bindService(mServiceIntent, mServiceConn, BIND_AUTO_CREATE);
-		bindService(mServiceIntent, this, BIND_AUTO_CREATE);
-	}
+//	}
 
-	public void releaseService() {
+//	public void releaseService() {
 //		if (mServiceConn != null) {
 //			unbindService(mServiceConn);
 //			mServiceConn = null;
 //		}
-		unbindService(this);
-	}
+//		unbindService(this);
+//	}
 
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
@@ -95,9 +96,11 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 				});
 				dialog.show();
 				startService(mServiceIntent);
-				captureService();
+//				captureService();
+				bindService(mServiceIntent, this, BIND_AUTO_CREATE);
 			} else {
-				releaseService();
+//				releaseService();
+				unbindService(this);
 				stopService(mServiceIntent);
 			}
 //		} else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false) && (mServiceConn != null)) {

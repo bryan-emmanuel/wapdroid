@@ -5,17 +5,14 @@ import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
 import static com.piusvelte.wapdroid.WapdroidService.LISTEN_SIGNAL_STRENGTHS;
-import static com.piusvelte.wapdroid.WapdroidService.TAG;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-//import android.net.NetworkInfo;
 import android.net.wifi.WifiManager;
 import android.os.RemoteException;
 import android.telephony.PhoneStateListener;
-import android.util.Log;
 
 public class Receiver extends BroadcastReceiver {
 	private static final String BATTERY_EXTRA_LEVEL = "level";
@@ -26,7 +23,6 @@ public class Receiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		// on boot, or package upgrade, start the service
 		if (intent.getAction().equals(ACTION_BOOT_COMPLETED) || intent.getAction().equals(ACTION_PACKAGE_ADDED) || intent.getAction().equals(ACTION_PACKAGE_REPLACED) || intent.getAction().equals("android.intent.action.EXTERNAL_APPLICATIONS_UNAVAILABLE")) {
-			Log.v(TAG,intent.getAction());
 			SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 			if (sp.getBoolean(context.getString(R.string.key_manageWifi), true)) {
 				ManageWakeLocks.acquire(context);
@@ -60,7 +56,6 @@ public class Receiver extends BroadcastReceiver {
 			}
 		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 			// grab a lock to wait for a cell change occur
-//			NetworkInfo ni = (NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO);
 			WapdroidService ws = (WapdroidService) context;
 			// a connection was gained or lost
 			if (!ManageWakeLocks.hasLock()) {
