@@ -66,7 +66,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	private static final int FILTER_ID = Menu.FIRST + 5;
 	private int mFilter = FILTER_ALL;
 	private String mCells = "", mOperator = "", mBssid = "";
-//	private ServiceConn mServiceConn;
 	public IWapdroidService mIService;
 
 	@Override
@@ -90,8 +89,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		mDbHelper.open();
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
-//		mServiceConn = new ServiceConn(mWapdroidUI);
-//		bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
 		try {
 			listData();
@@ -103,15 +100,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	@Override
 	protected void onPause() {
 		super.onPause();
-//		if (mServiceConn != null) {
-//			if (mServiceConn.mIService != null) {
-//				try {
-//					mServiceConn.mIService.setCallback(null);
-//				} catch (RemoteException e) {}
-//			}
-//			unbindService(mServiceConn);
-//			mServiceConn = null;
-//		}
 		if (mIService != null) {
 			try {
 				mIService.setCallback(null);

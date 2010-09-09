@@ -60,7 +60,6 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	field_signal,
 	field_battery,
 	field_LAC;
-//	private ServiceConn mServiceConn;
 	private String mBssid = "",
 	mCells = "";
 	private int mCid = 0;
@@ -103,7 +102,6 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 			return true;
 		case WIFI_ID:
 			try {
-//				mServiceConn.mIService.manualOverride();
 				mIService.manualOverride();
 			}
 			catch (RemoteException e) {}
@@ -128,15 +126,6 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	@Override
 	public void onPause() {
 		super.onPause();
-//		if (mServiceConn != null) {
-//			if (mServiceConn.mIService != null) {
-//				try {
-//					mServiceConn.mIService.setCallback(null);
-//				} catch (RemoteException e) {}
-//			}
-//			unbindService(mServiceConn);
-//			mServiceConn = null;
-//		}
 		if (mIService != null) {
 			try {
 				mIService.setCallback(null);
@@ -161,8 +150,6 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 			});
 			dialog.show();			
 		}
-//		mServiceConn = new ServiceConn(mWapdroidUI);
-//		bindService(new Intent(this, WapdroidService.class), mServiceConn, BIND_AUTO_CREATE);
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
 	}
 

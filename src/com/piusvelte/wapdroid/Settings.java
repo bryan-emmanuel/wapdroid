@@ -38,7 +38,6 @@ import android.preference.PreferenceActivity;
 
 public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener, ServiceConnection {
 	private SharedPreferences mSharedPreferences;
-//	private ServiceConn mServiceConn;
 	public IWapdroidService mIService;
 	private Intent mServiceIntent;
 
@@ -55,7 +54,6 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	public void onPause() {
 		super.onPause();
 		mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
-//		releaseService();
 		unbindService(this);
 	}
 
@@ -65,23 +63,9 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 		mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
 		if (mSharedPreferences.getBoolean(getString(R.string.key_manageWifi), false)) {
 			startService(mServiceIntent);
-//			if (mServiceConn == null) captureService();
 			if (mIService == null) bindService(mServiceIntent, this, BIND_AUTO_CREATE);
 		}
 	}
-
-//	public void captureService() {
-//		mServiceConn = new ServiceConn();
-//		bindService(mServiceIntent, mServiceConn, BIND_AUTO_CREATE);
-//	}
-
-//	public void releaseService() {
-//		if (mServiceConn != null) {
-//			unbindService(mServiceConn);
-//			mServiceConn = null;
-//		}
-//		unbindService(this);
-//	}
 
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
@@ -96,25 +80,13 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 				});
 				dialog.show();
 				startService(mServiceIntent);
-//				captureService();
 				bindService(mServiceIntent, this, BIND_AUTO_CREATE);
 			} else {
-//				releaseService();
 				unbindService(this);
 				stopService(mServiceIntent);
 			}
-//		} else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false) && (mServiceConn != null)) {
 		} else if (sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false) && (mIService != null)) {
 			try {
-//				mServiceConn.mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false),
-//						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "30000")),
-//						sharedPreferences.getBoolean(getString(R.string.key_notify), false),
-//						sharedPreferences.getBoolean(getString(R.string.key_vibrate), false),
-//						sharedPreferences.getBoolean(getString(R.string.key_led), false),
-//						sharedPreferences.getBoolean(getString(R.string.key_ringtone), false),
-//						sharedPreferences.getBoolean(getString(R.string.key_battery_override), false),
-//						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_battery_percentage), "30")),
-//						sharedPreferences.getBoolean(getString(R.string.key_persistent_status), false));
 				mIService.updatePreferences(sharedPreferences.getBoolean(getString(R.string.key_manageWifi), false),
 						Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_interval), "30000")),
 						sharedPreferences.getBoolean(getString(R.string.key_notify), false),
