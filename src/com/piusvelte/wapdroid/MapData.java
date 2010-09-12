@@ -20,6 +20,9 @@
 
 package com.piusvelte.wapdroid;
 
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_LOCATION;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_LOCATIONS;
 import static com.piusvelte.wapdroid.WapdroidService.TAG;
 import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
 import static com.piusvelte.wapdroid.WapdroidService.TABLE_PAIRS;
@@ -50,6 +53,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -101,7 +106,8 @@ public class MapData extends MapActivity implements AdListener {
 	public static String string_lac;
 	public static String string_range;
 	public static String string_colon;
-	private UIDbAdapter mDbHelper;
+	private SQLiteDatabase mDb;
+	private DatabaseHelper mDbHelper;
 	private Context mContext;
 	private int mNetwork, mMCC = 0, mMNC = 0;
 	public int mPair = 0;
@@ -122,7 +128,7 @@ public class MapData extends MapActivity implements AdListener {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.map);
 		mContext = this;
-		mDbHelper = new UIDbAdapter(this);
+		mDbHelper = new DatabaseHelper(this);
 		mMView = (MapView) findViewById(R.id.mapview);
 		mMView.setBuiltInZoomControls(true);
 		mMController = mMView.getController();
@@ -156,7 +162,11 @@ public class MapData extends MapActivity implements AdListener {
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mDbHelper.open();
+		try {
+			mDb = mDbHelper.getWritableDatabase();
+		} catch (SQLException se) {
+			Log.e(TAG,"unexpected " + se);
+		}
 		mapData();
 	}
 
@@ -164,6 +174,13 @@ public class MapData extends MapActivity implements AdListener {
 	@Override
 	public void onPause() {
 		super.onPause();
+		if (mDb.isOpen()) mDb.close();
+	}
+
+	@Override
+	protected void onDestroy() {
+		super.onDestroy();
+		if (mDb.isOpen()) mDb.close();
 		mDbHelper.close();
 	}
 
@@ -173,7 +190,7 @@ public class MapData extends MapActivity implements AdListener {
 		menu.add(0, REFRESH_ID, 0, R.string.menu_refreshNetworks).setIcon(android.R.drawable.ic_menu_rotate);
 		return result;
 	}
-	
+
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
@@ -300,7 +317,17 @@ public class MapData extends MapActivity implements AdListener {
 				int ctr = 0;
 				List<Overlay> mapOverlays = mMView.getOverlays();
 				GeoPoint point = new GeoPoint(0, 0);
-				Cursor pairs = mPair == 0 ? mDbHelper.fetchNetworkData(mNetwork) : mDbHelper.fetchPairData(mPair);
+				Cursor pairs = mPair == 0 ? mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
+						+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+						+ " where " + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+						+ " and " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+						+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+						+ " and " + PAIRS_NETWORK + "=" + mNetwork, null) : mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
+								+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+								+ " where " + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+								+ " and " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+								+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+								+ " and " + TABLE_PAIRS + "." + TABLE_ID + "=" + mPair, null);
 				int ct = pairs.getCount();
 				if (ct > 0) {
 					WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);

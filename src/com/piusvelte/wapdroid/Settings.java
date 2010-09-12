@@ -19,8 +19,6 @@
  */
 package com.piusvelte.wapdroid;
 
-//import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_RSSI;
-
 import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
@@ -30,7 +28,6 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-//import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
