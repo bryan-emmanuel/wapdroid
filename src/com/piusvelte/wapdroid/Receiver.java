@@ -1,8 +1,24 @@
+/*
+ * Wapdroid - Android Location based Wifi Manager
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+ */
 package com.piusvelte.wapdroid;
 
-import static android.content.Intent.ACTION_BOOT_COMPLETED;
-import static android.content.Intent.ACTION_PACKAGE_ADDED;
-import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
 import static com.piusvelte.wapdroid.WapdroidService.LISTEN_SIGNAL_STRENGTHS;
 import android.app.AlarmManager;
@@ -21,14 +37,7 @@ public class Receiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		// on boot, or package upgrade, start the service
-		if (intent.getAction().equals(ACTION_BOOT_COMPLETED) || intent.getAction().equals(ACTION_PACKAGE_ADDED) || intent.getAction().equals(ACTION_PACKAGE_REPLACED) || intent.getAction().equals("android.intent.action.EXTERNAL_APPLICATIONS_UNAVAILABLE")) {
-			SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-			if (sp.getBoolean(context.getString(R.string.key_manageWifi), true)) {
-				ManageWakeLocks.acquire(context);
-				context.startService(new Intent(context, WapdroidService.class));
-			}
-		} else if (intent.getAction().equals(WAKE_SERVICE)) {
+		if (intent.getAction().equals(WAKE_SERVICE)) {
 			ManageWakeLocks.acquire(context);
 			context.startService(new Intent(context, WapdroidService.class));
 		} else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {

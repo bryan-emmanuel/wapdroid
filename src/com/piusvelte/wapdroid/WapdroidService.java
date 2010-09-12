@@ -17,7 +17,6 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-
 package com.piusvelte.wapdroid;
 
 import java.io.IOException;
@@ -478,11 +477,11 @@ public class WapdroidService extends Service {
 	private void createNotification(boolean enabled, boolean update) {
 		// service runs for ui, so if not managing, don't notify
 		if (mManageWifi) {
-			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
-			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), contentTitle, System.currentTimeMillis());
-			Intent i = new Intent(getBaseContext(), WapdroidUI.class);
-			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, i, 0);
-			notification.setLatestEventInfo(getBaseContext(), contentTitle, getString(R.string.app_name), contentIntent);
+//			CharSequence contentTitle = getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled);
+			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), System.currentTimeMillis());
+//			Intent i = new Intent(getBaseContext(), WapdroidUI.class);
+//			PendingIntent contentIntent = PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidUI.class), 0);
+			notification.setLatestEventInfo(getBaseContext(), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), getString(R.string.app_name), PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidUI.class), 0));
 			if (mPersistentStatus) notification.flags |= Notification.FLAG_NO_CLEAR;
 			if (update) notification.defaults |= mNotifications;
 			mNotificationManager.notify(NOTIFY_ID, notification);
