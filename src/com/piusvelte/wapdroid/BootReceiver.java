@@ -22,6 +22,7 @@ package com.piusvelte.wapdroid;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
+import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -39,6 +40,9 @@ public class BootReceiver extends BroadcastReceiver {
 				ManageWakeLocks.acquire(context);
 				context.startService(new Intent(context, WapdroidService.class));
 			}
+		} else if (intent.getAction().equals(WAKE_SERVICE)) {
+			ManageWakeLocks.acquire(context);
+			context.startService(new Intent(context, WapdroidService.class));
 		}
 	}
 

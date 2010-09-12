@@ -248,7 +248,7 @@ public class WapdroidService extends Service {
 		 * listen to wifi when: screenon
 		 * listen to battery when: disabling on battery level, UI is in foreground
 		 */
-		Intent i = new Intent(this, Receiver.class);
+		Intent i = new Intent(this, BootReceiver.class);
 		i.setAction(WAKE_SERVICE);
 		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);

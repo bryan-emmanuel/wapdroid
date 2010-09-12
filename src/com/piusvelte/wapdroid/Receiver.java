@@ -19,7 +19,6 @@
  */
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
 import static com.piusvelte.wapdroid.WapdroidService.LISTEN_SIGNAL_STRENGTHS;
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
@@ -37,10 +36,7 @@ public class Receiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (intent.getAction().equals(WAKE_SERVICE)) {
-			ManageWakeLocks.acquire(context);
-			context.startService(new Intent(context, WapdroidService.class));
-		} else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+		if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
 			WapdroidService ws = (WapdroidService) context;
 			// override low battery when charging
 			if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) {
