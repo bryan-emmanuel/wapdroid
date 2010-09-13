@@ -313,7 +313,7 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 				//								+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
 				//								+ " and " + TABLE_PAIRS + "." + TABLE_ID + "=" + mPair, null);
 				if (mApp.mDb.isOpen()) {
-					Cursor pairs = mPair == 0 ? mApp.fetchNetworkData(mNetwork) : mApp.fetchPairData(mPair);
+					Cursor pairs = mPair == 0 ? mApp.fetchData(PAIRS_NETWORK, mNetwork) : mApp.fetchData(TABLE_PAIRS + "." + TABLE_ID, mPair);
 					int ct = pairs.getCount();
 					if (ct > 0) {
 						WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);

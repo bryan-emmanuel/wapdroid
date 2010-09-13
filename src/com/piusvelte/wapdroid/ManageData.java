@@ -53,7 +53,6 @@ import android.os.RemoteException;
 //import android.util.Log;
 import android.util.Log;
 import android.view.ContextMenu;
-import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -450,23 +449,5 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	public void onCancel(DialogInterface dialog) {
 		mThread.interrupt();
 		finish();	
-	}
-	
-	@Override
-	public boolean onKeyDown(int keyCode, KeyEvent event)  {
-	    if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.ECLAIR
-	            && keyCode == KeyEvent.KEYCODE_BACK
-	            && event.getRepeatCount() == 0) {
-	        onBackPressed();
-	        return true;
-	    }
-
-	    return super.onKeyDown(keyCode, event);
-	}
-
-	@Override
-	public void onBackPressed() {
-		// check if we're going from cell view to a network view
-	    return;
 	}
 }
