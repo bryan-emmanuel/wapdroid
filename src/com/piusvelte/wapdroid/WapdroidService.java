@@ -45,6 +45,7 @@ import android.os.RemoteException;
 import android.telephony.CellLocation;
 import android.telephony.NeighboringCellInfo;
 import android.telephony.PhoneStateListener;
+import android.telephony.SignalStrength;
 import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
@@ -76,7 +77,58 @@ public class WapdroidService extends Service {
 	public AlarmManager mAlarmMgr;
 	public PendingIntent mPendingIntent;
 	public IWapdroidUI mWapdroidUI;
-	private BroadcastReceiver mReceiver;
+	private BroadcastReceiver mReceiver = new BroadcastReceiver() {
+		private static final String BATTERY_EXTRA_LEVEL = "level";
+		private static final String BATTERY_EXTRA_SCALE = "scale";
+		private static final String BATTERY_EXTRA_PLUGGED = "plugged";
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+				// override low battery when charging
+				if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) mBatteryLimit = 0;
+				else {
+					// unplugged
+					SharedPreferences sp = (SharedPreferences) context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+					if (sp.getBoolean(context.getString(R.string.key_battery_override), false)) mBatteryLimit = Integer.parseInt((String) sp.getString(context.getString(R.string.key_battery_percentage), "30"));
+				}
+				int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
+				// check the threshold
+				if (mManageWifi && !mManualOverride && (currentBattPerc < mBatteryLimit) && (mLastBattPerc >= mBatteryLimit)) {
+					mWifiManager.setWifiEnabled(false);
+					mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
+				} else if ((currentBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit)) mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
+				mLastBattPerc = currentBattPerc;
+				if (mWapdroidUI != null) {
+					try {
+						mWapdroidUI.setBattery(currentBattPerc);
+					} catch (RemoteException e) {};
+				}
+			} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+				// grab a lock to wait for a cell change occur
+				// a connection was gained or lost
+				if (!ManageWakeLocks.hasLock()) {
+					ManageWakeLocks.acquire(context);
+					mAlarmMgr.cancel(mPendingIntent);
+				}
+				networkStateChanged();
+			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+				mAlarmMgr.cancel(mPendingIntent);
+				ManageWakeLocks.release();
+				context.startService(new Intent(context, WapdroidService.class));
+			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+				mManualOverride = false;
+				if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+			} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+				// grab a lock to create notification
+				if (!ManageWakeLocks.hasLock()) {
+					ManageWakeLocks.acquire(context);
+					mAlarmMgr.cancel(mPendingIntent);
+				}
+				wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
+			}
+		}
+	};
 	public PhoneStateListener mPhoneListener;
 	// db variables
 	public static final String TABLE_ID = "_id";
@@ -276,10 +328,10 @@ public class WapdroidService extends Service {
 		f.addAction(Intent.ACTION_SCREEN_OFF);
 		f.addAction(Intent.ACTION_SCREEN_ON);
 		f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
-		mReceiver = new Receiver();
+//		mReceiver = new Receiver();
 		registerReceiver(mReceiver, f);
 		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7(this)) : (new PhoneListenerApi3(this))), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
+		mTeleManager.listen(mPhoneListener = (mApi7 ? (new PhoneListenerApi7()) : (new PhoneListenerApi3())), (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 	}
 
 	@Override
@@ -604,7 +656,7 @@ public class WapdroidService extends Service {
 			else mLastScanEnableWifi = enableWifi;
 		}
 	}
-	
+
 	public void networkStateChanged() {
 		/*
 		 * get network state
@@ -660,4 +712,34 @@ public class WapdroidService extends Service {
 			ManageWakeLocks.release();
 		}
 	}
+	
+	public class PhoneListenerApi3 extends PhoneStateListener {
+		public void onCellLocationChanged(CellLocation location) {
+			// this also calls signalStrengthChanged, since onSignalStrengthChanged isn't reliable enough by itself
+			getCellInfo(location);
+		}
+
+		public void onSignalStrengthChanged(int asu) {
+			// add cdma support, convert signal from gsm
+			signalStrengthChanged((asu > 0) && (asu != UNKNOWN_RSSI) ? (2 * asu - 113) : asu);
+		}
+	}
+	
+	public class PhoneListenerApi7 extends PhoneStateListener {
+		public void onCellLocationChanged(CellLocation location) {
+			// this also calls signalStrengthChanged, since signalStrengthChanged isn't reliable enough by itself
+			getCellInfo(location);
+		}
+
+		public void onSignalStrengthChanged(int asu) {
+			// add cdma support, convert signal from gsm
+			signalStrengthChanged((asu > 0) && (asu != UNKNOWN_RSSI) ? (2 * asu - 113) : asu);
+		}
+
+		public void onSignalStrengthsChanged(SignalStrength signalStrength) {
+			if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ? signalStrength.getCdmaDbm() : signalStrength.getEvdoDbm());
+			else signalStrengthChanged((signalStrength.getGsmSignalStrength() > 0) && (signalStrength.getGsmSignalStrength() != UNKNOWN_RSSI) ? (2 * signalStrength.getGsmSignalStrength() - 113) : signalStrength.getGsmSignalStrength());
+		}
+	}
+
 }
