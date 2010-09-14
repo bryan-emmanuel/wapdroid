@@ -20,20 +20,23 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.App.TAG;
-import static com.piusvelte.wapdroid.App.TABLE_ID;
-import static com.piusvelte.wapdroid.App.TABLE_NETWORKS;
-import static com.piusvelte.wapdroid.App.NETWORKS_SSID;
-import static com.piusvelte.wapdroid.App.NETWORKS_BSSID;
-import static com.piusvelte.wapdroid.App.CELLS_CID;
-import static com.piusvelte.wapdroid.App.LOCATIONS_LAC;
-import static com.piusvelte.wapdroid.App.TABLE_PAIRS;
-import static com.piusvelte.wapdroid.App.PAIRS_CELL;
-import static com.piusvelte.wapdroid.App.PAIRS_NETWORK;
-import static com.piusvelte.wapdroid.App.PAIRS_RSSI_MIN;
-import static com.piusvelte.wapdroid.App.PAIRS_RSSI_MAX;
-import static android.telephony.NeighboringCellInfo.UNKNOWN_CID;
-import static android.telephony.NeighboringCellInfo.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroid.WapdroidService.TAG;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_ID;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_SSID;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_BSSID;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidService.LOCATIONS_LAC;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_CELL;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_NETWORK;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MIN;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MAX;
+import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_CID;
+import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_LOCATIONS;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_LOCATION;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
@@ -50,8 +53,8 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
-//import android.database.SQLException;
-//import android.database.sqlite.SQLiteDatabase;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -103,9 +106,9 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 	public static String string_lac;
 	public static String string_range;
 	public static String string_colon;
-	//	private SQLiteDatabase mDb;
-	//	private DatabaseHelper mDbHelper;
-	private App mApp;
+		private SQLiteDatabase mDb;
+		private DatabaseHelper mDbHelper;
+//	private App mApp;
 	private Context mContext;
 	private int mNetwork, mMCC = 0, mMNC = 0;
 	public int mPair = 0;
@@ -126,8 +129,8 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.map);
 		mContext = this;
-		//		mDbHelper = new DatabaseHelper(this);
-		mApp = (App) getApplication();
+				mDbHelper = new DatabaseHelper(this);
+//		mApp = (App) getApplication();
 		mMView = (MapView) findViewById(R.id.mapview);
 		mMView.setBuiltInZoomControls(true);
 		mMController = mMView.getController();
@@ -161,11 +164,11 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 	@Override
 	protected void onResume() {
 		super.onResume();
-		//		try {
-		//			mDb = mDbHelper.getWritableDatabase();
-		//		} catch (SQLException se) {
-		//			Log.e(TAG,"unexpected " + se);
-		//		}
+				try {
+					mDb = mDbHelper.getWritableDatabase();
+				} catch (SQLException se) {
+					Log.e(TAG,"unexpected " + se);
+				}
 		mapData();
 	}
 
@@ -301,19 +304,19 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 				int ctr = 0;
 				List<Overlay> mapOverlays = mMView.getOverlays();
 				GeoPoint point = new GeoPoint(0, 0);
-				//				Cursor pairs = mPair == 0 ? mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
-				//						+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-				//						+ " where " + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
-				//						+ " and " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-				//						+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-				//						+ " and " + PAIRS_NETWORK + "=" + mNetwork, null) : mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
-				//								+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-				//								+ " where " + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
-				//								+ " and " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-				//								+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-				//								+ " and " + TABLE_PAIRS + "." + TABLE_ID + "=" + mPair, null);
-				if (mApp.mDb.isOpen()) {
-					Cursor pairs = mPair == 0 ? mApp.fetchData(PAIRS_NETWORK, mNetwork) : mApp.fetchData(TABLE_PAIRS + "." + TABLE_ID, mPair);
+								Cursor pairs = mPair == 0 ? mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
+										+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+										+ " where " + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+										+ " and " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+										+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+										+ " and " + PAIRS_NETWORK + "=" + mNetwork, null) : mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", " + CELLS_CID + ", " + LOCATIONS_LAC + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX
+												+ " from " + TABLE_PAIRS + ", " + TABLE_NETWORKS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+												+ " where " + PAIRS_NETWORK + "=" + TABLE_NETWORKS + "." + TABLE_ID
+												+ " and " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+												+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+												+ " and " + TABLE_PAIRS + "." + TABLE_ID + "=" + mPair, null);
+//				if (mApp.mDb.isOpen()) {
+//					Cursor pairs = mPair == 0 ? mApp.fetchData(PAIRS_NETWORK, mNetwork) : mApp.fetchData(TABLE_PAIRS + "." + TABLE_ID, mPair);
 					int ct = pairs.getCount();
 					if (ct > 0) {
 						WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);
@@ -357,7 +360,7 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 						mMController.setCenter(point);
 					}
 					pairs.close();
-				} else Log.e(TAG, "database unavailable");
+//				} else Log.e(TAG, "database unavailable");
 				mLoadingDialog.dismiss();
 				interrupt();
 			}

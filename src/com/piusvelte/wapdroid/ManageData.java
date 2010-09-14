@@ -19,17 +19,28 @@
  */
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.App.TABLE_NETWORKS;
-import static com.piusvelte.wapdroid.App.NETWORKS_SSID;
-import static com.piusvelte.wapdroid.App.NETWORKS_BSSID;
-import static com.piusvelte.wapdroid.App.TABLE_CELLS;
-import static com.piusvelte.wapdroid.App.CELLS_CID;
-import static com.piusvelte.wapdroid.App.STATUS;
-import static com.piusvelte.wapdroid.App.FILTER_ALL;
-import static com.piusvelte.wapdroid.App.LOCATIONS_LAC;
-import static com.piusvelte.wapdroid.App.TABLE_PAIRS;
-import static com.piusvelte.wapdroid.App.PAIRS_RSSI_MIN;
-import static com.piusvelte.wapdroid.App.TAG;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_SSID;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_BSSID;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidService.STATUS;
+import static com.piusvelte.wapdroid.WapdroidService.FILTER_ALL;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_LOCATIONS;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_LOCATION;
+import static com.piusvelte.wapdroid.WapdroidService.LOCATIONS_LAC;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MIN;
+import static com.piusvelte.wapdroid.WapdroidService.TAG;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_ID;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_CELL;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_NETWORK;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MAX;
+import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_CID;
+import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroid.WapdroidService.FILTER_CONNECTED;
+import static com.piusvelte.wapdroid.WapdroidService.FILTER_INRANGE;
+import static com.piusvelte.wapdroid.WapdroidService.FILTER_OUTRANGE;
 
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
@@ -37,7 +48,6 @@ import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
-import android.app.ProgressDialog;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -45,8 +55,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-//import android.database.SQLException;
-//import android.database.sqlite.SQLiteDatabase;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
@@ -61,9 +71,9 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageData extends ListActivity implements AdListener, ServiceConnection, DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
-	//	private SQLiteDatabase mDb;
-	//	private DatabaseHelper mDbHelper;
+public class ManageData extends ListActivity implements AdListener, ServiceConnection {
+	private SQLiteDatabase mDb;
+	private DatabaseHelper mDbHelper;
 	private int mNetwork = 0, mCid;
 	private static final int MANAGE_ID = Menu.FIRST;
 	private static final int MAP_ID = Menu.FIRST + 1;
@@ -74,9 +84,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	private int mFilter = FILTER_ALL;
 	private String mCells = "", mOperator = "", mBssid = "";
 	public IWapdroidService mIService;
-	private App mApp;
-	private ProgressDialog mLoadingDialog;
-	private Thread mThread;
+	//	private App mApp;
 	private Context mContext;
 	private Cursor mCursor;
 
@@ -93,18 +101,18 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
-		//		mDbHelper = new DatabaseHelper(this);
-		mApp = (App) getApplication();
+		mDbHelper = new DatabaseHelper(this);
+		//		mApp = (App) getApplication();
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		//		try {
-		//			mDb = mDbHelper.getWritableDatabase();
-		//		} catch (SQLException se) {
-		//			Log.e(TAG,"unexpected " + se);
-		//		}
+		try {
+			mDb = mDbHelper.getWritableDatabase();
+		} catch (SQLException se) {
+			Log.e(TAG,"unexpected " + se);
+		}
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
@@ -124,14 +132,14 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			} catch (RemoteException e) {}
 		}
 		unbindService(this);
-		//		if (mDb.isOpen()) mDb.close();
+		if (mDb.isOpen()) mDb.close();
 	}
 
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		//		if (mDb.isOpen()) mDb.close();
-		//		mDbHelper.close();
+		if (mDb.isOpen()) mDb.close();
+		mDbHelper.close();
 	}
 
 	@Override
@@ -248,24 +256,24 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			startActivity(intent);
 			return;
 		case DELETE_ID:
-			if (mApp.mDb.isOpen()) {
-				if (mNetwork == 0) mApp.deleteNetwork(id);
-				else mApp.deletePair(mNetwork, id);
-				//			if (mNetwork == 0) {
-				//				mDb.delete(TABLE_NETWORKS, TABLE_ID + "=" + id, null);
-				//				mDb.delete(TABLE_PAIRS, PAIRS_NETWORK + "=" + id, null);
-				//				cleanCellsLocations();
-				//			}
-				//			else {
-				//				mDb.delete(TABLE_PAIRS, TABLE_ID + "=" + id, null);
-				//				Cursor n = mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID
-				//						+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
-				//						+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-				//						+ " and "+ PAIRS_NETWORK + "=" + mNetwork, null);
-				//				if (n.getCount() == 0) mDb.delete(TABLE_NETWORKS, TABLE_ID + "=" + mNetwork, null);
-				//				n.close();
-				//				cleanCellsLocations();
-				//			}
+			if (mDb.isOpen()) {
+				//				if (mNetwork == 0) mApp.deleteNetwork(id);
+				//				else mApp.deletePair(mNetwork, id);
+				if (mNetwork == 0) {
+					mDb.delete(TABLE_NETWORKS, TABLE_ID + "=" + id, null);
+					mDb.delete(TABLE_PAIRS, PAIRS_NETWORK + "=" + id, null);
+					cleanCellsLocations();
+				}
+				else {
+					mDb.delete(TABLE_PAIRS, TABLE_ID + "=" + id, null);
+					Cursor n = mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID
+							+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
+							+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+							+ " and "+ PAIRS_NETWORK + "=" + mNetwork, null);
+					if (n.getCount() == 0) mDb.delete(TABLE_NETWORKS, TABLE_ID + "=" + mNetwork, null);
+					n.close();
+					cleanCellsLocations();
+				}
 			} else Log.e(TAG,"database unavailable");
 			try {
 				listData();
@@ -280,79 +288,61 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	}
 
 	public void listData() throws RemoteException {
-		mLoadingDialog = new ProgressDialog(this);
-		mLoadingDialog.setTitle(R.string.loading);
-		mLoadingDialog.setCancelable(true);
-		mLoadingDialog.setOnCancelListener(this);
-		mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(R.string.cancel), this);
-		mLoadingDialog.show();
-		mThread = new Thread() {
-			public void run() {
-				// filter results
-				if (mApp.mDb.isOpen()) {
-					mCursor = mNetwork == 0 ? mApp.fetchNetworks(mFilter, mBssid, mCells) : mApp.fetchPairsByNetworkFilter(mFilter, mNetwork, mCid, mCells);
-					//		Cursor c = mNetwork == 0 ? mDb.rawQuery("select " + TABLE_NETWORKS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", "
-					//				+ ((mFilter == FILTER_ALL) ?
-					//						("case when " + NETWORKS_BSSID + "='" + mBssid + "' then '" + getResources().getString(R.string.connected)
-					//								+ "' else (case when " + TABLE_NETWORKS + "." + TABLE_ID + " in (select " + PAIRS_NETWORK
-					//								+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-					//								+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-					//								+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-					//								+ " and (" + mCells + "))" + " then '" + getResources().getString(R.string.withinarea)
-					//								+ "' else '" + getResources().getString(R.string.outofarea) + "' end) end")
-					//								: "'" + (getResources().getString(mFilter == FILTER_CONNECTED ? R.string.connected : mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + "'"))
-					//								+ " as " + STATUS
-					//								+ " from " + TABLE_NETWORKS
-					//								+ (mFilter != FILTER_ALL ?
-					//										" where "
-					//										+ (mFilter == FILTER_CONNECTED ?
-					//												NETWORKS_BSSID + "='" + mBssid + "'"
-					//												: TABLE_NETWORKS + "." + TABLE_ID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + PAIRS_NETWORK
-					//												+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-					//												+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-					//												+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-					//												+ " and (" + mCells + "))")
-					//												: " order by " + STATUS), null) : mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID + ", "
-					//														+ "case when " + LOCATIONS_LAC + "=" + UNKNOWN_CID + " then '" + getResources().getString(R.string.unknown) + "' else " + LOCATIONS_LAC + " end as " + LOCATIONS_LAC + ", "
-					//														+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " then '" + getResources().getString(R.string.unknown) + "' else (" + PAIRS_RSSI_MIN + "||'" + getResources().getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + getResources().getString(R.string.dbm) + "') end as " + PAIRS_RSSI_MIN + ", "
-					//														+ ((mFilter == FILTER_ALL) ?
-					//																("case when " + CELLS_CID + "='" + mCid + "' then '" + getResources().getString(R.string.connected)
-					//																		+ "' else (case when " + TABLE_CELLS + "." + TABLE_ID + " in (select " + TABLE_CELLS + "." + TABLE_ID
-					//																		+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-					//																		+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-					//																		+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-					//																		+ " and " + PAIRS_NETWORK + "=" + mNetwork
-					//																		+ " and " + mCells + ")" + " then '" + getResources().getString(R.string.withinarea)
-					//																		+ "' else '" + getResources().getString(R.string.outofarea) + "' end) end as ")
-					//																		: "'" + (getResources().getString(mFilter == FILTER_CONNECTED ? R.string.connected : mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + "' as "))
-					//																		+ STATUS
-					//																		+ " from " + TABLE_PAIRS
-					//																		+ " left join " + TABLE_CELLS
-					//																		+ " on " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-					//																		+ " left outer join " + TABLE_LOCATIONS
-					//																		+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-					//																		+ " where "+ PAIRS_NETWORK + "=" + mNetwork
-					//																		+ (mFilter != FILTER_ALL ?
-					//																				" and "
-					//																				+ (mFilter == FILTER_CONNECTED ?
-					//																						CELLS_CID + "='" + mCid + "'"
-					//																						: TABLE_CELLS + "." + TABLE_ID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + TABLE_CELLS + "." + TABLE_ID
-					//																						+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-					//																						+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-					//																						+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-					//																						+ " and " + PAIRS_NETWORK + "=" + mNetwork
-					//																						+ " and " + mCells + ")")
-					//																						: " order by " + STATUS), null);
-					displayData();
-					mLoadingDialog.dismiss();
-					interrupt();
-				} else Log.e(TAG,"database unavailable");
-			}
-		};
-		mThread.run();
-	}
+		// filter results
+		//					mCursor = mNetwork == 0 ? mApp.fetchNetworks(mFilter, mBssid, mCells) : mApp.fetchPairsByNetworkFilter(mFilter, mNetwork, mCid, mCells);
+		mCursor = mNetwork == 0 ? mDb.rawQuery("select " + TABLE_NETWORKS + "." + TABLE_ID + " as " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + ", "
+				+ ((mFilter == FILTER_ALL) ?
+						("case when " + NETWORKS_BSSID + "='" + mBssid + "' then '" + getResources().getString(R.string.connected)
+								+ "' else (case when " + TABLE_NETWORKS + "." + TABLE_ID + " in (select " + PAIRS_NETWORK
+								+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+								+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+								+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+								+ " and (" + mCells + "))" + " then '" + getResources().getString(R.string.withinarea)
+								+ "' else '" + getResources().getString(R.string.outofarea) + "' end) end")
+								: "'" + (getResources().getString(mFilter == FILTER_CONNECTED ? R.string.connected : mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + "'"))
+								+ " as " + STATUS
+								+ " from " + TABLE_NETWORKS
+								+ (mFilter != FILTER_ALL ?
+										" where "
+										+ (mFilter == FILTER_CONNECTED ?
+												NETWORKS_BSSID + "='" + mBssid + "'"
+												: TABLE_NETWORKS + "." + TABLE_ID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + PAIRS_NETWORK
+												+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+												+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+												+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+												+ " and (" + mCells + "))")
+												: " order by " + STATUS), null) : mDb.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID + ", "
+														+ "case when " + LOCATIONS_LAC + "=" + UNKNOWN_CID + " then '" + getResources().getString(R.string.unknown) + "' else " + LOCATIONS_LAC + " end as " + LOCATIONS_LAC + ", "
+														+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " then '" + getResources().getString(R.string.unknown) + "' else (" + PAIRS_RSSI_MIN + "||'" + getResources().getString(R.string.colon) + "'||" + PAIRS_RSSI_MAX + "||'" + getResources().getString(R.string.dbm) + "') end as " + PAIRS_RSSI_MIN + ", "
+														+ ((mFilter == FILTER_ALL) ?
+																("case when " + CELLS_CID + "='" + mCid + "' then '" + getResources().getString(R.string.connected)
+																		+ "' else (case when " + TABLE_CELLS + "." + TABLE_ID + " in (select " + TABLE_CELLS + "." + TABLE_ID
+																		+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+																		+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+																		+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+																		+ " and " + PAIRS_NETWORK + "=" + mNetwork
+																		+ " and " + mCells + ")" + " then '" + getResources().getString(R.string.withinarea)
+																		+ "' else '" + getResources().getString(R.string.outofarea) + "' end) end as ")
+																		: "'" + (getResources().getString(mFilter == FILTER_CONNECTED ? R.string.connected : mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + "' as "))
+																		+ STATUS
+																		+ " from " + TABLE_PAIRS
+																		+ " left join " + TABLE_CELLS
+																		+ " on " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+																		+ " left outer join " + TABLE_LOCATIONS
+																		+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+																		+ " where "+ PAIRS_NETWORK + "=" + mNetwork
+																		+ (mFilter != FILTER_ALL ?
+																				" and "
+																				+ (mFilter == FILTER_CONNECTED ?
+																						CELLS_CID + "='" + mCid + "'"
+																						: TABLE_CELLS + "." + TABLE_ID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + TABLE_CELLS + "." + TABLE_ID
+																						+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+																						+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+																						+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+																						+ " and " + PAIRS_NETWORK + "=" + mNetwork
+																						+ " and " + mCells + ")")
+																						: " order by " + STATUS), null);
 
-	private void displayData() {
 		startManagingCursor(mCursor);
 		SimpleCursorAdapter data = mNetwork == 0 ?
 				new SimpleCursorAdapter(mContext,
@@ -366,29 +356,27 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				new String[] {CELLS_CID, LOCATIONS_LAC, PAIRS_RSSI_MIN, STATUS},
 				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status});
 				setListAdapter(data);
-
 	}
-
-	//	public void cleanCellsLocations() {
-	//		Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION + " from " + TABLE_CELLS, null);
-	//		if (c.getCount() > 0) {
-	//			c.moveToFirst();
-	//			while (!c.isAfterLast()) {
-	//				int cell = c.getInt(c.getColumnIndex(TABLE_ID));
-	//				Cursor p = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell, null);
-	//				if (p.getCount() == 0) {
-	//					mDb.delete(TABLE_CELLS, TABLE_ID + "=" + cell, null);
-	//					int location = c.getInt(c.getColumnIndex(CELLS_LOCATION));
-	//					Cursor l = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location, null);
-	//					if (l.getCount() == 0) mDb.delete(TABLE_LOCATIONS, TABLE_ID + "=" + location, null);
-	//					l.close();
-	//				}
-	//				p.close();
-	//				c.moveToNext();
-	//			}
-	//		}
-	//		c.close();
-	//	}
+	public void cleanCellsLocations() {
+		Cursor c = mDb.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION + " from " + TABLE_CELLS, null);
+		if (c.getCount() > 0) {
+			c.moveToFirst();
+			while (!c.isAfterLast()) {
+				int cell = c.getInt(c.getColumnIndex(TABLE_ID));
+				Cursor p = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell, null);
+				if (p.getCount() == 0) {
+					mDb.delete(TABLE_CELLS, TABLE_ID + "=" + cell, null);
+					int location = c.getInt(c.getColumnIndex(CELLS_LOCATION));
+					Cursor l = mDb.rawQuery("select " + TABLE_ID + " from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location, null);
+					if (l.getCount() == 0) mDb.delete(TABLE_LOCATIONS, TABLE_ID + "=" + location, null);
+					l.close();
+				}
+				p.close();
+				c.moveToNext();
+			}
+		}
+		c.close();
+	}
 
 	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(int cid, int lac) throws RemoteException {
@@ -437,17 +425,5 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	@Override
 	public void onServiceDisconnected(ComponentName name) {
 		mIService = null;
-	}
-
-	@Override
-	public void onClick(DialogInterface dialog, int which) {
-		mThread.interrupt();
-		finish();
-	}
-
-	@Override
-	public void onCancel(DialogInterface dialog) {
-		mThread.interrupt();
-		finish();	
 	}
 }

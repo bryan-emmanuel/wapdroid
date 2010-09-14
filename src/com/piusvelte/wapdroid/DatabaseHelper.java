@@ -20,22 +20,22 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.App.UNKNOWN_CID;
-import static com.piusvelte.wapdroid.App.UNKNOWN_RSSI;
-import static com.piusvelte.wapdroid.App.TABLE_ID;
-import static com.piusvelte.wapdroid.App.TABLE_NETWORKS;
-import static com.piusvelte.wapdroid.App.NETWORKS_SSID;
-import static com.piusvelte.wapdroid.App.NETWORKS_BSSID;
-import static com.piusvelte.wapdroid.App.TABLE_CELLS;
-import static com.piusvelte.wapdroid.App.CELLS_CID;
-import static com.piusvelte.wapdroid.App.TABLE_LOCATIONS;
-import static com.piusvelte.wapdroid.App.LOCATIONS_LAC;
-import static com.piusvelte.wapdroid.App.TABLE_PAIRS;
-import static com.piusvelte.wapdroid.App.PAIRS_CELL;
-import static com.piusvelte.wapdroid.App.PAIRS_NETWORK;
-import static com.piusvelte.wapdroid.App.CELLS_LOCATION;
-import static com.piusvelte.wapdroid.App.PAIRS_RSSI_MIN;
-import static com.piusvelte.wapdroid.App.PAIRS_RSSI_MAX;
+import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_CID;
+import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_ID;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_SSID;
+import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_BSSID;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_LOCATIONS;
+import static com.piusvelte.wapdroid.WapdroidService.LOCATIONS_LAC;
+import static com.piusvelte.wapdroid.WapdroidService.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_CELL;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_NETWORK;
+import static com.piusvelte.wapdroid.WapdroidService.CELLS_LOCATION;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MIN;
+import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MAX;
 
 import android.content.Context;
 import android.database.Cursor;

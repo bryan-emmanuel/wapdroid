@@ -22,7 +22,7 @@ package com.piusvelte.wapdroid;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.ACTION_PACKAGE_ADDED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
-import static com.piusvelte.wapdroid.App.WAKE_SERVICE;
+import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
