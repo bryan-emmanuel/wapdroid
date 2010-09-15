@@ -52,8 +52,6 @@ public class WapdroidService extends Service {
 	public static final int LISTEN_SIGNAL_STRENGTHS = 256;
 	public static final int PHONE_TYPE_CDMA = 2;
 	private static final int START_STICKY = 1;
-	private NotificationManager mNotificationManager;
-	TelephonyManager mTeleManager;
 	int mCid = UNKNOWN_CID,
 	mLac = UNKNOWN_CID,
 	mRssi = UNKNOWN_RSSI,
@@ -62,10 +60,12 @@ public class WapdroidService extends Service {
 	int mInterval,
 	mBatteryLimit,
 	mLastBattPerc = 0;
+	static int mPhoneType;
 	boolean mPersistentStatus;
 	boolean mManageWifi,
 	mManualOverride,
-	mLastScanEnableWifi;
+	mLastScanEnableWifi,
+	mNotify;
 	String mSsid, mBssid;
 	private static boolean mApi7;
 	AlarmManager mAlarmMgr;
@@ -91,8 +91,8 @@ public class WapdroidService extends Service {
 				if (mManageWifi && !mManualOverride && (currentBattPerc < mBatteryLimit) && (mLastBattPerc >= mBatteryLimit)) {
 					//					mWifiManager.setWifiEnabled(false);
 					((WifiManager) getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(false);
-					mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
-				} else if ((currentBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit)) mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
+					((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
+				} else if ((currentBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit)) ((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 				mLastBattPerc = currentBattPerc;
 				if (mWapdroidUI != null) {
 					try {
@@ -114,7 +114,7 @@ public class WapdroidService extends Service {
 					mSsid = null;
 					mBssid = null;
 				}
-				getCellInfo(mTeleManager.getCellLocation());
+				getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
 				if (mWapdroidUI != null) {
 					try {
 						mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
@@ -142,8 +142,7 @@ public class WapdroidService extends Service {
 				int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
 				if (state != WifiManager.WIFI_STATE_UNKNOWN) {
 					// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
-					if ((mNotificationManager != null)
-							&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
+					if (mNotify	&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
 									|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
 									|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED)))) createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
 					mLastWifiState = state;
@@ -201,25 +200,17 @@ public class WapdroidService extends Service {
 			if (vibrate) mNotifications |= Notification.DEFAULT_VIBRATE;
 			if (led) mNotifications |= Notification.DEFAULT_LIGHTS;
 			if (ringtone) mNotifications |= Notification.DEFAULT_SOUND;
-			if ((mManageWifi ^ manage) || ((mNotificationManager != null) ^ notify)) {
+			if ((mManageWifi ^ manage) || (mNotify ^ notify)) {
 				mPersistentStatus = persistent_status;
-				if (manage && notify) {
-					if (mNotificationManager == null) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-					createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
-				} else if (mNotificationManager != null) {
-					mNotificationManager.cancel(NOTIFY_ID);
-					mNotificationManager = null;
-				}
+				if (manage && notify) createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
 			} else if (mPersistentStatus ^ persistent_status) {
 				// changed the status icon persistence
 				mPersistentStatus = persistent_status;
 				if (mPersistentStatus) {
-					if (manage && notify) {
-						if (mNotificationManager == null) mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-						createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);						
-					}
-				} else if (mNotificationManager != null) mNotificationManager.cancel(NOTIFY_ID);
+					if (manage && notify) createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
+				} else if (notify) ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
 			}
+			mNotify = notify;
 		}
 
 		public void setCallback(IBinder mWapdroidUIBinder)
@@ -235,9 +226,9 @@ public class WapdroidService extends Service {
 					spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
 					spe.commit();
 					// listen to phone changes if a low battery condition caused this to stop
-					if (mLastBattPerc < mBatteryLimit) mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
+					if (mLastBattPerc < mBatteryLimit) ((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 					updateUI();
-				} else if (mLastBattPerc < mBatteryLimit) mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
+				} else if (mLastBattPerc < mBatteryLimit) ((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 			}
 		}
 
@@ -322,7 +313,7 @@ public class WapdroidService extends Service {
 		 * others should release the lock and cancel the alarm
 		 */
 		// initialize the cell info
-		getCellInfo(mTeleManager.getCellLocation());
+		getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
 	}
 
 	@Override
@@ -341,8 +332,8 @@ public class WapdroidService extends Service {
 		// initialize preferences, updated by UI
 		mManageWifi = sp.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), "30000"));
-		if (sp.getBoolean(getString(R.string.key_notify), false)) {
-			mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+		mNotify = sp.getBoolean(getString(R.string.key_notify), false);
+		if (mNotify) {
 			mPersistentStatus = sp.getBoolean(getString(R.string.key_persistent_status), false);
 			mNotifications = 0;
 			if (sp.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;
@@ -351,13 +342,12 @@ public class WapdroidService extends Service {
 		}
 		mBatteryLimit = sp.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30")) : 0;
 		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
-		//		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		int state = wm.getWifiState();
 		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
 			// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
-			if ((mNotificationManager != null)
+			if (mNotify
 					&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
 							|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
 							|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED)))) createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
@@ -380,8 +370,9 @@ public class WapdroidService extends Service {
 		f.addAction(Intent.ACTION_SCREEN_ON);
 		f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 		registerReceiver(mReceiver, f);
-		mTeleManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-		mTeleManager.listen(mPhoneListener = (mApi7 ? new PhoneStateListener() {
+		TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+		mPhoneType = tm.getPhoneType();
+		tm.listen(mPhoneListener = (mApi7 ? new PhoneStateListener() {
 			public void onCellLocationChanged(CellLocation location) {
 				// this also calls signalStrengthChanged, since signalStrengthChanged isn't reliable enough by itself
 				getCellInfo(location);
@@ -393,7 +384,7 @@ public class WapdroidService extends Service {
 			}
 
 			public void onSignalStrengthsChanged(SignalStrength signalStrength) {
-				if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ? signalStrength.getCdmaDbm() : signalStrength.getEvdoDbm());
+				if (mPhoneType == PHONE_TYPE_CDMA) signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ? signalStrength.getCdmaDbm() : signalStrength.getEvdoDbm());
 				else signalStrengthChanged((signalStrength.getGsmSignalStrength() > 0) && (signalStrength.getGsmSignalStrength() != UNKNOWN_RSSI) ? (2 * signalStrength.getGsmSignalStrength() - 113) : signalStrength.getGsmSignalStrength());
 			}				
 		} : (new PhoneStateListener() {
@@ -416,18 +407,18 @@ public class WapdroidService extends Service {
 			unregisterReceiver(mReceiver);
 			mReceiver = null;
 		}
-		mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
-		if (mNotificationManager != null) mNotificationManager.cancel(NOTIFY_ID);
+		((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
+		if (mNotify) ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
 		if (ManageWakeLocks.hasLock()) ManageWakeLocks.release();
 	}
 
 	private void updateUI() {
 		String cells = "(" + CELLS_CID + "=" + Integer.toString(mCid) + " and (" + LOCATIONS_LAC + "=" + Integer.toString(mLac) + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
 		+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
-		if ((mTeleManager.getNeighboringCellInfo() != null) && !mTeleManager.getNeighboringCellInfo().isEmpty()) {
-			//			for (NeighboringCellInfo nci : mNeighboringCells) {
-			for (NeighboringCellInfo nci : mTeleManager.getNeighboringCellInfo()) {
-				int nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
+		TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+		if ((tm.getNeighboringCellInfo() != null) && !tm.getNeighboringCellInfo().isEmpty()) {
+			for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
+				int nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
 				if (mNciReflectGetLac != null) {
 					/* feature is supported */
 					try {
@@ -443,7 +434,7 @@ public class WapdroidService extends Service {
 			}
 		}
 		try {
-			mWapdroidUI.setOperator(mTeleManager.getNetworkOperator());
+			mWapdroidUI.setOperator(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getNetworkOperator());
 			mWapdroidUI.setCellInfo(mCid, mLac);
 			mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
 			mWapdroidUI.setSignalStrength(mRssi);
@@ -453,13 +444,12 @@ public class WapdroidService extends Service {
 	}
 
 	final void getCellInfo(CellLocation location) {
-		//		mNeighboringCells = mTeleManager.getNeighboringCellInfo();
 		if (location != null) {
-			if (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) {
+			if (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) {
 				GsmCellLocation gcl = (GsmCellLocation) location;
 				mCid = gcl.getCid();
 				mLac = gcl.getLac();
-			} else if (mTeleManager.getPhoneType() == PHONE_TYPE_CDMA) {
+			} else if (mPhoneType == PHONE_TYPE_CDMA) {
 				// check the phone type, cdma is not available before API 2.0, so use a wrapper
 				try {
 					CdmaCellLocation cdma = new CdmaCellLocation(location);
@@ -500,9 +490,10 @@ public class WapdroidService extends Service {
 					// upgrading, BSSID may not be set yet
 					int network = da.fetchNetwork(mSsid, mBssid);
 					da.createPair(mCid, mLac, network, mRssi);
-					if ((mTeleManager.getNeighboringCellInfo() != null) && !mTeleManager.getNeighboringCellInfo().isEmpty()) {
-						for (NeighboringCellInfo nci : mTeleManager.getNeighboringCellInfo()) {
-							int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_lac, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
+					TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+					if ((tm.getNeighboringCellInfo() != null) && !tm.getNeighboringCellInfo().isEmpty()) {
+						for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
+							int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_lac, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
 							if (mNciReflectGetLac != null) {
 								/* feature is supported */
 								try {
@@ -521,9 +512,10 @@ public class WapdroidService extends Service {
 					enableWifi = da.cellInRange(mCid, mLac, mRssi);
 					if (enableWifi) {
 						// check neighbors if it appears that we're in range, for both enabling and disabling
-						if ((mTeleManager.getNeighboringCellInfo() != null) && !mTeleManager.getNeighboringCellInfo().isEmpty()) {
-							for (NeighboringCellInfo nci : mTeleManager.getNeighboringCellInfo()) {
-								int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
+						TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+						if ((tm.getNeighboringCellInfo() != null) && !tm.getNeighboringCellInfo().isEmpty()) {
+							for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
+								int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
 								if (mNciReflectGetLac != null) {
 									/* feature is supported */
 									try {
@@ -568,7 +560,7 @@ public class WapdroidService extends Service {
 			notification.setLatestEventInfo(getBaseContext(), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), getString(R.string.app_name), PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidUI.class), 0));
 			if (mPersistentStatus) notification.flags |= Notification.FLAG_NO_CLEAR;
 			if (update) notification.defaults |= mNotifications;
-			mNotificationManager.notify(NOTIFY_ID, notification);
+			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
 		}
 	}
 
