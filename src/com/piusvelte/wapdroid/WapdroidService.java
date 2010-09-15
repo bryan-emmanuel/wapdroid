@@ -22,7 +22,6 @@ package com.piusvelte.wapdroid;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-//import java.util.List;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -30,14 +29,10 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
@@ -59,10 +54,6 @@ public class WapdroidService extends Service {
 	private static final int START_STICKY = 1;
 	private NotificationManager mNotificationManager;
 	TelephonyManager mTeleManager;
-	//	private List<NeighboringCellInfo> mNeighboringCells;
-	DatabaseHelper mDatabaseHelper;
-	SQLiteDatabase mDatabase;
-//	WifiManager mWifiManager;
 	int mCid = UNKNOWN_CID,
 	mLac = UNKNOWN_CID,
 	mRssi = UNKNOWN_RSSI,
@@ -98,7 +89,7 @@ public class WapdroidService extends Service {
 				int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
 				// check the threshold
 				if (mManageWifi && !mManualOverride && (currentBattPerc < mBatteryLimit) && (mLastBattPerc >= mBatteryLimit)) {
-//					mWifiManager.setWifiEnabled(false);
+					//					mWifiManager.setWifiEnabled(false);
 					((WifiManager) getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(false);
 					mTeleManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 				} else if ((currentBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit)) mTeleManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
@@ -115,7 +106,20 @@ public class WapdroidService extends Service {
 					ManageWakeLocks.acquire(context);
 					mAlarmMgr.cancel(mPendingIntent);
 				}
-				connectionStateChanged(intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false));
+				if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)) {
+					WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+					mSsid = wm.getConnectionInfo().getSSID();
+					mBssid = wm.getConnectionInfo().getBSSID();
+				} else {
+					mSsid = null;
+					mBssid = null;
+				}
+				getCellInfo(mTeleManager.getCellLocation());
+				if (mWapdroidUI != null) {
+					try {
+						mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+					} catch (RemoteException e) {}
+				}
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
 				mAlarmMgr.cancel(mPendingIntent);
 				ManageWakeLocks.release();
@@ -129,7 +133,35 @@ public class WapdroidService extends Service {
 					ManageWakeLocks.acquire(context);
 					mAlarmMgr.cancel(mPendingIntent);
 				}
-				wifiStateChanged(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
+				/*
+				 * get wifi state
+				 * initially, lastWifiState is unknown, otherwise state is evaluated either enabled or not
+				 * when wifi enabled, register network receiver
+				 * when wifi not enabled, unregister network receiver
+				 */
+				int state = intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4);
+				if (state != WifiManager.WIFI_STATE_UNKNOWN) {
+					// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
+					if ((mNotificationManager != null)
+							&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
+									|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
+									|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED)))) createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
+					mLastWifiState = state;
+					if (mWapdroidUI != null) {
+						try {
+							mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+						} catch (RemoteException e) {}
+					}
+				}
+				// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
+				if (ManageWakeLocks.hasLock()) {
+					if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+					// if sleeping, re-initialize phone info
+					mCid = UNKNOWN_CID;
+					mLac = UNKNOWN_CID;
+					mRssi = UNKNOWN_RSSI;
+					ManageWakeLocks.release();
+				}
 			}
 		}
 	};
@@ -319,14 +351,28 @@ public class WapdroidService extends Service {
 		}
 		mBatteryLimit = sp.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30")) : 0;
 		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
-//		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+		//		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-		wifiStateChanged(wm.getWifiState());
+		int state = wm.getWifiState();
+		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
+			// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
+			if ((mNotificationManager != null)
+					&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
+							|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
+							|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED)))) createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
+			mLastWifiState = state;
+		}
 		// to help avoid hysteresis, make sure that at least 2 consecutive scans were in/out of range
 		mLastScanEnableWifi = (mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
 		// the ssid from wifimanager may not be null, even if disconnected, so check against the supplicant state
-		connectionStateChanged(wm.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED);
+		if (wm.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) {
+			mSsid = wm.getConnectionInfo().getSSID();
+			mBssid = wm.getConnectionInfo().getBSSID();
+		} else {
+			mSsid = null;
+			mBssid = null;
+		}
 		IntentFilter f = new IntentFilter();
 		f.addAction(Intent.ACTION_BATTERY_CHANGED);
 		f.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
@@ -446,39 +492,14 @@ public class WapdroidService extends Service {
 		// initialize enableWifi as mLastScanEnableWifi, so that wakelock is released by default
 		boolean enableWifi = mLastScanEnableWifi;
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
-		// check that the service is in control, and minimum values are set
-		//		if (mManageWifi && (mCid != UNKNOWN_CID) && mApp.mDb.isOpen()) {
 		if (mManageWifi && (mCid != UNKNOWN_CID)) {
-			//			List<NeighboringCellInfo> nc = mTeleManager.getNeighboringCellInfo();
-			//			enableWifi = cellInRange(mCid, mLac, mRssi);
-			// if connected, only update the range
-			//			if (mWifiManager.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) updateRange();
-			// separate updateRange() not needed, only called on cell changes
-			if ((mSsid != null) && (mBssid != null)) {
-				if (mDatabaseHelper == null) mDatabaseHelper = new DatabaseHelper(this);
-				mDatabase = null;
-				try {
-					mDatabase = mDatabaseHelper.getWritableDatabase();
-				} catch (SQLException se) {
-					Log.e(TAG,"unexpected " + se);
-				}
-				if ((mDatabase != null) && mDatabase.isOpen()) {
+			DatabaseAdapter da = new DatabaseAdapter(this);
+			da.open();
+			if ((DatabaseAdapter.mDatabase != null) && DatabaseAdapter.mDatabase.isOpen()) {
+				if (mSsid != null) {
 					// upgrading, BSSID may not be set yet
-					int network = UNKNOWN_CID;
-					Cursor c = mDatabase.rawQuery("select " + TABLE_ID + ", " + NETWORKS_SSID + ", " + NETWORKS_BSSID + " from " + TABLE_NETWORKS + " where " + NETWORKS_SSID + "=\"" + mSsid + "\" and (" + NETWORKS_BSSID + "=\"" + mBssid + "\" or " + NETWORKS_BSSID + "=\"\")", null);
-					if (c.getCount() > 0) {
-						// ssid matches, only concerned if bssid is empty
-						c.moveToFirst();
-						network = c.getInt(c.getColumnIndex(TABLE_ID));
-						if (c.getString(c.getColumnIndex(NETWORKS_BSSID)).equals("")) mDatabase.execSQL("update " + TABLE_NETWORKS + " set " + NETWORKS_BSSID + "='" + mBssid + "' where " + TABLE_ID + "=" + network + ";");
-					} else {
-						ContentValues cv = new ContentValues();
-						cv.put(NETWORKS_SSID, mSsid);
-						cv.put(NETWORKS_BSSID, mBssid);
-						network = (int) mDatabase.insert(TABLE_NETWORKS, null, cv);
-					}
-					c.close();
-					createPair(mCid, mLac, network, mRssi);
+					int network = da.fetchNetwork(mSsid, mBssid);
+					da.createPair(mCid, mLac, network, mRssi);
 					if ((mTeleManager.getNeighboringCellInfo() != null) && !mTeleManager.getNeighboringCellInfo().isEmpty()) {
 						for (NeighboringCellInfo nci : mTeleManager.getNeighboringCellInfo()) {
 							int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_lac, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mTeleManager.getPhoneType() == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
@@ -491,24 +512,13 @@ public class WapdroidService extends Service {
 									Log.e(TAG, "unexpected " + ie);
 								}
 							} else nci_lac = UNKNOWN_CID;
-							if (nci_cid != UNKNOWN_CID) createPair(nci_cid, nci_lac, network, nci_rssi);
+							if (nci_cid != UNKNOWN_CID) da.createPair(nci_cid, nci_lac, network, nci_rssi);
 						}
 					}
-					mDatabase.close();
 				}
-				mDatabaseHelper.close();
-			}
-			// always allow disabling, but only enable if above the battery limit
-			else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
-				mDatabaseHelper = new DatabaseHelper(this);
-				mDatabase = null;
-				try {
-					mDatabase = mDatabaseHelper.getWritableDatabase();
-				} catch (SQLException se) {
-					Log.e(TAG,"unexpected " + se);
-				}
-				if ((mDatabase != null) && mDatabase.isOpen()) {
-					enableWifi = cellInRange(mCid, mLac, mRssi);
+				// always allow disabling, but only enable if above the battery limit
+				else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
+					enableWifi = da.cellInRange(mCid, mLac, mRssi);
 					if (enableWifi) {
 						// check neighbors if it appears that we're in range, for both enabling and disabling
 						if ((mTeleManager.getNeighboringCellInfo() != null) && !mTeleManager.getNeighboringCellInfo().isEmpty()) {
@@ -524,7 +534,7 @@ public class WapdroidService extends Service {
 									}
 								} else nci_lac = UNKNOWN_CID;
 								// break on out of range result
-								if (nci_cid != UNKNOWN_CID) enableWifi = cellInRange(nci_cid, nci_lac, nci_rssi);
+								if (nci_cid != UNKNOWN_CID) enableWifi = da.cellInRange(nci_cid, nci_lac, nci_rssi);
 								if (!enableWifi) break;
 							}
 						}
@@ -532,10 +542,10 @@ public class WapdroidService extends Service {
 					// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
 					// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
 					if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) ((WifiManager) getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(enableWifi);
-					mDatabase.close();
 				}
-				mDatabaseHelper.close();
-			}
+				da.close();
+			} else Log.e(TAG, "database unavailable");
+			da.closeHelper();
 			// release the service if it doesn't appear that we're entering or leaving a network
 			if (enableWifi == mLastScanEnableWifi) {
 				if (ManageWakeLocks.hasLock()) {
@@ -551,27 +561,6 @@ public class WapdroidService extends Service {
 		}
 	}
 
-	final void connectionStateChanged(boolean connected) {
-		/*
-		 * get network state
-		 * if connected or disconnected, leave the wakelock set by the receiver for a cell change to release
-		 */
-		// only update range from a cell change
-		if (connected) {
-			WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-			mSsid = wm.getConnectionInfo().getSSID();
-			mBssid = wm.getConnectionInfo().getBSSID();
-		} else {
-			mSsid = null;
-			mBssid = null;
-		}
-		if (mWapdroidUI != null) {
-			try {
-				mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
-			} catch (RemoteException e) {}
-		}
-	}
-
 	final void createNotification(boolean enabled, boolean update) {
 		// service runs for ui, so if not managing, don't notify
 		if (mManageWifi) {
@@ -581,110 +570,6 @@ public class WapdroidService extends Service {
 			if (update) notification.defaults |= mNotifications;
 			mNotificationManager.notify(NOTIFY_ID, notification);
 		}
-	}
-
-	final void wifiStateChanged(int state) {
-		/*
-		 * get wifi state
-		 * initially, lastWifiState is unknown, otherwise state is evaluated either enabled or not
-		 * when wifi enabled, register network receiver
-		 * when wifi not enabled, unregister network receiver
-		 */
-		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
-			// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
-			if ((mNotificationManager != null)
-					&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
-							|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
-							|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED)))) createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
-			mLastWifiState = state;
-			if (mWapdroidUI != null) {
-				try {
-					mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
-				} catch (RemoteException e) {}
-			}
-		}
-		// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
-		if (ManageWakeLocks.hasLock()) {
-			if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
-			// if sleeping, re-initialize phone info
-			mCid = UNKNOWN_CID;
-			mLac = UNKNOWN_CID;
-			mRssi = UNKNOWN_RSSI;
-			ManageWakeLocks.release();
-		}
-	}
-
-	boolean cellInRange(int cid, int lac, int rssi) {
-		Cursor c = mDatabase.rawQuery("select " + TABLE_CELLS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_LOCATION + (rssi != UNKNOWN_RSSI ? ", (select min(" + PAIRS_RSSI_MIN + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MIN + ", (select max(" + PAIRS_RSSI_MAX + ") from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID + ") as " + PAIRS_RSSI_MAX : "") + " from " + TABLE_CELLS + " left outer join " + TABLE_LOCATIONS + " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID + " where "+ CELLS_CID + "=" + cid + " and (" + LOCATIONS_LAC + "=" + lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
-				+ (rssi == UNKNOWN_RSSI ? "" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + rssi + ")) and (" + PAIRS_RSSI_MAX + ">=" + rssi + "))"), null);
-		boolean inRange = (c.getCount() > 0);
-		if (inRange && (lac > 0)) {
-			// check LAC, as this is a new column
-			c.moveToFirst();
-			if (c.isNull(c.getColumnIndex(CELLS_LOCATION))) {
-				// select or insert location
-				int location;
-				if (lac > 0) {
-					Cursor l = mDatabase.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=" + lac, null);
-					if (l.getCount() > 0) {
-						l.moveToFirst();
-						location = l.getInt(l.getColumnIndex(TABLE_ID));
-					} else {
-						ContentValues cv = new ContentValues();
-						cv.put(LOCATIONS_LAC, lac);
-						location = (int) mDatabase.insert(TABLE_LOCATIONS, null, cv);
-					}
-					l.close();
-				} else location = UNKNOWN_CID;
-				mDatabase.execSQL("update " + TABLE_CELLS + " set " + CELLS_LOCATION + "=" + location + " where " + TABLE_ID + "=" + c.getInt(c.getColumnIndex(TABLE_ID)) + ";");
-			}
-		}
-		c.close();
-		return inRange;		
-	}
-
-	void createPair(int cid, int lac, int network, int rssi) {
-		int cell, pair, location;
-		// select or insert location
-		if (lac > 0) {
-			Cursor c = mDatabase.rawQuery("select " + TABLE_ID + " from " + TABLE_LOCATIONS + " where " + LOCATIONS_LAC + "=" + lac, null);
-			if (c.getCount() > 0) {
-				c.moveToFirst();
-				location = c.getInt(c.getColumnIndex(TABLE_ID));
-			} else {
-				ContentValues cv = new ContentValues();
-				cv.put(LOCATIONS_LAC, lac);
-				location = (int) mDatabase.insert(TABLE_LOCATIONS, null, cv);
-			}
-			c.close();
-		} else location = UNKNOWN_CID;
-		// if location==-1, then match only on cid, otherwise match on location or -1
-		// select or insert cell
-		Cursor c = mDatabase.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION + " from " + TABLE_CELLS + " where " + CELLS_CID + "=" + cid + (location == UNKNOWN_CID ? "" : " and (" + CELLS_LOCATION + "=" + UNKNOWN_CID + " or " + CELLS_LOCATION + "=" + location + ")"), null);
-		if (c.getCount() > 0) {
-			c.moveToFirst();
-			cell = c.getInt(c.getColumnIndex(TABLE_ID));
-			if ((location != UNKNOWN_CID) && (c.getInt(c.getColumnIndex(CELLS_LOCATION)) == UNKNOWN_CID)) mDatabase.execSQL("update " + TABLE_CELLS + " set " + CELLS_LOCATION + "=" + location + " where " + TABLE_ID + "=" + cell + ";");
-		} else {
-			ContentValues cv = new ContentValues();
-			cv.put(CELLS_CID, cid);
-			cv.put(CELLS_LOCATION, location);
-			cell = (int) mDatabase.insert(TABLE_CELLS, null, cv);
-		}
-		c.close();
-		// select and update or insert pair
-		c = mDatabase.rawQuery("select " + TABLE_ID + ", " + PAIRS_RSSI_MIN + ", " + PAIRS_RSSI_MAX + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell + " and " + PAIRS_NETWORK + "=" + network, null);
-		if (c.getCount() > 0) {
-			if (rssi != UNKNOWN_RSSI) {
-				c.moveToFirst();
-				pair = c.getInt(c.getColumnIndex(TABLE_ID));
-				int rssi_min = c.getInt(c.getColumnIndex(PAIRS_RSSI_MIN));
-				int rssi_max = c.getInt(c.getColumnIndex(PAIRS_RSSI_MAX));
-				if (rssi_min > rssi) mDatabase.execSQL("update " + TABLE_PAIRS + " set " + PAIRS_RSSI_MIN + "=" + rssi + " where " + TABLE_ID + "=" + pair + ";");
-				else if ((rssi_max == UNKNOWN_RSSI) || (rssi_max < rssi)) mDatabase.execSQL("update " + TABLE_PAIRS + " set " + PAIRS_RSSI_MAX + "=" + rssi + " where " + TABLE_ID + "=" + pair + ";");
-			}
-		} else mDatabase.execSQL("insert into " + TABLE_PAIRS + " (" + PAIRS_CELL + "," + PAIRS_NETWORK + "," + PAIRS_RSSI_MIN + "," + PAIRS_RSSI_MAX + ") values (" + cell + "," + network + "," + rssi + "," + rssi + ");");
-		c.close();		
 	}
 
 }

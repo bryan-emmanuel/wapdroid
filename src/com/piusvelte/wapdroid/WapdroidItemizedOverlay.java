@@ -20,16 +20,8 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
-import static com.piusvelte.wapdroid.WapdroidService.CELLS_LOCATION;
-import static com.piusvelte.wapdroid.WapdroidService.PAIRS_CELL;
 import static com.piusvelte.wapdroid.WapdroidService.PAIRS_NETWORK;
 import static com.piusvelte.wapdroid.WapdroidService.TAG;
-import static com.piusvelte.wapdroid.WapdroidService.TABLE_CELLS;
-import static com.piusvelte.wapdroid.WapdroidService.TABLE_ID;
-import static com.piusvelte.wapdroid.WapdroidService.TABLE_LOCATIONS;
-import static com.piusvelte.wapdroid.WapdroidService.TABLE_NETWORKS;
-import static com.piusvelte.wapdroid.WapdroidService.TABLE_PAIRS;
 import static com.piusvelte.wapdroid.MapData.color_primary;
 import static com.piusvelte.wapdroid.MapData.color_secondary;
 import static com.piusvelte.wapdroid.MapData.drawable_cell;
@@ -42,16 +34,12 @@ import java.util.ArrayList;
 
 import android.app.AlertDialog;
 import android.content.DialogInterface;
-import android.database.Cursor;
-import android.database.SQLException;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.util.Log;
-//import android.util.Log;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
@@ -152,103 +140,27 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 		dialog.setPositiveButton(pair == 0 ? string_deleteNetwork : string_deleteCell, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				DatabaseHelper dh = new DatabaseHelper(mMap);
-				SQLiteDatabase sd = null;
-				try {
-					sd = dh.getWritableDatabase();
-				} catch (SQLException se) {
-					Log.e(TAG,"unexpected " + se);
-				}
-				if (sd.isOpen()) {
-					//				App a = (App) mMap.getApplication();
-					//				if (a.mDb.isOpen()) {
+				DatabaseAdapter da = new DatabaseAdapter(mMap);
+				da.open();
+				if ((DatabaseAdapter.mDatabase != null) && DatabaseAdapter.mDatabase.isOpen()) {
 					if (pair == 0) {
-						sd.delete(TABLE_NETWORKS, TABLE_ID + "=" + network, null);
-						sd.delete(TABLE_PAIRS, PAIRS_NETWORK + "=" + network, null);
-						Cursor c = sd.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION + " from " + TABLE_CELLS, null);
-						if (c.getCount() > 0) {
-							c.moveToFirst();
-							while (!c.isAfterLast()) {
-								int cell = c.getInt(c.getColumnIndex(TABLE_ID));
-								Cursor p = sd.rawQuery("select " + TABLE_ID + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell, null);
-								if (p.getCount() == 0) {
-									sd.delete(TABLE_CELLS, TABLE_ID + "=" + cell, null);
-									int location = c.getInt(c.getColumnIndex(CELLS_LOCATION));
-									Cursor l = sd.rawQuery("select " + TABLE_ID + " from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location, null);
-									if (l.getCount() == 0) sd.delete(TABLE_LOCATIONS, TABLE_ID + "=" + location, null);
-									l.close();
-								}
-								p.close();
-								c.moveToNext();
-							}
-						}
-						c.close();
+						da.deleteNetwork(network);
 						mMap.finish();
 					} else if (mMap.mPair == 0) {
 						// delete one pair from the mapped network
-						sd.delete(TABLE_PAIRS, TABLE_ID + "=" + pair, null);
-						Cursor n = sd.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID
-								+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
-								+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-								+ " and "+ PAIRS_NETWORK + "=" + network, null);
-						if (n.getCount() == 0) sd.delete(TABLE_NETWORKS, TABLE_ID + "=" + network, null);
-						n.close();
-						Cursor c = sd.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION + " from " + TABLE_CELLS, null);
-						if (c.getCount() > 0) {
-							c.moveToFirst();
-							while (!c.isAfterLast()) {
-								int cell = c.getInt(c.getColumnIndex(TABLE_ID));
-								Cursor p = sd.rawQuery("select " + TABLE_ID + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell, null);
-								if (p.getCount() == 0) {
-									sd.delete(TABLE_CELLS, TABLE_ID + "=" + cell, null);
-									int location = c.getInt(c.getColumnIndex(CELLS_LOCATION));
-									Cursor l = sd.rawQuery("select " + TABLE_ID + " from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location, null);
-									if (l.getCount() == 0) sd.delete(TABLE_LOCATIONS, TABLE_ID + "=" + location, null);
-									l.close();
-								}
-								p.close();
-								c.moveToNext();
-							}
-						}
-						c.close();
-						//						a.deletePair(network, pair);
+						da.deletePair(network, pair);
 						mOverlays.remove(item);
 						mMap.mMView.invalidate();
 						mMap.mapData();
 						dialog.cancel();
 					} else {
 						// delete an individually mapped cell
-						sd.delete(TABLE_PAIRS, TABLE_ID + "=" + pair, null);
-						Cursor n = sd.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID
-								+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS
-								+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-								+ " and "+ PAIRS_NETWORK + "=" + network, null);
-						if (n.getCount() == 0) sd.delete(TABLE_NETWORKS, TABLE_ID + "=" + network, null);
-						n.close();
-						Cursor c = sd.rawQuery("select " + TABLE_ID + ", " + CELLS_LOCATION + " from " + TABLE_CELLS, null);
-						if (c.getCount() > 0) {
-							c.moveToFirst();
-							while (!c.isAfterLast()) {
-								int cell = c.getInt(c.getColumnIndex(TABLE_ID));
-								Cursor p = sd.rawQuery("select " + TABLE_ID + " from " + TABLE_PAIRS + " where " + PAIRS_CELL + "=" + cell, null);
-								if (p.getCount() == 0) {
-									sd.delete(TABLE_CELLS, TABLE_ID + "=" + cell, null);
-									int location = c.getInt(c.getColumnIndex(CELLS_LOCATION));
-									Cursor l = sd.rawQuery("select " + TABLE_ID + " from " + TABLE_CELLS + " where " + CELLS_LOCATION + "=" + location, null);
-									if (l.getCount() == 0) sd.delete(TABLE_LOCATIONS, TABLE_ID + "=" + location, null);
-									l.close();
-								}
-								p.close();
-								c.moveToNext();
-							}
-						}
-						c.close();
-						//						a.deletePair(network, pair);
+						da.deletePair(network, pair);
 						mMap.finish();
 					}
-					sd.close();
+					da.close();
 				} else Log.e(TAG, "database unavailable");
-				dh.close();
+				da.closeHelper();
 			}
 		});
 		dialog.setNegativeButton(string_cancel, new DialogInterface.OnClickListener() {
