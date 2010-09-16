@@ -51,38 +51,6 @@ this.setCallback(_arg0);
 reply.writeNoException();
 return true;
 }
-case TRANSACTION_updatePreferences:
-{
-data.enforceInterface(DESCRIPTOR);
-boolean _arg0;
-_arg0 = (0!=data.readInt());
-int _arg1;
-_arg1 = data.readInt();
-boolean _arg2;
-_arg2 = (0!=data.readInt());
-boolean _arg3;
-_arg3 = (0!=data.readInt());
-boolean _arg4;
-_arg4 = (0!=data.readInt());
-boolean _arg5;
-_arg5 = (0!=data.readInt());
-boolean _arg6;
-_arg6 = (0!=data.readInt());
-int _arg7;
-_arg7 = data.readInt();
-boolean _arg8;
-_arg8 = (0!=data.readInt());
-this.updatePreferences(_arg0, _arg1, _arg2, _arg3, _arg4, _arg5, _arg6, _arg7, _arg8);
-reply.writeNoException();
-return true;
-}
-case TRANSACTION_manualOverride:
-{
-data.enforceInterface(DESCRIPTOR);
-this.manualOverride();
-reply.writeNoException();
-return true;
-}
 }
 return super.onTransact(code, data, reply, flags);
 }
@@ -116,49 +84,8 @@ _reply.recycle();
 _data.recycle();
 }
 }
-public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean persistent_status) throws android.os.RemoteException
-{
-android.os.Parcel _data = android.os.Parcel.obtain();
-android.os.Parcel _reply = android.os.Parcel.obtain();
-try {
-_data.writeInterfaceToken(DESCRIPTOR);
-_data.writeInt(((manage)?(1):(0)));
-_data.writeInt(interval);
-_data.writeInt(((notify)?(1):(0)));
-_data.writeInt(((vibrate)?(1):(0)));
-_data.writeInt(((led)?(1):(0)));
-_data.writeInt(((ringtone)?(1):(0)));
-_data.writeInt(((batteryOverride)?(1):(0)));
-_data.writeInt(batteryPercentage);
-_data.writeInt(((persistent_status)?(1):(0)));
-mRemote.transact(Stub.TRANSACTION_updatePreferences, _data, _reply, 0);
-_reply.readException();
-}
-finally {
-_reply.recycle();
-_data.recycle();
-}
-}
-public void manualOverride() throws android.os.RemoteException
-{
-android.os.Parcel _data = android.os.Parcel.obtain();
-android.os.Parcel _reply = android.os.Parcel.obtain();
-try {
-_data.writeInterfaceToken(DESCRIPTOR);
-mRemote.transact(Stub.TRANSACTION_manualOverride, _data, _reply, 0);
-_reply.readException();
-}
-finally {
-_reply.recycle();
-_data.recycle();
-}
-}
 }
 static final int TRANSACTION_setCallback = (android.os.IBinder.FIRST_CALL_TRANSACTION + 0);
-static final int TRANSACTION_updatePreferences = (android.os.IBinder.FIRST_CALL_TRANSACTION + 1);
-static final int TRANSACTION_manualOverride = (android.os.IBinder.FIRST_CALL_TRANSACTION + 2);
 }
 public void setCallback(android.os.IBinder mWapdroidUIBinder) throws android.os.RemoteException;
-public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean persistent_status) throws android.os.RemoteException;
-public void manualOverride() throws android.os.RemoteException;
 }

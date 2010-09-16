@@ -33,6 +33,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.net.NetworkInfo;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiManager;
 import android.os.IBinder;
@@ -45,7 +47,7 @@ import android.telephony.TelephonyManager;
 import android.telephony.gsm.GsmCellLocation;
 import android.util.Log;
 
-public class WapdroidService extends Service {
+public class WapdroidService extends Service implements OnSharedPreferenceChangeListener {
 	private static int NOTIFY_ID = 1;
 	public static final String TAG = "Wapdroid";
 	public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
@@ -61,13 +63,14 @@ public class WapdroidService extends Service {
 	mBatteryLimit,
 	mLastBattPerc = 0;
 	static int mPhoneType;
-	boolean mPersistentStatus;
 	boolean mManageWifi,
 	mManualOverride,
 	mLastScanEnableWifi,
-	mNotify;
+	mNotify,
+	mPersistentStatus;
 	String mSsid, mBssid;
 	private static boolean mApi7;
+	PendingIntent mPendingIntent;
 	IWapdroidUI mWapdroidUI;
 	private BroadcastReceiver mReceiver = new BroadcastReceiver() {
 		private static final String BATTERY_EXTRA_LEVEL = "level";
@@ -97,14 +100,14 @@ public class WapdroidService extends Service {
 						mWapdroidUI.setBattery(currentBattPerc);
 					} catch (RemoteException e) {};
 				}
-			} else if (intent.getAction().equals(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION)) {
+			} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 				// grab a lock to wait for a cell change occur
 				// a connection was gained or lost
 				if (!ManageWakeLocks.hasLock()) {
 					ManageWakeLocks.acquire(context);
-					((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(mPendingIntent);
 				}
-				if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)) {
+				if (((NetworkInfo) intent.getParcelableExtra(WifiManager.EXTRA_NETWORK_INFO)).isConnected()) {
 					WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 					mSsid = wm.getConnectionInfo().getSSID();
 					mBssid = wm.getConnectionInfo().getBSSID();
@@ -119,17 +122,17 @@ public class WapdroidService extends Service {
 					} catch (RemoteException e) {}
 				}
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(mPendingIntent);
 				ManageWakeLocks.release();
 				context.startService(new Intent(context, WapdroidService.class));
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
 				mManualOverride = false;
-				if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
 			} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 				// grab a lock to create notification
 				if (!ManageWakeLocks.hasLock()) {
 					ManageWakeLocks.acquire(context);
-					((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(mPendingIntent);
 				}
 				/*
 				 * get wifi state
@@ -152,7 +155,7 @@ public class WapdroidService extends Service {
 				}
 				// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
 				if (ManageWakeLocks.hasLock()) {
-					if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
 					// if sleeping, re-initialize phone info
 					mCid = UNKNOWN_CID;
 					mLac = UNKNOWN_CID;
@@ -188,29 +191,29 @@ public class WapdroidService extends Service {
 	public static PhoneStateListener mPhoneListener;
 
 	private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
-		public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean persistent_status)
-		throws RemoteException {
-			mManageWifi = manage;
-			mInterval = interval;
-			int limit = batteryOverride ? batteryPercentage : 0;
-			if (limit != mBatteryLimit) mBatteryLimit = limit;
-			mNotifications = 0;
-			if (vibrate) mNotifications |= Notification.DEFAULT_VIBRATE;
-			if (led) mNotifications |= Notification.DEFAULT_LIGHTS;
-			if (ringtone) mNotifications |= Notification.DEFAULT_SOUND;
-			if ((mManageWifi ^ manage) || (mNotify ^ notify)) {
-				mPersistentStatus = persistent_status;
-				if (manage && notify) createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
-			} else if (mPersistentStatus ^ persistent_status) {
-				// changed the status icon persistence
-				mPersistentStatus = persistent_status;
-				if (mPersistentStatus) {
-					if (manage && notify) createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
-				} else if (notify) ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
-			}
-			mNotify = notify;
-		}
-
+//		public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean persistent_status)
+//		throws RemoteException {
+//		mManageWifi = manage;
+//		mInterval = interval;
+//		int limit = batteryOverride ? batteryPercentage : 0;
+//		if (limit != mBatteryLimit) mBatteryLimit = limit;
+//		mNotifications = 0;
+//		if (vibrate) mNotifications |= Notification.DEFAULT_VIBRATE;
+//		if (led) mNotifications |= Notification.DEFAULT_LIGHTS;
+//		if (ringtone) mNotifications |= Notification.DEFAULT_SOUND;
+//		if ((mManageWifi ^ manage) || (mNotify ^ notify)) {
+//			mPersistentStatus = persistent_status;
+//			if (manage && notify) createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
+//		} else if (mPersistentStatus ^ persistent_status) {
+//			// changed the status icon persistence
+//			mPersistentStatus = persistent_status;
+//			if (mPersistentStatus) {
+//				if (manage && notify) createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
+//			} else if (notify) ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
+//		}
+//		mNotify = notify;
+//		}
+//
 		public void setCallback(IBinder mWapdroidUIBinder)
 		throws RemoteException {
 			if (mWapdroidUIBinder != null) {
@@ -218,11 +221,11 @@ public class WapdroidService extends Service {
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 				if (mWapdroidUI != null) {
 					// may have returned from wifi systems
-					mManualOverride = false;
-					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-					SharedPreferences.Editor spe = sp.edit();
-					spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
-					spe.commit();
+//					mManualOverride = false;
+//					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+//					SharedPreferences.Editor spe = sp.edit();
+//					spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
+//					spe.commit();
 					// listen to phone changes if a low battery condition caused this to stop
 					if (mLastBattPerc < mBatteryLimit) ((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 					updateUI();
@@ -230,15 +233,15 @@ public class WapdroidService extends Service {
 			}
 		}
 
-		public void manualOverride() throws RemoteException {
-			// if the service is killed, such as in a low memory situation, this override will be lost
-			// store in preferences for persistence
-			mManualOverride = true;
-			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-			SharedPreferences.Editor spe = sp.edit();
-			spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
-			spe.commit();
-		}
+//		public void manualOverride() throws RemoteException {
+//			// if the service is killed, such as in a low memory situation, this override will be lost
+//			// store in preferences for persistence
+//			mManualOverride = true;
+//			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+//			SharedPreferences.Editor spe = sp.edit();
+//			spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
+//			spe.commit();
+//		}
 	};
 
 	// add onSignalStrengthsChanged for api >= 7
@@ -286,7 +289,7 @@ public class WapdroidService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(mPendingIntent);
 		ManageWakeLocks.release();
 		return mWapdroidService;
 	}
@@ -328,6 +331,7 @@ public class WapdroidService extends Service {
 		mManageWifi = sp.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), "30000"));
 		mNotify = sp.getBoolean(getString(R.string.key_notify), false);
+		mPendingIntent = PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0);
 		if (mNotify) {
 			mPersistentStatus = sp.getBoolean(getString(R.string.key_persistent_status), false);
 			mNotifications = 0;
@@ -337,6 +341,7 @@ public class WapdroidService extends Service {
 		}
 		mBatteryLimit = sp.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30")) : 0;
 		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
+		sp.registerOnSharedPreferenceChangeListener(this);
 		WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		int state = wm.getWifiState();
 		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
@@ -359,7 +364,7 @@ public class WapdroidService extends Service {
 		}
 		IntentFilter f = new IntentFilter();
 		f.addAction(Intent.ACTION_BATTERY_CHANGED);
-		f.addAction(WifiManager.SUPPLICANT_CONNECTION_CHANGE_ACTION);
+		f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
 		f.addAction(Intent.ACTION_SCREEN_OFF);
 		f.addAction(Intent.ACTION_SCREEN_ON);
 		f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
@@ -535,7 +540,7 @@ public class WapdroidService extends Service {
 			// release the service if it doesn't appear that we're entering or leaving a network
 			if (enableWifi == mLastScanEnableWifi) {
 				if (ManageWakeLocks.hasLock()) {
-					if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
 					// if sleeping, re-initialize phone info
 					mCid = UNKNOWN_CID;
 					mLac = UNKNOWN_CID;
@@ -551,11 +556,55 @@ public class WapdroidService extends Service {
 		// service runs for ui, so if not managing, don't notify
 		if (mManageWifi) {
 			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), System.currentTimeMillis());
-			notification.setLatestEventInfo(getBaseContext(), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), getString(R.string.app_name), PendingIntent.getActivity(getBaseContext(), 0, new Intent(getBaseContext(), WapdroidUI.class), 0));
+			notification.setLatestEventInfo(getBaseContext(), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), getString(R.string.app_name), PendingIntent.getActivity(this, 0, (new Intent(this, WapdroidUI.class)), 0));
 			if (mPersistentStatus) notification.flags |= Notification.FLAG_NO_CLEAR;
 			if (update) notification.defaults |= mNotifications;
 			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
 		}
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences,
+			String key) {
+		if (key.equals(getString(R.string.key_manageWifi))) {
+			mManageWifi = sharedPreferences.getBoolean(key, false);
+			if (mManageWifi) {
+				mNotify = sharedPreferences.getBoolean(getString(R.string.key_notify), false);
+				if (mNotify) {
+					mPersistentStatus = sharedPreferences.getBoolean(getString(R.string.key_persistent_status), false);
+					mNotifications = 0;
+					if (sharedPreferences.getBoolean(getString(R.string.key_led), false)) mNotifications |= Notification.DEFAULT_LIGHTS;
+					if (sharedPreferences.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
+					if (sharedPreferences.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;				
+				}
+			}
+		}
+		else if (key.equals(getString(R.string.key_interval))) mInterval = Integer.parseInt((String) sharedPreferences.getString(key, "30000"));
+		else if (key.equals(getString(R.string.key_battery_override))) mBatteryLimit = (sharedPreferences.getBoolean(key, false)) ? Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_battery_percentage), "30")) : 0;
+		else if (key.equals(getString(R.string.key_battery_percentage))) mBatteryLimit = Integer.parseInt((String) sharedPreferences.getString(key, "30"));
+		else if (key.equals(getString(R.string.key_led)) || key.equals(getString(R.string.key_ringtone)) || key.equals(getString(R.string.key_vibrate))) {
+			mNotifications = 0;
+			if (sharedPreferences.getBoolean(getString(R.string.key_led), false)) mNotifications |= Notification.DEFAULT_LIGHTS;
+			if (sharedPreferences.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
+			if (sharedPreferences.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;
+		}
+		else if (key.equals(getString(R.string.key_notify))) {
+			mNotify = sharedPreferences.getBoolean(key, false);
+			if (mNotify) {
+				mPersistentStatus = sharedPreferences.getBoolean(getString(R.string.key_persistent_status), false);
+				mNotifications = 0;
+				if (sharedPreferences.getBoolean(getString(R.string.key_led), false)) mNotifications |= Notification.DEFAULT_LIGHTS;
+				if (sharedPreferences.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
+				if (sharedPreferences.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;				
+			}
+		}
+		else if (key.equals(getString(R.string.key_persistent_status))) {
+			// to change this, manage & notify must me enabled
+			mPersistentStatus = sharedPreferences.getBoolean(key, false);
+			if (mPersistentStatus) createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
+			else ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
+		}
+		else if (key.equals(getString(R.string.key_manual_override))) mManualOverride = sharedPreferences.getBoolean(key, false);
 	}
 
 }
