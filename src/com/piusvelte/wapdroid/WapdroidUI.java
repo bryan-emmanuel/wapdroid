@@ -45,11 +45,10 @@ import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class WapdroidUI extends Activity implements AdListener, ServiceConnection {
+public class WapdroidUI extends Activity implements AdListener, ServiceConnection, View.OnClickListener, DialogInterface.OnClickListener {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
@@ -91,20 +90,18 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case MANAGE_ID:
-			Intent intent = new Intent(this, ManageData.class);
-			intent.putExtra(NETWORKS_BSSID, mBssid);
-			intent.putExtra(TABLE_CELLS, mCells);
-			intent.putExtra(CELLS_CID, mCid);
-			startActivity(intent);
+			startActivity((new Intent(this, ManageData.class)).putExtra(NETWORKS_BSSID, mBssid).putExtra(TABLE_CELLS, mCells).putExtra(CELLS_CID, mCid));
 			return true;
 		case SETTINGS_ID:
 			startActivity(new Intent(this, Settings.class));
 			return true;
 		case WIFI_ID:
-			try {
-				mIService.manualOverride();
+			if (mIService != null) {
+				try {
+					mIService.manualOverride();
+				}
+				catch (RemoteException e) {}
 			}
-			catch (RemoteException e) {}
 			startActivity(new Intent().setComponent(new ComponentName("com.android.settings", "com.android.settings.wifi.WifiSettings")));
 			return true;
 		case ABOUT_ID:
@@ -112,11 +109,7 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 			dialog.setContentView(R.layout.about);
 			dialog.setTitle(R.string.label_about);
 			Button donate = (Button) dialog.findViewById(R.id.button_donate);
-			donate.setOnClickListener(new OnClickListener() {
-				public void onClick(View v) {
-					startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.piusvelte.com?p=wapdroid")));
-				}
-			});
+			donate.setOnClickListener(this);
 			dialog.show();
 			return true;
 		}
@@ -142,12 +135,7 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 		else {
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setMessage(R.string.service_info);
-			dialog.setNegativeButton(R.string.close, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface arg0, int arg1) {
-					arg0.cancel();
-				}
-			});
+			dialog.setNegativeButton(R.string.close, this);
 			dialog.show();			
 		}
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
@@ -222,5 +210,15 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	@Override
 	public void onServiceDisconnected(ComponentName name) {
 		mIService = null;
+	}
+
+	@Override
+	public void onClick(View v) {
+		startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.piusvelte.com?p=wapdroid")));		
+	}
+
+	@Override
+	public void onClick(DialogInterface dialog, int which) {
+		dialog.cancel();
 	}
 }

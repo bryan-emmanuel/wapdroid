@@ -69,7 +69,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	private int mFilter = FILTER_ALL;
 	private String mCells = "", mOperator = "", mBssid = "";
 	public IWapdroidService mIService;
-	//	private App mApp;
 	private Context mContext;
 	private Cursor mCursor;
 

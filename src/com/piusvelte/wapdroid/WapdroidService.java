@@ -68,8 +68,6 @@ public class WapdroidService extends Service {
 	mNotify;
 	String mSsid, mBssid;
 	private static boolean mApi7;
-	AlarmManager mAlarmMgr;
-	PendingIntent mPendingIntent;
 	IWapdroidUI mWapdroidUI;
 	private BroadcastReceiver mReceiver = new BroadcastReceiver() {
 		private static final String BATTERY_EXTRA_LEVEL = "level";
@@ -104,7 +102,7 @@ public class WapdroidService extends Service {
 				// a connection was gained or lost
 				if (!ManageWakeLocks.hasLock()) {
 					ManageWakeLocks.acquire(context);
-					mAlarmMgr.cancel(mPendingIntent);
+					((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				}
 				if (intent.getBooleanExtra(WifiManager.EXTRA_SUPPLICANT_CONNECTED, false)) {
 					WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -121,17 +119,17 @@ public class WapdroidService extends Service {
 					} catch (RemoteException e) {}
 				}
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-				mAlarmMgr.cancel(mPendingIntent);
+				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				ManageWakeLocks.release();
 				context.startService(new Intent(context, WapdroidService.class));
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
 				mManualOverride = false;
-				if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+				if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 			} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 				// grab a lock to create notification
 				if (!ManageWakeLocks.hasLock()) {
 					ManageWakeLocks.acquire(context);
-					mAlarmMgr.cancel(mPendingIntent);
+					((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				}
 				/*
 				 * get wifi state
@@ -154,7 +152,7 @@ public class WapdroidService extends Service {
 				}
 				// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
 				if (ManageWakeLocks.hasLock()) {
-					if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+					if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 					// if sleeping, re-initialize phone info
 					mCid = UNKNOWN_CID;
 					mLac = UNKNOWN_CID;
@@ -288,7 +286,7 @@ public class WapdroidService extends Service {
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		mAlarmMgr.cancel(mPendingIntent);
+		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 		ManageWakeLocks.release();
 		return mWapdroidService;
 	}
@@ -325,9 +323,6 @@ public class WapdroidService extends Service {
 		 * listen to wifi when: screenon
 		 * listen to battery when: disabling on battery level, UI is in foreground
 		 */
-		Intent i = new Intent(this, BootReceiver.class);
-		i.setAction(WAKE_SERVICE);
-		mPendingIntent = PendingIntent.getBroadcast(this, 0, i, 0);
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		// initialize preferences, updated by UI
 		mManageWifi = sp.getBoolean(getString(R.string.key_manageWifi), false);
@@ -342,7 +337,6 @@ public class WapdroidService extends Service {
 		}
 		mBatteryLimit = sp.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30")) : 0;
 		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
-		mAlarmMgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		int state = wm.getWifiState();
 		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
@@ -541,7 +535,7 @@ public class WapdroidService extends Service {
 			// release the service if it doesn't appear that we're entering or leaving a network
 			if (enableWifi == mLastScanEnableWifi) {
 				if (ManageWakeLocks.hasLock()) {
-					if (mInterval > 0) mAlarmMgr.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, mPendingIntent);
+					if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 					// if sleeping, re-initialize phone info
 					mCid = UNKNOWN_CID;
 					mLac = UNKNOWN_CID;
