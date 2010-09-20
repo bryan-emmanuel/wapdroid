@@ -144,8 +144,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				if (state != WifiManager.WIFI_STATE_UNKNOWN) {
 					// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
 					if (mNotify	&& ((mLastWifiState == WifiManager.WIFI_STATE_UNKNOWN)
-									|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
-									|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED)))) createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
+							|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWifiState != WifiManager.WIFI_STATE_DISABLED))
+							|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWifiState != WifiManager.WIFI_STATE_ENABLED)))) createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWifiState != WifiManager.WIFI_STATE_UNKNOWN));
 					mLastWifiState = state;
 					if (mWapdroidUI != null) {
 						try {
@@ -189,59 +189,19 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	static final int UNKNOWN_CID = -1;
 	static final int UNKNOWN_RSSI = 99;
 	public static PhoneStateListener mPhoneListener;
-
 	private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
-//		public void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean persistent_status)
-//		throws RemoteException {
-//		mManageWifi = manage;
-//		mInterval = interval;
-//		int limit = batteryOverride ? batteryPercentage : 0;
-//		if (limit != mBatteryLimit) mBatteryLimit = limit;
-//		mNotifications = 0;
-//		if (vibrate) mNotifications |= Notification.DEFAULT_VIBRATE;
-//		if (led) mNotifications |= Notification.DEFAULT_LIGHTS;
-//		if (ringtone) mNotifications |= Notification.DEFAULT_SOUND;
-//		if ((mManageWifi ^ manage) || (mNotify ^ notify)) {
-//			mPersistentStatus = persistent_status;
-//			if (manage && notify) createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
-//		} else if (mPersistentStatus ^ persistent_status) {
-//			// changed the status icon persistence
-//			mPersistentStatus = persistent_status;
-//			if (mPersistentStatus) {
-//				if (manage && notify) createNotification((mLastWifiState == WifiManager.WIFI_STATE_ENABLED), false);
-//			} else if (notify) ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
-//		}
-//		mNotify = notify;
-//		}
-//
 		public void setCallback(IBinder mWapdroidUIBinder)
 		throws RemoteException {
 			if (mWapdroidUIBinder != null) {
 				if (ManageWakeLocks.hasLock()) ManageWakeLocks.release();
 				mWapdroidUI = IWapdroidUI.Stub.asInterface(mWapdroidUIBinder);
 				if (mWapdroidUI != null) {
-					// may have returned from wifi systems
-//					mManualOverride = false;
-//					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-//					SharedPreferences.Editor spe = sp.edit();
-//					spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
-//					spe.commit();
 					// listen to phone changes if a low battery condition caused this to stop
 					if (mLastBattPerc < mBatteryLimit) ((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 					updateUI();
 				} else if (mLastBattPerc < mBatteryLimit) ((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 			}
 		}
-
-//		public void manualOverride() throws RemoteException {
-//			// if the service is killed, such as in a low memory situation, this override will be lost
-//			// store in preferences for persistence
-//			mManualOverride = true;
-//			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-//			SharedPreferences.Editor spe = sp.edit();
-//			spe.putBoolean(getString(R.string.key_manual_override), mManualOverride);
-//			spe.commit();
-//		}
 	};
 
 	// add onSignalStrengthsChanged for api >= 7
@@ -371,7 +331,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		registerReceiver(mReceiver, f);
 		TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		mPhoneType = tm.getPhoneType();
-		tm.listen(mPhoneListener = (mApi7 ? new PhoneStateListener() {
+		tm.listen(mPhoneListener = (mApi7 ?
+				new PhoneStateListener() {
 			public void onCellLocationChanged(CellLocation location) {
 				// this also calls signalStrengthChanged, since signalStrengthChanged isn't reliable enough by itself
 				getCellInfo(location);
@@ -386,7 +347,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				if (mPhoneType == PHONE_TYPE_CDMA) signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ? signalStrength.getCdmaDbm() : signalStrength.getEvdoDbm());
 				else signalStrengthChanged((signalStrength.getGsmSignalStrength() > 0) && (signalStrength.getGsmSignalStrength() != UNKNOWN_RSSI) ? (2 * signalStrength.getGsmSignalStrength() - 113) : signalStrength.getGsmSignalStrength());
 			}				
-		} : (new PhoneStateListener() {
+		}
+		: (new PhoneStateListener() {
 			public void onCellLocationChanged(CellLocation location) {
 				// this also calls signalStrengthChanged, since onSignalStrengthChanged isn't reliable enough by itself
 				getCellInfo(location);
