@@ -59,7 +59,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageData extends ListActivity implements AdListener, ServiceConnection {
 	private DatabaseAdapter mDatabaseAdapter;
-	private int mNetwork = 0, mCid;
+	int mNetwork = 0, mCid;
 	private static final int MANAGE_ID = Menu.FIRST;
 	private static final int MAP_ID = Menu.FIRST + 1;
 	private static final int DELETE_ID = Menu.FIRST + 2;
@@ -67,11 +67,10 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	private static final int REFRESH_ID = Menu.FIRST + 4;
 	private static final int FILTER_ID = Menu.FIRST + 5;
 	private int mFilter = FILTER_ALL;
-	private String mCells = "", mOperator = "", mBssid = "";
+	String mCells = "", mOperator = "", mBssid = "";
 	public IWapdroidService mIService;
 	private Context mContext;
 	private Cursor mCursor;
-
 	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(int cid, int lac) throws RemoteException {
 			mCid = cid;
@@ -113,11 +112,9 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	@Override
 	protected void onResume() {
 		super.onResume();
-		Log.v(TAG,"open db");
 		mDatabaseAdapter.open();
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
-		Log.v(TAG,"bind service");
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
 		try {
 			listData();
@@ -129,14 +126,12 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	@Override
 	protected void onPause() {
 		super.onPause();
-		Log.v(TAG,"close db");
 		if ((DatabaseAdapter.mDatabase != null) && DatabaseAdapter.mDatabase.isOpen()) mDatabaseAdapter.close();
 		if (mIService != null) {
 			try {
 				mIService.setCallback(null);
 			} catch (RemoteException e) {}
 		}
-		Log.v(TAG,"unbind service");
 		unbindService(this);
 	}
 	
@@ -248,7 +243,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	public void itemAction(int action, int id) {
 		switch(action) {
 		case MANAGE_ID:
-			Log.v(TAG,"manage "+Integer.toString(id));
 			startActivity((new Intent(this, ManageData.class)).putExtra(TABLE_NETWORKS, id).putExtra(TABLE_CELLS, mCells));
 			return;
 		case MAP_ID:
@@ -257,9 +251,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			else startActivity((new Intent(this, MapData.class)).putExtra(TABLE_NETWORKS, (int) (mNetwork == 0 ? id : mNetwork)).putExtra(MapData.OPERATOR, mOperator));
 			return;
 		case DELETE_ID:
-			Log.v(TAG,"delete");
 			if ((DatabaseAdapter.mDatabase != null) && DatabaseAdapter.mDatabase.isOpen()) {
-				Log.v(TAG,"id is "+Integer.toString(id));
 				if (mNetwork == 0) mDatabaseAdapter.deleteNetwork(id);
 				else mDatabaseAdapter.deletePair(mNetwork, id);
 				try {
@@ -307,7 +299,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 
 	@Override
 	public void onServiceConnected(ComponentName name, IBinder service) {
-		Log.v(TAG,"service connected");
 		mIService = IWapdroidService.Stub.asInterface((IBinder) service);
 		if (mWapdroidUI != null) {
 			try {
@@ -318,7 +309,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 
 	@Override
 	public void onServiceDisconnected(ComponentName name) {
-		Log.v(TAG,"service disconnected");
 		mIService = null;
 	}
 

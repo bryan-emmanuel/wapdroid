@@ -211,37 +211,39 @@ class DatabaseAdapter {
 	}
 	
 	Cursor fetchPairsByNetworkFilter(int filter, int network, int cid, String cells) {
-		return mDatabase.rawQuery("select " + TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", " + CELLS_CID + ", "
+		return mDatabase.rawQuery("select "
+				+ TABLE_PAIRS + "." + TABLE_ID + " as " + TABLE_ID + ", "
+				+ CELLS_CID + ", "
 				+ "case when " + LOCATIONS_LAC + "=" + UNKNOWN_CID + " then '" + unknown + "' else " + LOCATIONS_LAC + " end as " + LOCATIONS_LAC + ", "
-				+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " then '" + unknown + "' else (" + PAIRS_RSSI_MIN + "||'" + colon + "'||" + PAIRS_RSSI_MAX + "||'" + dbm + "') end as " + PAIRS_RSSI_MIN + ", "
+				+ "case when " + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + PAIRS_RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + unknown + "' else (" + PAIRS_RSSI_MIN + "||'" + colon + "'||" + PAIRS_RSSI_MAX + "||'" + dbm + "') end as " + PAIRS_RSSI_MIN + ", "
 				+ ((filter == FILTER_ALL) ?
-						("case when " + CELLS_CID + "='" + cid + "' then '" + connected
-								+ "' else (case when " + TABLE_CELLS + "." + TABLE_ID + " in (select " + TABLE_CELLS + "." + TABLE_ID
-								+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-								+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-								+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-								+ " and " + PAIRS_NETWORK + "=" + network
-								+ " and " + cells + ")" + " then '" + withinarea
-								+ "' else '" + outofarea + "' end) end as ")
-								: "'" + ((filter == FILTER_CONNECTED ? connected : filter == FILTER_INRANGE ? withinarea : outofarea) + "' as "))
-								+ STATUS
-								+ " from " + TABLE_PAIRS
-								+ " left join " + TABLE_CELLS
-								+ " on " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-								+ " left outer join " + TABLE_LOCATIONS
-								+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-								+ " where "+ PAIRS_NETWORK + "=" + network
-								+ (filter != FILTER_ALL ?
-										" and "
-										+ (filter == FILTER_CONNECTED ?
-												CELLS_CID + "='" + cid + "'"
-												: TABLE_CELLS + "." + TABLE_ID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + TABLE_CELLS + "." + TABLE_ID
-												+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-												+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
-												+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-												+ " and " + PAIRS_NETWORK + "=" + network
-												+ " and " + cells + ")")
-												: " order by " + STATUS), null);
+					("case when " + CELLS_CID + "='" + cid + "' then '" + connected
+						+ "' else (case when " + TABLE_CELLS + "." + TABLE_ID + " in (select "
+							+ TABLE_CELLS + "." + TABLE_ID
+							+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+							+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+							+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+							+ " and " + PAIRS_NETWORK + "=" + network
+							+ " and " + cells + ")" + " then '" + withinarea
+						+ "' else '" + outofarea + "' end) end as ")
+					: "'" + ((filter == FILTER_CONNECTED ? connected : filter == FILTER_INRANGE ? withinarea : outofarea) + "' as ")) + STATUS
+				+ " from " + TABLE_PAIRS
+				+ " left join " + TABLE_CELLS
+				+ " on " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+				+ " left outer join " + TABLE_LOCATIONS
+				+ " on " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+				+ " where "+ PAIRS_NETWORK + "=" + network
+				+ (filter != FILTER_ALL ?
+					" and " + (filter == FILTER_CONNECTED ?
+						CELLS_CID + "='" + cid + "'"
+						: TABLE_CELLS + "." + TABLE_ID + (filter == FILTER_OUTRANGE ? " NOT" : "") + " in (select "
+							+ TABLE_CELLS + "." + TABLE_ID
+							+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+							+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
+							+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
+							+ " and " + PAIRS_NETWORK + "=" + network
+							+ " and " + cells + ")")
+					: " order by " + STATUS), null);
 	}
 	
 	boolean cellInRange(int cid, int lac, int rssi) {
