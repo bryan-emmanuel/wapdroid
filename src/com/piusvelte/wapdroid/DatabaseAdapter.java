@@ -193,7 +193,7 @@ class DatabaseAdapter {
 							+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
 							+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
 							+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-							+ " and (" + cells + "))" + " then '" + withinarea
+							+ cells + ")" + " then '" + withinarea
 							+ "' else '" + outofarea + "' end) end")
 							: "'" + (filter == FILTER_CONNECTED ? connected : filter == FILTER_INRANGE ? withinarea : outofarea) + "'")
 							+ " as " + STATUS
@@ -206,7 +206,7 @@ class DatabaseAdapter {
 											+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
 											+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
 											+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
-											+ " and (" + cells + "))")
+											+ cells + ")")
 											: " order by " + STATUS), null);		
 	}
 	
@@ -224,7 +224,7 @@ class DatabaseAdapter {
 							+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
 							+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
 							+ " and " + PAIRS_NETWORK + "=" + network
-							+ " and " + cells + ")" + " then '" + withinarea
+							+ cells + ")" + " then '" + withinarea
 						+ "' else '" + outofarea + "' end) end as ")
 					: "'" + ((filter == FILTER_CONNECTED ? connected : filter == FILTER_INRANGE ? withinarea : outofarea) + "' as ")) + STATUS
 				+ " from " + TABLE_PAIRS
@@ -242,7 +242,7 @@ class DatabaseAdapter {
 							+ " where " + PAIRS_CELL + "=" + TABLE_CELLS + "." + TABLE_ID
 							+ " and " + CELLS_LOCATION + "=" + TABLE_LOCATIONS + "." + TABLE_ID
 							+ " and " + PAIRS_NETWORK + "=" + network
-							+ " and " + cells + ")")
+							+ cells + ")")
 					: " order by " + STATUS), null);
 	}
 	

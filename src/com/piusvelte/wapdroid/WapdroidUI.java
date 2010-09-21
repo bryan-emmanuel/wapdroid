@@ -21,7 +21,6 @@
 package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
-import static com.piusvelte.wapdroid.WapdroidService.TABLE_CELLS;
 import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_BSSID;
 import static com.piusvelte.wapdroid.WapdroidService.UNKNOWN_RSSI;
 
@@ -59,8 +58,7 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	field_signal,
 	field_battery,
 	field_LAC;
-	private String mBssid = "",
-	mCells = "";
+	private String mBssid = "";
 	private int mCid = 0;
 	public IWapdroidService mIService;
 
@@ -90,7 +88,7 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case MANAGE_ID:
-			startActivity((new Intent(this, ManageData.class)).putExtra(NETWORKS_BSSID, mBssid).putExtra(TABLE_CELLS, mCells).putExtra(CELLS_CID, mCid));
+			startActivity((new Intent(this, ManageData.class)).putExtra(NETWORKS_BSSID, mBssid).putExtra(CELLS_CID, mCid));
 			return true;
 		case SETTINGS_ID:
 			startActivity(new Intent(this, Settings.class));
@@ -178,9 +176,7 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 			field_battery.setText(Integer.toString(batteryPercentage) + "%");
 		}
 
-		public void setCells(String cells) throws RemoteException {
-			mCells = cells;
-		}
+		public void setCells(String cells) throws RemoteException {}
 
 		public void setOperator(String operator)
 		throws RemoteException {}

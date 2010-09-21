@@ -22,7 +22,6 @@ package com.piusvelte.wapdroid;
 import static com.piusvelte.wapdroid.WapdroidService.TABLE_NETWORKS;
 import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_SSID;
 import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_BSSID;
-import static com.piusvelte.wapdroid.WapdroidService.TABLE_CELLS;
 import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
 import static com.piusvelte.wapdroid.WapdroidService.STATUS;
 import static com.piusvelte.wapdroid.WapdroidService.FILTER_ALL;
@@ -102,7 +101,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			mNetwork = extras.getInt(TABLE_NETWORKS);
 			mCid = extras.getInt(CELLS_CID);
 			mBssid = extras.getString(NETWORKS_BSSID);
-			mCells = extras.getString(TABLE_CELLS);
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
@@ -243,7 +241,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	public void itemAction(int action, int id) {
 		switch(action) {
 		case MANAGE_ID:
-			startActivity((new Intent(this, ManageData.class)).putExtra(TABLE_NETWORKS, id).putExtra(TABLE_CELLS, mCells));
+			startActivity((new Intent(this, ManageData.class)).putExtra(TABLE_NETWORKS, id));
 			return;
 		case MAP_ID:
 			// open gmaps
