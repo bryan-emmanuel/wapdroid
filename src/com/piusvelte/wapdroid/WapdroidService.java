@@ -28,10 +28,11 @@ import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.UNKNOWN_R
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.jar.Attributes.Name;
 
+import com.piusvelte.wapdroid.Wapdroid.Cells;
 import com.piusvelte.wapdroid.Wapdroid.Networks;
-import com.piusvelte.wapdroid.providers.WapdroidContentProvider;
+import com.piusvelte.wapdroid.Wapdroid.Pairs;
+import com.piusvelte.wapdroid.Wapdroid.Ranges;
 
 import android.app.AlarmManager;
 import android.app.Notification;
@@ -365,14 +366,14 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	private void updateUI() {
 		// drop the rssi filtering due to ANR's
 		String cells = " and ((" + Cells.CID + "=" + Integer.toString(mCid) + " and (" + Locations.LAC + "=" + Integer.toString(mLac) + " or " + Cells.LOCATION + "=" + UNKNOWN_CID + "))";
-//		String cells = "(" + CELLS_CID + "=" + Integer.toString(mCid) + " and (" + LOCATIONS_LAC + "=" + Integer.toString(mLac) + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
-//		+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
+		//		String cells = "(" + CELLS_CID + "=" + Integer.toString(mCid) + " and (" + LOCATIONS_LAC + "=" + Integer.toString(mLac) + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
+		//		+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
 		TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		if ((tm.getNeighboringCellInfo() != null) && !tm.getNeighboringCellInfo().isEmpty()) {
 			for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
 				// drop the rssi filtering due to ANR's
 				int nci_lac;
-//				int nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
+				//				int nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
 				if (mNciReflectGetLac != null) {
 					/* feature is supported */
 					try {
@@ -385,9 +386,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				// drop the rssi filtering due to ANR's
 				cells += " or (" + Cells.CID + "=" + Integer.toString(nci.getCid())
 				+ " and (" + Locations.LAC + "=" + nci_lac + " or " + Cells.LOCATION + "=" + UNKNOWN_CID + "))";
-//				cells += " or (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
-//				+ " and (" + LOCATIONS_LAC + "=" + nci_lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
-//				+ ((nci_rssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(nci_rssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(nci_rssi) + ")))");
+				//				cells += " or (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
+				//				+ " and (" + LOCATIONS_LAC + "=" + nci_lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
+				//				+ ((nci_rssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(nci_rssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(nci_rssi) + ")))");
 			}
 		}
 		cells += ")";
@@ -441,34 +442,36 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		boolean enableWifi = mLastScanEnableWifi;
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		if (mManageWifi && (mCid != UNKNOWN_CID)) {
-				if (mSsid != null) {
-					// upgrading, BSSID may not be set yet
-//					int network = da.fetchNetwork(mSsid, mBssid);
-					Uri network;
-					String[] projection = {Networks.SSID, Networks.BSSID};
-					ContentResolver resolver = getContentResolver();
-					Cursor c = resolver.query(Networks.CONTENT_URI, projection, Networks.SSID + "=\"" + mSsid + "\" and (" + Networks.BSSID + "=\"" + mBssid + "\" or " + Networks.BSSID + "=\"\")", null, null);
-					if (c.getCount() > 0) {
-						// ssid matches, only concerned if bssid is empty
-						c.moveToFirst();
-						network = ContentUris.withAppendedId(Networks.CONTENT_URI, (long) c.getInt(c.getColumnIndex(Networks._ID));
-						if (c.getString(c.getColumnIndex(Networks.BSSID)).equals("")) {
-							ContentValues values = new ContentValues();
-							values.put(Networks.BSSID, mBssid);
-							resolver.update(Networks.CONTENT_URI, values, Networks._ID + "=" + network, null);
-						}
-					} else {
-						ContentValues values = new ContentValues();
-						values.put(Networks.SSID, mSsid);
-						values.put(Networks.BSSID, mBssid);
-						network = resolver.insert(Networks.CONTENT_URI, values);
+			if (mSsid != null) {
+				// upgrading, BSSID may not be set yet
+				Uri network = fetchNetwork(mSsid, mBssid);
+				createPair(mCid, mLac, network, mRssi);
+				TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
+				if ((tm.getNeighboringCellInfo() != null) && !tm.getNeighboringCellInfo().isEmpty()) {
+					for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
+						int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_lac, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
+						if (mNciReflectGetLac != null) {
+							/* feature is supported */
+							try {
+								nci_lac = nciGetLac(nci);
+							} catch (IOException ie) {
+								nci_lac = UNKNOWN_CID;
+								Log.e(TAG, "unexpected " + ie);
+							}
+						} else nci_lac = UNKNOWN_CID;
+						if (nci_cid != UNKNOWN_CID) createPair(nci_cid, nci_lac, network, nci_rssi);
 					}
-					c.close();
-					da.createPair(mCid, mLac, network, mRssi);
+				}
+			}
+			// always allow disabling, but only enable if above the battery limit
+			else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
+				enableWifi = cellInRange(mCid, mLac, mRssi);
+				if (enableWifi) {
+					// check neighbors if it appears that we're in range, for both enabling and disabling
 					TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 					if ((tm.getNeighboringCellInfo() != null) && !tm.getNeighboringCellInfo().isEmpty()) {
 						for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
-							int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_lac, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
+							int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
 							if (mNciReflectGetLac != null) {
 								/* feature is supported */
 								try {
@@ -478,38 +481,15 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 									Log.e(TAG, "unexpected " + ie);
 								}
 							} else nci_lac = UNKNOWN_CID;
-							if (nci_cid != UNKNOWN_CID) da.createPair(nci_cid, nci_lac, network, nci_rssi);
+							// break on out of range result
+							if (nci_cid != UNKNOWN_CID) enableWifi = cellInRange(nci_cid, nci_lac, nci_rssi);
+							if (!enableWifi) break;
 						}
 					}
 				}
-				// always allow disabling, but only enable if above the battery limit
-				else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
-					enableWifi = da.cellInRange(mCid, mLac, mRssi);
-					if (enableWifi) {
-						// check neighbors if it appears that we're in range, for both enabling and disabling
-						TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
-						if ((tm.getNeighboringCellInfo() != null) && !tm.getNeighboringCellInfo().isEmpty()) {
-							for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
-								int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
-								if (mNciReflectGetLac != null) {
-									/* feature is supported */
-									try {
-										nci_lac = nciGetLac(nci);
-									} catch (IOException ie) {
-										nci_lac = UNKNOWN_CID;
-										Log.e(TAG, "unexpected " + ie);
-									}
-								} else nci_lac = UNKNOWN_CID;
-								// break on out of range result
-								if (nci_cid != UNKNOWN_CID) enableWifi = da.cellInRange(nci_cid, nci_lac, nci_rssi);
-								if (!enableWifi) break;
-							}
-						}
-					}
-					// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
-					// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
-					if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) ((WifiManager) getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(enableWifi);
-				}
+				// toggle if ((enable & not(enabled or enabling)) or (disable and (enabled or enabling))) and (disable and not(disabling))
+				// to avoid hysteresis when on the edge of a network, require 2 consecutive, identical results before affecting a change
+				if (!mManualOverride && (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING))))) && (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING))) && (mLastScanEnableWifi == enableWifi)) ((WifiManager) getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(enableWifi);
 			}
 			// release the service if it doesn't appear that we're entering or leaving a network
 			if (enableWifi == mLastScanEnableWifi) {
@@ -579,6 +559,136 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			else ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
 		}
 		else if (key.equals(getString(R.string.key_manual_override))) mManualOverride = sharedPreferences.getBoolean(key, false);
+	}
+
+	private Uri fetchNetwork(String ssid, String bssid) {
+		Uri network;
+		String[] projection = {Networks.SSID, Networks.BSSID};
+		ContentResolver resolver = getContentResolver();
+		Cursor c = resolver.query(Networks.CONTENT_URI, projection, Networks.SSID + "=\"" + ssid + "\" and (" + Networks.BSSID + "=\"" + bssid + "\" or " + Networks.BSSID + "=\"\")", null, null);
+		if (c.getCount() > 0) {
+			// ssid matches, only concerned if bssid is empty
+			c.moveToFirst();
+			network = ContentUris.withAppendedId(Networks.CONTENT_URI, c.getLong(c.getColumnIndex(Networks._ID)));
+			if (c.getString(c.getColumnIndex(Networks.BSSID)).equals("")) {
+				ContentValues values = new ContentValues();
+				values.put(Networks.BSSID, bssid);
+				resolver.update(Networks.CONTENT_URI, values, Networks._ID + "=" + ContentUris.parseId(network), null);
+			}
+		} else {
+			ContentValues values = new ContentValues();
+			values.put(Networks.SSID, ssid);
+			values.put(Networks.BSSID, bssid);
+			network = resolver.insert(Networks.CONTENT_URI, values);
+		}
+		c.close();
+		return network;
+	}
+
+	private void createPair(int cid, int lac, Uri network, int rssi) {
+		Uri cell, pair, location = null;
+		ContentResolver resolver = getContentResolver();
+		String[] projection;
+		// select or insert location
+		if (lac > 0) {
+			projection = new String[]{Locations._ID};
+			Cursor c = resolver.query(Locations.CONTENT_URI, projection, Locations.LAC + "=\"" + lac + "\"", null, null);
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				location = ContentUris.withAppendedId(Locations.CONTENT_URI, c.getLong(c.getColumnIndex(Locations._ID)));
+			} else {
+				ContentValues values = new ContentValues();
+				values.put(Locations.LAC, lac);
+				location = resolver.insert(Locations.CONTENT_URI, values);
+			}
+			c.close();
+		}
+		// if location==-1, then match only on cid, otherwise match on location or -1
+		// select or insert cell
+		projection = new String[]{Cells._ID, Cells.LOCATION};
+		Cursor c = resolver.query(Cells.CONTENT_URI, projection, Cells.CID + "=" + cid + (ContentUris.parseId(location) == UNKNOWN_CID ? "" : " and (" + Cells.LOCATION + "=" + UNKNOWN_CID + " or " + Cells.LOCATION + "=" + location + ")"), null, null);
+		if (c.getCount() > 0) {
+			c.moveToFirst();
+			cell = ContentUris.withAppendedId(Cells.CONTENT_URI, c.getLong(c.getColumnIndex(Cells._ID)));
+			if ((ContentUris.parseId(location) != UNKNOWN_CID) && (c.getInt(c.getColumnIndex(Cells.LOCATION)) == UNKNOWN_CID)) {
+				ContentValues values = new ContentValues();
+				values.put(Cells.LOCATION, ContentUris.parseId(location));
+				resolver.update(Cells.CONTENT_URI, values, Cells._ID + "=" + ContentUris.parseId(cell), null);
+			}
+		} else {
+			ContentValues values = new ContentValues();
+			values.put(Cells.CID, cid);
+			values.put(Cells.LOCATION, ContentUris.parseId(location));
+			cell = resolver.insert(Cells.CONTENT_URI, values);
+		}
+		c.close();
+		// select and update or insert pair
+		projection = new String[]{Pairs.RSSI_MIN, Pairs.RSSI_MAX};
+		c = resolver.query(Pairs.CONTENT_URI, projection, Pairs.CELL + "=" + ContentUris.parseId(cell) + " and " + Pairs.NETWORK + "=" + ContentUris.parseId(network), null, null);
+		if (c.getCount() > 0) {
+			if (rssi != UNKNOWN_RSSI) {
+				c.moveToFirst();
+				pair = ContentUris.withAppendedId(Pairs.CONTENT_URI, c.getLong(c.getColumnIndex(Pairs._ID)));
+				int rssi_min = c.getInt(c.getColumnIndex(Pairs.RSSI_MIN));
+				int rssi_max = c.getInt(c.getColumnIndex(Pairs.RSSI_MAX));
+				if (rssi_min > rssi) {
+					ContentValues values = new ContentValues();
+					values.put(Pairs.RSSI_MIN, rssi);
+					resolver.update(Pairs.CONTENT_URI, values, Pairs._ID + "=" + ContentUris.parseId(pair), null);
+				}
+				else if ((rssi_max == UNKNOWN_RSSI) || (rssi_max < rssi)) {
+					ContentValues values = new ContentValues();
+					values.put(Pairs.RSSI_MAX, rssi);
+					resolver.update(Pairs.CONTENT_URI, values, Pairs._ID + "=" + ContentUris.parseId(pair), null);
+				}
+			}
+		} else {
+			ContentValues values = new ContentValues();
+			values.put(Pairs.CELL, ContentUris.parseId(cell));
+			values.put(Pairs.NETWORK, ContentUris.parseId(network));
+			values.put(Pairs.RSSI_MIN, rssi);
+			values.put(Pairs.RSSI_MAX, rssi);
+			resolver.insert(Pairs.CONTENT_URI, values);
+		}
+		c.close();
+	}
+	
+	private boolean cellInRange(int cid, int lac, int rssi) {
+		String[] projection = {Ranges.LAC};
+		ContentResolver resolver = getContentResolver();
+		Cursor c = resolver.query(Ranges.CONTENT_URI, projection,
+				Cells.CID + "=" + cid
+				+ " and (" + Ranges.LAC + "=" + lac + " or " + Ranges.LOCATION + "=" + UNKNOWN_CID + ")"
+				+ (rssi == UNKNOWN_RSSI
+						? ""
+						: " and (((" + Ranges.RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + Ranges.RSSI_MIN + "<=" + rssi + ")) and (" + Ranges.RSSI_MAX + ">=" + rssi + "))"), null, null);
+		boolean inRange = (c.getCount() > 0);
+		if (inRange && (lac > 0)) {
+			// check LAC, as this is a new column
+			c.moveToFirst();
+			if (c.isNull(c.getColumnIndex(Ranges.LOCATION))) {
+				// select or insert location
+				Uri location;
+				if (lac > 0) {
+					projection = new String[]{Locations._ID};
+					Cursor l = resolver.query(Locations.CONTENT_URI, projection, Locations.LAC + "=" + lac, null, null);
+					if (l.getCount() > 0) {
+						l.moveToFirst();
+						location = ContentUris.withAppendedId(Locations.CONTENT_URI, l.getLong(l.getColumnIndex(Locations._ID)));
+					} else {
+						ContentValues values = new ContentValues();
+						values.put(Locations.LAC, lac);
+						location = resolver.insert(Locations.CONTENT_URI, values);
+					}
+					l.close();
+				} else location = ContentUris.withAppendedId(Locations.CONTENT_URI, UNKNOWN_CID);
+				ContentValues values = new ContentValues();
+				values.put(Cells.LOCATION, ContentUris.parseId(location));
+				resolver.update(Cells.CONTENT_URI, values, Cells._ID + "=" + c.getLong(c.getColumnIndex(Ranges._ID)), null);
+			}
+		}
+		c.close();
+		return inRange;
 	}
 
 }

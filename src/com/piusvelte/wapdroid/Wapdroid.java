@@ -69,5 +69,21 @@ public final class Wapdroid {
 		public static final String CONTENT_ITEM_TYPE = "";
 		public static final String LAC = "LAC";
 	}
+	
+	public static final class Ranges implements BaseColumns {
+		private Ranges() {}
+		
+		public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/ranges");
+		public static final String CONTENT_TYPE = "";
+		public static final String CONTENT_ITEM_TYPE = "";
+		public static final String CID = "CID";
+		public static final String LAC = "LAC";
+		public static final String RSSI_MIN = "RSSI_min";
+		public static final String RSSI_MAX = "RSSI_max";
+		public static final String LOCATION = "location";
+		public static final String NETWORK = "network";
+		public static final String SSID = "SSID";
+		public static final String BSSID = "BSSID";
+	}
 
 }

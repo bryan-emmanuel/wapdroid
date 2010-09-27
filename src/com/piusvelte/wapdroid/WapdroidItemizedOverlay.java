@@ -21,7 +21,6 @@
 package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.Wapdroid.Pairs;
-import static com.piusvelte.wapdroid.Wapdroid.TAG;
 import static com.piusvelte.wapdroid.MapData.color_primary;
 import static com.piusvelte.wapdroid.MapData.color_secondary;
 import static com.piusvelte.wapdroid.MapData.drawable_cell;
@@ -33,19 +32,23 @@ import static com.piusvelte.wapdroid.MapData.string_cancel;
 import java.util.ArrayList;
 
 import android.app.AlertDialog;
+import android.content.ContentResolver;
 import android.content.DialogInterface;
+import android.database.Cursor;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
-import android.util.Log;
 
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Projection;
-import com.piusvelte.wapdroid.providers.WapdroidContentProvider;
+import com.piusvelte.wapdroid.Wapdroid.Cells;
+import com.piusvelte.wapdroid.Wapdroid.Locations;
+import com.piusvelte.wapdroid.Wapdroid.Networks;
+import com.piusvelte.wapdroid.Wapdroid.Pairs;
 
 public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem> {
 	private ArrayList<WapdroidOverlayItem> mOverlays = new ArrayList<WapdroidOverlayItem>();
@@ -141,25 +144,51 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 		dialog.setPositiveButton(pair == 0 ? string_deleteNetwork : string_deleteCell, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				WapdroidContentProvider da = new WapdroidContentProvider(mMap);
-				if (da.isOpen()) {
-					if (pair == 0) {
-						da.deleteNetwork(network);
-						mMap.finish();
-					} else if (mMap.mPair == 0) {
-						// delete one pair from the mapped network
-						da.deletePair(network, pair);
+				ContentResolver resolver = mMap.getContentResolver();
+				String[] projection;
+				if (pair == 0) {
+					resolver.delete(Networks.CONTENT_URI, Networks._ID + "=" + network, null);
+					resolver.delete(Pairs.CONTENT_URI, Pairs.NETWORK + "=" + network, null);
+				} else {
+					// delete one pair from the mapped network or 
+					// delete an individually mapped cell
+					resolver.delete(Pairs.CONTENT_URI, Pairs._ID + "=" + pair, null);
+					projection = new String[]{Pairs._ID};
+					Cursor n = resolver.query(Pairs.CONTENT_URI, projection, Pairs.NETWORK + "=" + network, null, null);
+					if (n.getCount() == 0) resolver.delete(Networks.CONTENT_URI, Networks._ID + "=" + network, null);
+					n.close();
+				}
+				projection = new String[]{Cells._ID, Cells.LOCATION};
+				Cursor c = resolver.query(Cells.CONTENT_URI, projection, null, null, null);
+				if (c.getCount() > 0) {
+					c.moveToFirst();
+					int[] index = {c.getColumnIndex(Cells._ID), c.getColumnIndex(Cells.LOCATION)};
+					while (!c.isAfterLast()) {
+						int cell = c.getInt(index[0]);
+						projection = new String[]{Pairs._ID};
+						Cursor p = resolver.query(Pairs.CONTENT_URI, projection, Pairs.CELL + "=" + cell, null, null);
+						if (p.getCount() == 0) {
+							resolver.delete(Cells.CONTENT_URI, Cells._ID + "=" + cell, null);
+							int location = c.getInt(index[1]);
+							projection = new String[]{Cells.LOCATION};
+							Cursor l = resolver.query(Cells.CONTENT_URI, projection, Cells.LOCATION + "=" + location, null, null);
+							if (l.getCount() == 0) resolver.delete(Locations.CONTENT_URI, Locations._ID + "=" + location, null);
+							l.close();
+						}
+						p.close();
+						c.moveToNext();
+					}
+				}
+				c.close();
+				if (pair == 0) mMap.finish();
+				else {
+					if (mMap.mPair == 0) {
 						mOverlays.remove(item);
 						mMap.mMView.invalidate();
 						mMap.mapData();
 						dialog.cancel();
-					} else {
-						// delete an individually mapped cell
-						da.deletePair(network, pair);
-						mMap.finish();
-					}
-				} else Log.e(TAG, "database unavailable");
-				da.closeHelper();
+					} else mMap.finish();
+				}
 			}
 		});
 		dialog.setNegativeButton(string_cancel, new DialogInterface.OnClickListener() {

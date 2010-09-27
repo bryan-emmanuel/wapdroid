@@ -60,7 +60,11 @@ import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
-import com.piusvelte.wapdroid.providers.WapdroidContentProvider;
+import com.piusvelte.wapdroid.Wapdroid.Cells;
+import com.piusvelte.wapdroid.Wapdroid.Locations;
+import com.piusvelte.wapdroid.Wapdroid.Networks;
+import com.piusvelte.wapdroid.Wapdroid.Pairs;
+import com.piusvelte.wapdroid.Wapdroid.Ranges;
 
 public class MapData extends MapActivity implements AdListener, DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private static final int REFRESH_ID = Menu.FIRST;
@@ -272,54 +276,50 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 				int ctr = 0;
 				List<Overlay> mapOverlays = mMView.getOverlays();
 				GeoPoint point = new GeoPoint(0, 0);
-				WapdroidContentProvider da = new WapdroidContentProvider(mContext);
-				if (da.isOpen()) {
-					Cursor pairs = mPair == 0 ? da.fetchData(Pairs.NETWORK, mNetwork) : da.fetchData(TABLE_PAIRS + "." + Pairs._ID, mPair);
-					int ct = pairs.getCount();
-					if (ct > 0) {
-						WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);
-						pairs.moveToFirst();
-						while (!interrupted() && !pairs.isAfterLast()) {
-							ctr++;
-							int cid = pairs.getInt(pairs.getColumnIndex(Cells.CID)),
-							lac = pairs.getInt(pairs.getColumnIndex(Locations.LAC)),
-							rssi_min = pairs.getInt(pairs.getColumnIndex(Pairs.RSSI_MIN)),
-							rssi_max = pairs.getInt(pairs.getColumnIndex(Pairs.RSSI_MAX)),
-							rssi_avg = Math.round((rssi_min + rssi_max) / 2),
-							rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
-							mMsg = string_cellWarning + Pairs.CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
-							mHandler.post(mUpdtDialog);
-							String tower = "{" + addInt(cell_id, cid) + "," + addInt(location_area_code, lac) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
-							if (rssi_avg != UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
-							tower += "}";
-							if (ssid == "") ssid = pairs.getString(pairs.getColumnIndex(Networks.SSID));
-							if (bssid == "") bssid = pairs.getString(pairs.getColumnIndex(Networks.BSSID));
-							if (towers != "") towers += ",";
-							towers += tower;
-							point = getGeoPoint(bldRequest(tower, bssid));
-							pinOverlays.addOverlay(new WapdroidOverlayItem(point, Pairs.CELL,
-									string_cid + Integer.toString(cid)
-									+ string_linefeed + string_lac + Integer.toString(lac)
-									+ string_linefeed + string_range + Integer.toString(rssi_min) + string_colon + Integer.toString(rssi_max),
-									mNetwork, pairs.getInt(pairs.getColumnIndex(Pairs._ID)), rssi_avg, rssi_range));
-							pairs.moveToNext();
-						}
-						if (mPair == 0) {
-							mMsg = Pairs.NETWORK + ": " + ssid;
-							mHandler.post(mUpdtDialog);
-							point = getGeoPoint(bldRequest(towers, bssid));
-							Location location = new Location("");
-							location.setLatitude(point.getLatitudeE6()/1e6);
-							location.setLongitude(point.getLongitudeE6()/1e6);
-							pinOverlays.addOverlay(new WapdroidOverlayItem(point, Pairs.NETWORK, ssid, mNetwork), drawable_network);
-							pinOverlays.setDistances(location);
-						}
-						mapOverlays.add(pinOverlays);
-						mMController.setCenter(point);
+				Cursor pairs = getContentResolver().query(Ranges.CONTENT_URI, new String[]{Ranges._ID, Ranges.SSID, Ranges.BSSID, Ranges.CID, Ranges.LAC, Ranges.RSSI_MIN, Ranges.RSSI_MAX}, mPair == 0 ? Ranges.NETWORK + "=" + mNetwork : Ranges._ID + "=" + mPair, null, null);
+				int ct = pairs.getCount();
+				if (ct > 0) {
+					WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);
+					pairs.moveToFirst();
+					while (!interrupted() && !pairs.isAfterLast()) {
+						ctr++;
+						int cid = pairs.getInt(pairs.getColumnIndex(Cells.CID)),
+						lac = pairs.getInt(pairs.getColumnIndex(Locations.LAC)),
+						rssi_min = pairs.getInt(pairs.getColumnIndex(Pairs.RSSI_MIN)),
+						rssi_max = pairs.getInt(pairs.getColumnIndex(Pairs.RSSI_MAX)),
+						rssi_avg = Math.round((rssi_min + rssi_max) / 2),
+						rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
+						mMsg = string_cellWarning + Pairs.CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
+						mHandler.post(mUpdtDialog);
+						String tower = "{" + addInt(cell_id, cid) + "," + addInt(location_area_code, lac) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
+						if (rssi_avg != UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
+						tower += "}";
+						if (ssid == "") ssid = pairs.getString(pairs.getColumnIndex(Networks.SSID));
+						if (bssid == "") bssid = pairs.getString(pairs.getColumnIndex(Networks.BSSID));
+						if (towers != "") towers += ",";
+						towers += tower;
+						point = getGeoPoint(bldRequest(tower, bssid));
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, Pairs.CELL,
+								string_cid + Integer.toString(cid)
+								+ string_linefeed + string_lac + Integer.toString(lac)
+								+ string_linefeed + string_range + Integer.toString(rssi_min) + string_colon + Integer.toString(rssi_max),
+								mNetwork, pairs.getInt(pairs.getColumnIndex(Pairs._ID)), rssi_avg, rssi_range));
+						pairs.moveToNext();
 					}
-					pairs.close();
-					da.closeHelper();
-				} else Log.e(TAG, "database unavailable");
+					if (mPair == 0) {
+						mMsg = Pairs.NETWORK + ": " + ssid;
+						mHandler.post(mUpdtDialog);
+						point = getGeoPoint(bldRequest(towers, bssid));
+						Location location = new Location("");
+						location.setLatitude(point.getLatitudeE6()/1e6);
+						location.setLongitude(point.getLongitudeE6()/1e6);
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, Pairs.NETWORK, ssid, mNetwork), drawable_network);
+						pinOverlays.setDistances(location);
+					}
+					mapOverlays.add(pinOverlays);
+					mMController.setCenter(point);
+				}
+				pairs.close();
 				mLoadingDialog.dismiss();
 				interrupt();
 			}

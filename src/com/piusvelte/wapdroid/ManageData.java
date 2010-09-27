@@ -19,34 +19,40 @@
  */
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.Wapdroid.TAG;
 import static com.piusvelte.wapdroid.Wapdroid.Networks;
 import static com.piusvelte.wapdroid.Wapdroid.Cells;
 import static com.piusvelte.wapdroid.Wapdroid.Pairs;
 import static com.piusvelte.wapdroid.Wapdroid.Locations;
-import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.FILTER_ALL;
-import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.STATUS;
 import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.TABLE_CELLS;
+import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.TABLE_LOCATIONS;
 import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.UNKNOWN_CID;
+import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.UNKNOWN_RSSI;
 
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
 import com.piusvelte.wapdroid.R;
-import com.piusvelte.wapdroid.providers.WapdroidContentProvider;
+import com.piusvelte.wapdroid.Wapdroid.Cells;
+import com.piusvelte.wapdroid.Wapdroid.Locations;
+import com.piusvelte.wapdroid.Wapdroid.Networks;
+import com.piusvelte.wapdroid.Wapdroid.Pairs;
+import com.piusvelte.wapdroid.Wapdroid.Ranges;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ComponentName;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -64,11 +70,15 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	private static final int CANCEL_ID = Menu.FIRST + 3;
 	private static final int REFRESH_ID = Menu.FIRST + 4;
 	private static final int FILTER_ID = Menu.FIRST + 5;
+	private static final String STATUS = "status";
+	private static final int FILTER_ALL = 0;
+	private static final int FILTER_INRANGE = 1;
+	private static final int FILTER_OUTRANGE = 2;
+	private static final int FILTER_CONNECTED = 3;
 	private int mFilter = FILTER_ALL;
 	String mCells = "", mOperator = "", mBssid = "";
 	public IWapdroidService mIService;
 	private Context mContext;
-	private WapdroidContentProvider mDatabaseAdapter;
 	private Cursor mCursor;
 	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(int cid, int lac) throws RemoteException {
@@ -104,28 +114,19 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
-		mDatabaseAdapter = new WapdroidContentProvider(this);
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		if (!mDatabaseAdapter.isOpen()) mDatabaseAdapter.open();
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
-		try {
-			listData();
-		} catch (RemoteException e) {
-			e.printStackTrace();
-		}
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		mDatabaseAdapter.closeHelper();
-		if (mDatabaseAdapter.isOpen()) mDatabaseAdapter.close();
 		if (mIService != null) {
 			try {
 				mIService.setCallback(null);
@@ -133,7 +134,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		}
 		unbindService(this);
 	}
-	
+
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean result = super.onCreateOptionsMenu(menu);
@@ -241,16 +242,40 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			else startActivity((new Intent(this, MapData.class)).putExtra(TABLE_NETWORKS, (int) (mNetwork == 0 ? id : mNetwork)).putExtra(MapData.OPERATOR, mOperator));
 			return;
 		case DELETE_ID:
-			if ((WapdroidProvider.WapdroidContentProvider != null) && WapdroidProvider.WapdroidContentProvider.isOpen()) {
-				if (mNetwork == 0) mDatabaseAdapter.deleteNetwork(id);
-				else mDatabaseAdapter.deletePair(mNetwork, id);
-				try {
-					listData();
+			ContentResolver resolver = getContentResolver();
+			String[] projection;
+			if (mNetwork == 0) {
+				resolver.delete(Networks.CONTENT_URI, Networks._ID + "=" + id, null);
+				resolver.delete(Pairs.CONTENT_URI, Pairs.NETWORK + "=" + id, null);
+			} else {
+				resolver.delete(Pairs.CONTENT_URI, Pairs._ID + "=" + id, null);
+				projection = new String[]{Pairs._ID};
+				Cursor n = resolver.query(Pairs.CONTENT_URI, projection, Pairs.NETWORK + "=" + mNetwork, null, null);
+				if (n.getCount() == 0) resolver.delete(Networks.CONTENT_URI, Networks._ID + "=" + mNetwork, null);
+				n.close();
+			}
+			projection = new String[]{Cells._ID, Cells.LOCATION};
+			Cursor c = resolver.query(Cells.CONTENT_URI, projection, null, null, null);
+			if (c.getCount() > 0) {
+				c.moveToFirst();
+				int[] index = {c.getColumnIndex(Cells._ID), c.getColumnIndex(Cells.LOCATION)};
+				while (!c.isAfterLast()) {
+					int cell = c.getInt(index[0]);
+					projection = new String[]{Pairs._ID};
+					Cursor p = resolver.query(Pairs.CONTENT_URI, projection, Pairs.CELL + "=" + cell, null, null);
+					if (p.getCount() == 0) {
+						resolver.delete(Cells.CONTENT_URI, Cells._ID + "=" + cell, null);
+						int location = c.getInt(index[1]);
+						projection = new String[]{Cells.LOCATION};
+						Cursor l = resolver.query(Cells.CONTENT_URI, projection, Cells.LOCATION + "=" + location, null, null);
+						if (l.getCount() == 0) resolver.delete(Locations.CONTENT_URI, Locations._ID + "=" + location, null);
+						l.close();
+					}
+					p.close();
+					c.moveToNext();
 				}
-				catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			} else Log.e(TAG,"database unavailable");
+			}
+			c.close();
 			return;
 		case CANCEL_ID:
 			return;
@@ -259,7 +284,60 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 
 	public void listData() throws RemoteException {
 		// filter results
-		mCursor = mNetwork == 0 ? mDatabaseAdapter.fetchNetworks(mFilter, mBssid, mCells) : mDatabaseAdapter.fetchPairsByNetworkFilter(mFilter, mNetwork, mCid, mCells);
+		Resources r = getResources();
+		String[] projection;
+		if (mNetwork == 0) {
+			if (mFilter == FILTER_ALL) projection = new String[]{Networks._ID,
+					Networks.SSID,
+					Networks.BSSID,
+					"case when " + Networks.BSSID + "='" + mBssid
+					+ "' then '" + r.getString(R.string.connected)
+					+ "' else (case when " + TABLE_NETWORKS + "." + Networks._ID + " in (select " + Pairs.NETWORK
+					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+					+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Cells._ID
+					+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
+					+ mCells + ") then '" + r.getString(R.string.withinarea)
+					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + r.getString(R.string.status)};
+			else projection = new String[]{Networks._ID,
+					Networks.SSID,
+					Networks.BSSID,
+					r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + " as " + r.getString(R.string.status)};
+			mCursor = getContentResolver().query(Networks.CONTENT_URI, projection,
+					mFilter == FILTER_CONNECTED ? Networks.BSSID + "='" + mBssid + "'"
+							: Networks._ID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + Pairs.NETWORK
+							+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+							+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Pairs._ID
+							+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
+							+ mCells + ")", null, r.getString(R.string.status));
+		} else {
+			if (mFilter == FILTER_ALL) projection = new String[]{Ranges._ID,
+					Ranges.CID,
+					"case when " + Locations.LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Locations.LAC + " end as " + Locations.LAC,
+					"case when " + Pairs.RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + Pairs.RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Pairs.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Pairs.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Pairs.RSSI_MIN,
+					"case when " + Cells.CID + "='" + mCid + "' then '" + r.getString(R.string.connected)
+					+ "' else (case when " + TABLE_CELLS + "." + Cells._ID + " in (select "
+					+ TABLE_CELLS + "." + Cells._ID
+					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+					+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Cells._ID
+					+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
+					+ " and " + Pairs.NETWORK + "=" + mNetwork
+					+ mCells + ")" + " then '" + r.getString(R.string.withinarea)
+					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + r.getString(R.string.status)};
+			else projection = new String[]{Ranges._ID,
+					Ranges.CID,
+					"case when " + Locations.LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Locations.LAC + " end as " + Locations.LAC,
+					"case when " + Pairs.RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + Pairs.RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Pairs.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Pairs.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Pairs.RSSI_MIN,
+					r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + " as " + r.getString(R.string.status)};
+			mCursor = getContentResolver().query(Ranges.CONTENT_URI, projection,
+					Ranges.NETWORK + "=" + mNetwork
+					+ " and " + (mFilter == FILTER_CONNECTED ? Ranges.CID + "='" + mCid + "'"
+					: Ranges.CID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + Cells.CID
+					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+					+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Cells._ID
+					+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
+					+ " and " + Pairs.NETWORK + "=" + mNetwork
+					+ mCells + ")"), null, r.getString(R.string.status));
+		}
 		startManagingCursor(mCursor);
 		SimpleCursorAdapter data = mNetwork == 0 ?
 				new SimpleCursorAdapter(mContext,
@@ -302,5 +380,4 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		mIService = null;
 	}
 
-	
 }
