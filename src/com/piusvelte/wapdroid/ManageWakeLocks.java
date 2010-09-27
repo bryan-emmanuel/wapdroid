@@ -20,7 +20,7 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidService.TAG;
+import static com.piusvelte.wapdroid.Wapdroid.TAG;
 import android.content.Context;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;

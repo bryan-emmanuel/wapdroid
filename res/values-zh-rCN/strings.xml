@@ -63,7 +63,6 @@
     <string name="battery_percentage">电池百分比</string>
     <string name="connected">连接</string>
     <string name="unknown">未知</string>
-    <string name="cancel">取消</string>
     <string name="map_network">网络地图</string>
     <string name="map_cell">地图位置</string>
     <string name="linefeed">\u000A</string>

@@ -20,8 +20,8 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidService.PAIRS_NETWORK;
-import static com.piusvelte.wapdroid.WapdroidService.TAG;
+import static com.piusvelte.wapdroid.Wapdroid.Pairs;
+import static com.piusvelte.wapdroid.Wapdroid.TAG;
 import static com.piusvelte.wapdroid.MapData.color_primary;
 import static com.piusvelte.wapdroid.MapData.color_secondary;
 import static com.piusvelte.wapdroid.MapData.drawable_cell;
@@ -45,6 +45,7 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Projection;
+import com.piusvelte.wapdroid.providers.WapdroidContentProvider;
 
 public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem> {
 	private ArrayList<WapdroidOverlayItem> mOverlays = new ArrayList<WapdroidOverlayItem>();
@@ -68,7 +69,7 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 			Projection projection = mapView.getProjection();
 			projection.toPixels(gpt, pt);
 			double mercator = Math.cos(Math.toRadians(gpt.getLatitudeE6()/1E6));
-			if (item.getTitle() == PAIRS_NETWORK) {
+			if (item.getTitle() == Pairs.NETWORK) {
 				radius = 70;
 				paint.setColor(color_primary);
 				paint.setAlpha(mNetworkAlpha);
@@ -113,7 +114,7 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 
 	public void setDistances(Location location) {
 		for (WapdroidOverlayItem item : mOverlays) {
-			if (item.getTitle() != PAIRS_NETWORK) {
+			if (item.getTitle() != Pairs.NETWORK) {
 				GeoPoint gpt = item.getPoint();
 				Location cell = new Location("");
 				cell.setLatitude(gpt.getLatitudeE6()/1e6);
@@ -140,9 +141,8 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 		dialog.setPositiveButton(pair == 0 ? string_deleteNetwork : string_deleteCell, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				DatabaseAdapter da = new DatabaseAdapter(mMap);
-				da.open();
-				if ((DatabaseAdapter.mDatabase != null) && DatabaseAdapter.mDatabase.isOpen()) {
+				WapdroidContentProvider da = new WapdroidContentProvider(mMap);
+				if (da.isOpen()) {
 					if (pair == 0) {
 						da.deleteNetwork(network);
 						mMap.finish();
@@ -158,7 +158,6 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 						da.deletePair(network, pair);
 						mMap.finish();
 					}
-					da.close();
 				} else Log.e(TAG, "database unavailable");
 				da.closeHelper();
 			}

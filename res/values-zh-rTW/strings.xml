@@ -63,7 +63,6 @@
     <string name="battery_percentage">電集區百分比</string>
     <string name="connected">連線</string>
     <string name="unknown">未知</string>
-    <string name="cancel">取消</string>
     <string name="map_network">網路地圖</string>
     <string name="map_cell">地圖位置</string>
     <string name="linefeed">\u000A</string>

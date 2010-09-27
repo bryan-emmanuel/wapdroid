@@ -19,20 +19,20 @@
  */
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidService.TABLE_NETWORKS;
-import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_SSID;
-import static com.piusvelte.wapdroid.WapdroidService.NETWORKS_BSSID;
-import static com.piusvelte.wapdroid.WapdroidService.CELLS_CID;
-import static com.piusvelte.wapdroid.WapdroidService.STATUS;
-import static com.piusvelte.wapdroid.WapdroidService.FILTER_ALL;
-import static com.piusvelte.wapdroid.WapdroidService.LOCATIONS_LAC;
-import static com.piusvelte.wapdroid.WapdroidService.TABLE_PAIRS;
-import static com.piusvelte.wapdroid.WapdroidService.PAIRS_RSSI_MIN;
-import static com.piusvelte.wapdroid.WapdroidService.TAG;
+import static com.piusvelte.wapdroid.Wapdroid.TAG;
+import static com.piusvelte.wapdroid.Wapdroid.Networks;
+import static com.piusvelte.wapdroid.Wapdroid.Cells;
+import static com.piusvelte.wapdroid.Wapdroid.Pairs;
+import static com.piusvelte.wapdroid.Wapdroid.Locations;
+import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.FILTER_ALL;
+import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.STATUS;
+import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.TABLE_PAIRS;
 
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
 import com.piusvelte.wapdroid.R;
+import com.piusvelte.wapdroid.providers.WapdroidContentProvider;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -57,7 +57,6 @@ import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageData extends ListActivity implements AdListener, ServiceConnection {
-	private DatabaseAdapter mDatabaseAdapter;
 	int mNetwork = 0, mCid;
 	private static final int MANAGE_ID = Menu.FIRST;
 	private static final int MAP_ID = Menu.FIRST + 1;
@@ -69,6 +68,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	String mCells = "", mOperator = "", mBssid = "";
 	public IWapdroidService mIService;
 	private Context mContext;
+	private WapdroidContentProvider mDatabaseAdapter;
 	private Cursor mCursor;
 	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(int cid, int lac) throws RemoteException {
@@ -99,18 +99,18 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			mNetwork = extras.getInt(TABLE_NETWORKS);
-			mCid = extras.getInt(CELLS_CID);
-			mBssid = extras.getString(NETWORKS_BSSID);
+			mCid = extras.getInt(Cells.CID);
+			mBssid = extras.getString(Networks.BSSID);
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
-		mDatabaseAdapter = new DatabaseAdapter(this);
+		mDatabaseAdapter = new WapdroidContentProvider(this);
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		mDatabaseAdapter.open();
+		if (!mDatabaseAdapter.isOpen()) mDatabaseAdapter.open();
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
@@ -124,22 +124,14 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	@Override
 	protected void onPause() {
 		super.onPause();
-		if ((DatabaseAdapter.mDatabase != null) && DatabaseAdapter.mDatabase.isOpen()) mDatabaseAdapter.close();
+		mDatabaseAdapter.closeHelper();
+		if (mDatabaseAdapter.isOpen()) mDatabaseAdapter.close();
 		if (mIService != null) {
 			try {
 				mIService.setCallback(null);
 			} catch (RemoteException e) {}
 		}
 		unbindService(this);
-	}
-	
-	@Override
-	protected void onDestroy() {
-		if (mDatabaseAdapter != null) {
-			if ((DatabaseAdapter.mDatabase != null) && DatabaseAdapter.mDatabase.isOpen()) mDatabaseAdapter.close();
-			mDatabaseAdapter.closeHelper();
-		}
-		super.onDestroy();
 	}
 	
 	@Override
@@ -197,7 +189,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		if (mNetwork == 0) menu.add(0, MANAGE_ID, 0, R.string.menu_manageCells);
 		menu.add(0, MAP_ID, 0, mNetwork == 0 ? R.string.map_network : R.string.map_cell);
 		menu.add(0, DELETE_ID, 0, mNetwork == 0 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);
-		menu.add(0, CANCEL_ID, 0, R.string.cancel);
+		menu.add(0, CANCEL_ID, 0, android.R.string.cancel);
 	}
 
 	@Override
@@ -211,7 +203,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		super.onListItemClick(list, view, position, id);
 		final int item = (int) id;
 		if (mNetwork == 0) {
-			final CharSequence[] items = {getString(R.string.menu_manageCells), getString(R.string.map_network), getString(R.string.menu_deleteNetwork), getString(R.string.cancel)};
+			final CharSequence[] items = {getString(R.string.menu_manageCells), getString(R.string.map_network), getString(R.string.menu_deleteNetwork), getString(android.R.string.cancel)};
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setItems(items, new DialogInterface.OnClickListener() {
 				@Override
@@ -224,7 +216,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			dialog.show();
 		}
 		else {
-			final CharSequence[] items = {getString(R.string.map_cell), getString(R.string.menu_deleteCell), getString(R.string.cancel)};
+			final CharSequence[] items = {getString(R.string.map_cell), getString(R.string.menu_deleteCell), getString(android.R.string.cancel)};
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setItems(items, new DialogInterface.OnClickListener() {
 				@Override
@@ -249,7 +241,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			else startActivity((new Intent(this, MapData.class)).putExtra(TABLE_NETWORKS, (int) (mNetwork == 0 ? id : mNetwork)).putExtra(MapData.OPERATOR, mOperator));
 			return;
 		case DELETE_ID:
-			if ((DatabaseAdapter.mDatabase != null) && DatabaseAdapter.mDatabase.isOpen()) {
+			if ((WapdroidProvider.WapdroidContentProvider != null) && WapdroidProvider.WapdroidContentProvider.isOpen()) {
 				if (mNetwork == 0) mDatabaseAdapter.deleteNetwork(id);
 				else mDatabaseAdapter.deletePair(mNetwork, id);
 				try {
@@ -273,12 +265,12 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				new SimpleCursorAdapter(mContext,
 						R.layout.network_row,
 						mCursor,
-						new String[] {NETWORKS_SSID, NETWORKS_BSSID, STATUS},
+						new String[] {Networks.SSID, Networks.BSSID, STATUS},
 						new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status})
 		: new SimpleCursorAdapter(mContext,
 				R.layout.cell_row,
 				mCursor,
-				new String[] {CELLS_CID, LOCATIONS_LAC, PAIRS_RSSI_MIN, STATUS},
+				new String[] {Cells.CID, Locations.LAC, Pairs.RSSI_MIN, STATUS},
 				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status});
 				setListAdapter(data);
 	}
