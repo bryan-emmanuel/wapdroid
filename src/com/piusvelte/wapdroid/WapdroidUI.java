@@ -22,7 +22,7 @@ package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.Wapdroid.Cells;
 import static com.piusvelte.wapdroid.Wapdroid.Networks;
-import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_RSSI;
 
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;

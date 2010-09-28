@@ -25,10 +25,10 @@ import static com.piusvelte.wapdroid.Wapdroid.Networks;
 import static com.piusvelte.wapdroid.Wapdroid.Cells;
 import static com.piusvelte.wapdroid.Wapdroid.Locations;
 import static com.piusvelte.wapdroid.Wapdroid.Pairs;
-import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.TABLE_NETWORKS;
-import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.TABLE_PAIRS;
-import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.UNKNOWN_CID;
-import static com.piusvelte.wapdroid.providers.WapdroidContentProvider.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_CID;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_RSSI;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
