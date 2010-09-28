@@ -76,14 +76,14 @@ public final class Wapdroid {
 		public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/ranges");
 		public static final String CONTENT_TYPE = "";
 		public static final String CONTENT_ITEM_TYPE = "";
-		public static final String CID = "CID";
-		public static final String LAC = "LAC";
-		public static final String RSSI_MIN = "RSSI_min";
-		public static final String RSSI_MAX = "RSSI_max";
-		public static final String LOCATION = "location";
-		public static final String NETWORK = "network";
-		public static final String SSID = "SSID";
-		public static final String BSSID = "BSSID";
+		public static final String CID = Cells.CID;
+		public static final String LAC = Locations.LAC;
+		public static final String RSSI_MIN = Pairs.RSSI_MIN;
+		public static final String RSSI_MAX = Pairs.RSSI_MAX;
+		public static final String LOCATION = Cells.LOCATION;
+		public static final String NETWORK = Pairs.NETWORK;
+		public static final String SSID = Networks.SSID;
+		public static final String BSSID = Networks.BSSID;
 	}
 
 }
