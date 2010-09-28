@@ -563,9 +563,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	private Uri fetchNetwork(String ssid, String bssid) {
 		Uri network;
-		String[] projection = {Networks.SSID, Networks.BSSID};
 		ContentResolver resolver = getContentResolver();
-		Cursor c = resolver.query(Networks.CONTENT_URI, projection, Networks.SSID + "=\"" + ssid + "\" and (" + Networks.BSSID + "=\"" + bssid + "\" or " + Networks.BSSID + "=\"\")", null, null);
+		Cursor c = resolver.query(Networks.CONTENT_URI, new String[]{Networks._ID, Networks.SSID, Networks.BSSID}, Networks.SSID + "=\"" + ssid + "\" and (" + Networks.BSSID + "=\"" + bssid + "\" or " + Networks.BSSID + "=\"\")", null, null);
 		if (c.getCount() > 0) {
 			// ssid matches, only concerned if bssid is empty
 			c.moveToFirst();
@@ -586,13 +585,11 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	}
 
 	private void createPair(int cid, int lac, Uri network, int rssi) {
-		Uri cell, pair, location = null;
+		Uri cell, pair, location;
 		ContentResolver resolver = getContentResolver();
-		String[] projection;
 		// select or insert location
 		if (lac > 0) {
-			projection = new String[]{Locations._ID};
-			Cursor c = resolver.query(Locations.CONTENT_URI, projection, Locations.LAC + "=\"" + lac + "\"", null, null);
+			Cursor c = resolver.query(Locations.CONTENT_URI, new String[]{Locations._ID}, Locations.LAC + "=\"" + lac + "\"", null, null);
 			if (c.getCount() > 0) {
 				c.moveToFirst();
 				location = ContentUris.withAppendedId(Locations.CONTENT_URI, c.getLong(c.getColumnIndex(Locations._ID)));
@@ -602,11 +599,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				location = resolver.insert(Locations.CONTENT_URI, values);
 			}
 			c.close();
-		}
+		} else location = ContentUris.withAppendedId(Locations.CONTENT_URI, UNKNOWN_CID);
 		// if location==-1, then match only on cid, otherwise match on location or -1
 		// select or insert cell
-		projection = new String[]{Cells._ID, Cells.LOCATION};
-		Cursor c = resolver.query(Cells.CONTENT_URI, projection, Cells.CID + "=" + cid + (ContentUris.parseId(location) == UNKNOWN_CID ? "" : " and (" + Cells.LOCATION + "=" + UNKNOWN_CID + " or " + Cells.LOCATION + "=" + location + ")"), null, null);
+		Cursor c = resolver.query(Cells.CONTENT_URI, new String[]{Cells._ID, Cells.LOCATION}, Cells.CID + "=" + cid + (ContentUris.parseId(location) == UNKNOWN_CID ? "" : " and (" + Cells.LOCATION + "=" + UNKNOWN_CID + " or " + Cells.LOCATION + "=" + ContentUris.parseId(location) + ")"), null, null);
 		if (c.getCount() > 0) {
 			c.moveToFirst();
 			cell = ContentUris.withAppendedId(Cells.CONTENT_URI, c.getLong(c.getColumnIndex(Cells._ID)));
@@ -623,8 +619,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		}
 		c.close();
 		// select and update or insert pair
-		projection = new String[]{Pairs.RSSI_MIN, Pairs.RSSI_MAX};
-		c = resolver.query(Pairs.CONTENT_URI, projection, Pairs.CELL + "=" + ContentUris.parseId(cell) + " and " + Pairs.NETWORK + "=" + ContentUris.parseId(network), null, null);
+		c = resolver.query(Pairs.CONTENT_URI, new String[]{Pairs._ID, Pairs.RSSI_MIN, Pairs.RSSI_MAX}, Pairs.CELL + "=" + ContentUris.parseId(cell) + " and " + Pairs.NETWORK + "=" + ContentUris.parseId(network), null, null);
 		if (c.getCount() > 0) {
 			if (rssi != UNKNOWN_RSSI) {
 				c.moveToFirst();

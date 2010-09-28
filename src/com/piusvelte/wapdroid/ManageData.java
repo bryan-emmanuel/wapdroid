@@ -114,6 +114,70 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
+		Resources r = getResources();
+		String[] projection;
+		if (mNetwork == 0) {
+			if (mFilter == FILTER_ALL) projection = new String[]{Networks._ID,
+					Networks.SSID,
+					Networks.BSSID, "case when " + Networks.BSSID + "='" + mBssid
+					+ "' then '" + r.getString(R.string.connected)
+					+ "' else (case when " + TABLE_NETWORKS + "." + Networks._ID + " in (select " + Pairs.NETWORK
+					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+					+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Cells._ID
+					+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
+					+ mCells + ") then '" + r.getString(R.string.withinarea)
+					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS};
+			else projection = new String[]{Networks._ID,
+					Networks.SSID,
+					Networks.BSSID,
+					r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : (mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea)) + " as " + STATUS};
+			mCursor = managedQuery(Networks.CONTENT_URI, projection,
+					(mFilter == FILTER_CONNECTED ? Networks.BSSID + "='" + mBssid + "'"
+							: Networks._ID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + Pairs.NETWORK
+							+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+							+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Pairs._ID
+							+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
+							+ mCells + ")"), null, STATUS);
+		} else {
+			if (mFilter == FILTER_ALL) projection = new String[]{Ranges._ID,
+					Ranges.CID,
+					"case when " + Locations.LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Locations.LAC + " end as " + Locations.LAC,
+					"case when " + Pairs.RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + Pairs.RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Pairs.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Pairs.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Pairs.RSSI_MIN,
+					"case when " + Cells.CID + "='" + mCid + "' then '" + r.getString(R.string.connected)
+					+ "' else (case when " + TABLE_CELLS + "." + Cells._ID + " in (select "
+					+ TABLE_CELLS + "." + Cells._ID
+					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+					+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Cells._ID
+					+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
+					+ " and " + Pairs.NETWORK + "=" + mNetwork
+					+ mCells + ")" + " then '" + r.getString(R.string.withinarea)
+					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS};
+			else projection = new String[]{Ranges._ID,
+					Ranges.CID,
+					"case when " + Locations.LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Locations.LAC + " end as " + Locations.LAC,
+					"case when " + Pairs.RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + Pairs.RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Pairs.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Pairs.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Pairs.RSSI_MIN,
+					r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : (mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea)) + " as " + STATUS};
+			mCursor = managedQuery(Ranges.CONTENT_URI, projection,
+					Ranges.NETWORK + "=" + mNetwork
+					+ " and " + (mFilter == FILTER_CONNECTED ? Ranges.CID + "='" + mCid + "'"
+					: Ranges.CID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + Cells.CID
+					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
+					+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Cells._ID
+					+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
+					+ " and " + Pairs.NETWORK + "=" + mNetwork
+					+ mCells + ")"), null, STATUS);
+		}
+		setListAdapter(mNetwork == 0 ?
+				new SimpleCursorAdapter(mContext,
+						R.layout.network_row,
+						mCursor,
+						new String[] {Networks.SSID, Networks.BSSID, STATUS},
+						new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status})
+		: new SimpleCursorAdapter(mContext,
+				R.layout.cell_row,
+				mCursor,
+				new String[] {Cells.CID, Locations.LAC, Pairs.RSSI_MIN, STATUS},
+				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status}));
 	}
 
 	@Override
@@ -147,11 +211,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case REFRESH_ID:
-			try {
-				listData();
-			} catch (RemoteException e1) {
-				e1.printStackTrace();
-			}
+			mCursor.requery();
 			return true;
 		case FILTER_ID:
 			/* filter options */
@@ -172,11 +232,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.dismiss();
 							mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
-							try {
-								listData();
-							} catch (RemoteException e) {
-								e.printStackTrace();
-							}
+							mCursor.requery();
 						}});
 			dialog.show();
 			return true;
@@ -280,77 +336,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		case CANCEL_ID:
 			return;
 		}
-	}
-
-	public void listData() throws RemoteException {
-		// filter results
-		Resources r = getResources();
-		String[] projection;
-		if (mNetwork == 0) {
-			if (mFilter == FILTER_ALL) projection = new String[]{Networks._ID,
-					Networks.SSID,
-					Networks.BSSID,
-					"case when " + Networks.BSSID + "='" + mBssid
-					+ "' then '" + r.getString(R.string.connected)
-					+ "' else (case when " + TABLE_NETWORKS + "." + Networks._ID + " in (select " + Pairs.NETWORK
-					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-					+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Cells._ID
-					+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
-					+ mCells + ") then '" + r.getString(R.string.withinarea)
-					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + r.getString(R.string.status)};
-			else projection = new String[]{Networks._ID,
-					Networks.SSID,
-					Networks.BSSID,
-					r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + " as " + r.getString(R.string.status)};
-			mCursor = getContentResolver().query(Networks.CONTENT_URI, projection,
-					mFilter == FILTER_CONNECTED ? Networks.BSSID + "='" + mBssid + "'"
-							: Networks._ID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + Pairs.NETWORK
-							+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-							+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Pairs._ID
-							+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
-							+ mCells + ")", null, r.getString(R.string.status));
-		} else {
-			if (mFilter == FILTER_ALL) projection = new String[]{Ranges._ID,
-					Ranges.CID,
-					"case when " + Locations.LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Locations.LAC + " end as " + Locations.LAC,
-					"case when " + Pairs.RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + Pairs.RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Pairs.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Pairs.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Pairs.RSSI_MIN,
-					"case when " + Cells.CID + "='" + mCid + "' then '" + r.getString(R.string.connected)
-					+ "' else (case when " + TABLE_CELLS + "." + Cells._ID + " in (select "
-					+ TABLE_CELLS + "." + Cells._ID
-					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-					+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Cells._ID
-					+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
-					+ " and " + Pairs.NETWORK + "=" + mNetwork
-					+ mCells + ")" + " then '" + r.getString(R.string.withinarea)
-					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + r.getString(R.string.status)};
-			else projection = new String[]{Ranges._ID,
-					Ranges.CID,
-					"case when " + Locations.LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Locations.LAC + " end as " + Locations.LAC,
-					"case when " + Pairs.RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + Pairs.RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Pairs.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Pairs.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Pairs.RSSI_MIN,
-					r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea) + " as " + r.getString(R.string.status)};
-			mCursor = getContentResolver().query(Ranges.CONTENT_URI, projection,
-					Ranges.NETWORK + "=" + mNetwork
-					+ " and " + (mFilter == FILTER_CONNECTED ? Ranges.CID + "='" + mCid + "'"
-					: Ranges.CID + (mFilter == FILTER_OUTRANGE ? " NOT" : "") + " in (select " + Cells.CID
-					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-					+ " where " + Pairs.CELL + "=" + TABLE_CELLS + "." + Cells._ID
-					+ " and " + Cells.LOCATION + "=" + TABLE_LOCATIONS + "." + Locations._ID
-					+ " and " + Pairs.NETWORK + "=" + mNetwork
-					+ mCells + ")"), null, r.getString(R.string.status));
-		}
-		startManagingCursor(mCursor);
-		SimpleCursorAdapter data = mNetwork == 0 ?
-				new SimpleCursorAdapter(mContext,
-						R.layout.network_row,
-						mCursor,
-						new String[] {Networks.SSID, Networks.BSSID, STATUS},
-						new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status})
-		: new SimpleCursorAdapter(mContext,
-				R.layout.cell_row,
-				mCursor,
-				new String[] {Cells.CID, Locations.LAC, Pairs.RSSI_MIN, STATUS},
-				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status});
-				setListAdapter(data);
 	}
 
 	@Override

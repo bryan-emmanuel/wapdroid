@@ -21,6 +21,7 @@
 package com.piusvelte.wapdroid.providers;
 
 import static com.piusvelte.wapdroid.Wapdroid.AUTHORITY;
+//import static com.piusvelte.wapdroid.Wapdroid.TAG;
 
 import java.util.HashMap;
 
@@ -61,15 +62,15 @@ public class WapdroidContentProvider extends ContentProvider {
 	private static HashMap<String, String> rangesProjectionMap;
 	public static final int UNKNOWN_CID = -1;
 	public static final int UNKNOWN_RSSI = 99;
-	
+
 	private static UriMatcher sUriMatcher;
-	
+
 	private static class DatabaseHelper extends SQLiteOpenHelper {
 
 		public DatabaseHelper(Context context) {
 			super(context, DATABASE_NAME, null, DATABASE_VERSION);
 		}
-		
+
 		@Override
 		public void onCreate(SQLiteDatabase db) {
 			db.execSQL("create table if not exists " + TABLE_NETWORKS + " ("
@@ -184,14 +185,14 @@ public class WapdroidContentProvider extends ContentProvider {
 			}
 		}		
 	}
-	
+
 	private DatabaseHelper mOpenHelper;
 
-    @Override
-    public boolean onCreate() {
-        mOpenHelper = new DatabaseHelper(getContext());
-        return true;
-    }
+	@Override
+	public boolean onCreate() {
+		mOpenHelper = new DatabaseHelper(getContext());
+		return true;
+	}
 
 	@Override
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
@@ -232,28 +233,28 @@ public class WapdroidContentProvider extends ContentProvider {
 		long rowId = 0;
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
-			db.insert(TABLE_NETWORKS, Networks.SSID, values);
+			rowId = db.insert(TABLE_NETWORKS, Networks.SSID, values);
 			if (rowId > 0) {
 				Uri networkUri = ContentUris.withAppendedId(Networks.CONTENT_URI, rowId);
 				getContext().getContentResolver().notifyChange(networkUri, null);
 				return networkUri;
 			} else return null;
 		case CELLS:
-			db.insert(TABLE_CELLS, Cells.CID, values);
+			rowId = db.insert(TABLE_CELLS, Cells.CID, values);
 			if (rowId > 0) {
 				Uri cellUri = ContentUris.withAppendedId(Cells.CONTENT_URI, rowId);
 				getContext().getContentResolver().notifyChange(cellUri, null);
 				return cellUri;
 			} else return null;
 		case PAIRS:
-			db.insert(TABLE_PAIRS, Pairs.CELL, values);
+			rowId = db.insert(TABLE_PAIRS, Pairs.CELL, values);
 			if (rowId > 0) {
 				Uri pairUri = ContentUris.withAppendedId(Pairs.CONTENT_URI, rowId);
 				getContext().getContentResolver().notifyChange(pairUri, null);
 				return pairUri;
 			} else return null;
 		case LOCATIONS:
-			db.insert(TABLE_LOCATIONS, Locations.LAC, values);
+			rowId = db.insert(TABLE_LOCATIONS, Locations.LAC, values);
 			if (rowId > 0) {
 				Uri locationUri = ContentUris.withAppendedId(Networks.CONTENT_URI, rowId);
 				getContext().getContentResolver().notifyChange(locationUri, null);
@@ -317,35 +318,35 @@ public class WapdroidContentProvider extends ContentProvider {
 		getContext().getContentResolver().notifyChange(uri, null);
 		return count;
 	}
-	
+
 	static {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 		sUriMatcher.addURI(AUTHORITY, TABLE_NETWORKS, NETWORKS);
 		sUriMatcher.addURI(AUTHORITY, TABLE_CELLS, CELLS);
 		sUriMatcher.addURI(AUTHORITY, TABLE_PAIRS, PAIRS);
 		sUriMatcher.addURI(AUTHORITY, TABLE_LOCATIONS, LOCATIONS);
-		
+
 		networksProjectionMap = new HashMap<String, String>();
 		networksProjectionMap.put(Networks._ID, Networks._ID);
 		networksProjectionMap.put(Networks.SSID, Networks.SSID);
 		networksProjectionMap.put(Networks.BSSID, Networks.BSSID);
-		
+
 		cellsProjectionMap = new HashMap<String, String>();
 		cellsProjectionMap.put(Cells._ID, Cells._ID);
 		cellsProjectionMap.put(Cells.CID, Cells.CID);
 		cellsProjectionMap.put(Cells.LOCATION, Cells.LOCATION);
-		
+
 		pairsProjectionMap = new HashMap<String, String>();
 		pairsProjectionMap.put(Pairs._ID, Pairs._ID);
 		pairsProjectionMap.put(Pairs.CELL, Pairs.CELL);
 		pairsProjectionMap.put(Pairs.NETWORK, Pairs.NETWORK);
 		pairsProjectionMap.put(Pairs.RSSI_MIN, Pairs.RSSI_MIN);
 		pairsProjectionMap.put(Pairs.RSSI_MAX, Pairs.RSSI_MAX);
-		
+
 		locationsProjectionMap = new HashMap<String, String>();
 		locationsProjectionMap.put(Locations._ID, Locations._ID);
 		locationsProjectionMap.put(Locations.LAC, Locations.LAC);
-		
+
 		rangesProjectionMap = new HashMap<String, String>();
 		rangesProjectionMap.put(Ranges._ID, Ranges._ID);
 		rangesProjectionMap.put(Ranges.CID, Ranges.CID);
