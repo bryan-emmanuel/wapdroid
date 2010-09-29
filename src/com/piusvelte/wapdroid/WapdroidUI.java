@@ -20,8 +20,8 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.Wapdroid.Cells;
-import static com.piusvelte.wapdroid.Wapdroid.Networks;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.CID;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.BSSID;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_RSSI;
 
 import com.admob.android.ads.AdListener;
@@ -88,7 +88,7 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case MANAGE_ID:
-			startActivity((new Intent(this, ManageData.class)).putExtra(Networks.BSSID, mBssid).putExtra(Cells.CID, mCid));
+			startActivity((new Intent(this, ManageData.class)).putExtra(BSSID, mBssid).putExtra(CID, mCid));
 			return true;
 		case SETTINGS_ID:
 			startActivity(new Intent(this, Settings.class));

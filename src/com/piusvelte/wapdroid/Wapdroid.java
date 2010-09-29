@@ -19,71 +19,14 @@
  */
 package com.piusvelte.wapdroid;
 
-import android.net.Uri;
 import android.provider.BaseColumns;
 
 public final class Wapdroid {
-	public static final String TAG = "Wapdroid";
-	public static final String AUTHORITY = "com.piusvelte.wapdroid.providers.WapdroidContentProvider";
 
 	private Wapdroid() {}
 
 	public static final class Networks implements BaseColumns {
 		private Networks() {}
-
-		public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/networks");
-		public static final String CONTENT_TYPE = "";
-		public static final String CONTENT_ITEM_TYPE = "";
-		public static final String SSID = "SSID";
-		public static final String BSSID = "BSSID";		
-	}
-
-	public static final class Cells implements BaseColumns {
-		private Cells() {}
-
-		public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/cells");
-		public static final String CONTENT_TYPE = "";
-		public static final String CONTENT_ITEM_TYPE = "";
-		public static final String CID = "CID";
-		public static final String LOCATION = "location";
-	}
-
-	public static final class Pairs implements BaseColumns {
-		private Pairs() {}
-
-		public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/pairs");
-		public static final String CONTENT_TYPE = "";
-		public static final String CONTENT_ITEM_TYPE = "";
-		public static final String CELL = "cell";
-		public static final String NETWORK = "network";
-		public static final String RSSI_MIN = "RSSI_min";
-		public static final String RSSI_MAX = "RSSI_max";
-	}
-
-
-	public static final class Locations implements BaseColumns {
-		private Locations() {}
-
-		public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/locations");
-		public static final String CONTENT_TYPE = "";
-		public static final String CONTENT_ITEM_TYPE = "";
-		public static final String LAC = "LAC";
-	}
-	
-	public static final class Ranges implements BaseColumns {
-		private Ranges() {}
-		
-		public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/ranges");
-		public static final String CONTENT_TYPE = "";
-		public static final String CONTENT_ITEM_TYPE = "";
-		public static final String CID = Cells.CID;
-		public static final String LAC = Locations.LAC;
-		public static final String RSSI_MIN = Pairs.RSSI_MIN;
-		public static final String RSSI_MAX = Pairs.RSSI_MAX;
-		public static final String LOCATION = Cells.LOCATION;
-		public static final String NETWORK = Pairs.NETWORK;
-		public static final String SSID = Networks.SSID;
-		public static final String BSSID = Networks.BSSID;
 	}
 
 }

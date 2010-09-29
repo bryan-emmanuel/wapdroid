@@ -20,7 +20,6 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.Wapdroid.Pairs;
 import static com.piusvelte.wapdroid.MapData.color_primary;
 import static com.piusvelte.wapdroid.MapData.color_secondary;
 import static com.piusvelte.wapdroid.MapData.drawable_cell;
@@ -28,13 +27,21 @@ import static com.piusvelte.wapdroid.MapData.drawable_network;
 import static com.piusvelte.wapdroid.MapData.string_deleteCell;
 import static com.piusvelte.wapdroid.MapData.string_deleteNetwork;
 import static com.piusvelte.wapdroid.MapData.string_cancel;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_CELLS;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_LOCATIONS;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_NETWORKS;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_PAIRS;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper._ID;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.CELL;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.LOCATION;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.NETWORK;
 
 import java.util.ArrayList;
 
 import android.app.AlertDialog;
-import android.content.ContentResolver;
 import android.content.DialogInterface;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Point;
@@ -45,10 +52,6 @@ import com.google.android.maps.GeoPoint;
 import com.google.android.maps.ItemizedOverlay;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Projection;
-import com.piusvelte.wapdroid.Wapdroid.Cells;
-import com.piusvelte.wapdroid.Wapdroid.Locations;
-import com.piusvelte.wapdroid.Wapdroid.Networks;
-import com.piusvelte.wapdroid.Wapdroid.Pairs;
 
 public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem> {
 	private ArrayList<WapdroidOverlayItem> mOverlays = new ArrayList<WapdroidOverlayItem>();
@@ -72,7 +75,7 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 			Projection projection = mapView.getProjection();
 			projection.toPixels(gpt, pt);
 			double mercator = Math.cos(Math.toRadians(gpt.getLatitudeE6()/1E6));
-			if (item.getTitle() == Pairs.NETWORK) {
+			if (item.getTitle() == NETWORK) {
 				radius = 70;
 				paint.setColor(color_primary);
 				paint.setAlpha(mNetworkAlpha);
@@ -117,7 +120,7 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 
 	public void setDistances(Location location) {
 		for (WapdroidOverlayItem item : mOverlays) {
-			if (item.getTitle() != Pairs.NETWORK) {
+			if (item.getTitle() != NETWORK) {
 				GeoPoint gpt = item.getPoint();
 				Location cell = new Location("");
 				cell.setLatitude(gpt.getLatitudeE6()/1e6);
@@ -144,35 +147,31 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 		dialog.setPositiveButton(pair == 0 ? string_deleteNetwork : string_deleteCell, new DialogInterface.OnClickListener() {
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
-				ContentResolver resolver = mMap.getContentResolver();
-				String[] projection;
+				WapdroidDatabaseHelper wapdroidDatabaseHelper = new WapdroidDatabaseHelper(mMap);
+				SQLiteDatabase db = wapdroidDatabaseHelper.getWritableDatabase();
 				if (pair == 0) {
-					resolver.delete(Networks.CONTENT_URI, Networks._ID + "=" + network, null);
-					resolver.delete(Pairs.CONTENT_URI, Pairs.NETWORK + "=" + network, null);
+					db.delete(TABLE_NETWORKS, _ID + "=" + network, null);
+					db.delete(TABLE_PAIRS, NETWORK + "=" + network, null);
 				} else {
 					// delete one pair from the mapped network or 
 					// delete an individually mapped cell
-					resolver.delete(Pairs.CONTENT_URI, Pairs._ID + "=" + pair, null);
-					projection = new String[]{Pairs._ID};
-					Cursor n = resolver.query(Pairs.CONTENT_URI, projection, Pairs.NETWORK + "=" + network, null, null);
-					if (n.getCount() == 0) resolver.delete(Networks.CONTENT_URI, Networks._ID + "=" + network, null);
+					db.delete(TABLE_PAIRS, _ID + "=" + pair, null);
+					Cursor n = db.query(TABLE_PAIRS, new String[]{_ID}, NETWORK + "=" + network, null, null, null, null);
+					if (n.getCount() == 0) db.delete(TABLE_NETWORKS, _ID + "=" + network, null);
 					n.close();
 				}
-				projection = new String[]{Cells._ID, Cells.LOCATION};
-				Cursor c = resolver.query(Cells.CONTENT_URI, projection, null, null, null);
+				Cursor c = db.query(TABLE_CELLS, new String[]{_ID, LOCATION}, null, null, null, null, null);
 				if (c.getCount() > 0) {
 					c.moveToFirst();
-					int[] index = {c.getColumnIndex(Cells._ID), c.getColumnIndex(Cells.LOCATION)};
+					int[] index = {c.getColumnIndex(_ID), c.getColumnIndex(LOCATION)};
 					while (!c.isAfterLast()) {
 						int cell = c.getInt(index[0]);
-						projection = new String[]{Pairs._ID};
-						Cursor p = resolver.query(Pairs.CONTENT_URI, projection, Pairs.CELL + "=" + cell, null, null);
+						Cursor p = db.query(TABLE_PAIRS, new String[]{_ID}, CELL + "=" + cell, null, null, null, null);
 						if (p.getCount() == 0) {
-							resolver.delete(Cells.CONTENT_URI, Cells._ID + "=" + cell, null);
+							db.delete(TABLE_CELLS, _ID + "=" + cell, null);
 							int location = c.getInt(index[1]);
-							projection = new String[]{Cells.LOCATION};
-							Cursor l = resolver.query(Cells.CONTENT_URI, projection, Cells.LOCATION + "=" + location, null, null);
-							if (l.getCount() == 0) resolver.delete(Locations.CONTENT_URI, Locations._ID + "=" + location, null);
+							Cursor l = db.query(TABLE_CELLS, new String[]{LOCATION}, LOCATION + "=" + location, null, null, null, null);
+							if (l.getCount() == 0) db.delete(TABLE_LOCATIONS, _ID + "=" + location, null);
 							l.close();
 						}
 						p.close();
