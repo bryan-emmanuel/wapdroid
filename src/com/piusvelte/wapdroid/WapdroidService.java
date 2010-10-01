@@ -201,6 +201,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		}
 	};
 	private WapdroidDatabaseHelper mWapdroidDatabaseHelper;
+	private SQLiteDatabase mDatabase;
 
 	// add onSignalStrengthsChanged for api >= 7
 	static {
@@ -319,6 +320,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			mSsid = null;
 			mBssid = null;
 		}
+		mWapdroidDatabaseHelper = new WapdroidDatabaseHelper(this);
+		mDatabase = mWapdroidDatabaseHelper.getWritableDatabase();
 		IntentFilter f = new IntentFilter();
 		f.addAction(Intent.ACTION_BATTERY_CHANGED);
 		f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
@@ -367,12 +370,17 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		}
 		((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 		if (mNotify) ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
+		mDatabase.close();
+		mWapdroidDatabaseHelper.close();
 		if (ManageWakeLocks.hasLock()) ManageWakeLocks.release();
 	}
 
 	private void updateUI() {
 		// drop the rssi filtering due to ANR's
-		String cells = " and ((" + CID + "=" + Integer.toString(mCid) + " and (" + LAC + "=" + Integer.toString(mLac) + " or " + LOCATION + "=" + UNKNOWN_CID + "))";
+		String cells = String.format(getString(R.string.sql_cells_and),
+				String.format(getString(R.string.sql_equalsvalue), CID, Integer.toString(mCid)),
+				String.format(getString(R.string.sql_equalsvalue), LAC, Integer.toString(mLac)),
+				String.format(getString(R.string.sql_equalsvalue), LOCATION, UNKNOWN_CID));
 		//		String cells = "(" + CELLS_CID + "=" + Integer.toString(mCid) + " and (" + LOCATIONS_LAC + "=" + Integer.toString(mLac) + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
 		//		+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
 		TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
@@ -391,8 +399,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					}
 				} else nci_lac = UNKNOWN_CID;
 				// drop the rssi filtering due to ANR's
-				cells += " or (" + CID + "=" + Integer.toString(nci.getCid())
-				+ " and (" + LAC + "=" + nci_lac + " or " + LOCATION + "=" + UNKNOWN_CID + "))";
+				cells += String.format(getString(R.string.sql_cells_or),
+						String.format(getString(R.string.sql_equalsvalue), CID, Integer.toString(nci.getCid())),
+						String.format(getString(R.string.sql_equalsvalue), LAC, Integer.toString(nci_lac)),
+						String.format(getString(R.string.sql_equalsvalue), LOCATION, UNKNOWN_CID));
 				//				cells += " or (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
 				//				+ " and (" + LOCATIONS_LAC + "=" + nci_lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
 				//				+ ((nci_rssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(nci_rssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(nci_rssi) + ")))");
@@ -450,7 +460,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		if (mManageWifi && (mCid != UNKNOWN_CID)) {
 			if (mSsid != null) {
-				if (mWapdroidDatabaseHelper == null) mWapdroidDatabaseHelper = new WapdroidDatabaseHelper(this);
 				// upgrading, BSSID may not be set yet
 				long network = fetchNetwork(mSsid, mBssid);
 				createPair(mCid, mLac, network, mRssi);
@@ -473,7 +482,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			}
 			// always allow disabling, but only enable if above the battery limit
 			else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
-				if (mWapdroidDatabaseHelper == null) mWapdroidDatabaseHelper = new WapdroidDatabaseHelper(this);
 				enableWifi = cellInRange(mCid, mLac, mRssi);
 				if (enableWifi) {
 					// check neighbors if it appears that we're in range, for both enabling and disabling
@@ -572,8 +580,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	private long fetchNetwork(String ssid, String bssid) {
 		long network;
-		SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
-		Cursor c = db.query(TABLE_NETWORKS, new String[]{_ID, SSID, BSSID}, SSID + "=\"" + ssid + "\" and (" + BSSID + "=\"" + bssid + "\" or " + BSSID + "=\"\")", null, null, null, null);
+		Cursor c = mDatabase.query(TABLE_NETWORKS, new String[]{_ID, SSID, BSSID}, String.format(getString(R.string.sql_fetchnetwork),
+				String.format(getString(R.string.sql_equalsquotedvalue), SSID, ssid),
+				String.format(getString(R.string.sql_equalsquotedvalue), BSSID, bssid), BSSID), null, null, null, null);
 		if (c.getCount() > 0) {
 			// ssid matches, only concerned if bssid is empty
 			c.moveToFirst();
@@ -581,65 +590,60 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			if (c.getString(c.getColumnIndex(BSSID)).equals("")) {
 				ContentValues values = new ContentValues();
 				values.put(BSSID, bssid);
-				db.update(TABLE_NETWORKS, values, _ID + "=" + network, null);
+				mDatabase.update(TABLE_NETWORKS, values, String.format(getString(R.string.sql_equalsvalue), _ID, network), null);
 			}
 		} else {
 			ContentValues values = new ContentValues();
 			values.put(SSID, ssid);
 			values.put(BSSID, bssid);
-			network = db.insert(TABLE_NETWORKS, SSID, values);
+			network = mDatabase.insert(TABLE_NETWORKS, SSID, values);
 		}
 		c.close();
-		db.close();
 		return network;
 	}
 
 	private long fetchLocation(int lac) {
 		// select or insert location
-		SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
 		if (lac > 0) {
 			long location;
-			Cursor c = db.query(TABLE_LOCATIONS, new String[]{_ID}, LAC + "=\"" + lac + "\"", null, null, null, null);
+			Cursor c = mDatabase.query(TABLE_LOCATIONS, new String[]{_ID}, String.format(getString(R.string.sql_equalsquotedvalue), LAC, lac), null, null, null, null);
 			if (c.getCount() > 0) {
 				c.moveToFirst();
 				location = c.getLong(c.getColumnIndex(_ID));
 			} else {
 				ContentValues values = new ContentValues();
 				values.put(LAC, lac);
-				location = db.insert(TABLE_LOCATIONS, LAC, values);
+				location = mDatabase.insert(TABLE_LOCATIONS, LAC, values);
 			}
 			c.close();
-			db.close();
 			return location;
 		} else {
-			db.close();
 			return UNKNOWN_CID;
 		}
 	}
 	
 	private void createPair(int cid, int lac, long network, int rssi) {
 		long cell, pair, location = fetchLocation(lac);
-		SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
 		// if location==-1, then match only on cid, otherwise match on location or -1
 		// select or insert cell
-		Cursor c = db.query(TABLE_CELLS, new String[]{_ID, LOCATION}, CID + "=" + cid + (location == UNKNOWN_CID ? "" : " and (" + LOCATION + "=" + UNKNOWN_CID + " or " + LOCATION + "=" + location + ")"), null, null, null, null);
+		Cursor c = mDatabase.query(TABLE_CELLS, new String[]{_ID, LOCATION}, (location == UNKNOWN_CID ? String.format(getString(R.string.sql_equalsvalue), CID, cid) : String.format(getString(R.string.sql_fetchcell), String.format(getString(R.string.sql_equalsvalue), CID, cid), String.format(getString(R.string.sql_equalsvalue), LOCATION, UNKNOWN_CID), String.format(getString(R.string.sql_equalsvalue), LOCATION, location))), null, null, null, null);
 		if (c.getCount() > 0) {
 			c.moveToFirst();
 			cell = c.getLong(c.getColumnIndex(_ID));
 			if ((location != UNKNOWN_CID) && (c.getInt(c.getColumnIndex(LOCATION)) == UNKNOWN_CID)) {
 				ContentValues values = new ContentValues();
 				values.put(LOCATION, location);
-				db.update(TABLE_CELLS, values, _ID + "=" + cell, null);
+				mDatabase.update(TABLE_CELLS, values, String.format(getString(R.string.sql_equalsvalue),_ID, cell), null);
 			}
 		} else {
 			ContentValues values = new ContentValues();
 			values.put(CID, cid);
 			values.put(LOCATION, location);
-			cell = db.insert(TABLE_CELLS, CID, values);
+			cell = mDatabase.insert(TABLE_CELLS, CID, values);
 		}
 		c.close();
 		// select and update or insert pair
-		c = db.query(TABLE_PAIRS, new String[]{_ID, RSSI_MIN, RSSI_MAX}, CELL + "=" + cell + " and " + NETWORK + "=" + network, null, null, null, null);
+		c = mDatabase.query(TABLE_PAIRS, new String[]{_ID, RSSI_MIN, RSSI_MAX}, String.format(getString(R.string.sql_fetchpair), String.format(getString(R.string.sql_equalsvalue), CELL, cell), String.format(getString(R.string.sql_equalsvalue), NETWORK, network)), null, null, null, null);
 		if (c.getCount() > 0) {
 			if (rssi != UNKNOWN_RSSI) {
 				c.moveToFirst();
@@ -649,12 +653,12 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				if (rssi_min > rssi) {
 					ContentValues values = new ContentValues();
 					values.put(RSSI_MIN, rssi);
-					db.update(TABLE_PAIRS, values, _ID + "=" + pair, null);
+					mDatabase.update(TABLE_PAIRS, values, String.format(getString(R.string.sql_equalsvalue),_ID, pair), null);
 				}
 				else if ((rssi_max == UNKNOWN_RSSI) || (rssi_max < rssi)) {
 					ContentValues values = new ContentValues();
 					values.put(RSSI_MAX, rssi);
-					db.update(TABLE_PAIRS, values, _ID + "=" + pair, null);
+					mDatabase.update(TABLE_PAIRS, values, String.format(getString(R.string.sql_equalsvalue),_ID, pair), null);
 				}
 			}
 		} else {
@@ -663,20 +667,29 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			values.put(NETWORK, network);
 			values.put(RSSI_MIN, rssi);
 			values.put(RSSI_MAX, rssi);
-			db.insert(TABLE_PAIRS, CELL, values);
+			mDatabase.insert(TABLE_PAIRS, CELL, values);
 		}
 		c.close();
-		db.close();
 	}
 	
 	private boolean cellInRange(int cid, int lac, int rssi) {
-		SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
-		Cursor c = db.query(VIEW_RANGES, new String[]{LAC},
-				CID + "=" + cid
-				+ " and (" + LAC + "=" + lac + " or " + LOCATION + "=" + UNKNOWN_CID + ")"
-				+ (rssi == UNKNOWN_RSSI
-						? ""
-						: " and (((" + RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + RSSI_MIN + "<=" + rssi + ")) and (" + RSSI_MAX + ">=" + rssi + "))"), null, null, null, null);
+		Cursor c = mDatabase.query(VIEW_RANGES, new String[]{LAC},
+				(rssi == UNKNOWN_RSSI
+						? String.format(getString(R.string.sql_fetchrange),
+								String.format(getString(R.string.sql_equalsvalue), CID, cid),
+								String.format(getString(R.string.sql_equalsvalue), LAC, lac),
+								String.format(getString(R.string.sql_equalsvalue), LOCATION, UNKNOWN_CID))
+						: String.format(getString(R.string.sql_fetchrangewithrssi),
+								String.format(getString(R.string.sql_fetchrange),
+										String.format(getString(R.string.sql_equalsvalue), CID, cid),
+										String.format(getString(R.string.sql_equalsvalue), LAC, lac),
+										String.format(getString(R.string.sql_equalsvalue), LOCATION, UNKNOWN_CID)),
+								RSSI_MIN,
+								UNKNOWN_RSSI,
+								RSSI_MIN,
+								rssi,
+								RSSI_MAX,
+								rssi)), null, null, null, null);
 		boolean inRange = (c.getCount() > 0);
 		if (inRange && (lac > 0)) {
 			// check LAC, as this is a new column
@@ -684,11 +697,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			if (c.isNull(c.getColumnIndex(LOCATION))) {
 				ContentValues values = new ContentValues();
 				values.put(LOCATION, fetchLocation(lac));
-				db.update(TABLE_CELLS, values, _ID + "=" + c.getLong(c.getColumnIndex(_ID)), null);
+				mDatabase.update(TABLE_CELLS, values, String.format(getString(R.string.sql_equalsvalue), _ID, c.getLong(c.getColumnIndex(_ID))), null);
 			}
 		}
 		c.close();
-		db.close();
 		return inRange;
 	}
 

@@ -170,6 +170,15 @@ containing a value of this type.
         public static final int scanning=0x7f070027;
         public static final int service_info=0x7f070042;
         public static final int signal=0x7f070032;
+        public static final int sql_cells_and=0x7f07004c;
+        public static final int sql_cells_or=0x7f07004d;
+        public static final int sql_equalsquotedvalue=0x7f070046;
+        public static final int sql_equalsvalue=0x7f070045;
+        public static final int sql_fetchcell=0x7f070048;
+        public static final int sql_fetchnetwork=0x7f070047;
+        public static final int sql_fetchpair=0x7f070049;
+        public static final int sql_fetchrange=0x7f07004a;
+        public static final int sql_fetchrangewithrssi=0x7f07004b;
         public static final int status=0x7f07002b;
         public static final int unknown=0x7f070037;
         public static final int withinarea=0x7f07002c;
