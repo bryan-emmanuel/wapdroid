@@ -240,13 +240,14 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			return;
 		case DELETE_ID:
 			SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
+			String sql_equals = getString(R.string.sql_equalsvalue);
 			if (mNetwork == 0) {
 				db.delete(TABLE_NETWORKS, _ID + "=" + id, null);
 				db.delete(TABLE_PAIRS, NETWORK + "=" + id, null);
 			} else {
 				db.delete(TABLE_PAIRS, _ID + "=" + id, null);
-				Cursor n = db.query(TABLE_PAIRS, new String[]{_ID}, NETWORK + "=" + mNetwork, null, null, null, null);
-				if (n.getCount() == 0) db.delete(TABLE_PAIRS, _ID + "=" + mNetwork, null);
+				Cursor n = db.query(TABLE_PAIRS, new String[]{_ID}, String.format(sql_equals, NETWORK, mNetwork), null, null, null, null);
+				if (n.getCount() == 0) db.delete(TABLE_PAIRS, String.format(sql_equals, _ID, mNetwork), null);
 				n.close();
 			}
 			Cursor c = db.query(TABLE_CELLS, new String[]{_ID, LOCATION}, null, null, null, null, null);
@@ -255,12 +256,12 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				int[] index = {c.getColumnIndex(_ID), c.getColumnIndex(LOCATION)};
 				while (!c.isAfterLast()) {
 					int cell = c.getInt(index[0]);
-					Cursor p = db.query(TABLE_PAIRS, new String[]{_ID}, CELL + "=" + cell, null, null, null, null);
+					Cursor p = db.query(TABLE_PAIRS, new String[]{_ID}, String.format(sql_equals, CELL, cell), null, null, null, null);
 					if (p.getCount() == 0) {
-						db.delete(TABLE_CELLS, _ID + "=" + cell, null);
+						db.delete(TABLE_CELLS, String.format(sql_equals, _ID, cell), null);
 						int location = c.getInt(index[1]);
-						Cursor l = db.query(TABLE_CELLS, new String[]{LOCATION}, LOCATION + "=" + location, null, null, null, null);
-						if (l.getCount() == 0) db.delete(TABLE_LOCATIONS, _ID + "=" + location, null);
+						Cursor l = db.query(TABLE_CELLS, new String[]{LOCATION}, String.format(sql_equals, LOCATION, location), null, null, null, null);
+						if (l.getCount() == 0) db.delete(TABLE_LOCATIONS, String.format(sql_equals, _ID, location), null);
 						l.close();
 					}
 					p.close();
