@@ -579,14 +579,14 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	}
 
 	private long fetchNetwork(String ssid, String bssid) {
-		long network;
+		int network;
 		Cursor c = mDatabase.query(TABLE_NETWORKS, new String[]{_ID, SSID, BSSID}, String.format(getString(R.string.sql_fetchnetwork),
 				String.format(getString(R.string.sql_equalsquotedvalue), SSID, ssid),
 				String.format(getString(R.string.sql_equalsquotedvalue), BSSID, bssid), BSSID), null, null, null, null);
 		if (c.getCount() > 0) {
 			// ssid matches, only concerned if bssid is empty
 			c.moveToFirst();
-			network = c.getLong(c.getColumnIndex(_ID));
+			network = c.getInt(c.getColumnIndex(_ID));
 			if (c.getString(c.getColumnIndex(BSSID)).equals("")) {
 				ContentValues values = new ContentValues();
 				values.put(BSSID, bssid);
@@ -596,40 +596,38 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			ContentValues values = new ContentValues();
 			values.put(SSID, ssid);
 			values.put(BSSID, bssid);
-			network = mDatabase.insert(TABLE_NETWORKS, SSID, values);
+			network = (int) mDatabase.insert(TABLE_NETWORKS, SSID, values);
 		}
 		c.close();
 		return network;
 	}
 
-	private long fetchLocation(int lac) {
+	private int fetchLocation(int lac) {
 		// select or insert location
 		if (lac > 0) {
-			long location;
+			int location;
 			Cursor c = mDatabase.query(TABLE_LOCATIONS, new String[]{_ID}, String.format(getString(R.string.sql_equalsquotedvalue), LAC, lac), null, null, null, null);
 			if (c.getCount() > 0) {
 				c.moveToFirst();
-				location = c.getLong(c.getColumnIndex(_ID));
+				location = c.getInt(c.getColumnIndex(_ID));
 			} else {
 				ContentValues values = new ContentValues();
 				values.put(LAC, lac);
-				location = mDatabase.insert(TABLE_LOCATIONS, LAC, values);
+				location = (int) mDatabase.insert(TABLE_LOCATIONS, LAC, values);
 			}
 			c.close();
 			return location;
-		} else {
-			return UNKNOWN_CID;
-		}
+		} else return UNKNOWN_CID;
 	}
 	
 	private void createPair(int cid, int lac, long network, int rssi) {
-		long cell, pair, location = fetchLocation(lac);
+		int cell, pair, location = fetchLocation(lac);
 		// if location==-1, then match only on cid, otherwise match on location or -1
 		// select or insert cell
 		Cursor c = mDatabase.query(TABLE_CELLS, new String[]{_ID, LOCATION}, (location == UNKNOWN_CID ? String.format(getString(R.string.sql_equalsvalue), CID, cid) : String.format(getString(R.string.sql_fetchcell), String.format(getString(R.string.sql_equalsvalue), CID, cid), String.format(getString(R.string.sql_equalsvalue), LOCATION, UNKNOWN_CID), String.format(getString(R.string.sql_equalsvalue), LOCATION, location))), null, null, null, null);
 		if (c.getCount() > 0) {
 			c.moveToFirst();
-			cell = c.getLong(c.getColumnIndex(_ID));
+			cell = c.getInt(c.getColumnIndex(_ID));
 			if ((location != UNKNOWN_CID) && (c.getInt(c.getColumnIndex(LOCATION)) == UNKNOWN_CID)) {
 				ContentValues values = new ContentValues();
 				values.put(LOCATION, location);
@@ -639,7 +637,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			ContentValues values = new ContentValues();
 			values.put(CID, cid);
 			values.put(LOCATION, location);
-			cell = mDatabase.insert(TABLE_CELLS, CID, values);
+			cell = (int) mDatabase.insert(TABLE_CELLS, CID, values);
 		}
 		c.close();
 		// select and update or insert pair
@@ -647,7 +645,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		if (c.getCount() > 0) {
 			if (rssi != UNKNOWN_RSSI) {
 				c.moveToFirst();
-				pair = c.getLong(c.getColumnIndex(_ID));
+				pair = c.getInt(c.getColumnIndex(_ID));
 				int rssi_min = c.getInt(c.getColumnIndex(RSSI_MIN));
 				int rssi_max = c.getInt(c.getColumnIndex(RSSI_MAX));
 				if (rssi_min > rssi) {
@@ -697,7 +695,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			if (c.isNull(c.getColumnIndex(LOCATION))) {
 				ContentValues values = new ContentValues();
 				values.put(LOCATION, fetchLocation(lac));
-				mDatabase.update(TABLE_CELLS, values, String.format(getString(R.string.sql_equalsvalue), _ID, c.getLong(c.getColumnIndex(_ID))), null);
+				mDatabase.update(TABLE_CELLS, values, String.format(getString(R.string.sql_equalsvalue), _ID, c.getInt(c.getColumnIndex(_ID))), null);
 			}
 		}
 		c.close();
