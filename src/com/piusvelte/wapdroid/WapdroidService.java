@@ -671,7 +671,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	}
 	
 	private boolean cellInRange(int cid, int lac, int rssi) {
-		Cursor c = mDatabase.query(VIEW_RANGES, new String[]{LAC},
+		Cursor c = mDatabase.query(VIEW_RANGES, new String[]{_ID, LAC},
 				(rssi == UNKNOWN_RSSI
 						? String.format(getString(R.string.sql_fetchrange),
 								String.format(getString(R.string.sql_equalsvalue), CID, cid),

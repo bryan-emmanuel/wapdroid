@@ -26,7 +26,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 public class WapdroidDatabaseHelper extends SQLiteOpenHelper {
 	private static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 7;
+	private static final int DATABASE_VERSION = 8;
 	public static final String TAG = "Wapdroid";
 	public static final String TABLE_NETWORKS = "networks";
 	public static final String TABLE_CELLS = "cells";
@@ -77,6 +77,8 @@ public class WapdroidDatabaseHelper extends SQLiteOpenHelper {
 				+ "," + LOCATION
 				+ "," + SSID
 				+ "," + BSSID
+				+ "," + CELL
+				+ "," + NETWORK
 				+ " from " + TABLE_PAIRS
 				+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + _ID + "=" + CELL
 				+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + _ID + "=" + LOCATION
@@ -157,6 +159,24 @@ public class WapdroidDatabaseHelper extends SQLiteOpenHelper {
 					+ "," + NETWORK
 					+ "," + SSID
 					+ "," + BSSID
+					+ " from " + TABLE_PAIRS
+					+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + _ID + "=" + CELL
+					+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + _ID + "=" + LOCATION
+					+ " left join " + TABLE_NETWORKS + " on " + TABLE_NETWORKS + "." + _ID + "=" + NETWORK + ";");
+		}
+		if (oldVersion < 8) {
+			db.execSQL("drop view if exists " + VIEW_RANGES + ";");
+			db.execSQL("create view if not exists " + VIEW_RANGES + " as select "
+					+ TABLE_PAIRS + "." + _ID + " as " + _ID
+					+ "," + RSSI_MAX
+					+ "," + RSSI_MIN
+					+ "," + CID
+					+ "," + LAC
+					+ "," + LOCATION
+					+ "," + SSID
+					+ "," + BSSID
+					+ "," + CELL
+					+ "," + NETWORK
 					+ " from " + TABLE_PAIRS
 					+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + _ID + "=" + CELL
 					+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + _ID + "=" + LOCATION
