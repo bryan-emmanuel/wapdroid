@@ -176,10 +176,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
 				if (ManageWakeLocks.hasLock()) {
 					if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(WapdroidService.this, 0, (new Intent(WapdroidService.this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
-					// if sleeping, re-initialize phone info
-					mCid = UNKNOWN_CID;
-					mLac = UNKNOWN_CID;
-					mRssi = UNKNOWN_RSSI;
 					ManageWakeLocks.release();
 				}
 			}
@@ -447,8 +443,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	final void signalStrengthChanged(int rssi) {
 		// signalStrengthChanged releases any wakelocks IF mCid != UNKNOWN_CID && enableWif != mLastScanEnableWifi
-		// keep last known rssi
-		if (rssi != UNKNOWN_RSSI) mRssi = rssi;
+		// rssi may be unknown
+		mRssi = rssi;
 		if (mWapdroidUI != null) {
 			updateUI();
 			try {
@@ -674,7 +670,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	
 	private boolean cellInRange(int cid, int lac, int rssi) {
 		String sql_equalsvalue = getString(R.string.sql_equalsvalue);
-		Cursor c = mDatabase.query(VIEW_RANGES, new String[]{_ID, LAC},
+		Cursor c = mDatabase.query(VIEW_RANGES, new String[]{_ID, LOCATION},
 				(rssi == UNKNOWN_RSSI
 						? String.format(getString(R.string.sql_fetchrange),
 								String.format(sql_equalsvalue, CID, cid),
