@@ -118,7 +118,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
 		mWapdroidDatabaseHelper = new WapdroidDatabaseHelper(this);
-		listData();
 	}
 
 	@Override
@@ -127,6 +126,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
+		listData();
 	}
 
 	@Override
@@ -367,6 +367,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				mCursor,
 				new String[] {CID, LAC, RSSI_MIN, STATUS},
 				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status}));
+		db.close();
 
 	}
 }

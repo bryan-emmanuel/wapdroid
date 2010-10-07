@@ -433,9 +433,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					mLac = UNKNOWN_CID;
 				}
 			}
-		} else {
-			mCid = UNKNOWN_CID;
-			mLac = UNKNOWN_CID;
 		}
 		// allow unknown mRssi, since signalStrengthChanged isn't reliable enough by itself
 		signalStrengthChanged(UNKNOWN_RSSI);
