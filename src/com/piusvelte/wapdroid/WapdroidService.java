@@ -395,10 +395,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					}
 				} else nci_lac = UNKNOWN_CID;
 				// drop the rssi filtering due to ANR's
-				cells += String.format(getString(R.string.sql_cells_or),
-						String.format(getString(R.string.sql_equalsvalue), CID, Integer.toString(nci.getCid())),
-						String.format(getString(R.string.sql_equalsvalue), LAC, Integer.toString(nci_lac)),
-						String.format(getString(R.string.sql_equalsvalue), LOCATION, UNKNOWN_CID));
+				cells += String.format(getString(R.string.sql_cells_or), CID, Integer.toString(nci.getCid()), LAC, Integer.toString(nci_lac), LOCATION, UNKNOWN_CID);
 				//				cells += " or (" + CELLS_CID + "=" + Integer.toString(nci.getCid())
 				//				+ " and (" + LOCATIONS_LAC + "=" + nci_lac + " or " + CELLS_LOCATION + "=" + UNKNOWN_CID + ")"
 				//				+ ((nci_rssi == UNKNOWN_RSSI) ? ")" : " and (((" + PAIRS_RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + PAIRS_RSSI_MIN + "<=" + Integer.toString(nci_rssi) + ")) and (" + PAIRS_RSSI_MAX + ">=" + Integer.toString(nci_rssi) + ")))");
@@ -472,9 +469,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 						if (nci_cid != UNKNOWN_CID) createPair(nci_cid, nci_lac, network, nci_rssi);
 					}
 				}
-			}
-			// always allow disabling, but only enable if above the battery limit
-			else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
+			} else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
 				enableWifi = cellInRange(mCid, mLac, mRssi);
 				if (enableWifi) {
 					// check neighbors if it appears that we're in range, for both enabling and disabling
@@ -573,10 +568,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	private long fetchNetwork(String ssid, String bssid) {
 		int network;
-		String sql_equalsquotedvalue = getString(R.string.sql_equalsquotedvalue);
-		Cursor c = mDatabase.query(TABLE_NETWORKS, new String[]{_ID, SSID, BSSID}, String.format(getString(R.string.sql_fetchnetwork),
-				String.format(sql_equalsquotedvalue, SSID, ssid),
-				String.format(sql_equalsquotedvalue, BSSID, bssid), BSSID), null, null, null, null);
+		Cursor c = mDatabase.query(TABLE_NETWORKS, new String[]{_ID, SSID, BSSID}, String.format(getString(R.string.sql_fetchnetwork), SSID, ssid, BSSID, bssid, BSSID), null, null, null, null);
 		if (c.getCount() > 0) {
 			// ssid matches, only concerned if bssid is empty
 			c.moveToFirst();
@@ -666,18 +658,11 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	}
 	
 	private boolean cellInRange(int cid, int lac, int rssi) {
-		String sql_equalsvalue = getString(R.string.sql_equalsvalue);
 		Cursor c = mDatabase.query(VIEW_RANGES, new String[]{_ID, LOCATION},
 				(rssi == UNKNOWN_RSSI
-						? String.format(getString(R.string.sql_fetchrange),
-								String.format(sql_equalsvalue, CID, cid),
-								String.format(sql_equalsvalue, LAC, lac),
-								String.format(sql_equalsvalue, LOCATION, UNKNOWN_CID))
+						? String.format(getString(R.string.sql_fetchrange), CID, cid, LAC, lac, LOCATION, UNKNOWN_CID)
 						: String.format(getString(R.string.sql_fetchrangewithrssi),
-								String.format(getString(R.string.sql_fetchrange),
-										String.format(sql_equalsvalue, CID, cid),
-										String.format(sql_equalsvalue, LAC, lac),
-										String.format(sql_equalsvalue, LOCATION, UNKNOWN_CID)),
+								String.format(getString(R.string.sql_fetchrange), CID, cid, LAC, lac, LOCATION, UNKNOWN_CID),
 								RSSI_MIN,
 								UNKNOWN_RSSI,
 								RSSI_MIN,
@@ -691,7 +676,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			if (c.isNull(c.getColumnIndex(LOCATION))) {
 				ContentValues values = new ContentValues();
 				values.put(LOCATION, fetchLocation(lac));
-				mDatabase.update(TABLE_CELLS, values, String.format(sql_equalsvalue, _ID, c.getInt(c.getColumnIndex(_ID))), null);
+				mDatabase.update(TABLE_CELLS, values, String.format(getString(R.string.sql_equalsvalue), _ID, c.getInt(c.getColumnIndex(_ID))), null);
 			}
 		}
 		c.close();
