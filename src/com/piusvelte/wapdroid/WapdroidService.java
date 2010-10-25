@@ -269,6 +269,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		 * others should release the lock and cancel the alarm
 		 */
 		// initialize the cell info
+		Log.v(TAG,"service init");
 		getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
 	}
 
@@ -281,6 +282,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		 * listen to wifi when: screenon
 		 * listen to battery when: disabling on battery level, UI is in foreground
 		 */
+		Log.v(TAG,"service create");
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		// initialize preferences, updated by UI
 		mManageWifi = sp.getBoolean(getString(R.string.key_manageWifi), false);
