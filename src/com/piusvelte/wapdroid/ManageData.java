@@ -39,7 +39,6 @@ import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.SSID;
 
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
-import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -78,7 +77,9 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	private static final int FILTER_OUTRANGE = 2;
 	private static final int FILTER_CONNECTED = 3;
 	private int mFilter = FILTER_ALL;
-	String mCells = "", mOperator = "", mBssid = "";
+	String mCells = "",
+	mOperator = "",
+	mBssid = "";
 	public IWapdroidService mIService;
 	private Context mContext;
 	private WapdroidDatabaseHelper mWapdroidDatabaseHelper;
@@ -169,7 +170,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 					R.array.filter_entries,
 					which,
 					new DialogInterface.OnClickListener() {
-						//@Override
+						@Override
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.dismiss();
 							mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
@@ -212,8 +213,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				}
 			});
 			dialog.show();
-		}
-		else {
+		} else {
 			final CharSequence[] items = {getString(R.string.map_cell), getString(R.string.menu_deleteCell), getString(android.R.string.cancel)};
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setItems(items, new DialogInterface.OnClickListener() {
@@ -240,14 +240,13 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			return;
 		case DELETE_ID:
 			SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
-			String sql_equals = getString(R.string.sql_equalsvalue);
 			if (mNetwork == 0) {
 				db.delete(TABLE_NETWORKS, _ID + "=" + id, null);
 				db.delete(TABLE_PAIRS, NETWORK + "=" + id, null);
 			} else {
 				db.delete(TABLE_PAIRS, _ID + "=" + id, null);
-				Cursor n = db.query(TABLE_PAIRS, new String[]{_ID}, String.format(sql_equals, NETWORK, mNetwork), null, null, null, null);
-				if (n.getCount() == 0) db.delete(TABLE_PAIRS, String.format(sql_equals, _ID, mNetwork), null);
+				Cursor n = db.query(TABLE_PAIRS, new String[]{_ID}, NETWORK + "=" + mNetwork, null, null, null, null);
+				if (n.getCount() == 0) db.delete(TABLE_PAIRS, _ID + "=" + mNetwork, null);
 				n.close();
 			}
 			Cursor c = db.query(TABLE_CELLS, new String[]{_ID, LOCATION}, null, null, null, null, null);
@@ -256,12 +255,12 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				int[] index = {c.getColumnIndex(_ID), c.getColumnIndex(LOCATION)};
 				while (!c.isAfterLast()) {
 					int cell = c.getInt(index[0]);
-					Cursor p = db.query(TABLE_PAIRS, new String[]{_ID}, String.format(sql_equals, CELL, cell), null, null, null, null);
+					Cursor p = db.query(TABLE_PAIRS, new String[]{_ID}, CELL + "=" + cell, null, null, null, null);
 					if (p.getCount() == 0) {
-						db.delete(TABLE_CELLS, String.format(sql_equals, _ID, cell), null);
+						db.delete(TABLE_CELLS, _ID + "=" + cell, null);
 						int location = c.getInt(index[1]);
-						Cursor l = db.query(TABLE_CELLS, new String[]{LOCATION}, String.format(sql_equals, LOCATION, location), null, null, null, null);
-						if (l.getCount() == 0) db.delete(TABLE_LOCATIONS, String.format(sql_equals, _ID, location), null);
+						Cursor l = db.query(TABLE_CELLS, new String[]{LOCATION}, LOCATION + "=" + location, null, null, null, null);
+						if (l.getCount() == 0) db.delete(TABLE_LOCATIONS, _ID + "=" + location, null);
 						l.close();
 					}
 					p.close();
@@ -311,11 +310,9 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				SSID,
 				BSSID, "case when " + BSSID + "='" + mBssid
 				+ "' then '" + r.getString(R.string.connected)
-				+ "' else (case when " + _ID + " in (select " + NETWORK
-				+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-				+ " where " + CELL + "=" + TABLE_CELLS + "." + _ID
-				+ " and " + LOCATION + "=" + TABLE_LOCATIONS + "." + _ID
-				+ mCells + ") then '" + r.getString(R.string.withinarea)
+				+ "' else (case when "
+				+ _ID + " in (select " + NETWORK	+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS + " where " + CELL + "=" + TABLE_CELLS + "." + _ID + " and " + LOCATION + "=" + TABLE_LOCATIONS + "." + _ID + mCells
+				+ ") then '" + r.getString(R.string.withinarea)
 				+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
 		: new String[]{_ID,
 							SSID,

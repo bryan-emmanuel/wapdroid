@@ -27,7 +27,6 @@ import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TAG;
 
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
-import com.piusvelte.wapdroid.R;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -67,7 +66,6 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.v(TAG,"onCreate");
 		setContentView(R.layout.main);
 		field_CID = (TextView) findViewById(R.id.field_CID);
 		field_wifiState = (TextView) findViewById(R.id.field_wifiState);
@@ -129,7 +127,6 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	@Override
 	public void onResume() {
 		super.onResume();
-		Log.v(TAG,"onResume");
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		SharedPreferences.Editor spe = sp.edit();
 		spe.putBoolean(getString(R.string.key_manual_override), false);
@@ -141,7 +138,6 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 			dialog.setNegativeButton(R.string.close, this);
 			dialog.show();			
 		}
-		Log.v(TAG,"bindService");
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
 	}
 
