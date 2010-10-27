@@ -36,6 +36,7 @@ import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.LOCATION;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.RSSI_MAX;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.RSSI_MIN;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.SSID;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TAG;
 
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
@@ -54,6 +55,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -241,6 +243,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		case DELETE_ID:
 			SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
 			if (mNetwork == 0) {
+				Log.v(TAG, "delete "+id);
 				db.delete(TABLE_NETWORKS, _ID + "=" + id, null);
 				db.delete(TABLE_PAIRS, NETWORK + "=" + id, null);
 			} else {
@@ -268,6 +271,8 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				}
 			}
 			c.close();
+			db.close();
+			listData();
 			return;
 		case CANCEL_ID:
 			return;
@@ -365,6 +370,5 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				new String[] {CID, LAC, RSSI_MIN, STATUS},
 				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status}));
 		db.close();
-
 	}
 }

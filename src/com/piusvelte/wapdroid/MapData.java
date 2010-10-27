@@ -118,7 +118,7 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 		}
 	};
 
-	//@Override
+	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.map);

@@ -404,7 +404,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		} catch (RemoteException e) {}
 	}
 
-	final void getCellInfo(CellLocation location) {
+	private void getCellInfo(CellLocation location) {
 		if (location != null) {
 			if (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) {
 				GsmCellLocation gcl = (GsmCellLocation) location;
@@ -427,7 +427,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		signalStrengthChanged(UNKNOWN_RSSI);
 	}
 
-	final void signalStrengthChanged(int rssi) {
+	private void signalStrengthChanged(int rssi) {
 		// signalStrengthChanged releases any wakelocks IF mCid != UNKNOWN_CID && enableWif != mLastScanEnableWifi
 		// rssi may be unknown
 		mRssi = rssi;
@@ -503,7 +503,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		}
 	}
 
-	final void createNotification(boolean enabled, boolean update) {
+	private void createNotification(boolean enabled, boolean update) {
 		// service runs for ui, so if not managing, don't notify
 		if (mManageWifi) {
 			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), System.currentTimeMillis());
