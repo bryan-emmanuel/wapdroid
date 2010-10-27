@@ -86,8 +86,7 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 				if (stroke == 0) {
 					paint.setAlpha(mCellAlpha);
 					paint.setStyle(Paint.Style.FILL);
-				}
-				else {
+				} else {
 					paint.setAlpha(mCellAlpha);
 					paint.setStyle(Paint.Style.STROKE);
 					paint.setStrokeWidth(projection.metersToEquatorPixels(Math.round(stroke/mercator)));

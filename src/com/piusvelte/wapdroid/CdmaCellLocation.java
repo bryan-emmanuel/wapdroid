@@ -35,16 +35,17 @@ public class CdmaCellLocation {
 	}
 	
 	public CdmaCellLocation(CellLocation location) {
-		this.mBaseStationId = ((android.telephony.cdma.CdmaCellLocation) location).getBaseStationId();
-		this.mNetworkId = ((android.telephony.cdma.CdmaCellLocation) location).getNetworkId();
+		android.telephony.cdma.CdmaCellLocation cdma = (android.telephony.cdma.CdmaCellLocation) location;
+		mBaseStationId = cdma.getBaseStationId();
+		mNetworkId = cdma.getNetworkId();
 	}
 	
 	public int getBaseStationId() {
-		return this.mBaseStationId;
+		return mBaseStationId;
 	}
 	
 	public int getNetworkId() {
-		return this.mNetworkId;
+		return mNetworkId;
 	}
 	
 }
