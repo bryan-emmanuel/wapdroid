@@ -105,6 +105,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 
 		public void setCells(String cells) throws RemoteException {
 			mCells = cells;
+			listData();
 		}
 	};
 
@@ -129,7 +130,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
-		listData();
+		if (mCells.length() > 0) listData();
 	}
 
 	@Override
@@ -316,7 +317,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				BSSID, "case when " + BSSID + "='" + mBssid
 				+ "' then '" + r.getString(R.string.connected)
 				+ "' else (case when "
-				+ _ID + " in (select " + NETWORK	+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS + " where " + CELL + "=" + TABLE_CELLS + "." + _ID + " and " + LOCATION + "=" + TABLE_LOCATIONS + "." + _ID + mCells
+				+ _ID + " in (select " + NETWORK + " from " + VIEW_RANGES + " where " + mCells
 				+ ") then '" + r.getString(R.string.withinarea)
 				+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
 		: new String[]{_ID,
@@ -325,10 +326,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 							r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : (mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea)) + " as " + STATUS},
 							(mFilter == FILTER_CONNECTED ? BSSID + "='" + mBssid + "'"
 									: (mFilter == FILTER_OUTRANGE ? _ID + " NOT" : _ID) + " in (select " + NETWORK
-									+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-									+ " where " + CELL + "=" + TABLE_CELLS + "." + _ID
-									+ " and " + LOCATION + "=" + TABLE_LOCATIONS + "." + _ID
-									+ mCells + ")"), null, null, null, STATUS);
+									+ " from " + VIEW_RANGES + " where " + mCells + ")"), null, null, null, STATUS);
 		else {
 			mCursor = db.query(VIEW_RANGES, mFilter == FILTER_ALL ? new String[]{_ID,
 					CID,
@@ -337,10 +335,8 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 					"case when " + CID + "='" + mCid + "' then '" + r.getString(R.string.connected)
 					+ "' else (case when " + CELL + " in (select "
 					+ TABLE_CELLS + "." + _ID
-					+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-					+ " where " + CELL + "=" + TABLE_CELLS + "." + _ID
-					+ " and " + LOCATION + "=" + TABLE_LOCATIONS + "." + _ID
-					+ " and " + NETWORK + "=" + mNetwork
+					+ " from " + VIEW_RANGES
+					+ " where " + NETWORK + "=" + mNetwork
 					+ mCells + ")" + " then '" + r.getString(R.string.withinarea)
 					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
 			: new String[]{_ID,
@@ -351,10 +347,8 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 				NETWORK + "=" + mNetwork
 				+ " and " + (mFilter == FILTER_CONNECTED ? CID + "=" + mCid + ""
 						: (mFilter == FILTER_OUTRANGE ? CID + " NOT" : CID) + " in (select " + CID
-						+ " from " + TABLE_PAIRS + ", " + TABLE_CELLS + ", " + TABLE_LOCATIONS
-						+ " where " + CELL + "=" + TABLE_CELLS + "." + _ID
-						+ " and " + LOCATION + "=" + TABLE_LOCATIONS + "." + _ID
-						+ " and " + NETWORK + "=" + mNetwork
+						+ " from " + VIEW_RANGES
+						+ " where " + NETWORK + "=" + mNetwork
 						+ mCells + ")"), null, null, null, STATUS);
 		}
 		startManagingCursor(mCursor);
