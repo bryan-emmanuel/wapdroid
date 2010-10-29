@@ -105,7 +105,6 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 
 		public void setCells(String cells) throws RemoteException {
 			mCells = cells;
-			listData();
 		}
 	};
 
@@ -118,6 +117,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			mNetwork = extras.getInt(TABLE_NETWORKS);
 			mCid = extras.getInt(CID);
 			mBssid = extras.getString(BSSID);
+			mCells = extras.getString(TABLE_CELLS);
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
@@ -130,7 +130,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 		SharedPreferences prefs = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		if (prefs.getBoolean(getString(R.string.key_manageWifi), true)) startService(new Intent(this, WapdroidService.class));
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
-		if (mCells.length() > 0) listData();
+		listData();
 	}
 
 	@Override
@@ -234,7 +234,7 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	public void itemAction(int action, int id) {
 		switch(action) {
 		case MANAGE_ID:
-			startActivity((new Intent(this, ManageData.class)).putExtra(TABLE_NETWORKS, id));
+			startActivity((new Intent(this, ManageData.class)).putExtra(TABLE_NETWORKS, id).putExtra(TABLE_CELLS, mCells));
 			return;
 		case MAP_ID:
 			// open gmaps
@@ -308,61 +308,70 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 	}
 
 	private void listData() {
-		Resources r = getResources();
-		SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
-		if (mNetwork == 0) mCursor = db.query(TABLE_NETWORKS,
-				mFilter == FILTER_ALL ?
-						new String[]{_ID,
-				SSID,
-				BSSID, "case when " + BSSID + "='" + mBssid
-				+ "' then '" + r.getString(R.string.connected)
-				+ "' else (case when "
-				+ _ID + " in (select " + NETWORK + " from " + VIEW_RANGES + " where " + mCells
-				+ ") then '" + r.getString(R.string.withinarea)
-				+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
-		: new String[]{_ID,
-							SSID,
-							BSSID,
-							r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : (mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea)) + " as " + STATUS},
-							(mFilter == FILTER_CONNECTED ? BSSID + "='" + mBssid + "'"
-									: (mFilter == FILTER_OUTRANGE ? _ID + " NOT" : _ID) + " in (select " + NETWORK
-									+ " from " + VIEW_RANGES + " where " + mCells + ")"), null, null, null, STATUS);
-		else {
-			mCursor = db.query(VIEW_RANGES, mFilter == FILTER_ALL ? new String[]{_ID,
+		if (mCells.length() > 0) {
+			Resources r = getResources();
+			SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
+			if (mNetwork == 0) mCursor = db.query(TABLE_NETWORKS,
+					mFilter == FILTER_ALL ?
+							new String[]{_ID,
+					SSID,
+					BSSID, "case when " + BSSID + "='" + mBssid
+					+ "' then '" + r.getString(R.string.connected)
+					+ "' else (case when "
+					+ _ID + " in (select " + NETWORK + " from " + VIEW_RANGES + " where" + mCells
+					+ ") then '" + r.getString(R.string.withinarea)
+					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
+			: new String[]{_ID,
+								SSID,
+								BSSID,
+								r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : (mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea)) + " as " + STATUS},
+								(mFilter == FILTER_CONNECTED ? BSSID + "='" + mBssid + "'"
+										: (mFilter == FILTER_OUTRANGE ? _ID + " NOT" : _ID) + " in (select " + NETWORK
+										+ " from " + VIEW_RANGES + " where" + mCells + ")"), null, null, null, STATUS);
+			else {
+				mCursor = db.query(VIEW_RANGES, mFilter == FILTER_ALL ? new String[]{_ID,
+						CID,
+						"case when " + LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + LAC + " end as " + LAC,
+						"case when " + RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + RSSI_MIN,
+						"case when " + CID + "='" + mCid + "' then '" + r.getString(R.string.connected)
+						+ "' else (case when " + CELL + " in (select "
+						+ CELL
+						+ " from " + VIEW_RANGES
+						+ " where " + NETWORK + "=" + mNetwork + " and"
+						+ mCells + ")" + " then '" + r.getString(R.string.withinarea)
+						+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
+				: new String[]{_ID,
 					CID,
 					"case when " + LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + LAC + " end as " + LAC,
 					"case when " + RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + RSSI_MIN,
-					"case when " + CID + "='" + mCid + "' then '" + r.getString(R.string.connected)
-					+ "' else (case when " + CELL + " in (select "
-					+ TABLE_CELLS + "." + _ID
-					+ " from " + VIEW_RANGES
-					+ " where " + NETWORK + "=" + mNetwork
-					+ mCells + ")" + " then '" + r.getString(R.string.withinarea)
-					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
-			: new String[]{_ID,
-				CID,
-				"case when " + LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + LAC + " end as " + LAC,
-				"case when " + RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + RSSI_MIN,
-				r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : (mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea)) + " as " + STATUS},
-				NETWORK + "=" + mNetwork
-				+ " and " + (mFilter == FILTER_CONNECTED ? CID + "=" + mCid + ""
-						: (mFilter == FILTER_OUTRANGE ? CID + " NOT" : CID) + " in (select " + CID
-						+ " from " + VIEW_RANGES
-						+ " where " + NETWORK + "=" + mNetwork
-						+ mCells + ")"), null, null, null, STATUS);
+					r.getString(mFilter == FILTER_CONNECTED ?
+							R.string.connected
+							: (mFilter == FILTER_INRANGE ?
+									R.string.withinarea
+									: R.string.outofarea)) + " as " + STATUS},
+					NETWORK + "=" + mNetwork
+					+ " and " + (mFilter == FILTER_CONNECTED ?
+							CID + "=" + mCid
+							: CELL + (mFilter == FILTER_OUTRANGE ?
+									" NOT"
+									: "") + " in (select " + CELL
+							+ " from " + VIEW_RANGES
+							+ " where " + NETWORK + "=" + mNetwork + " and"
+							+ mCells + ")"), null, null, null, STATUS);
+			}
+			startManagingCursor(mCursor);
+			setListAdapter(mNetwork == 0 ?
+					new SimpleCursorAdapter(mContext,
+							R.layout.network_row,
+							mCursor,
+							new String[] {SSID, BSSID, STATUS},
+							new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status})
+			: new SimpleCursorAdapter(mContext,
+					R.layout.cell_row,
+					mCursor,
+					new String[] {CID, LAC, RSSI_MIN, STATUS},
+					new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status}));
+			db.close();
 		}
-		startManagingCursor(mCursor);
-		setListAdapter(mNetwork == 0 ?
-				new SimpleCursorAdapter(mContext,
-						R.layout.network_row,
-						mCursor,
-						new String[] {SSID, BSSID, STATUS},
-						new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status})
-		: new SimpleCursorAdapter(mContext,
-				R.layout.cell_row,
-				mCursor,
-				new String[] {CID, LAC, RSSI_MIN, STATUS},
-				new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status}));
-		db.close();
 	}
 }

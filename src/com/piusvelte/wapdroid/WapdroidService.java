@@ -75,16 +75,16 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	public static final int LISTEN_SIGNAL_STRENGTHS = 256;
 	public static final int PHONE_TYPE_CDMA = 2;
 	private static final int START_STICKY = 1;
-	int mCid = UNKNOWN_CID,
+	protected int mCid = UNKNOWN_CID,
 	mLac = UNKNOWN_CID,
 	mRssi = UNKNOWN_RSSI,
 	mLastWifiState = WifiManager.WIFI_STATE_UNKNOWN,
 	mNotifications;
-	int mInterval,
+	protected int mInterval,
 	mBatteryLimit,
 	mLastBattPerc = 0;
-	static int mPhoneType;
-	boolean mManageWifi,
+	protected static int mPhoneType;
+	protected boolean mManageWifi,
 	mManualOverride,
 	mLastScanEnableWifi,
 	mNotify,
@@ -269,14 +269,12 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		 * others should release the lock and cancel the alarm
 		 */
 		// initialize the cell info
-		Log.v(TAG,"init service");
 		getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
 	}
 
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		Log.v(TAG,"create service");
 		/*
 		 * only register the receiver on intents that are relevant
 		 * listen to network when: wifi is enabled
@@ -374,7 +372,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	}
 
 	private void updateUI() {
-		String cells = " and (" + CID + "=" + Integer.toString(mCid) + " and (" + LAC + "=" + Integer.toString(mLac) + " or " + LOCATION + "=" + UNKNOWN_CID + ")"
+		String cells = " (" + CID + "=" + Integer.toString(mCid) + " and (" + LAC + "=" + Integer.toString(mLac) + " or " + LOCATION + "=" + UNKNOWN_CID + ")"
 		+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
 		TelephonyManager tm = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		if ((tm.getNeighboringCellInfo() != null) && !tm.getNeighboringCellInfo().isEmpty()) {

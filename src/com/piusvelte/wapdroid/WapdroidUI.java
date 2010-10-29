@@ -23,7 +23,7 @@ package com.piusvelte.wapdroid;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.CID;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.BSSID;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_RSSI;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TAG;
+import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_CELLS;
 
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
@@ -41,7 +41,6 @@ import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -59,14 +58,14 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	field_signal,
 	field_battery,
 	field_LAC;
-	private String mBssid = "";
+	private String mBssid = "",
+	mCells = "";
 	private int mCid = 0;
 	public IWapdroidService mIService;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.v(TAG, "create UI");
 		setContentView(R.layout.main);
 		field_CID = (TextView) findViewById(R.id.field_CID);
 		field_wifiState = (TextView) findViewById(R.id.field_wifiState);
@@ -90,7 +89,7 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case MANAGE_ID:
-			startActivity((new Intent(this, ManageData.class)).putExtra(BSSID, mBssid).putExtra(CID, mCid));
+			startActivity((new Intent(this, ManageData.class)).putExtra(BSSID, mBssid).putExtra(CID, mCid).putExtra(TABLE_CELLS, mCells));
 			return true;
 		case SETTINGS_ID:
 			startActivity(new Intent(this, Settings.class));
@@ -128,7 +127,6 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 	@Override
 	public void onResume() {
 		super.onResume();
-		Log.v(TAG, "resume UI");
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		SharedPreferences.Editor spe = sp.edit();
 		spe.putBoolean(getString(R.string.key_manual_override), false);
@@ -179,7 +177,9 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 			field_battery.setText(Integer.toString(batteryPercentage) + "%");
 		}
 
-		public void setCells(String cells) throws RemoteException {}
+		public void setCells(String cells) throws RemoteException {
+			mCells = cells;
+		}
 
 		public void setOperator(String operator)
 		throws RemoteException {}

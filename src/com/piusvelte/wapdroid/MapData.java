@@ -111,8 +111,8 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 	private MapController mMController;
 	private ProgressDialog mLoadingDialog;
 	private Thread mThread;
-	final Handler mHandler = new Handler();
-	final Runnable mUpdtDialog = new Runnable() {
+	protected final Handler mHandler = new Handler();
+	protected final Runnable mUpdtDialog = new Runnable() {
 		public void run() {
 			updtDialog();
 		}
