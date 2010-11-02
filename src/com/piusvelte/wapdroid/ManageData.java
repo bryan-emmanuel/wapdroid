@@ -313,21 +313,14 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 			SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
 			if (mNetwork == 0) mCursor = db.query(TABLE_NETWORKS,
 					mFilter == FILTER_ALL ?
-							new String[]{_ID,
-					SSID,
-					BSSID, "case when " + BSSID + "='" + mBssid
-					+ "' then '" + r.getString(R.string.connected)
-					+ "' else (case when "
-					+ _ID + " in (select " + NETWORK + " from " + VIEW_RANGES + " where" + mCells
-					+ ") then '" + r.getString(R.string.withinarea)
-					+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
-			: new String[]{_ID,
-								SSID,
-								BSSID,
-								r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : (mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea)) + " as " + STATUS},
-								(mFilter == FILTER_CONNECTED ? BSSID + "='" + mBssid + "'"
-										: (mFilter == FILTER_OUTRANGE ? _ID + " NOT" : _ID) + " in (select " + NETWORK
-										+ " from " + VIEW_RANGES + " where" + mCells + ")"), null, null, null, STATUS);
+							new String[]{_ID, SSID, BSSID, "case when " + BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected) + "' else (case when " + _ID + " in (select " + NETWORK + " from " + VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea) + "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
+			: new String[]{_ID, SSID, BSSID, r.getString(mFilter == FILTER_CONNECTED ? R.string.connected : (mFilter == FILTER_INRANGE ? R.string.withinarea : R.string.outofarea)) + " as " + STATUS},
+			(mFilter == FILTER_ALL ?
+					null
+					: mFilter == FILTER_CONNECTED ?
+							BSSID + "='" + mBssid + "'"
+							: (mFilter == FILTER_OUTRANGE ? _ID + " NOT" : _ID) + " in (select " + NETWORK
+							+ " from " + VIEW_RANGES + " where" + mCells + ")"), null, null, null, STATUS);
 			else {
 				mCursor = db.query(VIEW_RANGES, mFilter == FILTER_ALL ? new String[]{_ID,
 						CID,
@@ -340,24 +333,21 @@ public class ManageData extends ListActivity implements AdListener, ServiceConne
 						+ " where " + NETWORK + "=" + mNetwork + " and"
 						+ mCells + ")" + " then '" + r.getString(R.string.withinarea)
 						+ "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS}
-				: new String[]{_ID,
-					CID,
-					"case when " + LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + LAC + " end as " + LAC,
-					"case when " + RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + RSSI_MIN,
+				: new String[]{_ID, CID, "case when " + LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + LAC + " end as " + LAC, "case when " + RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + RSSI_MIN,
 					r.getString(mFilter == FILTER_CONNECTED ?
 							R.string.connected
 							: (mFilter == FILTER_INRANGE ?
 									R.string.withinarea
 									: R.string.outofarea)) + " as " + STATUS},
-					NETWORK + "=" + mNetwork
-					+ " and " + (mFilter == FILTER_CONNECTED ?
-							CID + "=" + mCid
-							: CELL + (mFilter == FILTER_OUTRANGE ?
-									" NOT"
-									: "") + " in (select " + CELL
-							+ " from " + VIEW_RANGES
-							+ " where " + NETWORK + "=" + mNetwork + " and"
-							+ mCells + ")"), null, null, null, STATUS);
+									NETWORK + "=" + mNetwork + (mFilter == FILTER_ALL ? "" :
+									" and " + (mFilter == FILTER_CONNECTED ?
+											CID + "=" + mCid
+											: CELL + (mFilter == FILTER_OUTRANGE ?
+													" NOT"
+													: "") + " in (select " + CELL
+													+ " from " + VIEW_RANGES
+													+ " where " + NETWORK + "=" + mNetwork + " and"
+													+ mCells + ")")), null, null, null, STATUS);
 			}
 			startManagingCursor(mCursor);
 			setListAdapter(mNetwork == 0 ?
