@@ -22,21 +22,16 @@ package com.piusvelte.wapdroid;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TAG;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.util.Log;
 
 public class BootReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (intent.getAction() != null) Log.v(TAG, "action:"+intent.getAction());
-		if (intent.getScheme() != null) Log.v(TAG, "scheme:"+intent.getScheme());
-		if (intent.getPackage() != null) Log.v(TAG, "package:"+intent.getPackage());
 		if (intent.getAction().equals(ACTION_BOOT_COMPLETED)) checkService(context);
 		else if (intent.getAction().equals(ACTION_PACKAGE_REPLACED)) checkService(context);
 		else if (intent.getAction().equals("android.intent.action.EXTERNAL_APPLICATIONS_UNAVAILABLE")) checkService(context);

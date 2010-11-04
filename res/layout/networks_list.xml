@@ -23,23 +23,14 @@
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	android:textSize="14dip">
-	<com.admob.android.ads.AdView  
-		android:id="@+id/ad"
-		android:layout_width="fill_parent" 
-		android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true"
-		app:primaryTextColor="@color/primary"
-		app:secondaryTextColor="@color/secondary"/>
  	<ListView android:id="@android:id/list"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
-		android:layout_alignParentTop="true"
-		android:layout_above="@id/ad"/>
+		android:layout_alignParentTop="true" />
 	<TextView android:id="@android:id/empty"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
 		android:layout_alignParentTop="true"
-		android:layout_above="@id/ad"
   		android:textColor="@color/primary"
   		android:text="@string/no_networks"/>
 </RelativeLayout>

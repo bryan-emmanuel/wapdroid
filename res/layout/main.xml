@@ -115,15 +115,4 @@
 				android:text="@string/scanning"/>
 	    </TableRow>
 	</TableLayout>
-	<RelativeLayout
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent">
-		<com.admob.android.ads.AdView  
-			android:id="@+id/ad"
-			android:layout_width="fill_parent" 
-			android:layout_height="wrap_content"
-			android:layout_alignParentBottom="true"
-			app:primaryTextColor="@color/primary"
-			app:secondaryTextColor="@color/secondary"/>
-	</RelativeLayout>
 </LinearLayout>

@@ -25,9 +25,6 @@ import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.BSSID;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_RSSI;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_CELLS;
 
-import com.admob.android.ads.AdListener;
-import com.admob.android.ads.AdView;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -47,7 +44,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class WapdroidUI extends Activity implements AdListener, ServiceConnection, View.OnClickListener, DialogInterface.OnClickListener {
+public class WapdroidUI extends Activity implements ServiceConnection, View.OnClickListener, DialogInterface.OnClickListener {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
@@ -184,18 +181,6 @@ public class WapdroidUI extends Activity implements AdListener, ServiceConnectio
 		public void setOperator(String operator)
 		throws RemoteException {}
 	};
-
-	@Override
-	public void onFailedToReceiveAd(AdView arg0) {}
-
-	@Override
-	public void onFailedToReceiveRefreshedAd(AdView arg0) {}
-
-	@Override
-	public void onReceiveAd(AdView arg0) {}
-
-	@Override
-	public void onReceiveRefreshedAd(AdView arg0) {}
 
 	@Override
 	public void onServiceConnected(ComponentName name, IBinder service) {

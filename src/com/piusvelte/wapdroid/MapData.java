@@ -60,15 +60,13 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.admob.android.ads.AdListener;
-import com.admob.android.ads.AdView;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 
-public class MapData extends MapActivity implements AdListener, DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
+public class MapData extends MapActivity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private static final int REFRESH_ID = Menu.FIRST;
 	public static final String OPERATOR = "operator";
 	public static final String CARRIER = "carrier";
@@ -330,18 +328,6 @@ public class MapData extends MapActivity implements AdListener, DialogInterface.
 		};
 		mThread.start();
 	}
-
-	@Override
-	public void onFailedToReceiveAd(AdView arg0) {}
-
-	@Override
-	public void onFailedToReceiveRefreshedAd(AdView arg0) {}
-
-	@Override
-	public void onReceiveAd(AdView arg0) {}
-
-	@Override
-	public void onReceiveRefreshedAd(AdView arg0) {}
 
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
