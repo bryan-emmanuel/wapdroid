@@ -303,13 +303,13 @@ public class ManageData extends ListActivity implements ServiceConnection {
 			Resources r = getResources();
 			SQLiteDatabase db = mWapdroidDatabaseHelper.getWritableDatabase();
 			if (mNetwork == 0) mCursor = db.rawQuery(
-					"SELECT " + _ID + "," + SSID + "," + BSSID + (mFilter == FILTER_ALL ?
-							"case when " + BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected) + "' else (case when " + _ID + " in (select " + NETWORK + " from " + VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea) + "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS
-							: r.getString(mFilter == FILTER_CONNECTED ?
+					"SELECT " + _ID + "," + SSID + "," + BSSID + "," + (mFilter == FILTER_ALL ?
+							"case when " + BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected) + "' else (case when " + _ID + " in (select " + NETWORK + " from " + VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea) + "' else '" + r.getString(R.string.outofarea) + "' end) end"
+							: "'" + r.getString(mFilter == FILTER_CONNECTED ?
 									R.string.connected
 									: (mFilter == FILTER_INRANGE ?
 											R.string.withinarea :
-												R.string.outofarea)) + " as " + STATUS)
+												R.string.outofarea)) + "'") + " as " + STATUS
 					+ " FROM " + TABLE_NETWORKS
 					+ (mFilter == FILTER_ALL ? ""
 							: " WHERE " + (mFilter == FILTER_CONNECTED ?
@@ -321,14 +321,14 @@ public class ManageData extends ListActivity implements ServiceConnection {
 									+ " ORDER BY " + STATUS, null);
 			else {
 				mCursor = db.rawQuery(
-						"SELECT " + _ID + "," + CID + "," + "case when " + LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + LAC + " end as " + LAC + "case when " + RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + RSSI_MIN
+						"SELECT " + _ID + "," + CID + ",case when " + LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + LAC + " end as " + LAC + ",case when " + RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + RSSI_MIN + ","
 						+ (mFilter == FILTER_ALL ?
-								"case when " + CID + "='" + mCid + "' then '" + r.getString(R.string.connected)	+ "' else (case when " + CELL + " in (select " + CELL + " from " + VIEW_RANGES + " where " + NETWORK + "=" + mNetwork + " and" + mCells + ")" + " then '" + r.getString(R.string.withinarea) + "' else '" + r.getString(R.string.outofarea) + "' end) end as " + STATUS
-								: r.getString(mFilter == FILTER_CONNECTED ?
+								"case when " + CID + "='" + mCid + "' then '" + r.getString(R.string.connected)	+ "' else (case when " + CELL + " in (select " + CELL + " from " + VIEW_RANGES + " where " + NETWORK + "=" + mNetwork + " and" + mCells + ")" + " then '" + r.getString(R.string.withinarea) + "' else '" + r.getString(R.string.outofarea) + "' end) end"
+								: "'" + r.getString(mFilter == FILTER_CONNECTED ?
 										R.string.connected
 										: (mFilter == FILTER_INRANGE ?
 												R.string.withinarea
-												: R.string.outofarea)) + " as " + STATUS)
+												: R.string.outofarea)) + "'") + " as " + STATUS
 						+ " FROM " + VIEW_RANGES
 						+ " WHERE " + NETWORK + "=" + mNetwork + (mFilter == FILTER_ALL ? "" :
 							" and " + (mFilter == FILTER_CONNECTED ?
