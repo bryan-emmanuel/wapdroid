@@ -259,7 +259,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 					Cursor p = db.rawQuery(
 							"SELECT " + _ID
 							+ " FROM " + TABLE_PAIRS
-							+ " WHERE" + CELL + "=" + cell, null);
+							+ " WHERE " + CELL + "=" + cell, null);
 					if (p.getCount() == 0) {
 						db.delete(TABLE_CELLS, _ID + "=" + cell, null);
 						int location = c.getInt(index[1]);

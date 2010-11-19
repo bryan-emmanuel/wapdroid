@@ -32,59 +32,53 @@ public class Receiver extends BroadcastReceiver {
 	private static final String BATTERY_EXTRA_SCALE = "scale";
 	private static final String BATTERY_EXTRA_PLUGGED = "plugged";
 
-	@Override
-	public void onReceive(Context context, Intent intent) {
+	private void onReceive(WapdroidService context, Intent intent) {
 		if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
 			// override low battery when charging
-			WapdroidService ws = (WapdroidService) context;
-			if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) ws.mBatteryLimit = 0;
+			if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) context.mBatteryLimit = 0;
 			else {
 				// unplugged
 				SharedPreferences sp = (SharedPreferences) context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-				if (sp.getBoolean(context.getString(R.string.key_battery_override), false)) ws.mBatteryLimit = Integer.parseInt((String) sp.getString(context.getString(R.string.key_battery_percentage), "30"));
+				if (sp.getBoolean(context.getString(R.string.key_battery_override), false)) context.mBatteryLimit = Integer.parseInt((String) sp.getString(context.getString(R.string.key_battery_percentage), "30"));
 			}
 			int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
 			// check the threshold
-			if (ws.mManageWifi && !ws.mManualOverride && (currentBattPerc < ws.mBatteryLimit) && (ws.mLastBattPerc >= ws.mBatteryLimit)) {
-				((WifiManager) ws.getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(false);
-				ws.ignorePhone();
-			} else if ((currentBattPerc >= ws.mBatteryLimit) && (ws.mLastBattPerc < ws.mBatteryLimit)) ws.listenPhone();
-			ws.mLastBattPerc = currentBattPerc;
-			if (ws.mWapdroidUI != null) {
+			if (context.mManageWifi && !context.mManualOverride && (currentBattPerc < context.mBatteryLimit) && (context.mLastBattPerc >= context.mBatteryLimit)) {
+				((WifiManager) context.getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(false);
+				context.ignorePhone();
+			} else if ((currentBattPerc >= context.mBatteryLimit) && (context.mLastBattPerc < context.mBatteryLimit)) context.listenPhone();
+			context.mLastBattPerc = currentBattPerc;
+			if (context.mWapdroidUI != null) {
 				try {
-					ws.mWapdroidUI.setBattery(currentBattPerc);
+					context.mWapdroidUI.setBattery(currentBattPerc);
 				} catch (RemoteException e) {};
 			}
 		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 			// grab a lock to wait for a cell change occur
 			// a connection was gained or lost
-			WapdroidService ws = (WapdroidService) context;
 			if (!ManageWakeLocks.hasLock()) {
 				ManageWakeLocks.acquire(context);
-				ws.cancelAlarm();
+				context.cancelAlarm();
 			}
-			ws.wifiConnection((WifiManager) ws.getSystemService(Context.WIFI_SERVICE));
-			ws.getCellInfo(((TelephonyManager) ws.getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
-			if (ws.mWapdroidUI != null) {
+			context.wifiConnection((WifiManager) context.getSystemService(Context.WIFI_SERVICE));
+			context.getCellInfo(((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
+			if (context.mWapdroidUI != null) {
 				try {
-					ws.mWapdroidUI.setWifiInfo(ws.mLastWifiState, ws.mSsid, ws.mBssid);
+					context.mWapdroidUI.setWifiInfo(context.mLastWifiState, context.mSsid, context.mBssid);
 				} catch (RemoteException e) {}
 			}
 		} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-			WapdroidService ws = (WapdroidService) context;
-			ws.cancelAlarm();
+			context.cancelAlarm();
 			ManageWakeLocks.release();
 			context.startService(new Intent(context, WapdroidService.class));
 		} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
-			WapdroidService ws = (WapdroidService) context;
-			ws.mManualOverride = false;
-			if (ws.mInterval > 0) ws.setAlarm();
+			context.mManualOverride = false;
+			context.setAlarm();
 		} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 			// grab a lock to create notification
-			WapdroidService ws = (WapdroidService) context;
 			if (!ManageWakeLocks.hasLock()) {
 				ManageWakeLocks.acquire(context);
-				ws.cancelAlarm();
+				context.cancelAlarm();
 			}
 			/*
 			 * get wifi state
@@ -92,13 +86,83 @@ public class Receiver extends BroadcastReceiver {
 			 * when wifi enabled, register network receiver
 			 * when wifi not enabled, unregister network receiver
 			 */
-			ws.wifiState(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
+			context.wifiState(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
 			// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
 			if (ManageWakeLocks.hasLock()) {
-				if (ws.mInterval > 0) ws.setAlarm();
+				context.setAlarm();
 				ManageWakeLocks.release();
 			}
-		}
+		}		
+	}
+
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		//		if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+		//			// override low battery when charging
+		//			WapdroidService ws = (WapdroidService) context;
+		//			if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) ws.mBatteryLimit = 0;
+		//			else {
+		//				// unplugged
+		//				SharedPreferences sp = (SharedPreferences) context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+		//				if (sp.getBoolean(context.getString(R.string.key_battery_override), false)) ws.mBatteryLimit = Integer.parseInt((String) sp.getString(context.getString(R.string.key_battery_percentage), "30"));
+		//			}
+		//			int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
+		//			// check the threshold
+		//			if (ws.mManageWifi && !ws.mManualOverride && (currentBattPerc < ws.mBatteryLimit) && (ws.mLastBattPerc >= ws.mBatteryLimit)) {
+		//				((WifiManager) ws.getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(false);
+		//				ws.ignorePhone();
+		//			} else if ((currentBattPerc >= ws.mBatteryLimit) && (ws.mLastBattPerc < ws.mBatteryLimit)) ws.listenPhone();
+		//			ws.mLastBattPerc = currentBattPerc;
+		//			if (ws.mWapdroidUI != null) {
+		//				try {
+		//					ws.mWapdroidUI.setBattery(currentBattPerc);
+		//				} catch (RemoteException e) {};
+		//			}
+		//		} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+		//			// grab a lock to wait for a cell change occur
+		//			// a connection was gained or lost
+		//			WapdroidService ws = (WapdroidService) context;
+		//			if (!ManageWakeLocks.hasLock()) {
+		//				ManageWakeLocks.acquire(context);
+		//				ws.cancelAlarm();
+		//			}
+		//			ws.wifiConnection((WifiManager) ws.getSystemService(Context.WIFI_SERVICE));
+		//			ws.getCellInfo(((TelephonyManager) ws.getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
+		//			if (ws.mWapdroidUI != null) {
+		//				try {
+		//					ws.mWapdroidUI.setWifiInfo(ws.mLastWifiState, ws.mSsid, ws.mBssid);
+		//				} catch (RemoteException e) {}
+		//			}
+		//		} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+		//			WapdroidService ws = (WapdroidService) context;
+		//			ws.cancelAlarm();
+		//			ManageWakeLocks.release();
+		//			context.startService(new Intent(context, WapdroidService.class));
+		//		} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+		//			WapdroidService ws = (WapdroidService) context;
+		//			ws.mManualOverride = false;
+		//			if (ws.mInterval > 0) ws.setAlarm();
+		//		} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+		//			// grab a lock to create notification
+		//			WapdroidService ws = (WapdroidService) context;
+		//			if (!ManageWakeLocks.hasLock()) {
+		//				ManageWakeLocks.acquire(context);
+		//				ws.cancelAlarm();
+		//			}
+		//			/*
+		//			 * get wifi state
+		//			 * initially, lastWifiState is unknown, otherwise state is evaluated either enabled or not
+		//			 * when wifi enabled, register network receiver
+		//			 * when wifi not enabled, unregister network receiver
+		//			 */
+		//			ws.wifiState(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
+		//			// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
+		//			if (ManageWakeLocks.hasLock()) {
+		//				if (ws.mInterval > 0) ws.setAlarm();
+		//				ManageWakeLocks.release();
+		//			}
+		//		}
+		onReceive((WapdroidService) context, intent);
 	}
 
 }
