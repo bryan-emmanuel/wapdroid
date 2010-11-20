@@ -166,8 +166,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		super.onStart(intent, startId);
-		init();
+		onStart(intent, startId);
 		return START_STICKY;
 	}
 
