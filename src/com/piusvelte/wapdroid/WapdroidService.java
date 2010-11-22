@@ -19,6 +19,8 @@
  */
 package com.piusvelte.wapdroid;
 
+import static android.content.Intent.ACTION_BOOT_COMPLETED;
+import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TAG;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_CID;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_RSSI;
@@ -74,16 +76,16 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	public static final int LISTEN_SIGNAL_STRENGTHS = 256;
 	public static final int PHONE_TYPE_CDMA = 2;
 	private static final int START_STICKY = 1;
-	protected int mCid = UNKNOWN_CID,
+	private int mCid = UNKNOWN_CID,
 	mLac = UNKNOWN_CID,
 	mRssi = UNKNOWN_RSSI,
 	mLastWifiState = WifiManager.WIFI_STATE_UNKNOWN,
 	mNotifications;
-	protected int mInterval,
+	private int mInterval,
 	mBatteryLimit,
 	mLastBattPerc = 0;
-	protected static int mPhoneType;
-	protected boolean mManageWifi,
+	private static int mPhoneType;
+	private boolean mManageWifi,
 	mManualOverride,
 	mLastScanEnableWifi,
 	mNotify,
@@ -92,7 +94,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	private static boolean mApi7 = false;
 	IWapdroidUI mWapdroidUI;
 	private BroadcastReceiver mReceiver = new Receiver();
-	
+	private static final String BATTERY_EXTRA_LEVEL = "level";
+	private static final String BATTERY_EXTRA_SCALE = "scale";
+	private static final String BATTERY_EXTRA_PLUGGED = "plugged";
+
 	public static PhoneStateListener mPhoneListener;
 	private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
 		public void setCallback(IBinder mWapdroidUIBinder)
@@ -161,23 +166,69 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	@Override
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
-		init();
+		if ((intent != null) && (intent.getAction() != null) && !intent.getAction().equals(WAKE_SERVICE)) {
+			if ((intent.getAction().equals(ACTION_BOOT_COMPLETED) || intent.getAction().equals(ACTION_PACKAGE_REPLACED)) && !mManageWifi) {
+				// nothing to do
+				ManageWakeLocks.release();
+				stopSelf();
+			} else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
+				// override low battery when charging
+				if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) mBatteryLimit = 0;
+				else {
+					// unplugged, restore the user defined battery limit
+					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+					if (sp.getBoolean(getString(R.string.key_battery_override), false)) mBatteryLimit = Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30"));
+				}
+				int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
+				// check the threshold
+				if (mManageWifi && !mManualOverride && (currentBattPerc < mBatteryLimit) && (mLastBattPerc >= mBatteryLimit)) {
+					((WifiManager) getSystemService(Context.WIFI_SERVICE)).setWifiEnabled(false);
+					ignorePhone();
+				} else if ((currentBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit)) listenPhone();
+				mLastBattPerc = currentBattPerc;
+				if (mWapdroidUI != null) {
+					try {
+						mWapdroidUI.setBattery(currentBattPerc);
+					} catch (RemoteException e) {};
+				}
+			} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
+				// cell change will release lock
+				// a connection was gained or lost
+				cancelAlarm();
+				wifiConnection((WifiManager) getSystemService(Context.WIFI_SERVICE));
+				getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
+				if (mWapdroidUI != null) {
+					try {
+						mWapdroidUI.setWifiInfo(mLastWifiState, mSsid, mBssid);
+					} catch (RemoteException e) {}
+				}
+			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
+				cancelAlarm();
+				getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
+			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+				mManualOverride = false;
+				setAlarm();
+				ManageWakeLocks.release();
+			} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
+				cancelAlarm();
+				/*
+				 * get wifi state
+				 * initially, lastWifiState is unknown, otherwise state is evaluated either enabled or not
+				 * when wifi enabled, register network receiver
+				 * when wifi not enabled, unregister network receiver
+				 */
+				wifiState(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
+				// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
+				setAlarm();
+				ManageWakeLocks.release();
+			}
+		} else getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
 	}
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		onStart(intent, startId);
 		return START_STICKY;
-	}
-
-	private void init() {
-		/*
-		 * started on boot, wake, screen_on, ui, settings
-		 * boot and wake will wakelock and should set the alarm,
-		 * others should release the lock and cancel the alarm
-		 */
-		// initialize the cell info
-		getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
 	}
 
 	@Override
@@ -264,7 +315,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		mWapdroidDatabaseHelper.close();
 		if (ManageWakeLocks.hasLock()) ManageWakeLocks.release();
 	}
-	
+
 	protected void wifiState(int state) {
 		if (state != WifiManager.WIFI_STATE_UNKNOWN) {
 			// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
@@ -279,7 +330,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			}
 		}
 	}
-	
+
 	protected int wifiConnection(WifiManager wm) {
 		if (wm.getConnectionInfo().getSupplicantState() == SupplicantState.COMPLETED) {
 			mSsid = wm.getConnectionInfo().getSSID();
@@ -320,23 +371,23 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			mWapdroidUI.setBattery(mLastBattPerc);
 		} catch (RemoteException e) {}
 	}
-	
+
 	private PendingIntent alarmPendingIntent() {
 		return PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0);
 	}
-	
+
 	protected void setAlarm() {
 		if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, alarmPendingIntent());
 	}
-	
+
 	protected void cancelAlarm() {
 		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(alarmPendingIntent());
 	}
-	
+
 	protected void listenPhone() {
 		((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 	}
-	
+
 	protected void ignorePhone() {
 		((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);		
 	}
@@ -548,8 +599,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				"SELECT " + _ID + "," + LOCATION
 				+ " FROM " + TABLE_CELLS
 				+ " WHERE " + CID + "=" + cid + (location == UNKNOWN_CID ?
-				""
-				: " and (" + LOCATION + "=" + UNKNOWN_CID + " or " + LOCATION + "=" + location + ")"), null);
+						""
+						: " and (" + LOCATION + "=" + UNKNOWN_CID + " or " + LOCATION + "=" + location + ")"), null);
 		if (c.getCount() > 0) {
 			c.moveToFirst();
 			cell = c.getInt(c.getColumnIndex(_ID));

@@ -142,7 +142,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean result = super.onCreateOptionsMenu(menu);
-		menu.add(0, REFRESH_ID, 0, R.string.menu_refreshNetworks).setIcon(android.R.drawable.ic_menu_rotate);
+		menu.add(0, REFRESH_ID, 0, String.format(getString(R.string.refresh), getString(mNetwork == 0 ? R.string.network : R.string.cell))).setIcon(android.R.drawable.ic_menu_rotate);
 		menu.add(0, FILTER_ID, 0, R.string.menu_filter).setIcon(android.R.drawable.ic_menu_agenda);
 		return result;
 	}
@@ -183,9 +183,14 @@ public class ManageData extends ListActivity implements ServiceConnection {
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, view, menuInfo);
-		if (mNetwork == 0) menu.add(0, MANAGE_ID, 0, R.string.menu_manageCells);
-		menu.add(0, MAP_ID, 0, mNetwork == 0 ? R.string.map_network : R.string.map_cell);
-		menu.add(0, DELETE_ID, 0, mNetwork == 0 ? R.string.menu_deleteNetwork : R.string.menu_deleteCell);
+		if (mNetwork == 0) {
+			menu.add(0, MANAGE_ID, 0, String.format(getString(R.string.manage), getString(R.string.cell)));
+			menu.add(0, MAP_ID, 0, String.format(getString(R.string.map), getString(R.string.network)));
+			menu.add(0, DELETE_ID, 0, String.format(getString(R.string.forget), getString(R.string.network)));
+		} else {
+			menu.add(0, MAP_ID, 0, String.format(getString(R.string.map), getString(R.string.cell)));
+			menu.add(0, DELETE_ID, 0, String.format(getString(R.string.forget), getString(R.string.cell)));
+		}
 		menu.add(0, CANCEL_ID, 0, android.R.string.cancel);
 	}
 
@@ -200,7 +205,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 		super.onListItemClick(list, view, position, id);
 		final int item = (int) id;
 		if (mNetwork == 0) {
-			final CharSequence[] items = {getString(R.string.menu_manageCells), getString(R.string.map_network), getString(R.string.menu_deleteNetwork), getString(android.R.string.cancel)};
+			final CharSequence[] items = {String.format(getString(R.string.manage), getString(R.string.cell)), String.format(getString(R.string.map), getString(R.string.network)), String.format(getString(R.string.forget), getString(R.string.network)), getString(android.R.string.cancel)};
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setItems(items, new DialogInterface.OnClickListener() {
 				@Override
@@ -212,7 +217,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 			});
 			dialog.show();
 		} else {
-			final CharSequence[] items = {getString(R.string.map_cell), getString(R.string.menu_deleteCell), getString(android.R.string.cancel)};
+			final CharSequence[] items = {String.format(getString(R.string.map), getString(R.string.cell)), String.format(getString(R.string.forget), getString(R.string.cell)), getString(android.R.string.cancel)};
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setItems(items, new DialogInterface.OnClickListener() {
 				@Override

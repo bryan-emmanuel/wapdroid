@@ -20,7 +20,7 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.piusvelte.wapdroid"
-      android:versionCode="311" android:versionName="3.1.1"
+      android:versionCode="312" android:versionName="3.1.2"
       android:installLocation="auto">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".WapdroidUI"
@@ -36,8 +36,9 @@
 		<receiver android:name=".BootReceiver">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED" />
+			</intent-filter>
+			<intent-filter>
 				<action android:name="com.piusvelte.wapdroid.WAKE_SERVICE" />
-				<action android:name="android.intent.action.EXTERNAL_APPLICATIONS_AVAILABLE" />
 			</intent-filter>
 			<intent-filter>
 				<action android:name="android.intent.action.PACKAGE_REPLACED" />

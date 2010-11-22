@@ -17,49 +17,6 @@ public final class R {
         public static final int scan_interval_values=0x7f050001;
     }
     public static final class attr {
-        /** <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
-"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-         */
-        public static final int backgroundColor=0x7f010000;
-        /** <p>Must be a string value, using '\\;' to escape characters such as '\\n' or '\\uxxxx' for a unicode character.
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-         */
-        public static final int keywords=0x7f010003;
-        /** <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
-"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-         */
-        public static final int primaryTextColor=0x7f010001;
-        /** <p>Must be an integer value, such as "<code>100</code>".
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-         */
-        public static final int refreshInterval=0x7f010004;
-        /** <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
-"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-         */
-        public static final int secondaryTextColor=0x7f010002;
     }
     public static final class color {
         public static final int primary=0x7f060000;
@@ -74,7 +31,6 @@ containing a value of this type.
         public static final int scanning=0x7f020004;
         public static final int status=0x7f020005;
         public static final int statuson=0x7f020006;
-        public static final int wifi=0x7f020007;
     }
     public static final class id {
         public static final int button_donate=0x7f080000;
@@ -103,18 +59,19 @@ containing a value of this type.
         public static final int networks_list=0x7f030006;
     }
     public static final class string {
-        public static final int about=0x7f070043;
+        public static final int about=0x7f070040;
         public static final int app_name=0x7f07000c;
-        public static final int background_info=0x7f070041;
+        public static final int background_info=0x7f07003e;
         public static final int battery_override=0x7f070034;
         public static final int battery_percentage=0x7f070035;
         public static final int battery_remaining=0x7f070033;
-        public static final int cellwarning=0x7f070040;
-        public static final int close=0x7f07003b;
+        public static final int cell=0x7f07001a;
+        public static final int cellwarning=0x7f07003d;
         public static final int colon=0x7f070031;
         public static final int connected=0x7f070036;
         public static final int dbm=0x7f070030;
-        public static final int gpl=0x7f070044;
+        public static final int forget=0x7f070016;
+        public static final int gpl=0x7f070041;
         public static final int key_battery_override=0x7f070007;
         public static final int key_battery_percentage=0x7f070008;
         public static final int key_interval=0x7f070006;
@@ -142,32 +99,28 @@ containing a value of this type.
         public static final int label_interval=0x7f070026;
         public static final int label_led=0x7f070022;
         public static final int label_notify=0x7f07001f;
-        public static final int label_persistent_status=0x7f07003f;
+        public static final int label_persistent_status=0x7f07003c;
         public static final int label_ringtone=0x7f070023;
         public static final int label_save=0x7f070024;
         public static final int label_vibrate=0x7f070021;
         public static final int label_wapdroidState=0x7f070012;
-        public static final int linefeed=0x7f07003a;
+        public static final int linefeed=0x7f070038;
         public static final int loading=0x7f07002e;
-        public static final int map_cell=0x7f070039;
-        public static final int map_network=0x7f070038;
-        public static final int menu_deleteCell=0x7f070018;
-        public static final int menu_deleteNetwork=0x7f070017;
+        public static final int manage=0x7f070015;
+        public static final int map=0x7f070018;
         public static final int menu_filter=0x7f07002a;
-        public static final int menu_manageCells=0x7f070016;
-        public static final int menu_manageNetworks=0x7f070015;
-        public static final int menu_refreshCells=0x7f07001a;
-        public static final int menu_refreshNetworks=0x7f070019;
         public static final int menu_settings=0x7f070020;
+        public static final int network=0x7f070019;
         public static final int no_cells=0x7f070014;
         public static final int no_networks=0x7f070013;
         public static final int outofarea=0x7f07002d;
-        public static final int pref_battery=0x7f07003e;
-        public static final int pref_notifications=0x7f07003d;
-        public static final int pref_service=0x7f07003c;
+        public static final int pref_battery=0x7f07003b;
+        public static final int pref_notifications=0x7f07003a;
+        public static final int pref_service=0x7f070039;
         public static final int range=0x7f07002f;
+        public static final int refresh=0x7f070017;
         public static final int scanning=0x7f070027;
-        public static final int service_info=0x7f070042;
+        public static final int service_info=0x7f07003f;
         public static final int signal=0x7f070032;
         public static final int status=0x7f07002b;
         public static final int unknown=0x7f070037;
@@ -176,101 +129,4 @@ containing a value of this type.
     public static final class xml {
         public static final int preferences=0x7f040000;
     }
-    public static final class styleable {
-        /** Attributes that can be used with a com_admob_android_ads_AdView.
-           <p>Includes the following attributes:</p>
-           <table>
-           <colgroup align="left" />
-           <colgroup align="left" />
-           <tr><th>Attribute</th><th>Description</th></tr>
-           <tr><td><code>{@link #com_admob_android_ads_AdView_backgroundColor com.piusvelte.wapdroid:backgroundColor}</code></td><td></td></tr>
-           <tr><td><code>{@link #com_admob_android_ads_AdView_keywords com.piusvelte.wapdroid:keywords}</code></td><td></td></tr>
-           <tr><td><code>{@link #com_admob_android_ads_AdView_primaryTextColor com.piusvelte.wapdroid:primaryTextColor}</code></td><td></td></tr>
-           <tr><td><code>{@link #com_admob_android_ads_AdView_refreshInterval com.piusvelte.wapdroid:refreshInterval}</code></td><td></td></tr>
-           <tr><td><code>{@link #com_admob_android_ads_AdView_secondaryTextColor com.piusvelte.wapdroid:secondaryTextColor}</code></td><td></td></tr>
-           </table>
-           @see #com_admob_android_ads_AdView_backgroundColor
-           @see #com_admob_android_ads_AdView_keywords
-           @see #com_admob_android_ads_AdView_primaryTextColor
-           @see #com_admob_android_ads_AdView_refreshInterval
-           @see #com_admob_android_ads_AdView_secondaryTextColor
-         */
-        public static final int[] com_admob_android_ads_AdView = {
-            0x7f010000, 0x7f010001, 0x7f010002, 0x7f010003,
-            0x7f010004
-        };
-        /**
-          <p>This symbol is the offset where the {@link com.piusvelte.wapdroid.R.attr#backgroundColor}
-          attribute's value can be found in the {@link #com_admob_android_ads_AdView} array.
-
-
-          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
-"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-          @attr name android:backgroundColor
-        */
-        public static final int com_admob_android_ads_AdView_backgroundColor = 0;
-        /**
-          <p>This symbol is the offset where the {@link com.piusvelte.wapdroid.R.attr#keywords}
-          attribute's value can be found in the {@link #com_admob_android_ads_AdView} array.
-
-
-          <p>Must be a string value, using '\\;' to escape characters such as '\\n' or '\\uxxxx' for a unicode character.
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-          @attr name android:keywords
-        */
-        public static final int com_admob_android_ads_AdView_keywords = 3;
-        /**
-          <p>This symbol is the offset where the {@link com.piusvelte.wapdroid.R.attr#primaryTextColor}
-          attribute's value can be found in the {@link #com_admob_android_ads_AdView} array.
-
-
-          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
-"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-          @attr name android:primaryTextColor
-        */
-        public static final int com_admob_android_ads_AdView_primaryTextColor = 1;
-        /**
-          <p>This symbol is the offset where the {@link com.piusvelte.wapdroid.R.attr#refreshInterval}
-          attribute's value can be found in the {@link #com_admob_android_ads_AdView} array.
-
-
-          <p>Must be an integer value, such as "<code>100</code>".
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-          @attr name android:refreshInterval
-        */
-        public static final int com_admob_android_ads_AdView_refreshInterval = 4;
-        /**
-          <p>This symbol is the offset where the {@link com.piusvelte.wapdroid.R.attr#secondaryTextColor}
-          attribute's value can be found in the {@link #com_admob_android_ads_AdView} array.
-
-
-          <p>Must be a color value, in the form of "<code>#<i>rgb</i></code>", "<code>#<i>argb</i></code>",
-"<code>#<i>rrggbb</i></code>", or "<code>#<i>aarrggbb</i></code>".
-<p>This may also be a reference to a resource (in the form
-"<code>@[<i>package</i>:]<i>type</i>:<i>name</i></code>") or
-theme attribute (in the form
-"<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
-containing a value of this type.
-          @attr name android:secondaryTextColor
-        */
-        public static final int com_admob_android_ads_AdView_secondaryTextColor = 2;
-    };
 }

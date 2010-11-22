@@ -61,7 +61,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 			if (sharedPreferences.getBoolean(key, true)) {
 				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 				dialog.setMessage(R.string.background_info);
-				dialog.setNegativeButton(R.string.close, this);
+				dialog.setNegativeButton(android.R.string.cancel, this);
 				dialog.show();
 			}
 		}

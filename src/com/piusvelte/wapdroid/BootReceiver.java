@@ -19,33 +19,16 @@
  */
 package com.piusvelte.wapdroid;
 
-import static android.content.Intent.ACTION_BOOT_COMPLETED;
-import static android.content.Intent.ACTION_PACKAGE_REPLACED;
-import static com.piusvelte.wapdroid.WapdroidService.WAKE_SERVICE;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 
 public class BootReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		if (intent.getAction().equals(ACTION_BOOT_COMPLETED)) checkService(context);
-		else if (intent.getAction().equals(ACTION_PACKAGE_REPLACED)) checkService(context);
-		else if (intent.getAction().equals("android.intent.action.EXTERNAL_APPLICATIONS_UNAVAILABLE")) checkService(context);
-		else if (intent.getAction().equals(WAKE_SERVICE)) startService(context);
-	}
-	
-	private void checkService(Context context) {
-		SharedPreferences sp = context.getSharedPreferences(context.getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-		if (sp.getBoolean(context.getString(R.string.key_manageWifi), false)) startService(context);
-	}
-	
-	private void startService(Context context) {
 		ManageWakeLocks.acquire(context);
-		context.startService(new Intent(context, WapdroidService.class));
+		context.startService(intent.setClass(context, WapdroidService.class));
 	}
 
 }

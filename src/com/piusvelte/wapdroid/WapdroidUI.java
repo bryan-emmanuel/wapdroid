@@ -75,7 +75,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, View.OnCl
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean result = super.onCreateOptionsMenu(menu);
-		menu.add(0, MANAGE_ID, 0, R.string.menu_manageNetworks).setIcon(android.R.drawable.ic_menu_manage);
+		menu.add(0, MANAGE_ID, 0, String.format(getString(R.string.manage), getString(R.string.network))).setIcon(android.R.drawable.ic_menu_manage);
 		menu.add(0, SETTINGS_ID, 0, R.string.menu_settings).setIcon(android.R.drawable.ic_menu_preferences);
 		menu.add(0, WIFI_ID, 0, R.string.label_WIFI).setIcon(android.R.drawable.ic_menu_manage);
 		menu.add(0, ABOUT_ID, 0, R.string.label_about).setIcon(android.R.drawable.ic_menu_more);
@@ -132,7 +132,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, View.OnCl
 		else {
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setMessage(R.string.service_info);
-			dialog.setNegativeButton(R.string.close, this);
+			dialog.setNegativeButton(android.R.string.cancel, this);
 			dialog.show();			
 		}
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);

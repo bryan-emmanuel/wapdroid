@@ -68,8 +68,8 @@ import com.google.android.maps.Overlay;
 
 public class MapData extends MapActivity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private static final int REFRESH_ID = Menu.FIRST;
-	public static final String OPERATOR = "operator";
-	public static final String CARRIER = "carrier";
+	protected static final String OPERATOR = "operator";
+	protected static final String CARRIER = "carrier";
 	private static final String version = "version";
 	private static final String gmaps_version = "1.1.0";
 	private static final String host = "host";
@@ -88,24 +88,24 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 	private static final String wifi_towers = "wifi_towers";
 	private static final String mac_address = "mac_address";
 	private static final String signal_strength = "signal_strength";
-	public static int color_primary;
-	public static int color_secondary;
-	public static Drawable drawable_cell;
-	public static Drawable drawable_network;
-	public static String string_cancel;
-	public static String string_deleteCell;
-	public static String string_deleteNetwork;
-	public static String string_cellWarning;
-	public static String string_cid;
-	public static String string_linefeed;
-	public static String string_lac;
-	public static String string_range;
-	public static String string_colon;
+	protected static int color_primary;
+	protected static int color_secondary;
+	protected static Drawable drawable_cell;
+	protected static Drawable drawable_network;
+	protected static String string_cancel;
+	protected static String string_deleteCell;
+	protected static String string_deleteNetwork;
+	protected static String string_cellWarning;
+	protected static String string_cid;
+	protected static String string_linefeed;
+	protected static String string_lac;
+	protected static String string_range;
+	protected static String string_colon;
 	private Context mContext;
 	private int mNetwork, mMCC = 0, mMNC = 0;
-	public int mPair = 0;
+	protected int mPair = 0;
 	private String mCarrier = "", mToken = "", mMsg = "";
-	public MapView mMView;
+	protected MapView mMView;
 	private MapController mMController;
 	private ProgressDialog mLoadingDialog;
 	private Thread mThread;
@@ -140,15 +140,15 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 		color_secondary = getResources().getColor(R.color.secondary);
 		drawable_cell = getResources().getDrawable(R.drawable.cell);
 		drawable_network = getResources().getDrawable(R.drawable.network);
-		string_cancel = getResources().getString(android.R.string.cancel);
-		string_deleteCell = getResources().getString(R.string.menu_deleteCell);
-		string_deleteNetwork = getResources().getString(R.string.menu_deleteNetwork);
-		string_cellWarning = getResources().getString(R.string.cellwarning);
-		string_cid = getResources().getString(R.string.label_CID);
-		string_linefeed = getResources().getString(R.string.linefeed);
-		string_lac = getResources().getString(R.string.label_LAC);
-		string_range = getResources().getString(R.string.range);
-		string_colon = getResources().getString(R.string.colon);
+		string_cancel = getString(android.R.string.cancel);
+		string_deleteCell = String.format(getString(R.string.forget), getString(R.string.cell));
+		string_deleteNetwork = String.format(getString(R.string.forget), getString(R.string.network));
+		string_cellWarning = getString(R.string.cellwarning);
+		string_cid = getString(R.string.label_CID);
+		string_linefeed = getString(R.string.linefeed);
+		string_lac = getString(R.string.label_LAC);
+		string_range = getString(R.string.range);
+		string_colon = getString(R.string.colon);
 	}
 
 	@Override
@@ -160,7 +160,7 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
 		boolean result = super.onCreateOptionsMenu(menu);
-		menu.add(0, REFRESH_ID, 0, R.string.menu_refreshNetworks).setIcon(android.R.drawable.ic_menu_rotate);
+		menu.add(0, REFRESH_ID, 0, String.format(getString(R.string.refresh), getString(mNetwork == 0 ? R.string.network : R.string.cell))).setIcon(android.R.drawable.ic_menu_rotate);
 		return result;
 	}
 
