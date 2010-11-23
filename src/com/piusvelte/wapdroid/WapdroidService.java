@@ -116,27 +116,18 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	private WapdroidDatabaseHelper mWapdroidDatabaseHelper;
 	private SQLiteDatabase mDatabase;
 
+	private static Method mNciReflectGetLac;
+
 	// add onSignalStrengthsChanged for api >= 7
 	static {
 		try {
 			Class.forName("android.telephony.SignalStrength");
 			mApi7 = true;
-		} catch (Exception ex) {
-			Log.e(TAG, "api < 7, " + ex);
-		}
-	}
-
-	private static Method mNciReflectGetLac;
-
-	static {
-		getLacReflection();
-	}
-
-	private static void getLacReflection() {
-		try {
-			mNciReflectGetLac = android.telephony.NeighboringCellInfo.class.getMethod("getLac", new Class[] {} );
+			mNciReflectGetLac = android.telephony.NeighboringCellInfo.class.getMethod("getLac", new Class[] {});
 		} catch (NoSuchMethodException nsme) {
 			Log.e(TAG, "api < 5, " + nsme);
+		} catch (Exception ex) {
+			Log.e(TAG, "api < 7, " + ex);
 		}
 	}
 
