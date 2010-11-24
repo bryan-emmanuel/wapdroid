@@ -40,7 +40,6 @@ import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.RSSI_MAX;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.RSSI_MIN;
 import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.SSID;
 
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
@@ -99,6 +98,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	private static final String BATTERY_EXTRA_PLUGGED = "plugged";
 	private WifiManager mWifiManager;
 	private TelephonyManager mTelephonyManager;
+	private AlarmManager mAlarmManager;
 
 	public static PhoneStateListener mPhoneListener;
 	private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
@@ -135,25 +135,25 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		}
 	}
 
-	private static int nciGetLac(NeighboringCellInfo nci) throws IOException {
-		int lac = UNKNOWN_CID;
-		try {
-			lac = (Integer) mNciReflectGetLac.invoke(nci);
-		} catch (InvocationTargetException ite) {
-			Throwable cause = ite.getCause();
-			if (cause instanceof IOException) throw (IOException) cause;
-			else if (cause instanceof RuntimeException) throw (RuntimeException) cause;
-			else if (cause instanceof Error) throw (Error) cause;
-			else throw new RuntimeException(ite);
-		} catch (IllegalAccessException ie) {
-			Log.e(TAG, "unexpected " + ie);
-		}
+	private static int nciGetLac(NeighboringCellInfo nci) {
+		int lac;
+		if (mNciReflectGetLac != null) {
+			try {
+				lac = (Integer) mNciReflectGetLac.invoke(nci);
+			} catch (InvocationTargetException ite) {
+				lac = UNKNOWN_CID;
+				Log.e(TAG, "unexpected " + ite.toString());
+			} catch (IllegalAccessException ie) {
+				lac = UNKNOWN_CID;
+				Log.e(TAG, "unexpected " + ie.toString());
+			}
+		} else lac = UNKNOWN_CID;
 		return lac;
 	}
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+		mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 		ManageWakeLocks.release();
 		return mWapdroidService;
 	}
@@ -192,7 +192,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 				// cell change will release lock
 				// a connection was gained or lost
-				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 //				wifiConnection((WifiManager) getSystemService(Context.WIFI_SERVICE));
 				wifiConnection();
 //				getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
@@ -203,15 +203,15 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					} catch (RemoteException e) {}
 				}
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 //				getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
 				getCellInfo(mTelephonyManager.getCellLocation());
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
 				mManualOverride = false;
-				if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				ManageWakeLocks.release();
 			} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-				((AlarmManager) getSystemService(Context.ALARM_SERVICE)).cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				/*
 				 * get wifi state
 				 * initially, lastWifiState is unknown, otherwise state is evaluated either enabled or not
@@ -220,7 +220,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				 */
 				wifiState(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
 				// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
-				if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				ManageWakeLocks.release();
 			}
 //		} else getCellInfo(((TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE)).getCellLocation());
@@ -258,6 +258,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		mManualOverride = sp.getBoolean(getString(R.string.key_manual_override), false);
 		// only register the listener when ui is invoked
 		sp.registerOnSharedPreferenceChangeListener(this);
+		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 //		WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 //		wifiState(wm.getWifiState());
@@ -370,17 +371,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		if ((mTelephonyManager.getNeighboringCellInfo() != null) && !mTelephonyManager.getNeighboringCellInfo().isEmpty()) {
 //			for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
 			for (NeighboringCellInfo nci : mTelephonyManager.getNeighboringCellInfo()) {
-				int nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
-				if (mNciReflectGetLac != null) {
-					/* feature is supported */
-					try {
-						nci_lac = nciGetLac(nci);
-					} catch (IOException ie) {
-						nci_lac = UNKNOWN_CID;
-						Log.e(TAG, "unexpected " + ie);
-					}
-				} else nci_lac = UNKNOWN_CID;
-				cells += " or (" + CID + "=" + Integer.toString(nci.getCid()) + " and (" + LAC + "=" + nci_lac + " or " + LOCATION + "=" + UNKNOWN_CID + ")"
+				int nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
+				cells += " or (" + CID + "=" + Integer.toString(nci.getCid()) + " and (" + LAC + "=" + nciGetLac(nci) + " or " + LOCATION + "=" + UNKNOWN_CID + ")"
 				+ ((nci_rssi == UNKNOWN_RSSI) ? ")" : " and (((" + RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + RSSI_MIN + "<=" + Integer.toString(nci_rssi) + ")) and (" + RSSI_MAX + ">=" + Integer.toString(nci_rssi) + ")))");
 			}
 		}
@@ -441,17 +433,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				if ((mTelephonyManager.getNeighboringCellInfo() != null) && !mTelephonyManager.getNeighboringCellInfo().isEmpty()) {
 //					for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
 					for (NeighboringCellInfo nci : mTelephonyManager.getNeighboringCellInfo()) {
-						int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_lac, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
-						if (mNciReflectGetLac != null) {
-							/* feature is supported */
-							try {
-								nci_lac = nciGetLac(nci);
-							} catch (IOException ie) {
-								nci_lac = UNKNOWN_CID;
-								Log.e(TAG, "unexpected " + ie);
-							}
-						} else nci_lac = UNKNOWN_CID;
-						if (nci_cid != UNKNOWN_CID) createPair(nci_cid, nci_lac, network, nci_rssi);
+						if (nci.getCid() > 0) createPair(nci.getCid(), nciGetLac(nci), network, (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi());
 					}
 				}
 			} else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
@@ -463,18 +445,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					if ((mTelephonyManager.getNeighboringCellInfo() != null) && !mTelephonyManager.getNeighboringCellInfo().isEmpty()) {
 //						for (NeighboringCellInfo nci : tm.getNeighboringCellInfo()) {
 						for (NeighboringCellInfo nci : mTelephonyManager.getNeighboringCellInfo()) {
-							int nci_cid = nci.getCid() > 0 ? nci.getCid() : UNKNOWN_CID, nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi(), nci_lac;
-							if (mNciReflectGetLac != null) {
-								/* feature is supported */
-								try {
-									nci_lac = nciGetLac(nci);
-								} catch (IOException ie) {
-									nci_lac = UNKNOWN_CID;
-									Log.e(TAG, "unexpected " + ie);
-								}
-							} else nci_lac = UNKNOWN_CID;
 							// break on out of range result
-							if (nci_cid != UNKNOWN_CID) enableWifi = cellInRange(nci_cid, nci_lac, nci_rssi);
+							if (nci.getCid() > 0) enableWifi = cellInRange(nci.getCid(), nciGetLac(nci), (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi());
 							if (!enableWifi) break;
 						}
 					}
@@ -487,7 +459,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			// release the service if it doesn't appear that we're entering or leaving a network
 			if (enableWifi == mLastScanEnableWifi) {
 				if (ManageWakeLocks.hasLock()) {
-					if (mInterval > 0) ((AlarmManager) getSystemService(Context.ALARM_SERVICE)).set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 					// if sleeping, re-initialize phone info
 					mCid = UNKNOWN_CID;
 					mLac = UNKNOWN_CID;
