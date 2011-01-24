@@ -19,22 +19,6 @@
  */
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TAG;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_NETWORKS;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_PAIRS;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_CID;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_RSSI;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.VIEW_RANGES;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper._ID;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.BSSID;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.CELL;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.CID;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.LAC;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.NETWORK;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.RSSI_MAX;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.RSSI_MIN;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.SSID;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
@@ -50,7 +34,6 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.os.Bundle;
@@ -66,6 +49,7 @@ import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 
 public class MapData extends MapActivity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
+	private static final String TAG = "MapData";
 	private static final int REFRESH_ID = Menu.FIRST;
 	protected static final String OPERATOR = "operator";
 	protected static final String CARRIER = "carrier";
@@ -126,8 +110,8 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 		mMController.setZoom(12);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getInt(TABLE_NETWORKS);
-			mPair = extras.getInt(TABLE_PAIRS);
+			mNetwork = extras.getInt(WapdroidProvider.TABLE_NETWORKS);
+			mPair = extras.getInt(WapdroidProvider.TABLE_PAIRS);
 			String operator = extras.getString(OPERATOR);
 			if (operator.length() > 0) {
 				mMCC = Integer.parseInt(operator.substring(0, 3));
@@ -205,11 +189,11 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 	public String getValue(String dictionary, String key) {
 		int key_index = dictionary.indexOf(key), end;
 		String value = "";
-		if (key_index != UNKNOWN_CID) {
+		if (key_index != Wapdroid.UNKNOWN_CID) {
 			key_index += key.length() + 1;
 			key_index = dictionary.indexOf(":", key_index) + 1;
 			end = dictionary.indexOf(",", key_index);
-			if (end == UNKNOWN_CID) end = dictionary.indexOf("}", key_index);
+			if (end == Wapdroid.UNKNOWN_CID) end = dictionary.indexOf("}", key_index);
 			value = dictionary.substring(key_index, end);
 		}
 		return value;
@@ -264,57 +248,54 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 	public void mapData() {
 		mLoadingDialog = new ProgressDialog(this);
 		mLoadingDialog.setTitle(R.string.loading);
-		mLoadingDialog.setMessage((mPair == 0 ? NETWORK : CELL));
+		mLoadingDialog.setMessage((mPair == 0 ? Wapdroid.Ranges.NETWORK : Wapdroid.Ranges.CELL));
 		mLoadingDialog.setCancelable(true);
 		mLoadingDialog.setOnCancelListener(this);
 		mLoadingDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, getString(android.R.string.cancel), this);
 		mLoadingDialog.show();
 		mThread = new Thread() {
 			public void run() {
-				WapdroidDatabaseHelper wapdroidDatabaseHelper = new WapdroidDatabaseHelper(mContext);
-				SQLiteDatabase db = wapdroidDatabaseHelper.getWritableDatabase();
 				String ssid = "", bssid = "", towers = "";
 				int ctr = 0;
 				List<Overlay> mapOverlays = mMView.getOverlays();
 				GeoPoint point = new GeoPoint(0, 0);
-				Cursor pairs = db.query(VIEW_RANGES, new String[]{_ID, SSID, BSSID, CID, LAC, RSSI_MIN, RSSI_MAX}, mPair == 0 ? NETWORK + "=" + mNetwork : _ID + "=" + mPair, null, null, null, null);
+				Cursor pairs = MapData.this.getContentResolver().query(Wapdroid.Ranges.CONTENT_URI, new String[]{Wapdroid.Ranges._ID, Wapdroid.Ranges.SSID, Wapdroid.Ranges.BSSID, Wapdroid.Ranges.CID, Wapdroid.Ranges.LAC, Wapdroid.Ranges.RSSI_MIN, Wapdroid.Ranges.RSSI_MAX}, mPair == 0 ? Wapdroid.Ranges.NETWORK + "=" + mNetwork : Wapdroid.Ranges._ID + "=" + mPair, null, null);
 				int ct = pairs.getCount();
-				if (ct > 0) {
+				if (pairs.moveToFirst()) {
 					WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);
-					pairs.moveToFirst();
 					while (!interrupted() && !pairs.isAfterLast()) {
 						ctr++;
-						int cid = pairs.getInt(pairs.getColumnIndex(CID)),
-						lac = pairs.getInt(pairs.getColumnIndex(LAC)),
-						rssi_min = pairs.getInt(pairs.getColumnIndex(RSSI_MIN)),
-						rssi_max = pairs.getInt(pairs.getColumnIndex(RSSI_MAX)),
+						int cid = pairs.getInt(pairs.getColumnIndex(Wapdroid.Ranges.CID)),
+						lac = pairs.getInt(pairs.getColumnIndex(Wapdroid.Ranges.LAC)),
+						rssi_min = pairs.getInt(pairs.getColumnIndex(Wapdroid.Ranges.RSSI_MIN)),
+						rssi_max = pairs.getInt(pairs.getColumnIndex(Wapdroid.Ranges.RSSI_MAX)),
 						rssi_avg = Math.round((rssi_min + rssi_max) / 2),
 						rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
-						mMsg = string_cellWarning + CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
+						mMsg = string_cellWarning + Wapdroid.Ranges.CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
 						mHandler.post(mUpdtDialog);
 						String tower = "{" + addInt(cell_id, cid) + "," + addInt(location_area_code, lac) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
-						if (rssi_avg != UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
+						if (rssi_avg != Wapdroid.UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
 						tower += "}";
-						if (ssid == "") ssid = pairs.getString(pairs.getColumnIndex(SSID));
-						if (bssid == "") bssid = pairs.getString(pairs.getColumnIndex(BSSID));
+						if (ssid == "") ssid = pairs.getString(pairs.getColumnIndex(Wapdroid.Ranges.SSID));
+						if (bssid == "") bssid = pairs.getString(pairs.getColumnIndex(Wapdroid.Ranges.BSSID));
 						if (towers != "") towers += ",";
 						towers += tower;
 						point = getGeoPoint(bldRequest(tower, bssid));
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, CELL,
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, Wapdroid.Ranges.CELL,
 								string_cid + Integer.toString(cid)
 								+ string_linefeed + string_lac + Integer.toString(lac)
 								+ string_linefeed + string_range + Integer.toString(rssi_min) + string_colon + Integer.toString(rssi_max),
-								mNetwork, pairs.getInt(pairs.getColumnIndex(_ID)), rssi_avg, rssi_range));
+								mNetwork, pairs.getInt(pairs.getColumnIndex(Wapdroid.Ranges._ID)), rssi_avg, rssi_range));
 						pairs.moveToNext();
 					}
 					if (mPair == 0) {
-						mMsg = NETWORK + ": " + ssid;
+						mMsg = Wapdroid.Ranges.NETWORK + ": " + ssid;
 						mHandler.post(mUpdtDialog);
 						point = getGeoPoint(bldRequest(towers, bssid));
 						Location location = new Location("");
 						location.setLatitude(point.getLatitudeE6()/1e6);
 						location.setLongitude(point.getLongitudeE6()/1e6);
-						pinOverlays.addOverlay(new WapdroidOverlayItem(point, NETWORK, ssid, mNetwork), drawable_network);
+						pinOverlays.addOverlay(new WapdroidOverlayItem(point, Wapdroid.Ranges.NETWORK, ssid, mNetwork), drawable_network);
 						pinOverlays.setDistances(location);
 					}
 					mapOverlays.add(pinOverlays);

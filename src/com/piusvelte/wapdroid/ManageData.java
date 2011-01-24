@@ -19,8 +19,6 @@
  */
 package com.piusvelte.wapdroid;
 
-import com.piusvelte.wapdroid.Wapdroid;
-
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ComponentName;

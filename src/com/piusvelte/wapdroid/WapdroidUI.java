@@ -20,11 +20,6 @@
 
 package com.piusvelte.wapdroid;
 
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.CID;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.BSSID;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.UNKNOWN_RSSI;
-import static com.piusvelte.wapdroid.WapdroidDatabaseHelper.TABLE_CELLS;
-
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -86,7 +81,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, View.OnCl
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case MANAGE_ID:
-			startActivity((new Intent(this, ManageData.class)).putExtra(BSSID, mBssid).putExtra(CID, mCid).putExtra(TABLE_CELLS, mCells));
+			startActivity((new Intent(this, ManageData.class)).putExtra(Wapdroid.Networks.BSSID, mBssid).putExtra(Wapdroid.Cells.CID, mCid).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
 			return true;
 		case SETTINGS_ID:
 			startActivity(new Intent(this, Settings.class));
@@ -167,7 +162,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, View.OnCl
 		}
 
 		public void setSignalStrength(int rssi) throws RemoteException {
-			field_signal.setText((rssi != UNKNOWN_RSSI ? (Integer.toString(rssi) + getString(R.string.dbm)) : getString(R.string.scanning)));
+			field_signal.setText((rssi != Wapdroid.UNKNOWN_RSSI ? (Integer.toString(rssi) + getString(R.string.dbm)) : getString(R.string.scanning)));
 		}
 
 		public void setBattery(int batteryPercentage) throws RemoteException {
