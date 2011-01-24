@@ -52,6 +52,7 @@ public final class Wapdroid {
     	
     	public static final String _ID = "_id";
     	public static final String CID = "CID";
+    	public static final String LOCATION = "location";
 	}
 	
 	public static final class Locations implements BaseColumns {
