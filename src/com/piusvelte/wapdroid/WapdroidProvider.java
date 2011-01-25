@@ -1,5 +1,5 @@
 /*
- * Wapdroid - Android Social Networking Widget
+ * Wapdroid - Android Location based Wifi Manager
  * Copyright (C) 2009 Bryan Emmanuel
  * 
  * This program is free software: you can redistribute it and/or modify

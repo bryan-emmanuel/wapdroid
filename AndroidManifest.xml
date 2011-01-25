@@ -46,6 +46,15 @@
 			</intent-filter>
 		</receiver>
 		<service android:name=".WapdroidService" />
+        <receiver android:name=".WapdroidWidget" android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.piusvelte.wapdroid.Wapdroid.TOGGLE_SERVICE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_1x1" />
+        </receiver>
         <provider
             android:name=".WapdroidProvider"
             android:authorities="com.piusvelte.wapdroid.WapdroidProvider"

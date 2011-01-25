@@ -48,6 +48,9 @@ public final class R {
         public static final int network_row_BSSID=0x7f08000d;
         public static final int network_row_SSID=0x7f08000c;
         public static final int network_row_status=0x7f08000e;
+        public static final int widget=0x7f08000f;
+        public static final int widget_icon=0x7f080010;
+        public static final int widget_status=0x7f080011;
     }
     public static final class layout {
         public static final int about=0x7f030000;
@@ -57,6 +60,7 @@ public final class R {
         public static final int map=0x7f030004;
         public static final int network_row=0x7f030005;
         public static final int networks_list=0x7f030006;
+        public static final int widget=0x7f030007;
     }
     public static final class string {
         public static final int about=0x7f070041;
@@ -127,9 +131,13 @@ public final class R {
         public static final int signal=0x7f070033;
         public static final int status=0x7f07002c;
         public static final int unknown=0x7f070038;
+        public static final int widget_label=0x7f070045;
+        public static final int widget_off=0x7f070047;
+        public static final int widget_on=0x7f070046;
         public static final int withinarea=0x7f07002d;
     }
     public static final class xml {
         public static final int preferences=0x7f040000;
+        public static final int widget_1x1=0x7f040001;
     }
 }

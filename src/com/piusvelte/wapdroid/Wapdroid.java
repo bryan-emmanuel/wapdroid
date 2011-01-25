@@ -26,6 +26,8 @@ public final class Wapdroid {
 
 	public static final int UNKNOWN_CID = -1;
 	public static final int UNKNOWN_RSSI = 99;
+	
+	public static final String ACTION_TOGGLE_SERVICE = "com.piusvelte.wapdroid.Wapdroid.TOGGLE_SERVICE";
 
 	private Wapdroid() {}
 
