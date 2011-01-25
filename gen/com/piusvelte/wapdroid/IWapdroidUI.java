@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: C:\\Users\\emmanuelb\\development\\wapdroid\\src\\com\\piusvelte\\wapdroid\\IWapdroidUI.aidl
+ * Original file: /home/bryan/development/wapdroid/src/com/piusvelte/wapdroid/IWapdroidUI.aidl
  */
 package com.piusvelte.wapdroid;
 public interface IWapdroidUI extends android.os.IInterface
