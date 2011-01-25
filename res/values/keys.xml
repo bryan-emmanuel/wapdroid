@@ -31,4 +31,5 @@
     <string name="key_manual_override">manual_override</string>
     <string name="key_noclear">noclear</string>
     <string name="key_persistent_status">persistent_status</string>
+    <string name="key_wifi_sleep">wifi_sleep</string>
 </resources>

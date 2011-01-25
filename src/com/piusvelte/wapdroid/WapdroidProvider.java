@@ -368,6 +368,7 @@ public class WapdroidProvider extends ContentProvider {
 						+ " left join " + TABLE_NETWORKS + " on " + TABLE_NETWORKS + "." + Wapdroid.Networks._ID + "=" + Wapdroid.Ranges.NETWORK + ";");
 			}
 			if (oldVersion < 8) {
+				// need to make all column names lowercase				
 				db.execSQL("drop view if exists " + VIEW_RANGES + ";");
 				db.execSQL("create view if not exists " + VIEW_RANGES + " as select "
 						+ TABLE_PAIRS + "." + Wapdroid.Ranges._ID + " as " + Wapdroid.Pairs._ID
