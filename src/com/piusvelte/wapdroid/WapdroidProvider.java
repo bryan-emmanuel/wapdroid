@@ -41,7 +41,7 @@ public class WapdroidProvider extends ContentProvider {
 	private static final UriMatcher sUriMatcher;
 	
 	private static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 8;
+	private static final int DATABASE_VERSION = 7;
 	
 	public static final String TAG = "WapdroidProvider";
 	
@@ -83,6 +83,7 @@ public class WapdroidProvider extends ContentProvider {
 		cellsProjectionMap.put(Wapdroid.Cells.LOCATION, Wapdroid.Cells.LOCATION);
 		
 		sUriMatcher.addURI(AUTHORITY, TABLE_PAIRS, PAIRS);
+		pairsProjectionMap = new HashMap<String, String>();
 		pairsProjectionMap.put(Wapdroid.Pairs._ID, Wapdroid.Pairs._ID);
 		pairsProjectionMap.put(Wapdroid.Pairs.CELL, Wapdroid.Pairs.CELL);
 		pairsProjectionMap.put(Wapdroid.Pairs.NETWORK, Wapdroid.Pairs.NETWORK);
@@ -90,10 +91,12 @@ public class WapdroidProvider extends ContentProvider {
 		pairsProjectionMap.put(Wapdroid.Pairs.RSSI_MIN, Wapdroid.Pairs.RSSI_MIN);
 		
 		sUriMatcher.addURI(AUTHORITY, TABLE_LOCATIONS, LOCATIONS);
+		locationsProjectionMap = new HashMap<String, String>();
 		locationsProjectionMap.put(Wapdroid.Locations._ID, Wapdroid.Locations._ID);
 		locationsProjectionMap.put(Wapdroid.Locations.LAC, Wapdroid.Locations.LAC);
 		
 		sUriMatcher.addURI(AUTHORITY, VIEW_RANGES, RANGES);
+		rangesProjectionMap = new HashMap<String, String>();
 		rangesProjectionMap.put(Wapdroid.Ranges._ID, Wapdroid.Ranges._ID);
 		rangesProjectionMap.put(Wapdroid.Ranges.BSSID, Wapdroid.Ranges.BSSID);
 		rangesProjectionMap.put(Wapdroid.Ranges.CELL, Wapdroid.Ranges.CELL);
@@ -352,23 +355,48 @@ public class WapdroidProvider extends ContentProvider {
 				db.execSQL("update " + TABLE_PAIRS + " set " + Wapdroid.Pairs.RSSI_MIN + "=99," + Wapdroid.Pairs.RSSI_MAX + "=99 where " + Wapdroid.Pairs.RSSI_MAX + "<" + Wapdroid.Pairs.RSSI_MIN + " and RSSI_max=-85;");			
 			}
 			if (oldVersion < 7) {
-				db.execSQL("create view if not exists " + VIEW_RANGES + " as select "
-						+ TABLE_PAIRS + "." + Wapdroid.Ranges._ID + " as " + Wapdroid.Ranges._ID
-						+ "," + Wapdroid.Ranges.RSSI_MAX
-						+ "," + Wapdroid.Ranges.RSSI_MIN
-						+ "," + Wapdroid.Ranges.CID
-						+ "," + Wapdroid.Ranges.LAC
-						+ "," + Wapdroid.Ranges.LOCATION
-						+ "," + Wapdroid.Ranges.NETWORK
-						+ "," + Wapdroid.Ranges.SSID
-						+ "," + Wapdroid.Ranges.BSSID
-						+ " from " + TABLE_PAIRS
-						+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + Wapdroid.Cells._ID + "=" + Wapdroid.Ranges.CELL
-						+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + Wapdroid.Locations._ID + "=" + Wapdroid.Ranges.LOCATION
-						+ " left join " + TABLE_NETWORKS + " on " + TABLE_NETWORKS + "." + Wapdroid.Networks._ID + "=" + Wapdroid.Ranges.NETWORK + ";");
-			}
-			if (oldVersion < 8) {
-				// need to make all column names lowercase				
+				// need to make all column names lowercase
+				db.execSQL("drop table if exists " + TABLE_NETWORKS + "_bkp;");
+				db.execSQL("create temporary table " + TABLE_NETWORKS + "_bkp as select * from " + TABLE_NETWORKS + ";");
+				db.execSQL("drop table if exists " + TABLE_NETWORKS + ";");
+				db.execSQL("create table if not exists " + TABLE_NETWORKS + " ("
+						+ Wapdroid.Networks._ID + " integer primary key autoincrement, "
+						+ Wapdroid.Networks.SSID + " text not null, "
+						+ Wapdroid.Networks.BSSID + " text not null);");
+				db.execSQL("insert into " + TABLE_NETWORKS + " (" + Wapdroid.Networks._ID + "," + Wapdroid.Networks.SSID + "," + Wapdroid.Networks.BSSID + ") select " + Wapdroid.Networks._ID + ",SSID,BSSID from " + TABLE_NETWORKS + "_bkp;");
+				db.execSQL("drop table if exists " + TABLE_NETWORKS + "_bkp;");
+
+				db.execSQL("drop table if exists " + TABLE_CELLS + "_bkp;");
+				db.execSQL("create temporary table " + TABLE_CELLS + "_bkp as select * from " + TABLE_CELLS + ";");
+				db.execSQL("drop table if exists " + TABLE_CELLS + ";");
+				db.execSQL("create table if not exists " + TABLE_CELLS + " ("
+						+ Wapdroid.Cells._ID + " integer primary key autoincrement, "
+						+ Wapdroid.Cells.CID + " integer, "
+						+ Wapdroid.Cells.LOCATION + " integer);");
+				db.execSQL("insert into " + TABLE_CELLS + " (" + Wapdroid.Cells._ID + "," + Wapdroid.Cells.CID + "," + Wapdroid.Cells.LOCATION + ") select " + Wapdroid.Cells._ID + ",CID," + Wapdroid.Cells.LOCATION + " from " + TABLE_CELLS + "_bkp;");
+				db.execSQL("drop table if exists " + TABLE_CELLS + "_bkp;");
+
+				db.execSQL("drop table if exists " + TABLE_PAIRS + "_bkp;");
+				db.execSQL("create temporary table " + TABLE_PAIRS + "_bkp as select * from " + TABLE_PAIRS + ";");
+				db.execSQL("drop table if exists " + TABLE_PAIRS + ";");
+				db.execSQL("create table if not exists " + TABLE_PAIRS + " ("
+						+ Wapdroid.Pairs._ID + " integer primary key autoincrement, "
+						+ Wapdroid.Pairs.CELL + " integer, "
+						+ Wapdroid.Pairs.NETWORK + " integer, "
+						+ Wapdroid.Pairs.RSSI_MIN + " integer, "
+						+ Wapdroid.Pairs.RSSI_MAX + " integer);");
+				db.execSQL("insert into " + TABLE_PAIRS + " (" + Wapdroid.Pairs._ID + "," + Wapdroid.Pairs.CELL + "," + Wapdroid.Pairs.NETWORK + "," + Wapdroid.Pairs.RSSI_MIN + "," + Wapdroid.Pairs.RSSI_MAX + ") select " + Wapdroid.Pairs._ID + "," + Wapdroid.Pairs.CELL + "," + Wapdroid.Pairs.NETWORK + ",RSSI_min, RSSI_max from " + TABLE_PAIRS + "_bkp;");
+				db.execSQL("drop table if exists " + TABLE_PAIRS + "_bkp;");
+
+				db.execSQL("drop table if exists " + TABLE_LOCATIONS + "_bkp;");
+				db.execSQL("create temporary table " + TABLE_LOCATIONS + "_bkp as select * from " + TABLE_LOCATIONS + ";");
+				db.execSQL("drop table if exists " + TABLE_LOCATIONS + ";");
+				db.execSQL("create table if not exists " + TABLE_LOCATIONS + " ("
+						+ Wapdroid.Locations._ID + " integer primary key autoincrement, "
+						+ Wapdroid.Locations.LAC + " integer);");
+				db.execSQL("insert into " + TABLE_LOCATIONS + " (" + Wapdroid.Locations._ID + "," + Wapdroid.Locations.LAC + ") select " + Wapdroid.Locations._ID + ",LAC from " + TABLE_LOCATIONS + "_bkp;");
+				db.execSQL("drop table if exists " + TABLE_LOCATIONS + "_bkp;");
+				
 				db.execSQL("drop view if exists " + VIEW_RANGES + ";");
 				db.execSQL("create view if not exists " + VIEW_RANGES + " as select "
 						+ TABLE_PAIRS + "." + Wapdroid.Ranges._ID + " as " + Wapdroid.Pairs._ID

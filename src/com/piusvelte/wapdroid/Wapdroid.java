@@ -38,8 +38,8 @@ public final class Wapdroid {
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.networks";
     	
     	public static final String _ID = "_id";
-    	public static final String SSID = "SSID";
-    	public static final String BSSID = "BSSID";
+    	public static final String SSID = "ssid";
+    	public static final String BSSID = "bssid";
 	}
 	
 	public static final class Cells implements BaseColumns {
@@ -51,7 +51,7 @@ public final class Wapdroid {
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.cells";
     	
     	public static final String _ID = "_id";
-    	public static final String CID = "CID";
+    	public static final String CID = "cid";
     	public static final String LOCATION = "location";
 	}
 	
@@ -64,7 +64,7 @@ public final class Wapdroid {
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.locations";
     	
     	public static final String _ID = "_id";
-    	public static final String LAC = "LAC";
+    	public static final String LAC = "lac";
 	}
 	
 	public static final class Pairs implements BaseColumns {
@@ -78,8 +78,8 @@ public final class Wapdroid {
     	public static final String _ID = "_id";
     	public static final String CELL = "cell";
     	public static final String NETWORK = "network";
-    	public static final String RSSI_MIN = "RSSI_min";
-    	public static final String RSSI_MAX = "RSSI_max";
+    	public static final String RSSI_MIN = "rssi_min";
+    	public static final String RSSI_MAX = "rssi_max";
 	}
 	
 	public static final class Ranges implements BaseColumns {
@@ -91,13 +91,13 @@ public final class Wapdroid {
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.ranges";
     	
     	public static final String _ID = "_id";
-    	public static final String RSSI_MIN = "RSSI_min";
-    	public static final String RSSI_MAX = "RSSI_max";
-    	public static final String CID = "CID";
-    	public static final String LAC = "LAC";
+    	public static final String RSSI_MIN = "rssi_min";
+    	public static final String RSSI_MAX = "rssi_max";
+    	public static final String CID = "cid";
+    	public static final String LAC = "lac";
     	public static final String LOCATION = "location";
-    	public static final String SSID = "SSID";
-    	public static final String BSSID = "BSSID";
+    	public static final String SSID = "ssid";
+    	public static final String BSSID = "bssid";
     	public static final String CELL = "cell";
     	public static final String NETWORK = "network";
 	}

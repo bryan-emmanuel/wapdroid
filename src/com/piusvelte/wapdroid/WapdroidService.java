@@ -482,7 +482,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	private long fetchNetwork(String ssid, String bssid) {
 		int network;
-		Cursor c = this.getContentResolver().query(Wapdroid.Networks.CONTENT_URI, new String[]{Wapdroid.Networks._ID, Wapdroid.Networks.SSID, Wapdroid.Networks.BSSID}, Wapdroid.Networks.SSID + "='?' and (" + Wapdroid.Networks.BSSID + "='?' or " + Wapdroid.Networks.BSSID + "='')", new String[]{ssid, bssid}, null);
+		Cursor c = this.getContentResolver().query(Wapdroid.Networks.CONTENT_URI, new String[]{Wapdroid.Networks._ID, Wapdroid.Networks.SSID, Wapdroid.Networks.BSSID}, Wapdroid.Networks.SSID + "=? and (" + Wapdroid.Networks.BSSID + "=? or " + Wapdroid.Networks.BSSID + "='')", new String[]{ssid, bssid}, null);
 		if (c.moveToFirst()) {
 			// ssid matches, only concerned if bssid is empty
 			network = c.getInt(c.getColumnIndex(Wapdroid.Networks._ID));
@@ -505,7 +505,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		// select or insert location
 		if (lac > 0) {
 			int location;
-			Cursor c = this.getContentResolver().query(Wapdroid.Locations.CONTENT_URI, new String[]{Wapdroid.Locations.LAC}, Wapdroid.Locations.LAC + "=?", new String[]{Integer.toString(lac)}, null);
+			Cursor c = this.getContentResolver().query(Wapdroid.Locations.CONTENT_URI, new String[]{Wapdroid.Locations._ID, Wapdroid.Locations.LAC}, Wapdroid.Locations.LAC + "=?", new String[]{Integer.toString(lac)}, null);
 			if (c.moveToFirst()) location = c.getInt(c.getColumnIndex(Wapdroid.Locations._ID));
 			else {
 				ContentValues values = new ContentValues();
@@ -522,9 +522,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		// if location==-1, then match only on cid, otherwise match on location or -1
 		// select or insert cell
 		Cursor c = this.getContentResolver().query(Wapdroid.Cells.CONTENT_URI, new String[]{Wapdroid.Cells._ID, Wapdroid.Cells.LOCATION},
-				Wapdroid.Cells.CID + "=" + cid + (location == UNKNOWN_CID ?
+				Wapdroid.Cells.CID + "=?" + (location == UNKNOWN_CID ?
 						""
-						: " and (" + Wapdroid.Cells.LOCATION + "=" + UNKNOWN_CID + " or " + Wapdroid.Cells.LOCATION + "=" + location + ")"), (location == UNKNOWN_CID ? new String[]{Integer.toString(cid)} : new String[]{Integer.toString(cid), Integer.toString(location)}), null);
+						: " and (" + Wapdroid.Cells.LOCATION + "=" + UNKNOWN_CID + " or " + Wapdroid.Cells.LOCATION + "=?)"), (location == UNKNOWN_CID ? new String[]{Integer.toString(cid)} : new String[]{Integer.toString(cid), Integer.toString(location)}), null);
 		if (c.moveToFirst()) {
 			cell = c.getInt(c.getColumnIndex(Wapdroid.Cells._ID));
 			if ((location != UNKNOWN_CID) && (c.getInt(c.getColumnIndex(Wapdroid.Cells.LOCATION)) == UNKNOWN_CID)) {
@@ -541,9 +541,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		c.close();
 		// select and update or insert pair
 		c = this.getContentResolver().query(Wapdroid.Pairs.CONTENT_URI, new String[]{Wapdroid.Pairs._ID, Wapdroid.Pairs.RSSI_MIN, Wapdroid.Pairs.RSSI_MAX}, Wapdroid.Pairs.CELL + "=? and " + Wapdroid.Pairs.NETWORK + "=?", new String[]{Integer.toString(cell), Long.toString(network)}, null);
-		if (c.getCount() > 0) {
+		if (c.moveToFirst()) {
 			if (rssi != UNKNOWN_RSSI) {
-				c.moveToFirst();
 				pair = c.getInt(c.getColumnIndex(Wapdroid.Pairs._ID));
 				int rssi_min = c.getInt(c.getColumnIndex(Wapdroid.Pairs.RSSI_MIN));
 				int rssi_max = c.getInt(c.getColumnIndex(Wapdroid.Pairs.RSSI_MAX));
