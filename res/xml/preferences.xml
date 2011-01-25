@@ -45,5 +45,6 @@
 		android:title="@string/battery_percentage" android:dependency="@string/key_battery_override"
 		android:entries="@array/battery_entries" android:entryValues="@array/battery_values"
 		android:defaultValue="30" />
+	<PreferenceCategory android:title="@string/pref_wifi_sleep" />
 	<CheckBoxPreference android:key="@string/key_wifi_sleep" android:title="@string/label_wifi_sleep" android:defaultValue="false" />
 </PreferenceScreen>

@@ -119,6 +119,7 @@ public final class R {
         public static final int pref_battery=0x7f07003c;
         public static final int pref_notifications=0x7f07003b;
         public static final int pref_service=0x7f07003a;
+        public static final int pref_wifi_sleep=0x7f070044;
         public static final int range=0x7f070030;
         public static final int refresh=0x7f070018;
         public static final int scanning=0x7f070028;
