@@ -26,5 +26,6 @@
 		android:layout_alignParentTop="true" android:padding="4dip" />
 	<TextView android:id="@+id/widget_status" android:singleLine="true"
 		android:layout_width="fill_parent" android:layout_height="wrap_content"
-		android:textStyle="bold" android:padding="4dip" android:layout_below="@id/widget_icon" />
+		android:textStyle="bold" android:padding="4dip" android:layout_below="@id/widget_icon"
+		android:gravity="center" />
 </RelativeLayout>

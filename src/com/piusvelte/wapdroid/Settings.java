@@ -22,15 +22,11 @@ package com.piusvelte.wapdroid;
 import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
-//import android.content.ComponentName;
 import android.content.DialogInterface;
-//import android.content.Intent;
-//import android.content.ServiceConnection;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
-//import android.os.IBinder;
-//import android.os.RemoteException;
 import android.preference.PreferenceActivity;
 
 public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener, DialogInterface.OnClickListener {
@@ -59,11 +55,12 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
 			if (sharedPreferences.getBoolean(key, true)) {
+				this.startService(new Intent(this, WapdroidService.class));
 				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 				dialog.setMessage(R.string.background_info);
 				dialog.setNegativeButton(android.R.string.cancel, this);
 				dialog.show();
-			}
+			} else this.stopService(new Intent(this, WapdroidService.class));
 		}
 	}
 
