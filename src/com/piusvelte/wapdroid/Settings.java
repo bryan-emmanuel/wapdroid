@@ -22,6 +22,8 @@ package com.piusvelte.wapdroid;
 import com.piusvelte.wapdroid.R;
 
 import android.app.AlertDialog;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -61,6 +63,9 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 				dialog.setNegativeButton(android.R.string.cancel, this);
 				dialog.show();
 			} else this.stopService(new Intent(this, WapdroidService.class));
+			// update widgets
+			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+			this.sendBroadcast(new Intent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
 		}
 	}
 

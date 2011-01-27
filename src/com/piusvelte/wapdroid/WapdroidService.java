@@ -33,9 +33,7 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.appwidget.AppWidgetManager;
 import android.content.BroadcastReceiver;
-import android.content.ComponentName;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
@@ -451,10 +449,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					if (sharedPreferences.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;				
 				}
 			}
-			// update the widget
-			AppWidgetManager awm = AppWidgetManager.getInstance(this);
-			int[] appWidgetIds = awm.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class));
-			if (appWidgetIds.length > 0) this.sendBroadcast(new Intent(this, WapdroidWidget.class).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds));
 		}
 		else if (key.equals(getString(R.string.key_interval))) mInterval = Integer.parseInt((String) sharedPreferences.getString(key, "30000"));
 		else if (key.equals(getString(R.string.key_battery_override))) mBatteryLimit = (sharedPreferences.getBoolean(key, false)) ? Integer.parseInt((String) sharedPreferences.getString(getString(R.string.key_battery_percentage), "30")) : 0;
