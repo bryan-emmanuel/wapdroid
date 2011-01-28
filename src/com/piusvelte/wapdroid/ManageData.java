@@ -276,7 +276,9 @@ public class ManageData extends ListActivity implements ServiceConnection {
 			if (mNetwork == 0) mCursor = this.getContentResolver().query(
 					Wapdroid.Networks.CONTENT_URI,
 					new String[]{Wapdroid.Networks._ID + "," + Wapdroid.Networks.SSID + "," + Wapdroid.Networks.BSSID + "," + (mFilter == FILTER_ALL ?
-							"case when " + Wapdroid.Networks.BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected) + "' else (case when " + Wapdroid.Networks._ID + " in (select " + Wapdroid.Ranges.NETWORK + " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea) + "' else '" + r.getString(R.string.outofarea) + "' end) end"
+							"case when " + Wapdroid.Networks.BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected)
+							+ "' case when " + Wapdroid.Networks._ID + " in (select " + Wapdroid.Ranges.NETWORK + " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea)
+							+ "' else '" + r.getString(R.string.outofarea) + "' end"
 							: "'" + r.getString(mFilter == FILTER_CONNECTED ?
 									R.string.connected
 									: (mFilter == FILTER_INRANGE ?
@@ -289,19 +291,21 @@ public class ManageData extends ListActivity implements ServiceConnection {
 									: (mFilter == FILTER_OUTRANGE ?
 											Wapdroid.Networks._ID + " NOT"
 											: Wapdroid.Networks._ID) + " in (select " + Wapdroid.Ranges.NETWORK
-									+ " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ")"))
-					,null,STATUS);
+											+ " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ")"))
+											,null,STATUS);
 			else {
 				mCursor = this.getContentResolver().query(
 						Wapdroid.Ranges.CONTENT_URI
 						, new String[]{Wapdroid.Ranges._ID + "," + Wapdroid.Ranges.CID + ",case when " + Wapdroid.Ranges.LAC + "=" + Wapdroid.UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Wapdroid.Ranges.LAC + " end as " + Wapdroid.Ranges.LAC + ",case when " + Wapdroid.Ranges.RSSI_MIN + "=" + Wapdroid.UNKNOWN_RSSI + " or " + Wapdroid.Ranges.RSSI_MAX + "=" + Wapdroid.UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Wapdroid.Ranges.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Wapdroid.Ranges.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Wapdroid.Ranges.RSSI_MIN + ","
-						+ (mFilter == FILTER_ALL ?
-								"case when " + Wapdroid.Ranges.CID + "='" + mCid + "' then '" + r.getString(R.string.connected)	+ "' else (case when " + Wapdroid.Ranges.CELL + " in (select " + Wapdroid.Ranges.CELL + " from " + WapdroidProvider.VIEW_RANGES + " where " + Wapdroid.Ranges.NETWORK + "=" + mNetwork + " and" + mCells + ")" + " then '" + r.getString(R.string.withinarea) + "' else '" + r.getString(R.string.outofarea) + "' end) end"
-								: "'" + r.getString(mFilter == FILTER_CONNECTED ?
-										R.string.connected
-										: (mFilter == FILTER_INRANGE ?
-												R.string.withinarea
-												: R.string.outofarea)) + "'") + " as " + STATUS
+								+ (mFilter == FILTER_ALL ?
+										"case when " + Wapdroid.Ranges.CID + "='" + mCid + "' then '" + r.getString(R.string.connected)
+										+ "' case when " + Wapdroid.Ranges.CELL + " in (select " + Wapdroid.Ranges.CELL + " from " + WapdroidProvider.VIEW_RANGES + " where " + Wapdroid.Ranges.NETWORK + "=" + mNetwork + " and" + mCells + ")" + " then '" + r.getString(R.string.withinarea)
+										+ "' else '" + r.getString(R.string.outofarea) + "' end"
+										: "'" + r.getString(mFilter == FILTER_CONNECTED ?
+												R.string.connected
+												: (mFilter == FILTER_INRANGE ?
+														R.string.withinarea
+														: R.string.outofarea)) + "'") + " as " + STATUS
 						}, Wapdroid.Ranges.NETWORK + "=" + mNetwork + (mFilter == FILTER_ALL ? "" :
 							" and " + (mFilter == FILTER_CONNECTED ?
 									Wapdroid.Ranges.CID + "=" + mCid
@@ -311,7 +315,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 											+ " from " + WapdroidProvider.VIEW_RANGES
 											+ " where " + Wapdroid.Ranges.NETWORK + "=" + mNetwork + " and"
 											+ mCells + ")"))
-						,null,STATUS);
+											,null,STATUS);
 			}
 			startManagingCursor(mCursor);
 			setListAdapter(mNetwork == 0 ?
