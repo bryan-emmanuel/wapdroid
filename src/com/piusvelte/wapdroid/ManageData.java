@@ -22,7 +22,6 @@ package com.piusvelte.wapdroid;
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -59,7 +58,6 @@ public class ManageData extends ListActivity implements ServiceConnection {
 	mOperator = "",
 	mBssid = "";
 	public IWapdroidService mIService;
-	private Context mContext;
 	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(int cid, int lac) throws RemoteException {
 			mCid = cid;
@@ -85,7 +83,6 @@ public class ManageData extends ListActivity implements ServiceConnection {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		mContext = this;
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			mNetwork = extras.getInt(WapdroidProvider.TABLE_NETWORKS);
@@ -272,28 +269,34 @@ public class ManageData extends ListActivity implements ServiceConnection {
 		if (mCells.length() > 0) {
 			Resources r = getResources();
 			Cursor c;
-			if (mNetwork == 0) c = this.getContentResolver().query(
-					Wapdroid.Networks.CONTENT_URI,
-					new String[]{Wapdroid.Networks._ID + "," + Wapdroid.Networks.SSID + "," + Wapdroid.Networks.BSSID + "," + (mFilter == FILTER_ALL ?
-							"case when " + Wapdroid.Networks.BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected)
-							+ "' when " + Wapdroid.Networks._ID + " in (select " + Wapdroid.Ranges.NETWORK + " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea)
-							+ "' else '" + r.getString(R.string.outofarea) + "' end"
-							: "'" + r.getString(mFilter == FILTER_CONNECTED ?
-									R.string.connected
-									: (mFilter == FILTER_INRANGE ?
-											R.string.withinarea :
-												R.string.outofarea)) + "'") + " as " + STATUS
-					},
-					(mFilter == FILTER_ALL ? null
-							: " WHERE " + (mFilter == FILTER_CONNECTED ?
-									Wapdroid.Networks.BSSID + "=?"
-									: Wapdroid.Networks._ID + (mFilter == FILTER_OUTRANGE ?
-											 " NOT"
-											: "") + " in (select " + Wapdroid.Ranges.NETWORK
-											+ " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ")"))
-											, (mFilter == FILTER_CONNECTED ? new String[]{mBssid} : null), STATUS);
-			else {
-				c = this.getContentResolver().query(
+			if (mNetwork == 0) {
+				c = this.managedQuery(
+						Wapdroid.Networks.CONTENT_URI,
+						new String[]{Wapdroid.Networks._ID + "," + Wapdroid.Networks.SSID + "," + Wapdroid.Networks.BSSID + "," + (mFilter == FILTER_ALL ?
+								"case when " + Wapdroid.Networks.BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected)
+								+ "' when " + Wapdroid.Networks._ID + " in (select " + Wapdroid.Ranges.NETWORK + " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea)
+								+ "' else '" + r.getString(R.string.outofarea) + "' end"
+								: "'" + r.getString(mFilter == FILTER_CONNECTED ?
+										R.string.connected
+										: (mFilter == FILTER_INRANGE ?
+												R.string.withinarea :
+													R.string.outofarea)) + "'") + " as " + STATUS
+						},
+						(mFilter == FILTER_ALL ? null
+								: " WHERE " + (mFilter == FILTER_CONNECTED ?
+										Wapdroid.Networks.BSSID + "=?"
+										: Wapdroid.Networks._ID + (mFilter == FILTER_OUTRANGE ?
+												" NOT"
+												: "") + " in (select " + Wapdroid.Ranges.NETWORK
+												+ " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ")"))
+												, (mFilter == FILTER_CONNECTED ? new String[]{mBssid} : null), STATUS);
+				setListAdapter(new SimpleCursorAdapter(this,
+						R.layout.network_row,
+						c,
+						new String[] {Wapdroid.Networks.SSID, Wapdroid.Networks.BSSID, STATUS},
+						new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status}));
+			} else {
+				c = this.managedQuery(
 						Wapdroid.Ranges.CONTENT_URI
 						, new String[]{Wapdroid.Ranges._ID + "," + Wapdroid.Ranges.CID + ",case when " + Wapdroid.Ranges.LAC + "=" + Wapdroid.UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Wapdroid.Ranges.LAC + " end as " + Wapdroid.Ranges.LAC + ",case when " + Wapdroid.Ranges.RSSI_MIN + "=" + Wapdroid.UNKNOWN_RSSI + " or " + Wapdroid.Ranges.RSSI_MAX + "=" + Wapdroid.UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Wapdroid.Ranges.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Wapdroid.Ranges.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Wapdroid.Ranges.RSSI_MIN + ","
 								+ (mFilter == FILTER_ALL ?
@@ -315,19 +318,12 @@ public class ManageData extends ListActivity implements ServiceConnection {
 											+ " where " + Wapdroid.Ranges.NETWORK + "=" + mNetwork + " and"
 											+ mCells + ")"))
 											, (mFilter == FILTER_CONNECTED ? new String[]{Integer.toString(mCid)} : null), STATUS);
+				setListAdapter(new SimpleCursorAdapter(this,
+						R.layout.cell_row,
+						c,
+						new String[] {Wapdroid.Ranges.CID, Wapdroid.Ranges.LAC, Wapdroid.Ranges.RSSI_MIN, STATUS},
+						new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status}));
 			}
-			setListAdapter(mNetwork == 0 ?
-					new SimpleCursorAdapter(mContext,
-							R.layout.network_row,
-							c,
-							new String[] {Wapdroid.Networks.SSID, Wapdroid.Networks.BSSID, STATUS},
-							new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status})
-			: new SimpleCursorAdapter(mContext,
-					R.layout.cell_row,
-					c,
-					new String[] {Wapdroid.Ranges.CID, Wapdroid.Ranges.LAC, Wapdroid.Ranges.RSSI_MIN, STATUS},
-					new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status}));
-			c.close();
 		}
 	}
 }
