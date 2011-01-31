@@ -39,7 +39,6 @@ public final class Wapdroid {
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.networks";
     	
-    	public static final String _ID = "_id";
     	public static final String SSID = "ssid";
     	public static final String BSSID = "bssid";
 	}
@@ -52,7 +51,6 @@ public final class Wapdroid {
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.cells";
     	
-    	public static final String _ID = "_id";
     	public static final String CID = "cid";
     	public static final String LOCATION = "location";
 	}
@@ -65,7 +63,6 @@ public final class Wapdroid {
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.locations";
     	
-    	public static final String _ID = "_id";
     	public static final String LAC = "lac";
 	}
 	
@@ -77,7 +74,6 @@ public final class Wapdroid {
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.pairs";
     	
-    	public static final String _ID = "_id";
     	public static final String CELL = "cell";
     	public static final String NETWORK = "network";
     	public static final String RSSI_MIN = "rssi_min";
@@ -92,7 +88,6 @@ public final class Wapdroid {
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.ranges";
     	
-    	public static final String _ID = "_id";
     	public static final String RSSI_MIN = "rssi_min";
     	public static final String RSSI_MAX = "rssi_max";
     	public static final String CID = "cid";

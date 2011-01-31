@@ -20,7 +20,7 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.piusvelte.wapdroid"
-      android:versionCode="329" android:versionName="3.2.9"
+      android:versionCode="330" android:versionName="3.3.0"
       android:installLocation="auto">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".WapdroidUI"
