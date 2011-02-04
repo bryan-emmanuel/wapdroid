@@ -147,6 +147,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 						public void onClick(DialogInterface dialog, int which) {
 							dialog.dismiss();
 							mFilter = Integer.parseInt(getResources().getStringArray(R.array.filter_values)[which]);
+							listData();
 						}});
 			dialog.show();
 			return true;
@@ -283,7 +284,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 													R.string.outofarea)) + "'") + " as " + STATUS
 						},
 						(mFilter == FILTER_ALL ? null
-								: " WHERE " + (mFilter == FILTER_CONNECTED ?
+								: (mFilter == FILTER_CONNECTED ?
 										Wapdroid.Networks.BSSID + "=?"
 										: Wapdroid.Networks._ID + (mFilter == FILTER_OUTRANGE ?
 												" NOT"
@@ -308,7 +309,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 												: (mFilter == FILTER_INRANGE ?
 														R.string.withinarea
 														: R.string.outofarea)) + "'") + " as " + STATUS
-						}, Wapdroid.Ranges.NETWORK + "=" + mNetwork + (mFilter == FILTER_ALL ? "" :
+						}, Wapdroid.Ranges.NETWORK + "=?" + (mFilter == FILTER_ALL ? "" :
 							" and " + (mFilter == FILTER_CONNECTED ?
 									Wapdroid.Ranges.CID + "=?"
 									: Wapdroid.Ranges.CELL + (mFilter == FILTER_OUTRANGE ?
@@ -317,7 +318,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 											+ " from " + WapdroidProvider.VIEW_RANGES
 											+ " where " + Wapdroid.Ranges.NETWORK + "=" + mNetwork + " and"
 											+ mCells + ")"))
-											, (mFilter == FILTER_CONNECTED ? new String[]{Integer.toString(mCid)} : null), STATUS);
+											, (mFilter == FILTER_CONNECTED ? new String[]{Integer.toString(mNetwork), Integer.toString(mCid)} : new String[]{Integer.toString(mNetwork)}), STATUS);
 				setListAdapter(new SimpleCursorAdapter(this,
 						R.layout.cell_row,
 						c,
