@@ -26,7 +26,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.widget.RemoteViews;
 
 public class WapdroidWidget extends AppWidgetProvider {
@@ -58,15 +57,8 @@ public class WapdroidWidget extends AppWidgetProvider {
 	private void updateWidgets(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds, boolean manageWifi) {
 		for (int appWidgetId : appWidgetIds) {
 			RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget);
-			if (manageWifi) {
-				views.setImageViewResource(R.id.widget_icon, R.drawable.wapdroid_widget_on);
-				views.setTextViewText(R.id.widget_status, context.getString(R.string.widget_on));
-				views.setTextColor(R.id.widget_status, Color.WHITE);
-			} else {
-				views.setImageViewResource(R.id.widget_icon, R.drawable.wapdroid_widget_off);
-				views.setTextViewText(R.id.widget_status, context.getString(R.string.widget_off));
-				views.setTextColor(R.id.widget_status, Color.GRAY);
-			}
+			if (manageWifi) views.setImageViewResource(R.id.widget_icon, R.drawable.wapdroid_widget_on);
+			else views.setImageViewResource(R.id.widget_icon, R.drawable.wapdroid_widget_off);
 			views.setOnClickPendingIntent(R.id.widget, PendingIntent.getBroadcast(context, 0, new Intent(context, WapdroidWidget.class).setAction(Wapdroid.ACTION_TOGGLE_SERVICE), 0));
 			appWidgetManager.updateAppWidget(appWidgetId, views);
 		}		
