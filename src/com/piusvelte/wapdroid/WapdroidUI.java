@@ -20,6 +20,9 @@
 
 package com.piusvelte.wapdroid;
 
+import com.admob.android.ads.AdListener;
+import com.admob.android.ads.AdView;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -39,7 +42,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class WapdroidUI extends Activity implements ServiceConnection, View.OnClickListener, DialogInterface.OnClickListener {
+public class WapdroidUI extends Activity implements ServiceConnection, View.OnClickListener, DialogInterface.OnClickListener, AdListener {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
@@ -200,5 +203,29 @@ public class WapdroidUI extends Activity implements ServiceConnection, View.OnCl
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
 		dialog.cancel();
+	}
+
+	@Override
+	public void onFailedToReceiveAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onFailedToReceiveRefreshedAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReceiveAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReceiveRefreshedAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 }

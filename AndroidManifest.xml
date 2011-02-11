@@ -65,6 +65,8 @@
 		<meta-data android:name="com.google.android.backup.api_key"
 		android:value="AEdPqrEAAAAIlersG5aLPTzpSy9UnEVOLZD14LQ-XUa654IkZg" />
 		-->
+		<!-- The application's publisher ID assigned by AdMob -->
+    	<meta-data android:value="a14c03f0ced257b" android:name="ADMOB_PUBLISHER_ID" />
 	</application>
     <uses-sdk android:minSdkVersion="3"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"></uses-permission>

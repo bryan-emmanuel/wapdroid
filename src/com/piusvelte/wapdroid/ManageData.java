@@ -19,6 +19,9 @@
  */
 package com.piusvelte.wapdroid;
 
+import com.admob.android.ads.AdListener;
+import com.admob.android.ads.AdView;
+
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ComponentName;
@@ -40,7 +43,7 @@ import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageData extends ListActivity implements ServiceConnection {
+public class ManageData extends ListActivity implements ServiceConnection, AdListener {
 	int mNetwork = 0, mCid;
 	private static final int MANAGE_ID = Menu.FIRST;
 	private static final int MAP_ID = Menu.FIRST + 1;
@@ -326,5 +329,29 @@ public class ManageData extends ListActivity implements ServiceConnection {
 						new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status}));
 			}
 		}
+	}
+
+	@Override
+	public void onFailedToReceiveAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onFailedToReceiveRefreshedAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReceiveAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void onReceiveRefreshedAd(AdView arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 }
