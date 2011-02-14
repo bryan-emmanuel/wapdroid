@@ -31,18 +31,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
-import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
-public class WapdroidUI extends Activity implements ServiceConnection, View.OnClickListener, DialogInterface.OnClickListener, AdListener {
+public class WapdroidUI extends Activity implements ServiceConnection, DialogInterface.OnClickListener, AdListener {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
@@ -100,8 +97,6 @@ public class WapdroidUI extends Activity implements ServiceConnection, View.OnCl
 			Dialog dialog = new Dialog(this);
 			dialog.setContentView(R.layout.about);
 			dialog.setTitle(R.string.label_about);
-			Button donate = (Button) dialog.findViewById(R.id.button_donate);
-			donate.setOnClickListener(this);
 			dialog.show();
 			return true;
 		}
@@ -194,12 +189,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, View.OnCl
 	public void onServiceDisconnected(ComponentName name) {
 		mIService = null;
 	}
-
-	@Override
-	public void onClick(View v) {
-		startActivity(new Intent(Intent.ACTION_VIEW).setData(Uri.parse("http://www.piusvelte.com?p=wapdroid")));		
-	}
-
+	
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
 		dialog.cancel();

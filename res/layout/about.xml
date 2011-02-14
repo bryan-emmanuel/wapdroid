@@ -21,12 +21,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent">
-	<Button android:id="@+id/button_donate"
-		android:text="@string/label_donate"
-		android:layout_width="fill_parent"
-		android:layout_height="wrap_content"
-		android:layout_alignParentBottom="true"/>
-	<ScrollView	android:layout_above="@id/button_donate"
+	<ScrollView	android:layout_alignParentBottom="true"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content">
 		<TableLayout android:layout_width="fill_parent"
