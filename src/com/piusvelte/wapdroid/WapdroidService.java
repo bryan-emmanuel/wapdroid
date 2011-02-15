@@ -481,6 +481,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	private long fetchNetwork(String ssid, String bssid) {
 		int network;
+		// handle nulls
+		if (ssid == null) ssid = "";
+		if (bssid == null) bssid = "";
 		Cursor c = this.getContentResolver().query(Wapdroid.Networks.CONTENT_URI, new String[]{Wapdroid.Networks._ID, Wapdroid.Networks.SSID, Wapdroid.Networks.BSSID}, Wapdroid.Networks.SSID + "=? and (" + Wapdroid.Networks.BSSID + "=? or " + Wapdroid.Networks.BSSID + "='')", new String[]{ssid, bssid}, null);
 		if (c.moveToFirst()) {
 			// ssid matches, only concerned if bssid is empty

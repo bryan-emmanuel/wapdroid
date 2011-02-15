@@ -20,7 +20,7 @@
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       package="com.piusvelte.wapdroid"
-      android:versionCode="334" android:versionName="3.3.4"
+      android:versionCode="338" android:versionName="3.3.8"
       android:installLocation="auto">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".WapdroidUI"
@@ -33,6 +33,10 @@
     	<activity android:name=".Settings"></activity>
     	<activity android:name=".ManageData"></activity>
     	<activity android:name=".MapData"></activity>
+        <activity android:name="com.admob.android.ads.AdMobActivity" 
+              android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+              android:configChanges="orientation|keyboard|keyboardHidden"
+              />
 		<receiver android:name=".BootReceiver">
 			<intent-filter>
 				<action android:name="android.intent.action.BOOT_COMPLETED" />

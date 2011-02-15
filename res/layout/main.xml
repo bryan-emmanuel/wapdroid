@@ -28,61 +28,65 @@
 		app:backgroundColor="@color/tertiary" app:primaryTextColor="@color/primary"
 		app:secondaryTextColor="@color/secondary" />
 	<ScrollView android:layout_below="@id/ad"
-		android:layout_width="fill_parent" android:layout_height="wrap_content">
-		<TableLayout android:background="@drawable/field"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingTop="10dip" android:paddingRight="12dip"
-			android:paddingBottom="10dip" android:paddingLeft="12dip"
-			android:stretchColumns="0">
-			<TableRow>
-				<TextView android:textColor="@color/primary" android:text="@string/label_WIFI" />
-				<TextView android:id="@+id/field_wifiState"
-					android:textStyle="bold" android:textColor="@color/primary"
-					android:gravity="right" android:text="@string/scanning" />
-			</TableRow>
-			<TableRow>
-				<TextView android:textColor="@color/secondary"
-					android:text="@string/label_BSSID" />
-				<TextView android:id="@+id/field_wifiBSSID"
-					android:textColor="@color/secondary" android:gravity="right"
-					android:text="@string/scanning" />
-			</TableRow>
-		</TableLayout>
-		<TableLayout android:background="@drawable/field"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingTop="10dip" android:paddingRight="12dip"
-			android:paddingBottom="10dip" android:paddingLeft="12dip"
-			android:stretchColumns="0">
-			<TableRow>
-				<TextView android:textColor="@color/secondary"
-					android:text="@string/label_CID" />
-				<TextView android:id="@+id/field_CID" android:textColor="@color/secondary"
-					android:gravity="right" android:text="@string/scanning" />
-			</TableRow>
-			<TableRow>
-				<TextView android:textColor="@color/secondary"
-					android:text="@string/label_LAC" />
-				<TextView android:id="@+id/field_LAC" android:textColor="@color/secondary"
-					android:gravity="right" android:text="@string/scanning" />
-			</TableRow>
-			<TableRow>
-				<TextView android:textColor="@color/secondary"
-					android:text="@string/signal" />
-				<TextView android:id="@+id/field_signal" android:textColor="@color/secondary"
-					android:gravity="right" android:text="@string/scanning" />
-			</TableRow>
-		</TableLayout>
-		<TableLayout android:background="@drawable/field"
-			android:layout_width="fill_parent" android:layout_height="wrap_content"
-			android:paddingTop="10dip" android:paddingRight="12dip"
-			android:paddingBottom="10dip" android:paddingLeft="12dip"
-			android:stretchColumns="0">
-			<TableRow>
-				<TextView android:textColor="@color/primary" android:text="@string/battery_remaining" />
-				<TextView android:id="@+id/field_battery"
-					android:textColor="@color/primary" android:textStyle="bold"
-					android:gravity="right" android:text="@string/scanning" />
-			</TableRow>
-		</TableLayout>
+		android:layout_width="fill_parent" android:layout_height="fill_parent">
+		<LinearLayout android:layout_width="fill_parent"
+			android:layout_height="fill_parent" android:orientation="vertical">
+			<TableLayout android:background="@drawable/field"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:paddingTop="10dip" android:paddingRight="12dip"
+				android:paddingBottom="10dip" android:paddingLeft="12dip"
+				android:stretchColumns="0">
+				<TableRow>
+					<TextView android:textColor="@color/primary" android:text="@string/label_WIFI" />
+					<TextView android:id="@+id/field_wifiState"
+						android:textStyle="bold" android:textColor="@color/primary"
+						android:gravity="right" android:text="@string/scanning" />
+				</TableRow>
+				<TableRow>
+					<TextView android:textColor="@color/secondary"
+						android:text="@string/label_BSSID" />
+					<TextView android:id="@+id/field_wifiBSSID"
+						android:textColor="@color/secondary" android:gravity="right"
+						android:text="@string/scanning" />
+				</TableRow>
+			</TableLayout>
+			<TableLayout android:background="@drawable/field"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:paddingTop="10dip" android:paddingRight="12dip"
+				android:paddingBottom="10dip" android:paddingLeft="12dip"
+				android:stretchColumns="0">
+				<TableRow>
+					<TextView android:textColor="@color/secondary"
+						android:text="@string/label_CID" />
+					<TextView android:id="@+id/field_CID" android:textColor="@color/secondary"
+						android:gravity="right" android:text="@string/scanning" />
+				</TableRow>
+				<TableRow>
+					<TextView android:textColor="@color/secondary"
+						android:text="@string/label_LAC" />
+					<TextView android:id="@+id/field_LAC" android:textColor="@color/secondary"
+						android:gravity="right" android:text="@string/scanning" />
+				</TableRow>
+				<TableRow>
+					<TextView android:textColor="@color/secondary"
+						android:text="@string/signal" />
+					<TextView android:id="@+id/field_signal"
+						android:textColor="@color/secondary" android:gravity="right"
+						android:text="@string/scanning" />
+				</TableRow>
+			</TableLayout>
+			<TableLayout android:background="@drawable/field"
+				android:layout_width="fill_parent" android:layout_height="wrap_content"
+				android:paddingTop="10dip" android:paddingRight="12dip"
+				android:paddingBottom="10dip" android:paddingLeft="12dip"
+				android:stretchColumns="0">
+				<TableRow>
+					<TextView android:textColor="@color/primary" android:text="@string/battery_remaining" />
+					<TextView android:id="@+id/field_battery"
+						android:textColor="@color/primary" android:textStyle="bold"
+						android:gravity="right" android:text="@string/scanning" />
+				</TableRow>
+			</TableLayout>
+		</LinearLayout>
 	</ScrollView>
 </RelativeLayout>
