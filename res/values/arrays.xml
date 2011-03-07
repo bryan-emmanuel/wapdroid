@@ -76,15 +76,13 @@
 		<item>100</item>
 	</string-array>
 	<string-array name="wifi_sleep_entries">
-		<item>Always on</item>
-		<item>Always on when in area</item>
-		<item>Always off when screen off</item>
-		<item>Always on when connected and no mobile networks</item>
+		<item>Never</item>
+		<item>Out of area</item>
+		<item>Out of area \u0026 Screen off</item>
 	</string-array>
 	<string-array name="wifi_sleep_values">
 		<item>0</item>
 		<item>1</item>
 		<item>2</item>
-		<item>3</item>
 	</string-array>
 </resources>
