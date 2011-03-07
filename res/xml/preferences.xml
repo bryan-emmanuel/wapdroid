@@ -46,5 +46,8 @@
 		android:entries="@array/battery_entries" android:entryValues="@array/battery_values"
 		android:defaultValue="30" />
 	<PreferenceCategory android:title="@string/pref_wifi_sleep" />
-	<CheckBoxPreference android:key="@string/key_wifi_sleep" android:title="@string/label_wifi_sleep" android:defaultValue="false" />
+	<ListPreference android:key="@string/key_wifi_sleep_policy"
+		android:title="@string/label_wifi_sleep"
+		android:entries="@array/wifi_sleep_entries" android:entryValues="@array/wifi_sleep_values"
+		android:defaultValue="1" />
 </PreferenceScreen>
