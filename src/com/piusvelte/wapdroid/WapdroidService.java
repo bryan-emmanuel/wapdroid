@@ -76,8 +76,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	mManualOverride,
 	mLastScanEnableWifi,
 	mNotify,
-	mPersistentStatus,
-	mWiFiExpectedState; // expected state tracks the expected wifi state to toggle it on if asleep due to screen off
+	mPersistentStatus;
 	String mSsid, mBssid;
 	private static boolean mApi7 = false;
 	IWapdroidUI mWapdroidUI;
@@ -212,7 +211,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				// if mobile connection was lost, and wifi was put to sleep, enable wifi
 				if (intent.hasExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY) && intent.hasExtra(ConnectivityManager.EXTRA_NETWORK_INFO) && (intent.getBooleanExtra(ConnectivityManager.EXTRA_NO_CONNECTIVITY, true))) {
 					NetworkInfo ni = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
-					if ((ni.getType() != ConnectivityManager.TYPE_WIFI) && !mobileNetworksAvailable() && mWiFiExpectedState) mWifiManager.setWifiEnabled(true);
+					if ((ni.getType() != ConnectivityManager.TYPE_WIFI) && !mobileNetworksAvailable() && mLastScanEnableWifi) mWifiManager.setWifiEnabled(true);
 				}
 			}
 		} else getCellInfo(mTelephonyManager.getCellLocation());
@@ -262,7 +261,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		wifiState(mWifiManager.getWifiState());
 		// to help avoid hysteresis, make sure that at least 2 consecutive scans were in/out of range
 		mLastScanEnableWifi = (mLastWifiState == WifiManager.WIFI_STATE_ENABLED);
-		mWiFiExpectedState = mLastWifiState == WifiManager.WIFI_STATE_ENABLED;
 		// the ssid from wifimanager may not be null, even if disconnected, so check against the supplicant state
 		wifiConnection();
 		IntentFilter f = new IntentFilter();
@@ -439,11 +437,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				if (!mManualOverride
 						&& (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))))
 						&& (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING)))
-						&& (mLastScanEnableWifi == enableWifi)) {
-					mWiFiExpectedState = enableWifi;
-					// check the sleep policy before applying the state
-					if ((!enableWifi || mScreenOn || ((mWifiSleepPolicy != 2) || !mobileNetworksAvailable())) && (mWifiSleepPolicy != 0)) mWifiManager.setWifiEnabled(enableWifi);
-				}
+						&& (mLastScanEnableWifi == enableWifi)
+						&& (!enableWifi || mScreenOn || ((mWifiSleepPolicy != 2) || !mobileNetworksAvailable()))
+						&& (enableWifi || (mWifiSleepPolicy != 0))) mWifiManager.setWifiEnabled(enableWifi);
 			}
 			// release the service if it doesn't appear that we're entering or leaving a network
 			if (enableWifi == mLastScanEnableWifi) {
