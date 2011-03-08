@@ -39,7 +39,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.Editor;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
@@ -76,7 +75,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	mManualOverride,
 	mLastScanEnableWifi,
 	mNotify,
-	mPersistentStatus;
+	mPersistentStatus,
+	mWifiSleep,
+	mScreenOn = true;
 	String mSsid, mBssid;
 	private static boolean mApi7 = false;
 	IWapdroidUI mWapdroidUI;
@@ -88,8 +89,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	private TelephonyManager mTelephonyManager;
 	private AlarmManager mAlarmManager;
 	private ConnectivityManager mConnectivityManager;
-	private int mWifiSleepPolicy = 1;
-	private boolean mScreenOn = true;
 
 	public static PhoneStateListener mPhoneListener;
 	private final IWapdroidService.Stub mWapdroidService = new IWapdroidService.Stub() {
@@ -193,7 +192,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				mManualOverride = false;
 				if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				// check sleep policy
-				if ((mWifiSleepPolicy == 2) && mobileNetworksAvailable()) mWifiManager.setWifiEnabled(false);
+				if (mWifiSleep && mobileNetworksAvailable()) mWifiManager.setWifiEnabled(false);
 				ManageWakeLocks.release();
 			} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
 				mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
@@ -234,14 +233,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		 */
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		// initialize preferences, updated by UI
-		if (sp.getBoolean(getString(R.string.key_wifi_sleep), false)) {
-			// update the sleep policy storage
-			Editor spe = sp.edit();
-			spe.putBoolean(getString(R.string.key_wifi_sleep), false);
-			spe.putInt(getString(R.string.key_wifi_sleep_policy), 2);
-			spe.commit();
-		}
-		mWifiSleepPolicy = Integer.parseInt((String) sp.getString(getString(R.string.key_wifi_sleep_policy), "1"));
+		mWifiSleep = sp.getBoolean(getString(R.string.key_wifi_sleep), false);
 		mManageWifi = sp.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), "30000"));
 		mNotify = sp.getBoolean(getString(R.string.key_notify), false);
@@ -438,8 +430,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 						&& (enableWifi ^ ((((mLastWifiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWifiState == WifiManager.WIFI_STATE_ENABLING)))))
 						&& (enableWifi ^ (!enableWifi && (mLastWifiState != WifiManager.WIFI_STATE_DISABLING)))
 						&& (mLastScanEnableWifi == enableWifi)
-						&& (!enableWifi || mScreenOn || ((mWifiSleepPolicy != 2) || !mobileNetworksAvailable()))
-						&& (enableWifi || (mWifiSleepPolicy != 0))) mWifiManager.setWifiEnabled(enableWifi);
+						&& (!enableWifi || mScreenOn || !mWifiSleep || !mobileNetworksAvailable())) mWifiManager.setWifiEnabled(enableWifi);
 			}
 			// release the service if it doesn't appear that we're entering or leaving a network
 			if (enableWifi == mLastScanEnableWifi) {
@@ -507,7 +498,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			else ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
 		}
 		else if (key.equals(getString(R.string.key_manual_override))) mManualOverride = sharedPreferences.getBoolean(key, false);
-		else if (key.equals(getString(R.string.key_wifi_sleep_policy))) mWifiSleepPolicy = Integer.parseInt((String) sharedPreferences.getString(key, "1"));
+		else if (key.equals(getString(R.string.key_wifi_sleep))) mWifiSleep = sharedPreferences.getBoolean(key, false);
 	}
 
 	private long fetchNetwork(String ssid, String bssid) {

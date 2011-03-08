@@ -75,14 +75,4 @@
 		<item>90</item>
 		<item>100</item>
 	</string-array>
-	<string-array name="wifi_sleep_entries">
-		<item>Never</item>
-		<item>Out of area</item>
-		<item>Out of area \u0026 Screen off</item>
-	</string-array>
-	<string-array name="wifi_sleep_values">
-		<item>0</item>
-		<item>1</item>
-		<item>2</item>
-	</string-array>
 </resources>

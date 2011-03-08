@@ -32,5 +32,4 @@
     <string name="key_noclear">noclear</string>
     <string name="key_persistent_status">persistent_status</string>
     <string name="key_wifi_sleep">wifi_sleep</string>
-    <string name="key_wifi_sleep_policy">wifi_sleep_policy</string>
 </resources>
