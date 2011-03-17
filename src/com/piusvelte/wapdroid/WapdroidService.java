@@ -28,6 +28,12 @@ import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import com.piusvelte.wapdroid.Wapdroid.Locations;
+import com.piusvelte.wapdroid.Wapdroid.Networks;
+import com.piusvelte.wapdroid.Wapdroid.Ranges;
+import com.piusvelte.wapdroid.Wapdroid.Cells;
+import com.piusvelte.wapdroid.Wapdroid.Pairs;
+
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -58,7 +64,7 @@ import android.util.Log;
 public class WapdroidService extends Service implements OnSharedPreferenceChangeListener {
 	private static final String TAG = "WapdroidService";
 	private static int NOTIFY_ID = 1;
-	public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
+	public static final String WAKE_SERVICE = "com.piusvelte.WAKE_SERVICE";
 	public static final int LISTEN_SIGNAL_STRENGTHS = 256;
 	public static final int PHONE_TYPE_CDMA = 2;
 	private static final int START_STICKY = 1;
@@ -347,13 +353,13 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	}
 
 	private void updateUI() {
-		String cells = " (" + Wapdroid.Ranges.CID + "=" + Integer.toString(mCid) + " and (" + Wapdroid.Ranges.LAC + "=" + Integer.toString(mLac) + " or " + Wapdroid.Ranges.LOCATION + "=" + UNKNOWN_CID + ")"
-		+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + Wapdroid.Ranges.RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + Wapdroid.Ranges.RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + Wapdroid.Ranges.RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
+		String cells = " (" + Ranges.CID + "=" + Integer.toString(mCid) + " and (" + Ranges.LAC + "=" + Integer.toString(mLac) + " or " + Ranges.LOCATION + "=" + UNKNOWN_CID + ")"
+		+ ((mRssi == UNKNOWN_RSSI) ? ")" : " and (((" + Ranges.RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + Ranges.RSSI_MIN + "<=" + Integer.toString(mRssi) + ")) and (" + Ranges.RSSI_MAX + ">=" + Integer.toString(mRssi) + ")))");
 		if ((mTelephonyManager.getNeighboringCellInfo() != null) && !mTelephonyManager.getNeighboringCellInfo().isEmpty()) {
 			for (NeighboringCellInfo nci : mTelephonyManager.getNeighboringCellInfo()) {
 				int nci_rssi = (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi();
-				cells += " or (" + Wapdroid.Ranges.CID + "=" + Integer.toString(nci.getCid()) + " and (" + Wapdroid.Ranges.LAC + "=" + nciGetLac(nci) + " or " + Wapdroid.Ranges.LOCATION + "=" + UNKNOWN_CID + ")"
-				+ ((nci_rssi == UNKNOWN_RSSI) ? ")" : " and (((" + Wapdroid.Ranges.RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + Wapdroid.Ranges.RSSI_MIN + "<=" + Integer.toString(nci_rssi) + ")) and (" + Wapdroid.Ranges.RSSI_MAX + ">=" + Integer.toString(nci_rssi) + ")))");
+				cells += " or (" + Ranges.CID + "=" + Integer.toString(nci.getCid()) + " and (" + Ranges.LAC + "=" + nciGetLac(nci) + " or " + Ranges.LOCATION + "=" + UNKNOWN_CID + ")"
+				+ ((nci_rssi == UNKNOWN_RSSI) ? ")" : " and (((" + Ranges.RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + Ranges.RSSI_MIN + "<=" + Integer.toString(nci_rssi) + ")) and (" + Ranges.RSSI_MAX + ">=" + Integer.toString(nci_rssi) + ")))");
 			}
 		}
 		try {
@@ -506,20 +512,20 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		// handle nulls
 		if (ssid == null) ssid = "";
 		if (bssid == null) bssid = "";
-		Cursor c = this.getContentResolver().query(Wapdroid.Networks.CONTENT_URI, new String[]{Wapdroid.Networks._ID, Wapdroid.Networks.SSID, Wapdroid.Networks.BSSID}, Wapdroid.Networks.SSID + "=? and (" + Wapdroid.Networks.BSSID + "=? or " + Wapdroid.Networks.BSSID + "='')", new String[]{ssid, bssid}, null);
+		Cursor c = this.getContentResolver().query(Networks.CONTENT_URI, new String[]{Networks._ID, Networks.SSID, Networks.BSSID}, Networks.SSID + "=? and (" + Networks.BSSID + "=? or " + Networks.BSSID + "='')", new String[]{ssid, bssid}, null);
 		if (c.moveToFirst()) {
 			// ssid matches, only concerned if bssid is empty
-			network = c.getInt(c.getColumnIndex(Wapdroid.Networks._ID));
-			if (c.getString(c.getColumnIndex(Wapdroid.Networks.BSSID)).equals("")) {
+			network = c.getInt(c.getColumnIndex(Networks._ID));
+			if (c.getString(c.getColumnIndex(Networks.BSSID)).equals("")) {
 				ContentValues values = new ContentValues();
-				values.put(Wapdroid.Networks.BSSID, bssid);
-				this.getContentResolver().update(Wapdroid.Networks.CONTENT_URI, values, Wapdroid.Networks._ID + "=" + network, null);
+				values.put(Networks.BSSID, bssid);
+				this.getContentResolver().update(Networks.CONTENT_URI, values, Networks._ID + "=" + network, null);
 			}
 		} else {
 			ContentValues values = new ContentValues();
-			values.put(Wapdroid.Networks.SSID, ssid);
-			values.put(Wapdroid.Networks.BSSID, bssid);
-			network = Integer.parseInt(this.getContentResolver().insert(Wapdroid.Networks.CONTENT_URI, values).getLastPathSegment());
+			values.put(Networks.SSID, ssid);
+			values.put(Networks.BSSID, bssid);
+			network = Integer.parseInt(this.getContentResolver().insert(Networks.CONTENT_URI, values).getLastPathSegment());
 		}
 		c.close();
 		return network;
@@ -529,12 +535,12 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		// select or insert location
 		if (lac > 0) {
 			int location;
-			Cursor c = this.getContentResolver().query(Wapdroid.Locations.CONTENT_URI, new String[]{Wapdroid.Locations._ID, Wapdroid.Locations.LAC}, Wapdroid.Locations.LAC + "=?", new String[]{Integer.toString(lac)}, null);
-			if (c.moveToFirst()) location = c.getInt(c.getColumnIndex(Wapdroid.Locations._ID));
+			Cursor c = this.getContentResolver().query(Locations.CONTENT_URI, new String[]{Locations._ID, Locations.LAC}, Locations.LAC + "=?", new String[]{Integer.toString(lac)}, null);
+			if (c.moveToFirst()) location = c.getInt(c.getColumnIndex(Locations._ID));
 			else {
 				ContentValues values = new ContentValues();
-				values.put(Wapdroid.Locations.LAC, lac);
-				location = Integer.parseInt(this.getContentResolver().insert(Wapdroid.Locations.CONTENT_URI, values).getLastPathSegment());
+				values.put(Locations.LAC, lac);
+				location = Integer.parseInt(this.getContentResolver().insert(Locations.CONTENT_URI, values).getLastPathSegment());
 			}
 			c.close();
 			return location;
@@ -545,65 +551,66 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		int cell, pair, location = fetchLocation(lac);
 		// if location==-1, then match only on cid, otherwise match on location or -1
 		// select or insert cell
-		Cursor c = this.getContentResolver().query(Wapdroid.Cells.CONTENT_URI, new String[]{Wapdroid.Cells._ID, Wapdroid.Cells.LOCATION},
-				Wapdroid.Cells.CID + "=?" + (location == UNKNOWN_CID ?
+		Cursor c = this.getContentResolver().query(Cells.CONTENT_URI, new String[]{Cells._ID, Cells.LOCATION},
+				Cells.CID + "=?" + (location == UNKNOWN_CID ?
 						""
-						: " and (" + Wapdroid.Cells.LOCATION + "=" + UNKNOWN_CID + " or " + Wapdroid.Cells.LOCATION + "=?)"), (location == UNKNOWN_CID ? new String[]{Integer.toString(cid)} : new String[]{Integer.toString(cid), Integer.toString(location)}), null);
+						: " and (" + Cells.LOCATION + "=" + UNKNOWN_CID + " or " + Cells.LOCATION + "=?)"), (location == UNKNOWN_CID ? new String[]{Integer.toString(cid)} : new String[]{Integer.toString(cid), Integer.toString(location)}), null);
 		if (c.moveToFirst()) {
-			cell = c.getInt(c.getColumnIndex(Wapdroid.Cells._ID));
-			if ((location != UNKNOWN_CID) && (c.getInt(c.getColumnIndex(Wapdroid.Cells.LOCATION)) == UNKNOWN_CID)) {
+			cell = c.getInt(c.getColumnIndex(Cells._ID));
+			if ((location != UNKNOWN_CID) && (c.getInt(c.getColumnIndex(Cells.LOCATION)) == UNKNOWN_CID)) {
 				ContentValues values = new ContentValues();
-				values.put(Wapdroid.Cells.LOCATION, location);
-				this.getContentResolver().update(Wapdroid.Cells.CONTENT_URI, values, Wapdroid.Cells._ID + "=?", new String[]{Integer.toString(cell)});
+				values.put(Cells.LOCATION, location);
+				this.getContentResolver().update(Cells.CONTENT_URI, values, Cells._ID + "=?", new String[]{Integer.toString(cell)});
 			}
 		} else {
 			ContentValues values = new ContentValues();
-			values.put(Wapdroid.Cells.CID, cid);
-			values.put(Wapdroid.Cells.LOCATION, location);
-			cell = Integer.parseInt(this.getContentResolver().insert(Wapdroid.Cells.CONTENT_URI, values).getLastPathSegment());
+			values.put(Cells.CID, cid);
+			values.put(Cells.LOCATION, location);
+			cell = Integer.parseInt(this.getContentResolver().insert(Cells.CONTENT_URI, values).getLastPathSegment());
 		}
 		c.close();
 		// select and update or insert pair
-		c = this.getContentResolver().query(Wapdroid.Pairs.CONTENT_URI, new String[]{Wapdroid.Pairs._ID, Wapdroid.Pairs.RSSI_MIN, Wapdroid.Pairs.RSSI_MAX}, Wapdroid.Pairs.CELL + "=? and " + Wapdroid.Pairs.NETWORK + "=?", new String[]{Integer.toString(cell), Long.toString(network)}, null);
+		c = this.getContentResolver().query(Pairs.CONTENT_URI, new String[]{Pairs._ID, Pairs.RSSI_MIN, Pairs.RSSI_MAX}, Pairs.CELL + "=? and " + Pairs.NETWORK + "=?", new String[]{Integer.toString(cell), Long.toString(network)}, null);
 		if (c.moveToFirst()) {
 			if (rssi != UNKNOWN_RSSI) {
-				pair = c.getInt(c.getColumnIndex(Wapdroid.Pairs._ID));
-				int rssi_min = c.getInt(c.getColumnIndex(Wapdroid.Pairs.RSSI_MIN));
-				int rssi_max = c.getInt(c.getColumnIndex(Wapdroid.Pairs.RSSI_MAX));
+				pair = c.getInt(c.getColumnIndex(Pairs._ID));
+				int rssi_min = c.getInt(c.getColumnIndex(Pairs.RSSI_MIN));
+				int rssi_max = c.getInt(c.getColumnIndex(Pairs.RSSI_MAX));
 				if (rssi_min > rssi) {
 					ContentValues values = new ContentValues();
-					values.put(Wapdroid.Pairs.RSSI_MIN, rssi);
-					this.getContentResolver().update(Wapdroid.Pairs.CONTENT_URI, values, Wapdroid.Pairs._ID + "=?", new String[]{Integer.toString(pair)});
+					values.put(Pairs.RSSI_MIN, rssi);
+					this.getContentResolver().update(Pairs.CONTENT_URI, values, Pairs._ID + "=?", new String[]{Integer.toString(pair)});
 				}
 				else if ((rssi_max == UNKNOWN_RSSI) || (rssi_max < rssi)) {
 					ContentValues values = new ContentValues();
-					values.put(Wapdroid.Pairs.RSSI_MAX, rssi);
-					this.getContentResolver().update(Wapdroid.Pairs.CONTENT_URI, values, Wapdroid.Pairs._ID + "=?", new String[]{Integer.toString(pair)});
+					values.put(Pairs.RSSI_MAX, rssi);
+					this.getContentResolver().update(Pairs.CONTENT_URI, values, Pairs._ID + "=?", new String[]{Integer.toString(pair)});
 				}
 			}
 		} else {
 			ContentValues values = new ContentValues();
-			values.put(Wapdroid.Pairs.CELL, cell);
-			values.put(Wapdroid.Pairs.NETWORK, network);
-			values.put(Wapdroid.Pairs.RSSI_MIN, rssi);
-			values.put(Wapdroid.Pairs.RSSI_MAX, rssi);
-			this.getContentResolver().insert(Wapdroid.Pairs.CONTENT_URI, values);
+			values.put(Pairs.CELL, cell);
+			values.put(Pairs.NETWORK, network);
+			values.put(Pairs.RSSI_MIN, rssi);
+			values.put(Pairs.RSSI_MAX, rssi);
+			this.getContentResolver().insert(Pairs.CONTENT_URI, values);
 		}
 		c.close();
 	}
 
 	private boolean cellInRange(int cid, int lac, int rssi) {
-		Cursor c = this.getContentResolver().query(Wapdroid.Ranges.CONTENT_URI, new String[]{Wapdroid.Ranges._ID, Wapdroid.Ranges.LOCATION}, Wapdroid.Ranges.CID + "=? and (" + Wapdroid.Ranges.LAC + "=? or " + Wapdroid.Ranges.LOCATION + "=" + UNKNOWN_CID + ")" +
-				(rssi == UNKNOWN_RSSI
+		Cursor c = this.getContentResolver().query(Ranges.CONTENT_URI, new String[]{Ranges._ID, Ranges.LOCATION}, Ranges.CID + "=? and (" + Ranges.LAC + "=? or " + Ranges.LOCATION + "=" + UNKNOWN_CID + ") and "
+				+ Ranges.MANAGE + "=1"
+				+ (rssi == UNKNOWN_RSSI
 						? ""
-								: " and (((" + Wapdroid.Ranges.RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + Wapdroid.Ranges.RSSI_MIN + "<=?)) and (" + Wapdroid.Ranges.RSSI_MAX + ">=?))"), (rssi == UNKNOWN_RSSI ? new String[]{Integer.toString(cid), Integer.toString(lac)} : new String[]{Integer.toString(cid), Integer.toString(lac), Integer.toString(rssi), Integer.toString(rssi)}), null);
+								: " and (((" + Ranges.RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + Ranges.RSSI_MIN + "<=?)) and (" + Ranges.RSSI_MAX + ">=?))"), (rssi == UNKNOWN_RSSI ? new String[]{Integer.toString(cid), Integer.toString(lac)} : new String[]{Integer.toString(cid), Integer.toString(lac), Integer.toString(rssi), Integer.toString(rssi)}), null);
 		boolean inRange = c.moveToFirst();
 		if (inRange && (lac > 0)) {
 			// check LAC, as this is a new column
-			if (c.isNull(c.getColumnIndex(Wapdroid.Ranges.LOCATION))) {
+			if (c.isNull(c.getColumnIndex(Ranges.LOCATION))) {
 				ContentValues values = new ContentValues();
-				values.put(Wapdroid.Ranges.LOCATION, fetchLocation(lac));
-				this.getContentResolver().update(Wapdroid.Cells.CONTENT_URI, values, Wapdroid.Cells._ID + "=?", new String[]{Integer.toString(c.getInt(c.getColumnIndex(Wapdroid.Ranges._ID)))});
+				values.put(Ranges.LOCATION, fetchLocation(lac));
+				this.getContentResolver().update(Cells.CONTENT_URI, values, Cells._ID + "=?", new String[]{Integer.toString(c.getInt(c.getColumnIndex(Ranges._ID)))});
 			}
 		}
 		c.close();

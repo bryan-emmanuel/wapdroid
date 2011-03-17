@@ -41,6 +41,7 @@ public final class Wapdroid {
     	
     	public static final String SSID = "ssid";
     	public static final String BSSID = "bssid";
+    	public static final String MANAGE = "manage";
 	}
 	
 	public static final class Cells implements BaseColumns {
@@ -97,6 +98,7 @@ public final class Wapdroid {
     	public static final String BSSID = "bssid";
     	public static final String CELL = "cell";
     	public static final String NETWORK = "network";
+    	public static final String MANAGE = "manage";
 	}
 
 }
