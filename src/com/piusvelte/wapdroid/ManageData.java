@@ -19,14 +19,21 @@
  */
 package com.piusvelte.wapdroid;
 
+import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_CID;
+import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_RSSI;
+
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
+import com.piusvelte.wapdroid.Wapdroid.Cells;
+import com.piusvelte.wapdroid.Wapdroid.Locations;
 import com.piusvelte.wapdroid.Wapdroid.Networks;
+import com.piusvelte.wapdroid.Wapdroid.Pairs;
 import com.piusvelte.wapdroid.Wapdroid.Ranges;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -36,7 +43,6 @@ import android.database.Cursor;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -49,12 +55,13 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageData extends ListActivity implements ServiceConnection, AdListener {
 	int mNetwork = 0, mCid;
-	private static final int MANAGE_ID = Menu.FIRST;
-	private static final int MAP_ID = Menu.FIRST + 1;
-	private static final int DELETE_ID = Menu.FIRST + 2;
-	private static final int CANCEL_ID = Menu.FIRST + 3;
-	private static final int REFRESH_ID = Menu.FIRST + 4;
-	private static final int FILTER_ID = Menu.FIRST + 5;
+	private static final int MANAGE_ID = 0;
+	private static final int MANAGE_NETWORK_ID = 1;
+	private static final int MAP_ID = 2;
+	private static final int DELETE_ID = Menu.FIRST;
+	private static final int CANCEL_ID = Menu.FIRST + 1;
+	private static final int REFRESH_ID = Menu.FIRST;
+	private static final int FILTER_ID = Menu.FIRST + 1;
 	private static final String STATUS = "status";
 	private static final int FILTER_ALL = 0;
 	private static final int FILTER_INRANGE = 1;
@@ -104,15 +111,12 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
 			mNetwork = extras.getInt(WapdroidProvider.TABLE_NETWORKS);
-			mCid = extras.getInt(Wapdroid.Cells.CID);
+			mCid = extras.getInt(Cells.CID);
 			mBssid = extras.getString(Networks.BSSID);
 			mCells = extras.getString(WapdroidProvider.TABLE_CELLS);
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
-		final ListView listView = getListView();
-		registerForContextMenu(listView);
-//		listView.setItemsCanFocus(false);
-//		listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE);
+		registerForContextMenu(getListView());
 	}
 
 	@Override
@@ -179,89 +183,34 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 	@Override
 	public void onCreateContextMenu(ContextMenu menu, View view, ContextMenuInfo menuInfo) {
 		super.onCreateContextMenu(menu, view, menuInfo);
-		if (mNetwork == 0) {
-			menu.add(0, MANAGE_ID, 0, String.format(getString(R.string.manage), getString(R.string.cell)));
-			menu.add(0, MAP_ID, 0, String.format(getString(R.string.map), getString(R.string.network)));
-			menu.add(0, DELETE_ID, 0, String.format(getString(R.string.forget), getString(R.string.network)));
-		} else {
-			menu.add(0, MAP_ID, 0, String.format(getString(R.string.map), getString(R.string.cell)));
-			menu.add(0, DELETE_ID, 0, String.format(getString(R.string.forget), getString(R.string.cell)));
-		}
+		menu.add(0, DELETE_ID, 0, String.format(getString(R.string.forget), getString(mNetwork == 0 ? R.string.network : R.string.cell)));
 		menu.add(0, CANCEL_ID, 0, android.R.string.cancel);
 	}
 
 	@Override
 	public boolean onContextItemSelected(MenuItem item) {
-		itemAction(item.getItemId(), (int) ((AdapterContextMenuInfo) item.getMenuInfo()).id);
-		return super.onContextItemSelected(item);
-	}
-
-	@Override
-	protected void onListItemClick(ListView list, View view, int position, long id) {
-		super.onListItemClick(list, view, position, id);
-		final int item = (int) id;
-		Log.v("ManageData","onListItemClick");
-		Log.v("ManageData","checkbox:"+R.id.network_manage);
-		Log.v("ManageData","view:"+view.getId());
-		Log.v("ManageData","found"+view.findViewById(R.id.network_manage));
-		if (mNetwork == 0) {
-			final CharSequence[] items = {String.format(getString(R.string.manage), getString(R.string.cell)), String.format(getString(R.string.map), getString(R.string.network)), String.format(getString(R.string.forget), getString(R.string.network)), getString(android.R.string.cancel)};
-			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-			dialog.setItems(items, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.cancel();
-					// +1 to reindex
-					itemAction(which + 1, item);
-				}
-			});
-			dialog.show();
-		} else {
-			final CharSequence[] items = {String.format(getString(R.string.map), getString(R.string.cell)), String.format(getString(R.string.forget), getString(R.string.cell)), getString(android.R.string.cancel)};
-			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-			dialog.setItems(items, new DialogInterface.OnClickListener() {
-				@Override
-				public void onClick(DialogInterface dialog, int which) {
-					dialog.cancel();
-					// +2 to reindex and as LIST_ID isn't an option here
-					itemAction(which + 2, item);
-				}
-			});
-			dialog.show();
-		}
-	}
-
-	public void itemAction(int action, int id) {
-		switch(action) {
-		case MANAGE_ID:
-			startActivity((new Intent(this, ManageData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, id).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
-			return;
-		case MAP_ID:
-			// open gmaps
-			if (mNetwork != 0) startActivity((new Intent(this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, (int) (mNetwork == 0 ? id : mNetwork)).putExtra(MapData.OPERATOR, mOperator).putExtra(WapdroidProvider.TABLE_PAIRS, id));
-			else startActivity((new Intent(this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, (int) (mNetwork == 0 ? id : mNetwork)).putExtra(MapData.OPERATOR, mOperator));
-			return;
-		case DELETE_ID:
+		int id = (int) ((AdapterContextMenuInfo) item.getMenuInfo()).id;
+		if (item.getItemId() == DELETE_ID) {
 			if (mNetwork == 0) {
 				this.getContentResolver().delete(Networks.CONTENT_URI, Networks._ID + "=" + id, null);
-				this.getContentResolver().delete(Wapdroid.Pairs.CONTENT_URI, Wapdroid.Pairs.NETWORK + "=" + id, null);
+				this.getContentResolver().delete(Pairs.CONTENT_URI, Pairs.NETWORK + "=" + id, null);
 			} else {
-				this.getContentResolver().delete(Wapdroid.Pairs.CONTENT_URI, Wapdroid.Pairs._ID + "=" + id, null);
-				Cursor n = this.getContentResolver().query(Wapdroid.Pairs.CONTENT_URI, new String[]{Wapdroid.Pairs._ID}, Wapdroid.Pairs.NETWORK + "=" + mNetwork, null, null);
-				if (n.getCount() == 0) this.getContentResolver().delete(Wapdroid.Pairs.CONTENT_URI, Wapdroid.Pairs._ID + "=" + mNetwork, null);
+				this.getContentResolver().delete(Pairs.CONTENT_URI, Pairs._ID + "=" + id, null);
+				Cursor n = this.getContentResolver().query(Pairs.CONTENT_URI, new String[]{Pairs._ID}, Pairs.NETWORK + "=" + mNetwork, null, null);
+				if (n.getCount() == 0) this.getContentResolver().delete(Pairs.CONTENT_URI, Pairs._ID + "=" + mNetwork, null);
 				n.close();
 			}
-			Cursor c = this.getContentResolver().query(Wapdroid.Cells.CONTENT_URI, new String[]{Wapdroid.Cells._ID, Wapdroid.Cells.LOCATION}, null, null, null);
+			Cursor c = this.getContentResolver().query(Cells.CONTENT_URI, new String[]{Cells._ID, Cells.LOCATION}, null, null, null);
 			if (c.moveToFirst()) {
-				int[] index = {c.getColumnIndex(Wapdroid.Cells._ID), c.getColumnIndex(Wapdroid.Cells.LOCATION)};
+				int[] index = {c.getColumnIndex(Cells._ID), c.getColumnIndex(Cells.LOCATION)};
 				while (!c.isAfterLast()) {
 					int cell = c.getInt(index[0]);
-					Cursor p = this.getContentResolver().query(Wapdroid.Pairs.CONTENT_URI, new String[]{Wapdroid.Pairs._ID}, Wapdroid.Pairs.CELL + "=" + cell, null, null);
+					Cursor p = this.getContentResolver().query(Pairs.CONTENT_URI, new String[]{Pairs._ID}, Pairs.CELL + "=" + cell, null, null);
 					if (p.getCount() == 0) {
-						this.getContentResolver().delete(Wapdroid.Cells.CONTENT_URI, Wapdroid.Cells._ID + "=" + cell, null);
+						this.getContentResolver().delete(Cells.CONTENT_URI, Cells._ID + "=" + cell, null);
 						int location = c.getInt(index[1]);
-						Cursor l = this.getContentResolver().query(Wapdroid.Cells.CONTENT_URI, new String[]{Wapdroid.Cells.LOCATION}, Wapdroid.Cells.LOCATION + "=" + location, null, null);
-						if (l.getCount() == 0) this.getContentResolver().delete(Wapdroid.Locations.CONTENT_URI, Wapdroid.Locations._ID + "=" + location, null);
+						Cursor l = this.getContentResolver().query(Cells.CONTENT_URI, new String[]{Cells.LOCATION}, Cells.LOCATION + "=" + location, null, null);
+						if (l.getCount() == 0) this.getContentResolver().delete(Locations.CONTENT_URI, Locations._ID + "=" + location, null);
 						l.close();
 					}
 					p.close();
@@ -269,10 +218,50 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 				}
 			}
 			c.close();
-			listData();
-			return;
-		case CANCEL_ID:
-			return;
+		}
+		return super.onContextItemSelected(item);
+	}
+
+	@Override
+	protected void onListItemClick(ListView list, final View view, int position, long id) {
+		super.onListItemClick(list, view, position, id);
+		final int item = (int) id;
+		if (mNetwork == 0) {
+			final CharSequence[] items = {String.format(getString(R.string.manage), getString(R.string.cell)), getString(((CheckBox) view.findViewById(R.id.network_manage)).isChecked() ? R.string.ignore_network : R.string.manage_network), String.format(getString(R.string.map), getString(R.string.network)), getString(android.R.string.cancel)};
+			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+			dialog.setItems(items, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.cancel();
+					switch(which) {
+					case MANAGE_ID:
+						startActivity((new Intent(ManageData.this, ManageData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, item).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
+						return;
+					case MAP_ID:
+						// open gmaps
+			            startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, item).putExtra(MapData.OPERATOR, mOperator));
+						return;
+					case MANAGE_NETWORK_ID:
+						// toggle the manage checkbox
+						ContentValues values = new ContentValues();
+						values.put(Networks.MANAGE, ((CheckBox) view.findViewById(R.id.network_manage)).isChecked() ? 0 : 1);
+						ManageData.this.getContentResolver().update(Networks.CONTENT_URI, values, Networks._ID + "=?", new String[] {Integer.toString(item)});
+						return;
+					}
+				}
+			});
+			dialog.show();
+		} else {
+			final CharSequence[] items = {String.format(getString(R.string.map), getString(R.string.cell)), getString(android.R.string.cancel)};
+			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+			dialog.setItems(items, new DialogInterface.OnClickListener() {
+				@Override
+				public void onClick(DialogInterface dialog, int which) {
+					dialog.cancel();
+					if (which == MANAGE_ID) startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, mNetwork).putExtra(MapData.OPERATOR, mOperator).putExtra(WapdroidProvider.TABLE_PAIRS, item));
+				}
+			});
+			dialog.show();
 		}
 	}
 
@@ -300,7 +289,7 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 						Networks.CONTENT_URI,
 						new String[]{Networks._ID, Networks.SSID, Networks.BSSID, (mFilter == FILTER_ALL ?
 								"case when " + Networks.BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected)
-								+ "' when " + Networks._ID + " in (select " + Wapdroid.Ranges.NETWORK + " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea)
+								+ "' when " + Networks._ID + " in (select " + Ranges.NETWORK + " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea)
 								+ "' else '" + r.getString(R.string.outofarea) + "' end"
 								: "'" + r.getString(mFilter == FILTER_CONNECTED ?
 										R.string.connected
@@ -313,20 +302,20 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 										Networks.BSSID + "=?"
 										: Networks._ID + (mFilter == FILTER_OUTRANGE ?
 												" NOT"
-												: "") + " in (select " + Wapdroid.Ranges.NETWORK
+												: "") + " in (select " + Ranges.NETWORK
 												+ " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ")"))
 												, (mFilter == FILTER_CONNECTED ? new String[]{mBssid} : null), STATUS);
 				SimpleCursorAdapter sca = new SimpleCursorAdapter(this,
 						R.layout.network_row,
 						c,
-						new String[] {Wapdroid.Ranges.CID, Wapdroid.Ranges.LAC, Wapdroid.Ranges.RSSI_MIN, STATUS},
-						new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status});
+						new String[] {Networks.SSID, Networks.BSSID, STATUS, Networks.MANAGE},
+						new int[] {R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status, R.id.network_manage});
 				sca.setViewBinder(mViewBinder);
 				setListAdapter(sca);
 			} else {
 				c = this.managedQuery(
 						Ranges.CONTENT_URI
-						, new String[]{Ranges._ID, Ranges.CID, "case when " + Ranges.LAC + "=" + Wapdroid.UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Ranges.LAC + " end as " + Ranges.LAC + ",case when " + Ranges.RSSI_MIN + "=" + Wapdroid.UNKNOWN_RSSI + " or " + Ranges.RSSI_MAX + "=" + Wapdroid.UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Ranges.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Ranges.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Ranges.RSSI_MIN + ","
+						, new String[]{Ranges._ID, Ranges.CID, "case when " + Ranges.LAC + "=" + UNKNOWN_CID + " then '" + r.getString(R.string.unknown) + "' else " + Ranges.LAC + " end as " + Ranges.LAC + ",case when " + Ranges.RSSI_MIN + "=" + UNKNOWN_RSSI + " or " + Ranges.RSSI_MAX + "=" + UNKNOWN_RSSI + " then '" + r.getString(R.string.unknown) + "' else (" + Ranges.RSSI_MIN + "||'" + r.getString(R.string.colon) + "'||" + Ranges.RSSI_MAX + "||'" + r.getString(R.string.dbm) + "') end as " + Ranges.RSSI_MIN + ","
 								+ (mFilter == FILTER_ALL ?
 										"case when " + Ranges.CID + "='" + mCid + "' then '" + r.getString(R.string.connected)
 										+ "' when " + Ranges.CELL + " in (select " + Ranges.CELL + " from " + WapdroidProvider.VIEW_RANGES + " where " + Ranges.NETWORK + "=" + mNetwork + " and" + mCells + ")" + " then '" + r.getString(R.string.withinarea)

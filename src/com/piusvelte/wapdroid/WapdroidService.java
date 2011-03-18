@@ -525,6 +525,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			ContentValues values = new ContentValues();
 			values.put(Networks.SSID, ssid);
 			values.put(Networks.BSSID, bssid);
+			// default to managing the network
+			values.put(Networks.MANAGE, 1);
 			network = Integer.parseInt(this.getContentResolver().insert(Networks.CONTENT_URI, values).getLastPathSegment());
 		}
 		c.close();

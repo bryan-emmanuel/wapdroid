@@ -77,4 +77,6 @@
     <string name="widget_label">Wapdroid Service Widget</string>
     <string name="widget_on">On</string>
     <string name="widget_off">Off</string>
+    <string name="manage_network">Manage network</string>
+    <string name="ignore_network">Ignore network</string>
 </resources>
