@@ -70,7 +70,8 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 	private int mFilter = FILTER_ALL;
 	String mCells = "",
 	mOperator = "",
-	mBssid = "";
+	mBssid = "",
+	mSsid = "";
 	public IWapdroidService mIService;
 	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(int cid, int lac) throws RemoteException {
@@ -78,6 +79,7 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 		}
 
 		public void setWifiInfo(int state, String ssid, String bssid) throws RemoteException {
+			mSsid = ssid;
 			mBssid = bssid;
 		}
 
@@ -112,6 +114,7 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 		if (extras != null) {
 			mNetwork = extras.getInt(WapdroidProvider.TABLE_NETWORKS);
 			mCid = extras.getInt(Cells.CID);
+			mSsid = extras.getString(Networks.SSID);
 			mBssid = extras.getString(Networks.BSSID);
 			mCells = extras.getString(WapdroidProvider.TABLE_CELLS);
 		}
@@ -288,7 +291,7 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 				c = this.managedQuery(
 						Networks.CONTENT_URI,
 						new String[]{Networks._ID, Networks.SSID, Networks.BSSID, (mFilter == FILTER_ALL ?
-								"case when " + Networks.BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected)
+								"case when " + Networks.SSID + "='" + mSsid + "' and " + Networks.BSSID + "='" + mBssid + "' then '" + r.getString(R.string.connected)
 								+ "' when " + Networks._ID + " in (select " + Ranges.NETWORK + " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ") then '" + r.getString(R.string.withinarea)
 								+ "' else '" + r.getString(R.string.outofarea) + "' end"
 								: "'" + r.getString(mFilter == FILTER_CONNECTED ?
@@ -299,12 +302,13 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 						, Networks.MANAGE},
 						(mFilter == FILTER_ALL ? null
 								: (mFilter == FILTER_CONNECTED ?
-										Networks.BSSID + "=?"
+										Networks.SSID + "=? and"
+										+ Networks.BSSID + "=?"
 										: Networks._ID + (mFilter == FILTER_OUTRANGE ?
 												" NOT"
 												: "") + " in (select " + Ranges.NETWORK
 												+ " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ")"))
-												, (mFilter == FILTER_CONNECTED ? new String[]{mBssid} : null), STATUS);
+												, (mFilter == FILTER_CONNECTED ? new String[]{mSsid, mBssid} : null), STATUS);
 				SimpleCursorAdapter sca = new SimpleCursorAdapter(this,
 						R.layout.network_row,
 						c,

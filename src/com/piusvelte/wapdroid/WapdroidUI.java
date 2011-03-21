@@ -20,8 +20,12 @@
 
 package com.piusvelte.wapdroid;
 
+import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_RSSI;
+
 import com.admob.android.ads.AdListener;
 import com.admob.android.ads.AdView;
+import com.piusvelte.wapdroid.Wapdroid.Cells;
+import com.piusvelte.wapdroid.Wapdroid.Networks;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -51,7 +55,8 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	field_battery,
 	field_LAC;
 	private String mBssid = "",
-	mCells = "";
+	mCells = "",
+	mSsid = "";
 	private int mCid = 0;
 	public IWapdroidService mIService;
 
@@ -81,7 +86,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case MANAGE_ID:
-			startActivity((new Intent(this, ManageData.class)).putExtra(Wapdroid.Networks.BSSID, mBssid).putExtra(Wapdroid.Cells.CID, mCid).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
+			startActivity((new Intent(this, ManageData.class)).putExtra(Networks.SSID, mSsid).putExtra(Networks.BSSID, mBssid).putExtra(Cells.CID, mCid).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
 			return true;
 		case SETTINGS_ID:
 			startActivity(new Intent(this, Settings.class));
@@ -140,6 +145,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 
 		public void setWifiInfo(int state, String ssid, String bssid)
 		throws RemoteException {
+			mSsid = ssid;
 			mBssid = bssid;
 			if (state == WifiManager.WIFI_STATE_ENABLED) {
 				if (ssid != null) {
@@ -160,7 +166,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 		}
 
 		public void setSignalStrength(int rssi) throws RemoteException {
-			field_signal.setText((rssi != Wapdroid.UNKNOWN_RSSI ? (Integer.toString(rssi) + getString(R.string.dbm)) : getString(R.string.scanning)));
+			field_signal.setText((rssi != UNKNOWN_RSSI ? (Integer.toString(rssi) + getString(R.string.dbm)) : getString(R.string.scanning)));
 		}
 
 		public void setBattery(int batteryPercentage) throws RemoteException {
