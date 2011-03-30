@@ -608,6 +608,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			values.put(Pairs.NETWORK, network);
 			values.put(Pairs.RSSI_MIN, rssi);
 			values.put(Pairs.RSSI_MAX, rssi);
+			values.put(Pairs.MANAGE_CELL, 1);
 			this.getContentResolver().insert(Pairs.CONTENT_URI, values);
 		}
 		c.close();
@@ -616,6 +617,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	private boolean cellInRange(int cid, int lac, int rssi) {
 		Cursor c = this.getContentResolver().query(Ranges.CONTENT_URI, new String[]{Ranges._ID, Ranges.LOCATION}, Ranges.CID + "=? and (" + Ranges.LAC + "=? or " + Ranges.LOCATION + "=" + UNKNOWN_CID + ") and "
 				+ Ranges.MANAGE + "=1"
+				+ Ranges.MANAGE_CELL + "=1"
 				+ (rssi == UNKNOWN_RSSI
 						? ""
 								: " and (((" + Ranges.RSSI_MIN + "=" + UNKNOWN_RSSI + ") or (" + Ranges.RSSI_MIN + "<=?)) and (" + Ranges.RSSI_MAX + ">=?))"), (rssi == UNKNOWN_RSSI ? new String[]{Integer.toString(cid), Integer.toString(lac)} : new String[]{Integer.toString(cid), Integer.toString(lac), Integer.toString(rssi), Integer.toString(rssi)}), null);

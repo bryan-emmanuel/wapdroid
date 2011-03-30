@@ -46,7 +46,7 @@ public class WapdroidProvider extends ContentProvider {
 	private static final UriMatcher sUriMatcher;
 	
 	private static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 8;
+	private static final int DATABASE_VERSION = 9;
 	
 	public static final String TAG = "WapdroidProvider";
 	
@@ -95,6 +95,7 @@ public class WapdroidProvider extends ContentProvider {
 		pairsProjectionMap.put(Pairs.NETWORK, Pairs.NETWORK);
 		pairsProjectionMap.put(Pairs.RSSI_MAX, Pairs.RSSI_MAX);
 		pairsProjectionMap.put(Pairs.RSSI_MIN, Pairs.RSSI_MIN);
+		pairsProjectionMap.put(Pairs.MANAGE_CELL, Pairs.MANAGE_CELL);
 		
 		sUriMatcher.addURI(AUTHORITY, TABLE_LOCATIONS, LOCATIONS);
 		locationsProjectionMap = new HashMap<String, String>();
@@ -114,14 +115,15 @@ public class WapdroidProvider extends ContentProvider {
 		rangesProjectionMap.put(Ranges.RSSI_MIN, Ranges.RSSI_MIN);
 		rangesProjectionMap.put(Ranges.SSID, Ranges.SSID);
 		rangesProjectionMap.put(Ranges.MANAGE, Ranges.MANAGE);
+		rangesProjectionMap.put(Ranges.MANAGE_CELL, Ranges.MANAGE_CELL);
 	}
 	
 
 	@Override
-	public int delete(Uri arg0, String arg1, String[] arg2) {
+	public int delete(Uri uri, String arg1, String[] arg2) {
 		SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
 		int count;
-		switch (sUriMatcher.match(arg0)) {
+		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
 			count = db.delete(TABLE_NETWORKS, arg1, arg2);
 			break;
@@ -135,9 +137,11 @@ public class WapdroidProvider extends ContentProvider {
 			count = db.delete(TABLE_PAIRS, arg1, arg2);
 			break;
 		default:
-			throw new IllegalArgumentException("Unknown URI " + arg0);
+			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
-		getContext().getContentResolver().notifyChange(arg0, null);
+		getContext().getContentResolver().notifyChange(uri, null);
+		// the view needs to be updated also
+		if (sUriMatcher.match(uri) == PAIRS) getContext().getContentResolver().notifyChange(Ranges.CONTENT_URI, null);
 		return count;
 	}
 
@@ -184,6 +188,7 @@ public class WapdroidProvider extends ContentProvider {
 			rowId = db.insert(TABLE_PAIRS, Pairs._ID, values);
 			returnUri = ContentUris.withAppendedId(Pairs.CONTENT_URI, rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
+			getContext().getContentResolver().notifyChange(Ranges.CONTENT_URI, null);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
@@ -253,6 +258,8 @@ public class WapdroidProvider extends ContentProvider {
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 		getContext().getContentResolver().notifyChange(uri, null);
+		// the view needs to be updated also
+		if (sUriMatcher.match(uri) == PAIRS) getContext().getContentResolver().notifyChange(Ranges.CONTENT_URI, null);
 		return count;
 	}
 	
@@ -278,7 +285,8 @@ public class WapdroidProvider extends ContentProvider {
 					+ Pairs.CELL + " integer, "
 					+ Pairs.NETWORK + " integer, "
 					+ Pairs.RSSI_MIN + " integer, "
-					+ Pairs.RSSI_MAX + " integer);");
+					+ Pairs.RSSI_MAX + " integer, "
+					+ Pairs.MANAGE_CELL + " integer);");
 			db.execSQL("create table if not exists " + TABLE_LOCATIONS + " ("
 					+ Locations._ID + " integer primary key autoincrement, "
 					+ Locations.LAC + " integer);");
@@ -294,6 +302,7 @@ public class WapdroidProvider extends ContentProvider {
 					+ "," + Ranges.CELL
 					+ "," + Ranges.NETWORK
 					+ "," + Ranges.MANAGE
+					+ "," + Ranges.MANAGE_CELL
 					+ " from " + TABLE_PAIRS
 					+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + Ranges._ID + "=" + Ranges.CELL
 					+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + Ranges._ID + "=" + Ranges.LOCATION
@@ -446,6 +455,45 @@ public class WapdroidProvider extends ContentProvider {
 						+ "," + Ranges.CELL
 						+ "," + Ranges.NETWORK
 						+ "," + Ranges.MANAGE
+						+ " from " + TABLE_PAIRS
+						+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + Ranges._ID + "=" + Ranges.CELL
+						+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + Ranges._ID + "=" + Ranges.LOCATION
+						+ " left join " + TABLE_NETWORKS + " on " + TABLE_NETWORKS + "." + Ranges._ID + "=" + Ranges.NETWORK + ";");				
+			}
+			if (oldVersion < 9) {
+				// add the manage column for optional cell management
+				db.execSQL("drop table if exists " + TABLE_PAIRS + "_bkp;");
+				db.execSQL("create temporary table " + TABLE_PAIRS + "_bkp as select * from " + TABLE_PAIRS + ";");
+				db.execSQL("drop table if exists " + TABLE_PAIRS + ";");
+				db.execSQL("create table if not exists " + TABLE_PAIRS + " ("
+						+ Pairs._ID + " integer primary key autoincrement, "
+						+ Pairs.CELL + " integer, "
+						+ Pairs.NETWORK + " integer, "
+						+ Pairs.RSSI_MIN + " integer, "
+						+ Pairs.RSSI_MAX + " integer, "
+						+ Pairs.MANAGE_CELL + " integer);");
+				db.execSQL("insert into " + TABLE_PAIRS
+						+ " select "
+						+ Pairs._ID + ", "
+						+ Pairs.CELL + ", "
+						+ Pairs.NETWORK + ", "
+						+ Pairs.RSSI_MIN + ", "
+						+ Pairs.RSSI_MAX + ", 1 from " + TABLE_PAIRS + "_bkp;");
+				db.execSQL("drop table if exists " + TABLE_PAIRS + "_bkp;");
+				db.execSQL("drop view if exists " + VIEW_RANGES + ";");
+				db.execSQL("create view if not exists " + VIEW_RANGES + " as select "
+						+ TABLE_PAIRS + "." + Ranges._ID + " as " + Ranges._ID
+						+ "," + Ranges.RSSI_MAX
+						+ "," + Ranges.RSSI_MIN
+						+ "," + Ranges.CID
+						+ "," + Ranges.LAC
+						+ "," + Ranges.LOCATION
+						+ "," + Ranges.SSID
+						+ "," + Ranges.BSSID
+						+ "," + Ranges.CELL
+						+ "," + Ranges.NETWORK
+						+ "," + Ranges.MANAGE
+						+ "," + Ranges.MANAGE_CELL
 						+ " from " + TABLE_PAIRS
 						+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + Ranges._ID + "=" + Ranges.CELL
 						+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + Ranges._ID + "=" + Ranges.LOCATION

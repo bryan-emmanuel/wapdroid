@@ -79,6 +79,7 @@ public final class Wapdroid {
     	public static final String NETWORK = "network";
     	public static final String RSSI_MIN = "rssi_min";
     	public static final String RSSI_MAX = "rssi_max";
+    	public static final String MANAGE_CELL = "manage_cell";
 	}
 	
 	public static final class Ranges implements BaseColumns {
@@ -99,6 +100,7 @@ public final class Wapdroid {
     	public static final String CELL = "cell";
     	public static final String NETWORK = "network";
     	public static final String MANAGE = "manage";
+    	public static final String MANAGE_CELL = "manage_cell";
 	}
 
 }

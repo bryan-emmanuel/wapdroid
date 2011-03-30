@@ -56,7 +56,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 public class ManageData extends ListActivity implements ServiceConnection, AdListener {
 	int mNetwork = 0, mCid;
 	private static final int MANAGE_ID = 0;
-	private static final int MANAGE_NETWORK_ID = 1;
+	private static final int MANAGE_NETWORK_OR_CELL_ID = 1;
 	private static final int MAP_ID = 2;
 	private static final int DELETE_ID = Menu.FIRST;
 	private static final int CANCEL_ID = Menu.FIRST + 1;
@@ -95,15 +95,17 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 			mCells = cells;
 		}
 	};
-	
+
 	private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
 		@Override
 		public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
 			if (columnIndex == cursor.getColumnIndex(Networks.MANAGE)) {
 				((CheckBox) view).setChecked(cursor.getInt(columnIndex) == 1);
 				return true;
-			}
-			return false;
+			} else if (columnIndex == cursor.getColumnIndex(Ranges.MANAGE_CELL)) {
+				((CheckBox) view).setChecked(cursor.getInt(columnIndex) == 1);
+				return true;
+			} else return false;
 		}
 	};
 
@@ -230,7 +232,7 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 		super.onListItemClick(list, view, position, id);
 		final int item = (int) id;
 		if (mNetwork == 0) {
-			final CharSequence[] items = {String.format(getString(R.string.manage), getString(R.string.cell)), getString(((CheckBox) view.findViewById(R.id.network_manage)).isChecked() ? R.string.ignore_network : R.string.manage_network), String.format(getString(R.string.map), getString(R.string.network)), getString(android.R.string.cancel)};
+			final CharSequence[] items = {String.format(getString(R.string.manage), getString(R.string.cell)), String.format(getString(((CheckBox) view.findViewById(R.id.network_manage)).isChecked() ? R.string.ignore_item : R.string.manage_item), getString(R.string.network)), String.format(getString(R.string.map), getString(R.string.network)), getString(android.R.string.cancel)};
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setItems(items, new DialogInterface.OnClickListener() {
 				@Override
@@ -240,28 +242,39 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 					case MANAGE_ID:
 						startActivity((new Intent(ManageData.this, ManageData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, item).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
 						return;
-					case MAP_ID:
-						// open gmaps
-			            startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, item).putExtra(MapData.OPERATOR, mOperator));
-						return;
-					case MANAGE_NETWORK_ID:
+					case MANAGE_NETWORK_OR_CELL_ID:
 						// toggle the manage checkbox
 						ContentValues values = new ContentValues();
 						values.put(Networks.MANAGE, ((CheckBox) view.findViewById(R.id.network_manage)).isChecked() ? 0 : 1);
 						ManageData.this.getContentResolver().update(Networks.CONTENT_URI, values, Networks._ID + "=?", new String[] {Integer.toString(item)});
+						return;
+					case MAP_ID:
+						// open gmaps
+						startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, item).putExtra(MapData.OPERATOR, mOperator));
 						return;
 					}
 				}
 			});
 			dialog.show();
 		} else {
-			final CharSequence[] items = {String.format(getString(R.string.map), getString(R.string.cell)), getString(android.R.string.cancel)};
+			final CharSequence[] items = {String.format(getString(((CheckBox) view.findViewById(R.id.cell_manage)).isChecked() ? R.string.ignore_item : R.string.manage_item), getString(R.string.cell)), String.format(getString(R.string.map), getString(R.string.cell)), getString(android.R.string.cancel)};
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setItems(items, new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					dialog.cancel();
-					if (which == MANAGE_ID) startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, mNetwork).putExtra(MapData.OPERATOR, mOperator).putExtra(WapdroidProvider.TABLE_PAIRS, item));
+					which++; // correct the id offset, as there is no MANAGE_ID for cells
+					switch(which) {
+					case MANAGE_NETWORK_OR_CELL_ID:
+						// toggle the manage checkbox
+						ContentValues values = new ContentValues();
+						values.put(Pairs.MANAGE_CELL, ((CheckBox) view.findViewById(R.id.cell_manage)).isChecked() ? 0 : 1);
+						ManageData.this.getContentResolver().update(Pairs.CONTENT_URI, values, Pairs._ID + "=?", new String[] {Integer.toString(item)});
+						return;
+					case MAP_ID:
+						startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, mNetwork).putExtra(MapData.OPERATOR, mOperator).putExtra(WapdroidProvider.TABLE_PAIRS, item));
+						return;
+					}
 				}
 			});
 			dialog.show();
@@ -299,16 +312,16 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 										: (mFilter == FILTER_INRANGE ?
 												R.string.withinarea :
 													R.string.outofarea)) + "'") + " as " + STATUS
-						, Networks.MANAGE},
-						(mFilter == FILTER_ALL ? null
-								: (mFilter == FILTER_CONNECTED ?
-										Networks.SSID + "=? and"
-										+ Networks.BSSID + "=?"
-										: Networks._ID + (mFilter == FILTER_OUTRANGE ?
-												" NOT"
-												: "") + " in (select " + Ranges.NETWORK
-												+ " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ")"))
-												, (mFilter == FILTER_CONNECTED ? new String[]{mSsid, mBssid} : null), STATUS);
+													, Networks.MANAGE},
+													(mFilter == FILTER_ALL ? null
+															: (mFilter == FILTER_CONNECTED ?
+																	Networks.SSID + "=? and "
+																	+ Networks.BSSID + "=?"
+																	: Networks._ID + (mFilter == FILTER_OUTRANGE ?
+																			" NOT"
+																			: "") + " in (select " + Ranges.NETWORK
+																			+ " from " + WapdroidProvider.VIEW_RANGES + " where" + mCells + ")"))
+																			, (mFilter == FILTER_CONNECTED ? new String[]{mSsid, mBssid} : null), STATUS);
 				SimpleCursorAdapter sca = new SimpleCursorAdapter(this,
 						R.layout.network_row,
 						c,
@@ -329,21 +342,23 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 												: (mFilter == FILTER_INRANGE ?
 														R.string.withinarea
 														: R.string.outofarea)) + "'") + " as " + STATUS
-						}, Ranges.NETWORK + "=?" + (mFilter == FILTER_ALL ? "" :
-							" and " + (mFilter == FILTER_CONNECTED ?
-									Ranges.CID + "=?"
-									: Ranges.CELL + (mFilter == FILTER_OUTRANGE ?
-											" NOT"
-											: "") + " in (select " + Ranges.CELL
-											+ " from " + WapdroidProvider.VIEW_RANGES
-											+ " where " + Ranges.NETWORK + "=" + mNetwork + " and"
-											+ mCells + ")"))
-											, (mFilter == FILTER_CONNECTED ? new String[]{Integer.toString(mNetwork), Integer.toString(mCid)} : new String[]{Integer.toString(mNetwork)}), STATUS);
-				setListAdapter(new SimpleCursorAdapter(this,
+														, Ranges.MANAGE_CELL}, Ranges.NETWORK + "=?" + (mFilter == FILTER_ALL ? "" :
+															" and " + (mFilter == FILTER_CONNECTED ?
+																	Ranges.CID + "=?"
+																	: Ranges.CELL + (mFilter == FILTER_OUTRANGE ?
+																			" NOT"
+																			: "") + " in (select " + Ranges.CELL
+																			+ " from " + WapdroidProvider.VIEW_RANGES
+																			+ " where " + Ranges.NETWORK + "=" + mNetwork + " and"
+																			+ mCells + ")"))
+																			, (mFilter == FILTER_CONNECTED ? new String[]{Integer.toString(mNetwork), Integer.toString(mCid)} : new String[]{Integer.toString(mNetwork)}), STATUS);
+				SimpleCursorAdapter sca = new SimpleCursorAdapter(this,
 						R.layout.cell_row,
 						c,
-						new String[] {Ranges.CID, Ranges.LAC, Ranges.RSSI_MIN, STATUS},
-						new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status}));
+						new String[] {Ranges.CID, Ranges.LAC, Ranges.RSSI_MIN, STATUS, Ranges.MANAGE_CELL},
+						new int[] {R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status, R.id.cell_manage});
+				sca.setViewBinder(mViewBinder);
+				setListAdapter(sca);
 			}
 		}
 	}
@@ -351,24 +366,24 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 	@Override
 	public void onFailedToReceiveAd(AdView arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onFailedToReceiveRefreshedAd(AdView arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onReceiveAd(AdView arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void onReceiveRefreshedAd(AdView arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

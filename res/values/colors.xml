@@ -22,5 +22,5 @@
 	<color name="primary">#f2f2f9</color>
 	<color name="secondary">#d2e2e9</color>
 	<color name="tertiary">#427279</color>
-	<color name="widget_background">#99000000</color>
+	<color name="widget_background">#00000000</color>
 </resources>
