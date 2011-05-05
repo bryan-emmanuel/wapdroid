@@ -22,8 +22,7 @@ package com.piusvelte.wapdroid;
 import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_CID;
 import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_RSSI;
 
-import com.admob.android.ads.AdListener;
-import com.admob.android.ads.AdView;
+import com.google.ads.*;
 import com.piusvelte.wapdroid.Wapdroid.Cells;
 import com.piusvelte.wapdroid.Wapdroid.Locations;
 import com.piusvelte.wapdroid.Wapdroid.Networks;
@@ -49,11 +48,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
-public class ManageData extends ListActivity implements ServiceConnection, AdListener {
+public class ManageData extends ListActivity implements ServiceConnection {
 	int mNetwork = 0, mCid;
 	private static final int MANAGE_ID = 0;
 	private static final int MANAGE_NETWORK_OR_CELL_ID = 1;
@@ -122,6 +122,9 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
+		AdView adView = new AdView(this, AdSize.BANNER, Wapdroid.GOOGLE_AD_ID);
+		((LinearLayout) findViewById(R.id.ad)).addView(adView);
+		adView.loadAd(new AdRequest());
 	}
 
 	@Override
@@ -361,29 +364,5 @@ public class ManageData extends ListActivity implements ServiceConnection, AdLis
 				setListAdapter(sca);
 			}
 		}
-	}
-
-	@Override
-	public void onFailedToReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onFailedToReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void onReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-
 	}
 }

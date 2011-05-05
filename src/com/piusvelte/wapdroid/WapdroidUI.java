@@ -22,8 +22,7 @@ package com.piusvelte.wapdroid;
 
 import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_RSSI;
 
-import com.admob.android.ads.AdListener;
-import com.admob.android.ads.AdView;
+import com.google.ads.*;
 import com.piusvelte.wapdroid.Wapdroid.Cells;
 import com.piusvelte.wapdroid.Wapdroid.Networks;
 
@@ -41,9 +40,10 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class WapdroidUI extends Activity implements ServiceConnection, DialogInterface.OnClickListener, AdListener {
+public class WapdroidUI extends Activity implements ServiceConnection, DialogInterface.OnClickListener {
 	public static final int MANAGE_ID = Menu.FIRST;
 	public static final int SETTINGS_ID = Menu.FIRST + 1;
 	public static final int WIFI_ID = Menu.FIRST + 2;
@@ -70,6 +70,9 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 		field_signal = (TextView) findViewById(R.id.field_signal);
 		field_battery = (TextView) findViewById(R.id.field_battery);
 		field_LAC = (TextView) findViewById(R.id.field_LAC);
+		AdView adView = new AdView(this, AdSize.BANNER, Wapdroid.GOOGLE_AD_ID);
+		((LinearLayout) findViewById(R.id.ad)).addView(adView);
+		adView.loadAd(new AdRequest());
 	}
 
 	@Override
@@ -199,29 +202,5 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
 		dialog.cancel();
-	}
-
-	@Override
-	public void onFailedToReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onFailedToReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 }

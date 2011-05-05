@@ -20,22 +20,13 @@
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
 	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.wapdroid"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent"
+	android:layout_width="fill_parent" android:layout_height="fill_parent"
 	android:textSize="14dip">
-	<com.admob.android.ads.AdView android:id="@+id/ad"
-		android:visibility="gone" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:layout_alignParentBottom="true"
-		app:backgroundColor="@color/tertiary" app:primaryTextColor="@color/primary"
-		app:secondaryTextColor="@color/secondary" />
-	<ListView android:id="@android:id/list"
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
-		android:layout_above="@id/ad" />
-	<TextView android:id="@android:id/empty"
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
-		android:layout_above="@id/ad"
-		android:textColor="@color/primary"
-		android:text="@string/no_cells"/>
+	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
+		android:layout_height="wrap_content"></LinearLayout>
+	<ListView android:id="@android:id/list" android:layout_below="@id/ad"
+		android:layout_width="fill_parent" android:layout_height="fill_parent" />
+	<TextView android:id="@android:id/empty" android:layout_below="@id/ad"
+		android:layout_width="fill_parent" android:layout_height="fill_parent"
+		android:textColor="@color/primary" android:text="@string/no_cells" />
 </RelativeLayout>

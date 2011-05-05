@@ -22,17 +22,14 @@
 	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.wapdroid"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent">
-	<com.admob.android.ads.AdView android:id="@+id/ad"
-		android:visibility="gone" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" android:layout_alignParentBottom="true"
-		app:backgroundColor="@color/tertiary" app:primaryTextColor="@color/primary"
-		app:secondaryTextColor="@color/secondary" />
+	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
+		android:layout_height="wrap_content"></LinearLayout>
 	<com.google.android.maps.MapView
 		xmlns:android="http://schemas.android.com/apk/res/android"
 		android:id="@+id/mapview"
+		android:layout_below="@id/ad"
 		android:clickable="true"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
-		android:layout_above="@id/ad"
 		android:apiKey="0gPRuHgQacrF1UiGJOhy3pqZM2Xwk7qNfNyTP1A" />
 </RelativeLayout>

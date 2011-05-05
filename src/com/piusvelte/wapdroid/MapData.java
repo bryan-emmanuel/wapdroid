@@ -41,16 +41,16 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 
-import com.admob.android.ads.AdListener;
-import com.admob.android.ads.AdView;
+import com.google.ads.*;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
 
-public class MapData extends MapActivity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener, AdListener {
+public class MapData extends MapActivity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private static final String TAG = "MapData";
 	private static final int REFRESH_ID = Menu.FIRST;
 	protected static final String OPERATOR = "operator";
@@ -134,6 +134,9 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 		string_lac = getString(R.string.label_LAC);
 		string_range = getString(R.string.range);
 		string_colon = getString(R.string.colon);
+		AdView adView = new AdView(this, AdSize.BANNER, Wapdroid.GOOGLE_AD_ID);
+		((LinearLayout) findViewById(R.id.ad)).addView(adView);
+		adView.loadAd(new AdRequest());
 	}
 
 	@Override
@@ -323,29 +326,5 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 		mThread.interrupt();
 		// if a cell was deleted, an array out of bounds error will be thrown if the map isn't redrawn, so finish if the redraw is cancelled
 		finish();
-	}
-
-	@Override
-	public void onFailedToReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onFailedToReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onReceiveAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void onReceiveRefreshedAd(AdView arg0) {
-		// TODO Auto-generated method stub
-		
 	}
 }
