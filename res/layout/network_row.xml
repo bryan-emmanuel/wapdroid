@@ -30,7 +30,7 @@
 	<CheckBox android:id="@+id/network_manage"
 		android:layout_width="wrap_content" android:layout_height="fill_parent"
 		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
-		android:layout_alignParentBottom="true" android:focusable="false" />
+		android:layout_alignParentBottom="true" android:focusable="false" android:clickable="false" />
 	<TextView android:layout_height="wrap_content"
 		android:layout_width="fill_parent" android:textStyle="bold"
 		android:id="@+id/network_row_SSID" android:textColor="@color/primary"

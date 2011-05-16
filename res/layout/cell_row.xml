@@ -29,7 +29,7 @@
 	<CheckBox android:id="@+id/cell_manage" android:layout_width="wrap_content"
 		android:layout_height="fill_parent" android:focusable="false"
 		android:layout_alignParentRight="true" android:layout_alignParentTop="true"
-		android:layout_alignParentBottom="true" />
+		android:layout_alignParentBottom="true" android:clickable="false" />
 	<TableLayout android:layout_width="wrap_content"
 		android:layout_height="wrap_content" android:layout_toRightOf="@id/cell_icon"
 		android:layout_toLeftOf="@id/cell_manage"
