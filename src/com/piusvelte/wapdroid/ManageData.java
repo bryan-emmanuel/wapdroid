@@ -231,9 +231,8 @@ public class ManageData extends ListActivity implements ServiceConnection {
 	}
 
 	@Override
-	protected void onListItemClick(ListView list, final View view, int position, long id) {
+	protected void onListItemClick(ListView list, final View view, int position, final long id) {
 		super.onListItemClick(list, view, position, id);
-		final int item = (int) id;
 		if (mNetwork == 0) {
 			final CharSequence[] items = {String.format(getString(R.string.manage), getString(R.string.cell)), String.format(getString(((CheckBox) view.findViewById(R.id.network_manage)).isChecked() ? R.string.ignore_item : R.string.manage_item), getString(R.string.network)), String.format(getString(R.string.map), getString(R.string.network)), getString(android.R.string.cancel)};
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
@@ -243,17 +242,17 @@ public class ManageData extends ListActivity implements ServiceConnection {
 					dialog.cancel();
 					switch(which) {
 					case MANAGE_ID:
-						startActivity((new Intent(ManageData.this, ManageData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, item).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
+						startActivity((new Intent(ManageData.this, ManageData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, id).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
 						return;
 					case MANAGE_NETWORK_OR_CELL_ID:
 						// toggle the manage checkbox
 						ContentValues values = new ContentValues();
 						values.put(Networks.MANAGE, ((CheckBox) view.findViewById(R.id.network_manage)).isChecked() ? 0 : 1);
-						ManageData.this.getContentResolver().update(Networks.CONTENT_URI, values, Networks._ID + "=?", new String[] {Integer.toString(item)});
+						ManageData.this.getContentResolver().update(Networks.CONTENT_URI, values, Networks._ID + "=?", new String[] {Long.toString(id)});
 						return;
 					case MAP_ID:
 						// open gmaps
-						startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, item).putExtra(MapData.OPERATOR, mOperator));
+						startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, id).putExtra(MapData.OPERATOR, mOperator));
 						return;
 					}
 				}
@@ -272,10 +271,10 @@ public class ManageData extends ListActivity implements ServiceConnection {
 						// toggle the manage checkbox
 						ContentValues values = new ContentValues();
 						values.put(Pairs.MANAGE_CELL, ((CheckBox) view.findViewById(R.id.cell_manage)).isChecked() ? 0 : 1);
-						ManageData.this.getContentResolver().update(Pairs.CONTENT_URI, values, Pairs._ID + "=?", new String[] {Integer.toString(item)});
+						ManageData.this.getContentResolver().update(Pairs.CONTENT_URI, values, Pairs._ID + "=?", new String[] {Long.toString(id)});
 						return;
 					case MAP_ID:
-						startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, mNetwork).putExtra(MapData.OPERATOR, mOperator).putExtra(WapdroidProvider.TABLE_PAIRS, item));
+						startActivity((new Intent(ManageData.this, MapData.class)).putExtra(WapdroidProvider.TABLE_NETWORKS, mNetwork).putExtra(MapData.OPERATOR, mOperator).putExtra(WapdroidProvider.TABLE_PAIRS, id));
 						return;
 					}
 				}

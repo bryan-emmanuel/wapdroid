@@ -101,6 +101,10 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 		}
 	};
 
+	private static final String SAddInt = "\"%s\":%d";
+	private static final String SAddString = "\"%s\":\"%s\"";
+	private static final String SAddArray = "\"%s\":[%s]";
+
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -172,23 +176,11 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 	}
 
 	public String getRequestHeader() {
-		return addString(version, gmaps_version)
-		+ "," + addString(host, gmaps)
-		+ "," + addInt(home_mcc, mMCC)
-		+ "," + addInt(home_mnc, mMNC)
-		+ "," + addString(carrier, mCarrier);
-	}
-
-	public String addInt(String key, int i) {
-		return "\"" + key + "\":" + Integer.toString(i);
-	}
-
-	public String addString(String key, String s) {
-		return "\"" + key + "\":\"" + s + "\"";
-	}
-
-	public String addArray(String key, String a) {
-		return "\"" + key + "\":[" + a + "]";
+		return String.format(SAddString, version, gmaps_version)
+		+ "," + String.format(SAddString, host, gmaps)
+		+ "," + String.format(SAddInt, home_mcc, mMCC)
+		+ "," + String.format(SAddInt, home_mnc, mMNC)
+		+ "," + String.format(SAddString, carrier, mCarrier);
 	}
 
 	public String getValue(String dictionary, String key) {
@@ -244,9 +236,9 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 
 	private String bldRequest(String towers, String bssid) {
 		String request = "{" + getRequestHeader();
-		if (mToken != "") request += "," + addString(access_token, mToken);
-		if (towers != "") request += "," + addArray(cell_towers, towers);
-		if (bssid != "") request += "," + addArray(wifi_towers, "{" + addString(mac_address, bssid) + "}");
+		if (mToken != "") request += "," + String.format(SAddString, access_token, mToken);
+		if (towers != "") request += "," + String.format(SAddArray, cell_towers, towers);
+		if (bssid != "") request += "," + String.format(SAddArray, wifi_towers, "{" + String.format(SAddString, mac_address, bssid) + "}");
 		return request + "}";
 	}
 
@@ -278,8 +270,8 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 						rssi_range = Math.abs(rssi_min) - Math.abs(rssi_max);
 						mMsg = string_cellWarning + Wapdroid.Ranges.CELL + " " + Integer.toString(ctr) + " of " + Integer.toString(ct);
 						mHandler.post(mUpdtDialog);
-						String tower = "{" + addInt(cell_id, cid) + "," + addInt(location_area_code, lac) + "," + addInt(mcc, mMCC) + "," + addInt(mnc, mMNC);
-						if (rssi_avg != Wapdroid.UNKNOWN_RSSI) tower += "," + addInt(signal_strength, rssi_avg);
+						String tower = "{" + String.format(SAddInt, cell_id, cid) + "," + String.format(SAddInt, location_area_code, lac) + "," + String.format(SAddInt, mcc, mMCC) + "," + String.format(SAddInt, mnc, mMNC);
+						if (rssi_avg != Wapdroid.UNKNOWN_RSSI) tower += "," + String.format(SAddInt, signal_strength, rssi_avg);
 						tower += "}";
 						if (ssid == "") ssid = pairs.getString(pairs.getColumnIndex(Wapdroid.Ranges.SSID));
 						if (bssid == "") bssid = pairs.getString(pairs.getColumnIndex(Wapdroid.Ranges.BSSID));
