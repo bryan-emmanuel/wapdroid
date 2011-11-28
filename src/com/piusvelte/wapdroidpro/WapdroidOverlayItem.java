@@ -18,7 +18,7 @@
  *  Bryan Emmanuel piusvelte@gmail.com
  */
 
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
 import android.graphics.drawable.Drawable;
 
@@ -30,18 +30,18 @@ class WapdroidOverlayItem extends OverlayItem {
 	protected String mSnippet;
 	protected String mTitle;
 	protected Drawable mMarker;
-	protected int mNetwork = 0;
+	protected long mNetwork = 0;
 	protected int mPair = 0;
 	protected int mRssi_avg = 0;
 	protected int mRssi_range = 0;
 	protected int mRadius = 0;
 	protected long mStroke = 0;
-	public WapdroidOverlayItem(GeoPoint point, String title, String snippet, int network) {
+	public WapdroidOverlayItem(GeoPoint point, String title, String snippet, long network) {
 		super(point, title, snippet);
 		mNetwork = network;
 	}
 	
-	public WapdroidOverlayItem(GeoPoint point, String title, String snippet, int network, int pair, int rssi_avg, int rssi_range) {
+	public WapdroidOverlayItem(GeoPoint point, String title, String snippet, long network, int pair, int rssi_avg, int rssi_range) {
 		super(point, title, snippet);
 		mRssi_avg = rssi_avg;
 		mRssi_range = rssi_range;
@@ -49,7 +49,7 @@ class WapdroidOverlayItem extends OverlayItem {
 		mPair = pair;
 	}
 	
-	public int getNetwork() {
+	public long getNetwork() {
 		return mNetwork;
 	}
 	

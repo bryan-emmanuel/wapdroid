@@ -17,17 +17,19 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
-import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_CID;
-import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroidpro.Wapdroid.UNKNOWN_CID;
+import static com.piusvelte.wapdroidpro.Wapdroid.UNKNOWN_RSSI;
 
-import com.google.ads.*;
-import com.piusvelte.wapdroid.Wapdroid.Cells;
-import com.piusvelte.wapdroid.Wapdroid.Locations;
-import com.piusvelte.wapdroid.Wapdroid.Networks;
-import com.piusvelte.wapdroid.Wapdroid.Pairs;
-import com.piusvelte.wapdroid.Wapdroid.Ranges;
+import com.piusvelte.wapdroidpro.IWapdroidService;
+import com.piusvelte.wapdroidpro.IWapdroidUI;
+import com.piusvelte.wapdroidpro.R;
+import com.piusvelte.wapdroidpro.Wapdroid.Cells;
+import com.piusvelte.wapdroidpro.Wapdroid.Locations;
+import com.piusvelte.wapdroidpro.Wapdroid.Networks;
+import com.piusvelte.wapdroidpro.Wapdroid.Pairs;
+import com.piusvelte.wapdroidpro.Wapdroid.Ranges;
 
 import android.app.AlertDialog;
 import android.app.ListActivity;
@@ -48,13 +50,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.CheckBox;
-import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageData extends ListActivity implements ServiceConnection {
-	int mNetwork = 0, mCid;
+	long mNetwork = 0;
+	int mCid;
 	private static final int MANAGE_ID = 0;
 	private static final int MANAGE_NETWORK_OR_CELL_ID = 1;
 	private static final int MAP_ID = 2;
@@ -114,7 +116,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 		super.onCreate(savedInstanceState);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getInt(WapdroidProvider.TABLE_NETWORKS);
+			mNetwork = extras.getLong(WapdroidProvider.TABLE_NETWORKS);
 			mCid = extras.getInt(Cells.CID);
 			mSsid = extras.getString(Networks.SSID);
 			mBssid = extras.getString(Networks.BSSID);
@@ -122,9 +124,6 @@ public class ManageData extends ListActivity implements ServiceConnection {
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
-		AdView adView = new AdView(this, AdSize.BANNER, Wapdroid.GOOGLE_AD_ID);
-		((LinearLayout) findViewById(R.id.ad)).addView(adView);
-		adView.loadAd(new AdRequest());
 	}
 
 	@Override
@@ -353,7 +352,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 																			+ " from " + WapdroidProvider.VIEW_RANGES
 																			+ " where " + Ranges.NETWORK + "=" + mNetwork + " and"
 																			+ mCells + ")"))
-																			, (mFilter == FILTER_CONNECTED ? new String[]{Integer.toString(mNetwork), Integer.toString(mCid)} : new String[]{Integer.toString(mNetwork)}), STATUS);
+																			, (mFilter == FILTER_CONNECTED ? new String[]{Long.toString(mNetwork), Integer.toString(mCid)} : new String[]{Long.toString(mNetwork)}), STATUS);
 				SimpleCursorAdapter sca = new SimpleCursorAdapter(this,
 						R.layout.cell_row,
 						c,

@@ -11,20 +11,35 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
-
+ *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
 
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
-interface IWapdroidUI {
-	void setOperator(String operator);
-	void setCellInfo(int cid, int lac);
-	void setCells(String cells);
-	void setBattery(int batteryPercentage);
-	void setWifiInfo(int state, String ssid, String bssid);
-	void setSignalStrength(int rssi);
+import android.content.Context;
+import android.os.PowerManager;
+import android.os.PowerManager.WakeLock;
+
+public class ManageWakeLocks {
+	private static final String TAG = "ManageWakeLocks";
+	private static final String POWER_SERVICE = Context.POWER_SERVICE;
+	private static WakeLock sWakeLock;
+	static boolean hasLock() {
+		return (sWakeLock != null);}
+	static void acquire(Context context) {
+		if (hasLock()) sWakeLock.release();
+		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
+		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+		sWakeLock.acquire();
+	}
+	static void release() {
+		if (hasLock()) {
+			sWakeLock.release();
+			sWakeLock = null;
+		}
+	}
 }

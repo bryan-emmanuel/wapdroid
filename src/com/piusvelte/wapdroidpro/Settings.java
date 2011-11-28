@@ -17,9 +17,9 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
-import com.piusvelte.wapdroid.R;
+import com.piusvelte.wapdroidpro.R;
 
 import android.app.AlertDialog;
 import android.appwidget.AppWidgetManager;

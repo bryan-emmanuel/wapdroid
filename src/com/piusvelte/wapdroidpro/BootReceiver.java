@@ -11,35 +11,24 @@
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
- *
+
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
+package com.piusvelte.wapdroidpro;
 
-package com.piusvelte.wapdroid;
-
+import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
+import android.content.Intent;
 
-public class ManageWakeLocks {
-	private static final String TAG = "ManageWakeLocks";
-	private static final String POWER_SERVICE = Context.POWER_SERVICE;
-	private static WakeLock sWakeLock;
-	static boolean hasLock() {
-		return (sWakeLock != null);}
-	static void acquire(Context context) {
-		if (hasLock()) sWakeLock.release();
-		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
-		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-		sWakeLock.acquire();
+public class BootReceiver extends BroadcastReceiver {
+
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		ManageWakeLocks.acquire(context);
+		context.startService(intent.setClass(context, WapdroidService.class));
 	}
-	static void release() {
-		if (hasLock()) {
-			sWakeLock.release();
-			sWakeLock = null;
-		}
-	}
+
 }

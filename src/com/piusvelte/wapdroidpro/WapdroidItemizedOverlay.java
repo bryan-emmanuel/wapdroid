@@ -18,15 +18,15 @@
  *  Bryan Emmanuel piusvelte@gmail.com
  */
 
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
-import static com.piusvelte.wapdroid.MapData.color_primary;
-import static com.piusvelte.wapdroid.MapData.color_secondary;
-import static com.piusvelte.wapdroid.MapData.drawable_cell;
-import static com.piusvelte.wapdroid.MapData.drawable_network;
-import static com.piusvelte.wapdroid.MapData.string_deleteCell;
-import static com.piusvelte.wapdroid.MapData.string_deleteNetwork;
-import static com.piusvelte.wapdroid.MapData.string_cancel;
+import static com.piusvelte.wapdroidpro.MapData.color_primary;
+import static com.piusvelte.wapdroidpro.MapData.color_secondary;
+import static com.piusvelte.wapdroidpro.MapData.drawable_cell;
+import static com.piusvelte.wapdroidpro.MapData.drawable_network;
+import static com.piusvelte.wapdroidpro.MapData.string_cancel;
+import static com.piusvelte.wapdroidpro.MapData.string_deleteCell;
+import static com.piusvelte.wapdroidpro.MapData.string_deleteNetwork;
 
 import java.util.ArrayList;
 
@@ -128,7 +128,7 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 	protected boolean onTap(int i) {
 		final int item = i;
 		WapdroidOverlayItem overlay = mOverlays.get(item);
-		final int network = overlay.getNetwork();
+		final long network = overlay.getNetwork();
 		final int pair = overlay.getPair();
 		AlertDialog.Builder dialog = new AlertDialog.Builder(mMap);
 		dialog.setIcon(pair == 0 ? drawable_network : drawable_cell);
@@ -138,14 +138,14 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				if (pair == 0) {
-					mMap.getContentResolver().delete(Wapdroid.Networks.CONTENT_URI, Wapdroid.Networks._ID + "=?", new String[]{Integer.toString(network)});
-					mMap.getContentResolver().delete(Wapdroid.Pairs.CONTENT_URI, Wapdroid.Pairs.NETWORK + "=?", new String[]{Integer.toString(network)});
+					mMap.getContentResolver().delete(Wapdroid.Networks.CONTENT_URI, Wapdroid.Networks._ID + "=?", new String[]{Long.toString(network)});
+					mMap.getContentResolver().delete(Wapdroid.Pairs.CONTENT_URI, Wapdroid.Pairs.NETWORK + "=?", new String[]{Long.toString(network)});
 				} else {
 					// delete one pair from the mapped network or 
 					// delete an individually mapped cell
 					mMap.getContentResolver().delete(Wapdroid.Pairs.CONTENT_URI, Wapdroid.Pairs._ID + "=?", new String[]{Integer.toString(pair)});
-					Cursor n = mMap.getContentResolver().query(Wapdroid.Pairs.CONTENT_URI, new String[]{Wapdroid.Pairs._ID}, Wapdroid.Pairs.NETWORK + "=?", new String[]{Integer.toString(network)}, null);
-					if (n.getCount() == 0) mMap.getContentResolver().delete(Wapdroid.Networks.CONTENT_URI, Wapdroid.Networks._ID + "=?", new String[]{Integer.toString(network)});
+					Cursor n = mMap.getContentResolver().query(Wapdroid.Pairs.CONTENT_URI, new String[]{Wapdroid.Pairs._ID}, Wapdroid.Pairs.NETWORK + "=?", new String[]{Long.toString(network)}, null);
+					if (n.getCount() == 0) mMap.getContentResolver().delete(Wapdroid.Networks.CONTENT_URI, Wapdroid.Networks._ID + "=?", new String[]{Long.toString(network)});
 					n.close();
 				}
 				Cursor c = mMap.getContentResolver().query(Wapdroid.Cells.CONTENT_URI, new String[]{Wapdroid.Cells._ID, Wapdroid.Cells.LOCATION}, null, null, null);

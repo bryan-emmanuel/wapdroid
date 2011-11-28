@@ -17,7 +17,7 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
 import android.content.Context;
 import android.database.Cursor;

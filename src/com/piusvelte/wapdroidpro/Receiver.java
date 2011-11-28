@@ -17,35 +17,17 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
+package com.piusvelte.wapdroidpro;
 
-package com.piusvelte.wapdroid;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
 
-import android.telephony.CellLocation;
+public class Receiver extends BroadcastReceiver {
 
-public class CdmaCellLocation {
-	private int mBaseStationId,
-	mNetworkId;
-	
-	static {
-		try {
-			Class.forName("android.telephony.cdma.CdmaCellLocation");
-		} catch (Exception ex) {
-			throw new RuntimeException(ex);
-		}
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		context.startService(intent.setClass(context, WapdroidService.class));
 	}
-	
-	public CdmaCellLocation(CellLocation location) {
-		android.telephony.cdma.CdmaCellLocation cdma = (android.telephony.cdma.CdmaCellLocation) location;
-		mBaseStationId = cdma.getBaseStationId();
-		mNetworkId = cdma.getNetworkId();
-	}
-	
-	public int getBaseStationId() {
-		return mBaseStationId;
-	}
-	
-	public int getNetworkId() {
-		return mNetworkId;
-	}
-	
+
 }

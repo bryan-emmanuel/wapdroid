@@ -17,18 +17,11 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.wapdroid;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
+package com.piusvelte.wapdroidpro;
 
-public class BootReceiver extends BroadcastReceiver {
-
-	@Override
-	public void onReceive(Context context, Intent intent) {
-		ManageWakeLocks.acquire(context);
-		context.startService(intent.setClass(context, WapdroidService.class));
-	}
-
+interface IWapdroidService {
+	void setCallback(in IBinder mWapdroidUIBinder);
+//	void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean persistent_status);
+//	void manualOverride();
 }

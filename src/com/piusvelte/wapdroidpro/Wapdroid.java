@@ -17,7 +17,7 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
 import android.net.Uri;
 import android.provider.BaseColumns;
@@ -27,8 +27,7 @@ public final class Wapdroid {
 	public static final int UNKNOWN_CID = -1;
 	public static final int UNKNOWN_RSSI = 99;
 	
-	public static final String ACTION_TOGGLE_SERVICE = "com.piusvelte.wapdroid.Wapdroid.TOGGLE_SERVICE";
-	protected static final String GOOGLE_AD_ID = "a14c03f0ced257b";
+	public static final String ACTION_TOGGLE_SERVICE = "com.piusvelte.wapdroidpro.Wapdroid.TOGGLE_SERVICE";
 
 	private Wapdroid() {}
 

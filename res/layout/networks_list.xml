@@ -23,14 +23,10 @@
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent"
 	android:textSize="14dip">
-	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
  	<ListView android:id="@android:id/list"
- 		android:layout_below="@id/ad"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent" />
 	<TextView android:id="@android:id/empty"
- 		android:layout_below="@id/ad"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"
   		android:textColor="@color/primary"

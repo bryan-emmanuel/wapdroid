@@ -18,10 +18,13 @@
  *  Bryan Emmanuel piusvelte@gmail.com
  */
 
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
-interface IWapdroidService {
-	void setCallback(in IBinder mWapdroidUIBinder);
-//	void updatePreferences(boolean manage, int interval, boolean notify, boolean vibrate, boolean led, boolean ringtone, boolean batteryOverride, int batteryPercentage, boolean persistent_status);
-//	void manualOverride();
+interface IWapdroidUI {
+	void setOperator(String operator);
+	void setCellInfo(int cid, int lac);
+	void setCells(String cells);
+	void setBattery(int batteryPercentage);
+	void setWifiInfo(int state, String ssid, String bssid);
+	void setSignalStrength(int rssi);
 }

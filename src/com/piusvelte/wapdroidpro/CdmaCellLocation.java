@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+/*
  * Wapdroid - Android Location based Wifi Manager
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -17,16 +16,36 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
--->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.wapdroid"
-	android:layout_width="fill_parent"
-	android:layout_height="fill_parent">
-	<com.google.android.maps.MapView
-		xmlns:android="http://schemas.android.com/apk/res/android"
-		android:id="@+id/mapview"
-		android:clickable="true"
-		android:layout_width="fill_parent"
-		android:layout_height="fill_parent"
-		android:apiKey="0gPRuHgQacrF1UiGJOhy3pqZM2Xwk7qNfNyTP1A" />
-</RelativeLayout>
+ */
+
+package com.piusvelte.wapdroidpro;
+
+import android.telephony.CellLocation;
+
+public class CdmaCellLocation {
+	private int mBaseStationId,
+	mNetworkId;
+	
+	static {
+		try {
+			Class.forName("android.telephony.cdma.CdmaCellLocation");
+		} catch (Exception ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+	
+	public CdmaCellLocation(CellLocation location) {
+		android.telephony.cdma.CdmaCellLocation cdma = (android.telephony.cdma.CdmaCellLocation) location;
+		mBaseStationId = cdma.getBaseStationId();
+		mNetworkId = cdma.getNetworkId();
+	}
+	
+	public int getBaseStationId() {
+		return mBaseStationId;
+	}
+	
+	public int getNetworkId() {
+		return mNetworkId;
+	}
+	
+}

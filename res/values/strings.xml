@@ -19,7 +19,7 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <resources>
-    <string name="app_name">Wapdroid</string>
+    <string name="app_name">Wapdroid-Pro</string>
     <string name="label_CID">Cell:</string>
     <string name="label_LAC">Location:</string>
     <string name="label_MNC">Carrier:</string>

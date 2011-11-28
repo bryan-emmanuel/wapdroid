@@ -17,10 +17,10 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
-import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_CID;
-import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroidpro.Wapdroid.UNKNOWN_CID;
+import static com.piusvelte.wapdroidpro.Wapdroid.UNKNOWN_RSSI;
 
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
@@ -28,11 +28,14 @@ import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import com.piusvelte.wapdroid.Wapdroid.Locations;
-import com.piusvelte.wapdroid.Wapdroid.Networks;
-import com.piusvelte.wapdroid.Wapdroid.Ranges;
-import com.piusvelte.wapdroid.Wapdroid.Cells;
-import com.piusvelte.wapdroid.Wapdroid.Pairs;
+import com.piusvelte.wapdroidpro.IWapdroidService;
+import com.piusvelte.wapdroidpro.IWapdroidUI;
+import com.piusvelte.wapdroidpro.R;
+import com.piusvelte.wapdroidpro.Wapdroid.Cells;
+import com.piusvelte.wapdroidpro.Wapdroid.Locations;
+import com.piusvelte.wapdroidpro.Wapdroid.Networks;
+import com.piusvelte.wapdroidpro.Wapdroid.Pairs;
+import com.piusvelte.wapdroidpro.Wapdroid.Ranges;
 
 import android.app.AlarmManager;
 import android.app.Notification;

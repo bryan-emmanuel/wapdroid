@@ -18,13 +18,15 @@
  *  Bryan Emmanuel piusvelte@gmail.com
  */
 
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
-import static com.piusvelte.wapdroid.Wapdroid.UNKNOWN_RSSI;
+import static com.piusvelte.wapdroidpro.Wapdroid.UNKNOWN_RSSI;
 
-import com.google.ads.*;
-import com.piusvelte.wapdroid.Wapdroid.Cells;
-import com.piusvelte.wapdroid.Wapdroid.Networks;
+import com.piusvelte.wapdroidpro.IWapdroidService;
+import com.piusvelte.wapdroidpro.IWapdroidUI;
+import com.piusvelte.wapdroidpro.R;
+import com.piusvelte.wapdroidpro.Wapdroid.Cells;
+import com.piusvelte.wapdroidpro.Wapdroid.Networks;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -40,7 +42,6 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class WapdroidUI extends Activity implements ServiceConnection, DialogInterface.OnClickListener {
@@ -70,9 +71,6 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 		field_signal = (TextView) findViewById(R.id.field_signal);
 		field_battery = (TextView) findViewById(R.id.field_battery);
 		field_LAC = (TextView) findViewById(R.id.field_LAC);
-		AdView adView = new AdView(this, AdSize.BANNER, Wapdroid.GOOGLE_AD_ID);
-		((LinearLayout) findViewById(R.id.ad)).addView(adView);
-		adView.loadAd(new AdRequest());
 	}
 
 	@Override
