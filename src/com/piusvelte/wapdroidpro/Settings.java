@@ -31,7 +31,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
 
-public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener, DialogInterface.OnClickListener {
+public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
 	private SharedPreferences mSharedPreferences;
 
 	@Override
@@ -58,19 +58,20 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 		if (key.equals(getString(R.string.key_manageWifi))) {
 			if (sharedPreferences.getBoolean(key, true)) {
 				this.startService(new Intent(this, WapdroidService.class));
-				AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-				dialog.setMessage(R.string.background_info);
-				dialog.setNegativeButton(android.R.string.cancel, this);
-				dialog.show();
+				(new AlertDialog.Builder(this)
+				.setMessage(R.string.background_info)
+				.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						startActivity(new Intent(android.provider.Settings.ACTION_WIFI_IP_SETTINGS));
+					}
+				})
+				)
+				.show();
 			} else this.stopService(new Intent(this, WapdroidService.class));
 			// update widgets
 			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 			this.sendBroadcast(new Intent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
 		}
-	}
-
-	@Override
-	public void onClick(DialogInterface dialog, int which) {
-		dialog.cancel();
 	}
 }

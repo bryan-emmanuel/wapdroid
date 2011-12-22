@@ -97,7 +97,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 			SharedPreferences.Editor spe = sp.edit();
 			spe.putBoolean(getString(R.string.key_manual_override), true);
 			spe.commit();
-			startActivity(new Intent().setComponent(new ComponentName("com.android.settings", "com.android.settings.wifi.WifiSettings")));
+			startActivity(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS));
 			return true;
 		case ABOUT_ID:
 			Dialog dialog = new Dialog(this);
@@ -131,7 +131,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 		else {
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setMessage(R.string.service_info);
-			dialog.setNegativeButton(android.R.string.cancel, this);
+			dialog.setNegativeButton(android.R.string.ok, this);
 			dialog.show();			
 		}
 		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
