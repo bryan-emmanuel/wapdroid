@@ -27,6 +27,7 @@ import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.List;
 
 import com.piusvelte.wapdroidpro.IWapdroidService;
 import com.piusvelte.wapdroidpro.IWapdroidUI;
@@ -52,6 +53,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
@@ -229,6 +231,49 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					NetworkInfo ni = intent.getParcelableExtra(ConnectivityManager.EXTRA_NETWORK_INFO);
 					if ((ni.getType() != ConnectivityManager.TYPE_WIFI) && !mobileNetworksAvailable() && mLastScanEnableWifi) mWifiManager.setWifiEnabled(true);
 				}
+			} else if (intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
+				// network scan
+				boolean networkInRange = false;
+				List<ScanResult> lsr = mWifiManager.getScanResults();
+				if (lsr != null) {
+					String ssids = null;
+					String bssids = null;
+					for (ScanResult sr : lsr) {
+						if ((sr.SSID != null) && (sr.SSID.length() > 0)) {
+							if (ssids == null) {
+								ssids = sr.SSID;
+							} else {
+								ssids += "," + sr.SSID;
+							}
+						}
+						if ((sr.BSSID != null) && (sr.BSSID.length() > 0)) {
+							if (bssids == null) {
+								bssids = sr.BSSID;
+							} else {
+								bssids += "," + sr.BSSID;
+							}
+						}
+					}
+					if (ssids != null) {
+						String selection = Networks.SSID + " in (" + ssids + ")";
+						if (bssids != null) {
+							selection += " and (" + Networks.BSSID + " in (" + bssids + ") or " + Networks.BSSID + "=''";
+						} else {
+							selection += " and " + Networks.BSSID + "=''";
+						}
+						Cursor c = this.getContentResolver().query(Networks.CONTENT_URI, new String[]{Networks._ID}, selection, null, null);
+						if (c.moveToFirst()) {
+							networkInRange = true;
+						}
+						c.close();
+					}
+				} else {
+					// leave wifi on if a bad scan comes back
+					networkInRange = true;
+				}
+				if (!networkInRange) {
+					//TODO if no networks in range, toggle wifi off
+				}
 			}
 		} else getCellInfo(mTelephonyManager.getCellLocation());
 	}
@@ -280,6 +325,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		f.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
 		f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
 		f.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
+		// network scan
+		f.addAction(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION);
 		registerReceiver(mReceiver, f);
 		mTelephonyManager = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 		mPhoneType = mTelephonyManager.getPhoneType();
