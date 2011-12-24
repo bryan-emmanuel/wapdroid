@@ -23,6 +23,7 @@ package com.piusvelte.wapdroidpro;
 import android.content.Context;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.util.Log;
 
 public class ManageWakeLocks {
 	private static final String TAG = "ManageWakeLocks";
@@ -35,11 +36,13 @@ public class ManageWakeLocks {
 		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
 		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
 		sWakeLock.acquire();
+		Log.d(TAG,"acquire wake lock");
 	}
 	static void release() {
 		if (hasLock()) {
 			sWakeLock.release();
 			sWakeLock = null;
+			Log.d(TAG,"release wake lock");
 		}
 	}
 }

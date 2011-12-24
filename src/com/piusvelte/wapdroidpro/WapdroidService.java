@@ -159,6 +159,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	@Override
 	public IBinder onBind(Intent intent) {
 		mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+		Log.d(TAG,"UI started, cancel alarm");
 		ManageWakeLocks.release();
 		return mWapdroidService;
 	}
@@ -169,6 +170,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		if ((intent != null) && (intent.getAction() != null) && !intent.getAction().equals(WAKE_SERVICE)) {
 			Log.d(TAG,"action:" + intent.getAction());
 			Log.d(TAG,(ManageWakeLocks.hasLock() ? "has wake lock" : "no wake lock"));
+			// cancel any pending alarms
+			mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 			if ((intent.getAction().equals(ACTION_BOOT_COMPLETED) || intent.getAction().equals(ACTION_PACKAGE_REPLACED)) && !mManageWifi) {
 				// nothing to do
 				ManageWakeLocks.release();
@@ -197,7 +200,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			} else if (intent.getAction().equals(WifiManager.NETWORK_STATE_CHANGED_ACTION)) {
 				// cell change will release lock
 				// a connection was gained or lost
-				mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				wifiConnection();
 				getCellInfo(mTelephonyManager.getCellLocation());
 				if (mWapdroidUI != null) {
@@ -207,12 +209,14 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				}
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
 				mScreenOn = true;
-				mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				getCellInfo(mTelephonyManager.getCellLocation());
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
 				mScreenOn = false;
 				mManualOverride = false;
-				if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				if (mInterval > 0) {
+					mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					Log.d(TAG,"set alarm");
+				}
 				if (mWifiSleep && mobileNetworksAvailable() && (mLastWiFiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWiFiState == WifiManager.WIFI_STATE_ENABLING)) {
 					// check sleep policy
 					// check if the current network is managed
@@ -228,7 +232,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				}
 				ManageWakeLocks.release();
 			} else if (intent.getAction().equals(WifiManager.WIFI_STATE_CHANGED_ACTION)) {
-				mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				/*
 				 * get wifi state
 				 * initially, lastWifiState is unknown, otherwise state is evaluated either enabled or not
@@ -239,6 +242,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
 				if (mInterval > 0) {
 					mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					Log.d(TAG,"set alarm");
 				}
 				if (!mScanningNetworks) {
 					ManageWakeLocks.release();
@@ -515,7 +519,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				createPair(mCid, mLac, network, mRssi);
 				if ((mTelephonyManager.getNeighboringCellInfo() != null) && !mTelephonyManager.getNeighboringCellInfo().isEmpty()) {
 					for (NeighboringCellInfo nci : mTelephonyManager.getNeighboringCellInfo()) {
-						if (nci.getCid() > 0) createPair(nci.getCid(), nciGetLac(nci), network, (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi());
+						if (nci.getCid() > 0) {
+							createPair(nci.getCid(), nciGetLac(nci), network, (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi());
+						}
 					}
 				}
 			} else if (!enableWifi || (mLastBattPerc >= mBatteryLimit)) {
@@ -525,8 +531,12 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					if ((mTelephonyManager.getNeighboringCellInfo() != null) && !mTelephonyManager.getNeighboringCellInfo().isEmpty()) {
 						for (NeighboringCellInfo nci : mTelephonyManager.getNeighboringCellInfo()) {
 							// break on out of range result
-							if (nci.getCid() > 0) enableWifi = cellInRange(nci.getCid(), nciGetLac(nci), (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi());
-							if (!enableWifi) break;
+							if (nci.getCid() > 0) {
+								enableWifi = cellInRange(nci.getCid(), nciGetLac(nci), (nci.getRssi() != UNKNOWN_RSSI) && (mPhoneType == TelephonyManager.PHONE_TYPE_GSM) ? 2 * nci.getRssi() - 113 : nci.getRssi());
+							}
+							if (!enableWifi) {
+								break;
+							}
 						}
 					}
 				}
@@ -546,7 +556,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			// release the service if it doesn't appear that we're entering or leaving a network
 			if (enableWifi == mLastScanEnableWifi) {
 				if (ManageWakeLocks.hasLock()) {
-					if (mInterval > 0) mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					if (mInterval > 0) {
+						mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+						Log.d(TAG,"set alarm");
+					}
 					// if sleeping, re-initialize phone info
 					mCid = UNKNOWN_CID;
 					mLac = UNKNOWN_CID;
