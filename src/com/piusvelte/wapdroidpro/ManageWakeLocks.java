@@ -23,26 +23,35 @@ package com.piusvelte.wapdroidpro;
 import android.content.Context;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
-import android.util.Log;
 
 public class ManageWakeLocks {
 	private static final String TAG = "ManageWakeLocks";
 	private static final String POWER_SERVICE = Context.POWER_SERVICE;
 	private static WakeLock sWakeLock;
+	private static boolean sScreenOn = true;
 	static boolean hasLock() {
-		return (sWakeLock != null);}
+		return (sWakeLock != null) && (sWakeLock.isHeld());
+	}
 	static void acquire(Context context) {
-		if (hasLock()) sWakeLock.release();
-		PowerManager pm = (PowerManager) context.getSystemService(POWER_SERVICE);
-		sWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-		sWakeLock.acquire();
-		Log.d(TAG,"acquire wake lock");
+		if (hasLock()) {
+			sWakeLock.release();
+		}
+		if (!sScreenOn) {
+			if (sWakeLock == null) {
+				sWakeLock = ((PowerManager) context.getSystemService(POWER_SERVICE)).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
+			}
+			sWakeLock.acquire();
+		}
 	}
 	static void release() {
 		if (hasLock()) {
 			sWakeLock.release();
-			sWakeLock = null;
-			Log.d(TAG,"release wake lock");
+		}
+	}
+	static void setScreenState(boolean screenOn) {
+		sScreenOn = screenOn;
+		if (screenOn && hasLock()) {
+			sWakeLock.release();
 		}
 	}
 }

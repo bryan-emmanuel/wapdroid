@@ -158,7 +158,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	@Override
 	public IBinder onBind(Intent intent) {
 		mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
-		Log.d(TAG,"UI started, cancel alarm");
 		ManageWakeLocks.release();
 		return mWapdroidService;
 	}
@@ -167,8 +166,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	public void onStart(Intent intent, int startId) {
 		super.onStart(intent, startId);
 		if ((intent != null) && (intent.getAction() != null) && !intent.getAction().equals(WAKE_SERVICE)) {
-			Log.d(TAG,"action:" + intent.getAction());
-			Log.d(TAG,(ManageWakeLocks.hasLock() ? "has wake lock" : "no wake lock"));
 			if ((intent.getAction().equals(ACTION_BOOT_COMPLETED) || intent.getAction().equals(ACTION_PACKAGE_REPLACED)) && !mManageWifi) {
 				// nothing to do
 				ManageWakeLocks.release();
@@ -209,14 +206,15 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					} catch (RemoteException e) {}
 				}
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-				ManageWakeLocks.release();
+				ManageWakeLocks.setScreenState(true);
 				// the alarm will be cancelled and set by getCellInfo
 				getCellInfo(mTelephonyManager.getCellLocation());
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
+				ManageWakeLocks.setScreenState(false);
+				ManageWakeLocks.acquire(this);
 				mManualOverride = false;
 				if (mInterval > 0) {
 					mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
-					Log.d(TAG,"set alarm");
 				}
 				if (mWifiSleep && mobileNetworksAvailable() && (mLastWiFiState == WifiManager.WIFI_STATE_ENABLED) || (mLastWiFiState == WifiManager.WIFI_STATE_ENABLING)) {
 					// check sleep policy
@@ -241,9 +239,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				 */
 				wifiState(intent.getIntExtra(WifiManager.EXTRA_WIFI_STATE, 4));
 				// a lock was only needed to send the notification, no cell changes need to be evaluated until a network state change occurs
-				if (mInterval > 0) {
+				if (ManageWakeLocks.hasLock() && (mInterval > 0)) {
 					mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
-					Log.d(TAG,"set alarm");
 				}
 				// if scanning networks, keep the lock until there are results
 				if (!mScanningNetworks) {
@@ -260,65 +257,65 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				ManageWakeLocks.release();
 			} else if (intent.getAction().equals(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION)) {
 				// network scan
-				boolean networkInRange = false;
-				mScanningNetworks = false;
-				List<ScanResult> lsr = mWifiManager.getScanResults();
-				if (lsr != null) {
-					StringBuilder ssids = null;
-					StringBuilder bssids = null;
-					for (ScanResult sr : lsr) {
-						if ((sr.SSID != null) && (sr.SSID.length() > 0)) {
-							if (ssids == null) {
-								ssids = new StringBuilder();
-								ssids.append("'" + sr.SSID + "'");
-							} else {
-								ssids.append(",'" + sr.SSID + "'");
+				if (mScanningNetworks) {
+					boolean networkInRange = false;
+					mScanningNetworks = false;
+					List<ScanResult> lsr = mWifiManager.getScanResults();
+					if (lsr != null) {
+						StringBuilder ssids = null;
+						StringBuilder bssids = null;
+						for (ScanResult sr : lsr) {
+							if ((sr.SSID != null) && (sr.SSID.length() > 0)) {
+								if (ssids == null) {
+									ssids = new StringBuilder();
+									ssids.append("'" + sr.SSID + "'");
+								} else {
+									ssids.append(",'" + sr.SSID + "'");
+								}
+							}
+							if ((sr.BSSID != null) && (sr.BSSID.length() > 0)) {
+								if (bssids == null) {
+									bssids = new StringBuilder();
+									bssids.append("'" + sr.BSSID + "'");
+								} else {
+									bssids.append(",'" + sr.BSSID + "'");
+								}
 							}
 						}
-						if ((sr.BSSID != null) && (sr.BSSID.length() > 0)) {
-							if (bssids == null) {
-								bssids = new StringBuilder();
-								bssids.append("'" + sr.BSSID + "'");
+						if (ssids != null) {
+							String selection = Networks.SSID + " in (" + ssids.toString() + ")";
+							if (bssids != null) {
+								selection += " and (" + Networks.BSSID + " in (" + bssids.toString() + ") or " + Networks.BSSID + "='')";
 							} else {
-								bssids.append(",'" + sr.BSSID + "'");
+								selection += " and " + Networks.BSSID + "=''";
 							}
+							Cursor c = this.getContentResolver().query(Networks.CONTENT_URI, new String[]{Networks._ID}, selection, null, null);
+							if (c.moveToFirst()) {
+								networkInRange = true;
+							}
+							c.close();
 						}
+					} else {
+						// leave wifi on if a bad scan comes back
+						networkInRange = true;
 					}
-					if (ssids != null) {
-						String selection = Networks.SSID + " in (" + ssids.toString() + ")";
-						if (bssids != null) {
-							selection += " and (" + Networks.BSSID + " in (" + bssids.toString() + ") or " + Networks.BSSID + "='')";
-						} else {
-							selection += " and " + Networks.BSSID + "=''";
+					if (!networkInRange) {
+						// network in range based on cell towers, but not found in scan, override
+						mWifiManager.setWifiEnabled(false);
+					}
+					if (ManageWakeLocks.hasLock()) {
+						// if hasLock, then screen is off, set alarm
+						if (mInterval > 0) {
+							mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 						}
-						Cursor c = this.getContentResolver().query(Networks.CONTENT_URI, new String[]{Networks._ID}, selection, null, null);
-						if (c.moveToFirst()) {
-							networkInRange = true;
-						}
-						c.close();
+						// if sleeping, re-initialize phone info
+						mCid = UNKNOWN_CID;
+						mLac = UNKNOWN_CID;
+						mRssi = UNKNOWN_RSSI;
+						ManageWakeLocks.release();
 					}
-				} else {
-					// leave wifi on if a bad scan comes back
-					networkInRange = true;
 				}
-				Log.d(TAG,"scan results: " + (networkInRange ? "network found" : "no networks"));
-				if (!networkInRange) {
-					// network in range based on cell towers, but not found in scan, override
-					mWifiManager.setWifiEnabled(false);
-				}
-				if (ManageWakeLocks.hasLock()) {
-					// if hasLock, then screen is off, set alarm
-					if (mInterval > 0) {
-						mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
-						Log.d(TAG,"set alarm");
-					}
-					// if sleeping, re-initialize phone info
-					mCid = UNKNOWN_CID;
-					mLac = UNKNOWN_CID;
-					mRssi = UNKNOWN_RSSI;
-					ManageWakeLocks.release();
-				}
-			} else {
+			} else if (ManageWakeLocks.hasLock() && (mInterval > 0)) {
 				// after installing or upgrading
 				mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
 				mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
@@ -454,7 +451,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				mSsid = null;
 				mBssid = null;
 			} else if (mScanningNetworks) {
-				Log.d(TAG,"start network scan");
 				if (!mWifiManager.startScan()) {
 					mScanningNetworks = false;
 				}
@@ -584,7 +580,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 						// if hasLock, then screen is off, set alarm
 						if (mInterval > 0) {
 							mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
-							Log.d(TAG,"set alarm");
 						}
 						// if sleeping, re-initialize phone info
 						mCid = UNKNOWN_CID;
@@ -647,11 +642,16 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		else if (key.equals(getString(R.string.key_persistent_status))) {
 			// to change this, manage & notify must me enabled
 			mPersistentStatus = sharedPreferences.getBoolean(key, false);
-			if (mPersistentStatus) createNotification((mLastWiFiState == WifiManager.WIFI_STATE_ENABLED), false);
-			else ((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
+			if (mPersistentStatus) {
+				createNotification((mLastWiFiState == WifiManager.WIFI_STATE_ENABLED), false);
+			} else {
+				((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
+			}
+		} else if (key.equals(getString(R.string.key_manual_override))) {
+			mManualOverride = sharedPreferences.getBoolean(key, false);
+		} else if (key.equals(getString(R.string.key_wifi_sleep))) {
+			mWifiSleep = sharedPreferences.getBoolean(key, false);
 		}
-		else if (key.equals(getString(R.string.key_manual_override))) mManualOverride = sharedPreferences.getBoolean(key, false);
-		else if (key.equals(getString(R.string.key_wifi_sleep))) mWifiSleep = sharedPreferences.getBoolean(key, false);
 	}
 
 	private long fetchNetwork(String ssid, String bssid) {
