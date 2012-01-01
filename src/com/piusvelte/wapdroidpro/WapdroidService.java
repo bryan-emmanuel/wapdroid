@@ -299,9 +299,11 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 						// leave wifi on if a bad scan comes back
 						networkInRange = true;
 					}
+					boolean pause = false;
 					if (!networkInRange) {
 						// network in range based on cell towers, but not found in scan, override
 						mWifiManager.setWifiEnabled(false);
+						pause = true;
 					}
 					if (ManageWakeLocks.hasLock()) {
 						// if hasLock, then screen is off, set alarm
@@ -313,6 +315,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 						mLac = UNKNOWN_CID;
 						mRssi = UNKNOWN_RSSI;
 						ManageWakeLocks.release();
+					}
+					if (pause) {
+						// prevent hysteresis near networks
+						stopSelf();
 					}
 				}
 			} else if (ManageWakeLocks.hasLock() && (mInterval > 0)) {
@@ -567,9 +573,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 						&& (enableWifi ^ (!enableWifi && (mLastWiFiState != WifiManager.WIFI_STATE_DISABLING)))
 						&& (mLastScanEnableWifi == enableWifi)
 						&& (!enableWifi || !ManageWakeLocks.hasLock() || !mWifiSleep || !mobileNetworksAvailable())) {
-					mWifiManager.setWifiEnabled(enableWifi);
+					// always scan before disabling and after enabling
+					mScanningNetworks = true;
 					if (enableWifi) {
-						mScanningNetworks = true;
+						mWifiManager.setWifiEnabled(enableWifi);
 					}
 				}
 			}
