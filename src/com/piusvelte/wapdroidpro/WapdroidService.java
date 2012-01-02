@@ -320,6 +320,16 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 						// prevent hysteresis near networks
 						stopSelf();
 					}
+				} else if (ManageWakeLocks.hasLock()) {
+					// if hasLock, then screen is off, set alarm
+					if (mInterval > 0) {
+						mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					}
+					// if sleeping, re-initialize phone info
+					mCid = UNKNOWN_CID;
+					mLac = UNKNOWN_CID;
+					mRssi = UNKNOWN_RSSI;
+					ManageWakeLocks.release();
 				}
 			} else if (ManageWakeLocks.hasLock() && (mInterval > 0)) {
 				// after installing or upgrading
@@ -451,7 +461,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
 			if (mNotify	&& ((mLastWiFiState == WifiManager.WIFI_STATE_UNKNOWN)
 					|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mLastWiFiState != WifiManager.WIFI_STATE_DISABLED))
-					|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWiFiState != WifiManager.WIFI_STATE_ENABLED)))) createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWiFiState != WifiManager.WIFI_STATE_UNKNOWN));
+					|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mLastWiFiState != WifiManager.WIFI_STATE_ENABLED)))) {
+				createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mLastWiFiState != WifiManager.WIFI_STATE_UNKNOWN));
+			}
 			mLastWiFiState = state;
 			if (mLastWiFiState != WifiManager.WIFI_STATE_ENABLED) {
 				mSsid = null;
@@ -460,6 +472,14 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				if (!mWifiManager.startScan()) {
 					mScanningNetworks = false;
 				}
+			} else {
+				// user turned on wifi, give them a chance to connect to a new network
+				mScanningNetworks = true;
+				if (ManageWakeLocks.hasLock() && (mInterval > 0)) {
+					mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+					mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				}
+				stopSelf();
 			}
 			if (mWapdroidUI != null) {
 				try {
