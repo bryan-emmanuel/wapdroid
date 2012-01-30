@@ -24,7 +24,7 @@
 	android:layout_height="fill_parent" android:textSize="16dip">
 	<ScrollView android:layout_width="fill_parent" android:layout_height="fill_parent">
 		<LinearLayout android:layout_width="fill_parent"
-			android:layout_height="fill_parent" android:orientation="vertical">
+			android:layout_height="wrap_content" android:orientation="vertical">
 			<TableLayout android:background="@drawable/field"
 				android:layout_width="fill_parent" android:layout_height="wrap_content"
 				android:paddingTop="10dip" android:paddingRight="12dip"

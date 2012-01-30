@@ -93,10 +93,10 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 			startActivity(new Intent(this, Settings.class));
 			return true;
 		case WIFI_ID:
-			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-			SharedPreferences.Editor spe = sp.edit();
-			spe.putBoolean(getString(R.string.key_manual_override), true);
-			spe.commit();
+//			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+//			SharedPreferences.Editor spe = sp.edit();
+//			spe.putBoolean(getString(R.string.key_manual_override), true);
+//			spe.commit();
 			startActivity(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS));
 			return true;
 		case ABOUT_ID:
@@ -124,9 +124,9 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	public void onResume() {
 		super.onResume();
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-		SharedPreferences.Editor spe = sp.edit();
-		spe.putBoolean(getString(R.string.key_manual_override), false);
-		spe.commit();
+//		SharedPreferences.Editor spe = sp.edit();
+//		spe.putBoolean(getString(R.string.key_manual_override), false);
+//		spe.commit();
 		if (sp.getBoolean(getString(R.string.key_manageWifi), false)) startService(new Intent(this, WapdroidService.class));
 		else {
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
