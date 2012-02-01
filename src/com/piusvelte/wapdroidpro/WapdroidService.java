@@ -293,7 +293,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				if (mScanWiFi) {
 					Log.d(TAG,"requested scan results received");
 					mScanWiFi = false;
-					boolean networkInRange = true;
+					// be default, use the cell tower result
+					boolean networkInRange = mCellTowersInRange;
 					List<ScanResult> lsr = mWifiManager.getScanResults();
 					if (lsr != null) {
 						int ssidCount = 0;
