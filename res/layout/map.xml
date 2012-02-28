@@ -22,9 +22,12 @@
 	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.wapdroid"
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent">
+	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
+		android:layout_height="wrap_content" />
 	<com.google.android.maps.MapView
 		xmlns:android="http://schemas.android.com/apk/res/android"
 		android:id="@+id/mapview"
+		android:layout_below="@id/ad"
 		android:clickable="true"
 		android:layout_width="fill_parent"
 		android:layout_height="fill_parent"

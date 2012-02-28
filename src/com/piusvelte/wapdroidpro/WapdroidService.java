@@ -79,10 +79,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	public static final int PHONE_TYPE_CDMA = 2;
 	private static final int START_STICKY = 1;
 	private int mCid = UNKNOWN_CID,
-	mLac = UNKNOWN_CID,
-	mRssi = UNKNOWN_RSSI,
-	mWiFiState = WifiManager.WIFI_STATE_UNKNOWN,
-	mNotifications;
+			mLac = UNKNOWN_CID,
+			mRssi = UNKNOWN_RSSI,
+			mWiFiState = WifiManager.WIFI_STATE_UNKNOWN,
+			mNotifications;
 	long mSuspendUntil = 0;
 	private int mInterval,
 	mBatteryLimit,
@@ -290,74 +290,70 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				// network scan
 				// if the service enabled wifi, check the scan results to confirm that wifi should remain on
 				// if the service wants to disable wifi, check the scan results to confirm that wifi should be disabled
-				if (mScanWiFi) {
-					Log.d(TAG,"requested scan results received");
-					mScanWiFi = false;
-					// be default, use the cell tower result
-					boolean networkInRange = mCellTowersInRange;
-					List<ScanResult> lsr = mWifiManager.getScanResults();
-					if (lsr != null) {
-						int ssidCount = 0;
-						int bssidCount = 0;
+				Log.d(TAG,"requested scan results received");
+				mScanWiFi = false;
+				boolean networkInRange = true;
+				List<ScanResult> lsr = mWifiManager.getScanResults();
+				if (lsr != null) {
+					int ssidCount = 0;
+					int bssidCount = 0;
+					for (ScanResult sr : lsr) {
+						if ((sr.SSID != null) && (sr.SSID.length() > 0)) {
+							ssidCount++;
+						}
+						if ((sr.BSSID != null) && (sr.BSSID.length() > 0)) {
+							bssidCount++;
+						}
+					}
+					if (ssidCount > 0) {
+						String[] args = new String[ssidCount + bssidCount];
+						bssidCount = 0;
+						StringBuilder selection = new StringBuilder();
+						selection.append(Networks.SSID + " in (");
 						for (ScanResult sr : lsr) {
 							if ((sr.SSID != null) && (sr.SSID.length() > 0)) {
-								ssidCount++;
-							}
-							if ((sr.BSSID != null) && (sr.BSSID.length() > 0)) {
-								bssidCount++;
+								if (bssidCount > 0) {
+									selection.append(",");
+								}
+								selection.append("?");
+								args[bssidCount++] = sr.SSID;
 							}
 						}
-						if (ssidCount > 0) {
-							String[] args = new String[ssidCount + bssidCount];
-							bssidCount = 0;
-							StringBuilder selection = new StringBuilder();
-							selection.append(Networks.SSID + " in (");
+						selection.append(")");
+						if (bssidCount < args.length) {
+							selection.append(" and (" + Networks.BSSID + " in (");
 							for (ScanResult sr : lsr) {
-								if ((sr.SSID != null) && (sr.SSID.length() > 0)) {
-									if (bssidCount > 0) {
+								if ((sr.BSSID != null) && (sr.BSSID.length() > 0)) {
+									if (bssidCount > ssidCount) {
 										selection.append(",");
 									}
 									selection.append("?");
-									args[bssidCount++] = sr.SSID;
+									args[bssidCount++] = sr.BSSID;
 								}
 							}
-							selection.append(")");
-							if (bssidCount < args.length) {
-								selection.append(" and (" + Networks.BSSID + " in (");
-								for (ScanResult sr : lsr) {
-									if ((sr.BSSID != null) && (sr.BSSID.length() > 0)) {
-										if (bssidCount > ssidCount) {
-											selection.append(",");
-										}
-										selection.append("?");
-										args[bssidCount++] = sr.BSSID;
-									}
-								}
-								selection.append(") or " + Networks.BSSID + "='')");
-							} else {
-								selection.append(" and " + Networks.BSSID + "=''");
-							}
-							selection.append(" and " + Networks.MANAGE + "=1");
-							Cursor c = this.getContentResolver().query(Networks.CONTENT_URI, new String[]{Networks._ID}, selection.toString(), args, null);
-							networkInRange = c.moveToFirst();
-							c.close();
+							selection.append(") or " + Networks.BSSID + "='')");
+						} else {
+							selection.append(" and " + Networks.BSSID + "=''");
 						}
+						selection.append(" and " + Networks.MANAGE + "=1");
+						Cursor c = this.getContentResolver().query(Networks.CONTENT_URI, new String[]{Networks._ID}, selection.toString(), args, null);
+						networkInRange = c.moveToFirst();
+						c.close();
 					}
-					if (networkInRange) {
-						Log.d(TAG,"networkInRange");
-						// allow notification and wifi variables to be initiated
-						wifiState(mWifiManager.getWifiState(), true);
-					} else {
-						Log.d(TAG,"!networkInRange, disabled wifi");
-						// network in range based on cell towers, but not found in scan, override
-						mWifiManager.setWifiEnabled(false);
-						// prevent hysteresis near networks
-						mSuspendUntil = System.currentTimeMillis() + mInterval;
-					}
-					sleep();
-				} else {
-					sleep();
 				}
+				if (networkInRange) {
+					Log.d(TAG,"networkInRange");
+					// allow notification and wifi variables to be initiated
+					wifiState(mWifiManager.getWifiState(), true);
+				} else if (mSuspendUntil < System.currentTimeMillis()) {
+					// only disable if the service isn't suspend, which will happen if the user has enabled the wifi
+					Log.d(TAG,"!networkInRange, disabled wifi");
+					// network in range based on cell towers, but not found in scan, override
+					mWifiManager.setWifiEnabled(false);
+					// prevent hysteresis near networks
+					mSuspendUntil = System.currentTimeMillis() + mInterval;
+				}
+				sleep();
 			} else {
 				// after installing or upgrading
 				sleep();
@@ -622,11 +618,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 						}
 					}
 				}
-				Log.d(TAG,"(mCellTowersInRange("+mCellTowersInRange+") ^ ((mWiFiState("+mWiFiState+") == WifiManager.WIFI_STATE_ENABLED("+WifiManager.WIFI_STATE_ENABLED+")) || (mWiFiState("+mWiFiState+") == WifiManager.WIFI_STATE_ENABLING("+WifiManager.WIFI_STATE_ENABLING+"))))) = "+(mCellTowersInRange ^ ((mWiFiState == WifiManager.WIFI_STATE_ENABLED) || (mWiFiState == WifiManager.WIFI_STATE_ENABLING))));
-				Log.d(TAG,"(!mCellTowersInRange("+!mCellTowersInRange+") || !ManageWakeLocks.hasLock()("+!ManageWakeLocks.hasLock()+") || !mWifiSleep("+!mWifiSleep+") || !mobileNetworksAvailable()("+!mobileNetworksAvailable()+")) = "+(!mCellTowersInRange || !ManageWakeLocks.hasLock() || !mWifiSleep || !mobileNetworksAvailable()));
-				Log.d(TAG,"(mSuspendUntil("+mSuspendUntil+") < System.currentTimeMillis()("+System.currentTimeMillis()+")) = "+(mSuspendUntil < System.currentTimeMillis()));
-				Log.d(TAG,"!(mScanWiFi("+mScanWiFi+") && (mWiFiState("+mWiFiState+") == WifiManager.WIFI_STATE_ENABLED("+WifiManager.WIFI_STATE_ENABLED+")) = "+!(mScanWiFi && (mWiFiState == WifiManager.WIFI_STATE_ENABLED)));
-				Log.d(TAG,"(!mCellTowersInRange("+!mCellTowersInRange+") || (mLastBattPerc("+mLastBattPerc+") >= mBatteryLimit("+mBatteryLimit+"))) = "+(!mCellTowersInRange || (mLastBattPerc >= mBatteryLimit)));
 				// either (enable and wifi is not enabled or enabling) or (disable and wifi is enabled or enabling)
 				// and either (not in range or screen on or not sleep or no other networks
 				// and the service isn't suspended

@@ -22,9 +22,7 @@ package com.piusvelte.wapdroidpro;
 import static com.piusvelte.wapdroidpro.Wapdroid.UNKNOWN_CID;
 import static com.piusvelte.wapdroidpro.Wapdroid.UNKNOWN_RSSI;
 
-import com.piusvelte.wapdroidpro.IWapdroidService;
-import com.piusvelte.wapdroidpro.IWapdroidUI;
-import com.piusvelte.wapdroidpro.R;
+import com.google.ads.*;
 import com.piusvelte.wapdroidpro.Wapdroid.Cells;
 import com.piusvelte.wapdroidpro.Wapdroid.Locations;
 import com.piusvelte.wapdroidpro.Wapdroid.Networks;
@@ -50,6 +48,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ContextMenu.ContextMenuInfo;
 import android.widget.CheckBox;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.SimpleCursorAdapter;
 import android.widget.AdapterView.AdapterContextMenuInfo;
@@ -71,9 +70,9 @@ public class ManageData extends ListActivity implements ServiceConnection {
 	private static final int FILTER_CONNECTED = 3;
 	private int mFilter = FILTER_ALL;
 	String mCells = "",
-	mOperator = "",
-	mBssid = "",
-	mSsid = "";
+			mOperator = "",
+			mBssid = "",
+			mSsid = "";
 	public IWapdroidService mIService;
 	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
 		public void setCellInfo(int cid, int lac) throws RemoteException {
@@ -116,7 +115,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 		super.onCreate(savedInstanceState);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getLong(WapdroidProvider.TABLE_NETWORKS);
+			mNetwork = extras.getInt(WapdroidProvider.TABLE_NETWORKS);
 			mCid = extras.getInt(Cells.CID);
 			mSsid = extras.getString(Networks.SSID);
 			mBssid = extras.getString(Networks.BSSID);
@@ -124,6 +123,11 @@ public class ManageData extends ListActivity implements ServiceConnection {
 		}
 		setContentView(mNetwork == 0 ? R.layout.networks_list : R.layout.cells_list);
 		registerForContextMenu(getListView());
+		if (!getPackageName().toLowerCase().contains(Wapdroid.PRO)) {
+			AdView adView = new AdView(this, AdSize.BANNER, Wapdroid.GOOGLE_AD_ID);
+			((LinearLayout) findViewById(R.id.ad)).addView(adView);
+			adView.loadAd(new AdRequest());
+		}
 	}
 
 	@Override

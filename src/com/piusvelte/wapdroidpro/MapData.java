@@ -41,13 +41,14 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.LinearLayout;
 
+import com.google.ads.*;
 import com.google.android.maps.GeoPoint;
 import com.google.android.maps.MapActivity;
 import com.google.android.maps.MapController;
 import com.google.android.maps.MapView;
 import com.google.android.maps.Overlay;
-import com.piusvelte.wapdroidpro.R;
 
 public class MapData extends MapActivity implements DialogInterface.OnClickListener, DialogInterface.OnCancelListener {
 	private static final String TAG = "MapData";
@@ -86,9 +87,8 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 	protected static String string_range;
 	protected static String string_colon;
 	private Context mContext;
-	private long mNetwork;
-	private int mMCC = 0, mMNC = 0;
-	protected long mPair = 0;
+	private int mNetwork, mMCC = 0, mMNC = 0;
+	protected int mPair = 0;
 	private String mCarrier = "", mToken = "", mMsg = "";
 	protected MapView mMView;
 	private MapController mMController;
@@ -116,8 +116,8 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 		mMController.setZoom(12);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getLong(WapdroidProvider.TABLE_NETWORKS);
-			mPair = extras.getLong(WapdroidProvider.TABLE_PAIRS);
+			mNetwork = extras.getInt(WapdroidProvider.TABLE_NETWORKS);
+			mPair = extras.getInt(WapdroidProvider.TABLE_PAIRS);
 			String operator = extras.getString(OPERATOR);
 			if (operator.length() > 0) {
 				mMCC = Integer.parseInt(operator.substring(0, 3));
@@ -138,6 +138,11 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 		string_lac = getString(R.string.label_LAC);
 		string_range = getString(R.string.range);
 		string_colon = getString(R.string.colon);
+		if (!getPackageName().toLowerCase().contains(Wapdroid.PRO)) {
+			AdView adView = new AdView(this, AdSize.BANNER, Wapdroid.GOOGLE_AD_ID);
+			((LinearLayout) findViewById(R.id.ad)).addView(adView);
+			adView.loadAd(new AdRequest());
+		}
 	}
 
 	@Override
