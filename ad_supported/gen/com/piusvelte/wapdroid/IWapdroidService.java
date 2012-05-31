@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: /home/bemmanuel/Documents/development/android/wapdroid_ad-supported/src/com/piusvelte/wapdroid/IWapdroidService.aidl
+ * Original file: /home/bemmanuel/Documents/development/android/wapdroid/ad_supported/src/com/piusvelte/wapdroid/IWapdroidService.aidl
  */
 package com.piusvelte.wapdroid;
 public interface IWapdroidService extends android.os.IInterface
