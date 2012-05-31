@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+	<!--
+		* Wapdroid - Android Location based Wifi Manager * Copyright (C) 2009
+		Bryan Emmanuel * * This program is free software: you can redistribute
+		it and/or modify * it under the terms of the GNU General Public
+		License as published by * the Free Software Foundation, either version
+		3 of the License, or * (at your option) any later version. * * This
+		program is distributed in the hope that it will be useful, * but
+		WITHOUT ANY WARRANTY; without even the implied warranty of *
+		MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the * GNU
+		General Public License for more details. * You should have received a
+		copy of the GNU General Public License * along with this program. If
+		not, see <http://www.gnu.org/licenses/>. * * Bryan Emmanuel
+		piusvelte@gmail.com
+	-->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+	<PreferenceCategory android:title="@string/pref_service" />
+	<CheckBoxPreference android:key="@string/key_manageWifi"
+		android:title="@string/label_wapdroidState" android:defaultValue="false" />
+	<ListPreference android:key="@string/key_interval"
+		android:title="@string/label_interval" android:dependency="@string/key_manageWifi"
+		android:entries="@array/scan_interval_entries" android:entryValues="@array/scan_interval_values"
+		android:defaultValue="300000" />
+	<PreferenceCategory android:title="@string/pref_notifications" />
+	<CheckBoxPreference android:key="@string/key_notify"
+		android:title="@string/label_notify" android:dependency="@string/key_manageWifi"
+		android:defaultValue="false" />
+	<CheckBoxPreference android:key="@string/key_persistent_status"
+		android:title="@string/label_persistent_status" android:dependency="@string/key_notify"
+		android:defaultValue="false" />
+	<CheckBoxPreference android:key="@string/key_vibrate"
+		android:title="@string/label_vibrate" android:dependency="@string/key_notify"
+		android:defaultValue="false" />
+	<CheckBoxPreference android:key="@string/key_led"
+		android:title="@string/label_led" android:dependency="@string/key_notify"
+		android:defaultValue="false" />
+	<CheckBoxPreference android:key="@string/key_ringtone"
+		android:title="@string/label_ringtone" android:dependency="@string/key_notify"
+		android:defaultValue="false" />
+	<PreferenceCategory android:title="@string/pref_battery" />
+	<CheckBoxPreference android:key="@string/key_battery_override"
+		android:title="@string/battery_override" android:dependency="@string/key_manageWifi"
+		android:defaultValue="false" />
+	<ListPreference android:key="@string/key_battery_percentage"
+		android:title="@string/battery_percentage" android:dependency="@string/key_battery_override"
+		android:entries="@array/battery_entries" android:entryValues="@array/battery_values"
+		android:defaultValue="30" />
+	<PreferenceCategory android:title="@string/pref_wifi_sleep" />
+	<CheckBoxPreference android:key="@string/key_wifi_sleep"
+		android:title="@string/label_wifi_sleep" android:defaultValue="false" />
+</PreferenceScreen>
