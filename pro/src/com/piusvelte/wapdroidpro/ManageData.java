@@ -115,7 +115,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 		super.onCreate(savedInstanceState);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getInt(WapdroidProvider.TABLE_NETWORKS);
+			mNetwork = extras.getLong(WapdroidProvider.TABLE_NETWORKS);
 			mCid = extras.getInt(Cells.CID);
 			mSsid = extras.getString(Networks.SSID);
 			mBssid = extras.getString(Networks.BSSID);
