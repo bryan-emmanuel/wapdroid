@@ -46,6 +46,13 @@
 		android:entries="@array/battery_entries" android:entryValues="@array/battery_values"
 		android:defaultValue="30" />
 	<PreferenceCategory android:title="@string/pref_wifi_sleep" />
-	<CheckBoxPreference android:key="@string/key_wifi_sleep"
-		android:title="@string/label_wifi_sleep" android:defaultValue="false" />
+	<CheckBoxPreference android:key="@string/key_wifi_sleep_screen"
+		android:title="@string/label_wifi_sleep_screen" android:defaultValue="false" />
+	<CheckBoxPreference android:key="@string/key_wifi_sleep_mob_net" android:dependency="@string/key_wifi_sleep_screen"
+		android:title="@string/label_wifi_sleep_mob_net" android:defaultValue="false" />
+	<CheckBoxPreference android:key="@string/key_wifi_sleep_charging" android:dependency="@string/key_wifi_sleep_screen"
+		android:title="@string/label_wifi_sleep_charging" android:defaultValue="false" />
+	<PreferenceCategory android:title="@string/pref_overrides" />
+	<CheckBoxPreference android:key="@string/key_wifi_override_charging"
+		android:title="@string/label_wifi_override_charging" android:defaultValue="false" />
 </PreferenceScreen>

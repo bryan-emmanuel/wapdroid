@@ -93,10 +93,10 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch (item.getItemId()) {
 		case MANAGE_ID:
-			startActivity((new Intent(this, ManageData.class)).putExtra(Networks.SSID, mSsid).putExtra(Networks.BSSID, mBssid).putExtra(Cells.CID, mCid).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
+			startActivity(Wapdroid.getPackageIntent(this, ManageData.class).putExtra(Networks.SSID, mSsid).putExtra(Networks.BSSID, mBssid).putExtra(Cells.CID, mCid).putExtra(WapdroidProvider.TABLE_CELLS, mCells));
 			return true;
 		case SETTINGS_ID:
-			startActivity(new Intent(this, Settings.class));
+			startActivity(Wapdroid.getPackageIntent(this, Settings.class));
 			return true;
 		case WIFI_ID:
 //			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
@@ -133,14 +133,14 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 //		SharedPreferences.Editor spe = sp.edit();
 //		spe.putBoolean(getString(R.string.key_manual_override), false);
 //		spe.commit();
-		if (sp.getBoolean(getString(R.string.key_manageWifi), false)) startService(new Intent(this, WapdroidService.class));
+		if (sp.getBoolean(getString(R.string.key_manageWifi), false)) startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
 		else {
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setMessage(R.string.service_info);
 			dialog.setNegativeButton(android.R.string.ok, this);
 			dialog.show();			
 		}
-		bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
+		bindService(Wapdroid.getPackageIntent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
 	}
 
 	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {

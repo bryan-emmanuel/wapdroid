@@ -138,27 +138,27 @@ public class WapdroidItemizedOverlay extends ItemizedOverlay<WapdroidOverlayItem
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				if (pair == 0) {
-					mMap.getContentResolver().delete(Wapdroid.Networks.CONTENT_URI, Wapdroid.Networks._ID + "=?", new String[]{Long.toString(network)});
-					mMap.getContentResolver().delete(Wapdroid.Pairs.CONTENT_URI, Wapdroid.Pairs.NETWORK + "=?", new String[]{Long.toString(network)});
+					mMap.getContentResolver().delete(Wapdroid.Networks.getContentUri(mMap), Wapdroid.Networks._ID + "=?", new String[]{Long.toString(network)});
+					mMap.getContentResolver().delete(Wapdroid.Pairs.getContentUri(mMap), Wapdroid.Pairs.NETWORK + "=?", new String[]{Long.toString(network)});
 				} else {
 					// delete one pair from the mapped network or 
 					// delete an individually mapped cell
-					mMap.getContentResolver().delete(Wapdroid.Pairs.CONTENT_URI, Wapdroid.Pairs._ID + "=?", new String[]{Integer.toString(pair)});
-					Cursor n = mMap.getContentResolver().query(Wapdroid.Pairs.CONTENT_URI, new String[]{Wapdroid.Pairs._ID}, Wapdroid.Pairs.NETWORK + "=?", new String[]{Long.toString(network)}, null);
-					if (n.getCount() == 0) mMap.getContentResolver().delete(Wapdroid.Networks.CONTENT_URI, Wapdroid.Networks._ID + "=?", new String[]{Long.toString(network)});
+					mMap.getContentResolver().delete(Wapdroid.Pairs.getContentUri(mMap), Wapdroid.Pairs._ID + "=?", new String[]{Integer.toString(pair)});
+					Cursor n = mMap.getContentResolver().query(Wapdroid.Pairs.getContentUri(mMap), new String[]{Wapdroid.Pairs._ID}, Wapdroid.Pairs.NETWORK + "=?", new String[]{Long.toString(network)}, null);
+					if (n.getCount() == 0) mMap.getContentResolver().delete(Wapdroid.Networks.getContentUri(mMap), Wapdroid.Networks._ID + "=?", new String[]{Long.toString(network)});
 					n.close();
 				}
-				Cursor c = mMap.getContentResolver().query(Wapdroid.Cells.CONTENT_URI, new String[]{Wapdroid.Cells._ID, Wapdroid.Cells.LOCATION}, null, null, null);
+				Cursor c = mMap.getContentResolver().query(Wapdroid.Cells.getContentUri(mMap), new String[]{Wapdroid.Cells._ID, Wapdroid.Cells.LOCATION}, null, null, null);
 				if (c.moveToFirst()) {
 					int[] index = {c.getColumnIndex(Wapdroid.Cells._ID), c.getColumnIndex(Wapdroid.Cells.LOCATION)};
 					while (!c.isAfterLast()) {
 						int cell = c.getInt(index[0]);
-						Cursor p = mMap.getContentResolver().query(Wapdroid.Pairs.CONTENT_URI, new String[]{Wapdroid.Pairs._ID}, Wapdroid.Pairs.CELL + "=?", new String[]{Integer.toString(cell)}, null);
+						Cursor p = mMap.getContentResolver().query(Wapdroid.Pairs.getContentUri(mMap), new String[]{Wapdroid.Pairs._ID}, Wapdroid.Pairs.CELL + "=?", new String[]{Integer.toString(cell)}, null);
 						if (p.getCount() == 0) {
-							mMap.getContentResolver().delete(Wapdroid.Cells.CONTENT_URI, Wapdroid.Cells._ID + "=" + cell, null);
+							mMap.getContentResolver().delete(Wapdroid.Cells.getContentUri(mMap), Wapdroid.Cells._ID + "=" + cell, null);
 							int location = c.getInt(index[1]);
-							Cursor l = mMap.getContentResolver().query(Wapdroid.Cells.CONTENT_URI, new String[]{Wapdroid.Cells.LOCATION}, Wapdroid.Cells.LOCATION + "=?", new String[]{Integer.toString(location)}, null);
-							if (l.getCount() == 0) mMap.getContentResolver().delete(Wapdroid.Locations.CONTENT_URI, Wapdroid.Locations._ID + "=?", new String[]{Integer.toString(location)});
+							Cursor l = mMap.getContentResolver().query(Wapdroid.Cells.getContentUri(mMap), new String[]{Wapdroid.Cells.LOCATION}, Wapdroid.Cells.LOCATION + "=?", new String[]{Integer.toString(location)}, null);
+							if (l.getCount() == 0) mMap.getContentResolver().delete(Wapdroid.Locations.getContentUri(mMap), Wapdroid.Locations._ID + "=?", new String[]{Integer.toString(location)});
 							l.close();
 						}
 						p.close();

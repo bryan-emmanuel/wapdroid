@@ -28,7 +28,7 @@ public class Receiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		ManageWakeLocks.acquire(context);
-		context.startService(intent.setClass(context, WapdroidService.class));
+		context.startService(intent.setClass(context, Wapdroid.getPackageClass(context, WapdroidService.class)));
 	}
 
 }

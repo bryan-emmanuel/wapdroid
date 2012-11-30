@@ -19,11 +19,15 @@
  */
 package com.piusvelte.wapdroid.core;
 
+import android.content.Context;
+import android.content.Intent;
 import android.net.Uri;
 import android.provider.BaseColumns;
+import android.util.Log;
 
 public final class Wapdroid {
 
+	private static final String TAG = "Wapdroid";
 	public static final int UNKNOWN_CID = -1;
 	public static final int UNKNOWN_RSSI = 99;
 	
@@ -36,8 +40,9 @@ public final class Wapdroid {
 	public static final class Networks implements BaseColumns {
 		private Networks() {}
     	
-    	public static final Uri CONTENT_URI = Uri.parse("content://"
-    			+ WapdroidProvider.AUTHORITY + "/networks");
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Wapdroid.getAuthority(context) + "/networks");
+		}
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.networks";
     	
@@ -48,9 +53,10 @@ public final class Wapdroid {
 	
 	public static final class Cells implements BaseColumns {
 		private Cells() {}
-    	
-    	public static final Uri CONTENT_URI = Uri.parse("content://"
-    			+ WapdroidProvider.AUTHORITY + "/cells");
+
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Wapdroid.getAuthority(context) + "/cells");
+		}
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.cells";
     	
@@ -60,9 +66,10 @@ public final class Wapdroid {
 	
 	public static final class Locations implements BaseColumns {
 		private Locations() {}
-    	
-    	public static final Uri CONTENT_URI = Uri.parse("content://"
-    			+ WapdroidProvider.AUTHORITY + "/locations");
+
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Wapdroid.getAuthority(context) + "/locations");
+		}
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.locations";
     	
@@ -71,9 +78,10 @@ public final class Wapdroid {
 	
 	public static final class Pairs implements BaseColumns {
 		private Pairs() {}
-    	
-    	public static final Uri CONTENT_URI = Uri.parse("content://"
-    			+ WapdroidProvider.AUTHORITY + "/pairs");
+
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Wapdroid.getAuthority(context) + "/pairs");
+		}
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.pairs";
     	
@@ -86,9 +94,10 @@ public final class Wapdroid {
 	
 	public static final class Ranges implements BaseColumns {
 		private Ranges() {}
-    	
-    	public static final Uri CONTENT_URI = Uri.parse("content://"
-    			+ WapdroidProvider.AUTHORITY + "/ranges");
+
+		public static Uri getContentUri(Context context) {
+			return Uri.parse("content://" + Wapdroid.getAuthority(context) + "/ranges");
+		}
     	
     	public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.piusvelte.ranges";
     	
@@ -104,5 +113,21 @@ public final class Wapdroid {
     	public static final String MANAGE = "manage";
     	public static final String MANAGE_CELL = "manage_cell";
 	}
-
+	
+	public static String getAuthority(Context context) {
+		return !context.getPackageName().toLowerCase().contains(PRO) ? WapdroidProvider.AUTHORITY : WapdroidProvider.PRO_AUTHORITY;
+	}
+	
+	protected static Class getPackageClass(Context context, Class cls) {
+		try {
+			return Class.forName(context.getPackageName() + "." + cls.getSimpleName());
+		} catch (ClassNotFoundException e) {
+			Log.e(TAG, e.getMessage());
+		}
+		return cls;
+	}
+	
+	protected static Intent getPackageIntent(Context context, Class cls) {
+		return new Intent(context, getPackageClass(context, cls));
+	}
 }

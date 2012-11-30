@@ -57,7 +57,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
 			if (sharedPreferences.getBoolean(key, true)) {
-				this.startService(new Intent(this, WapdroidService.class));
+				this.startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
 				(new AlertDialog.Builder(this)
 				.setMessage(R.string.background_info)
 				.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
@@ -68,10 +68,10 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 				})
 				)
 				.show();
-			} else this.stopService(new Intent(this, WapdroidService.class));
+			} else this.stopService(Wapdroid.getPackageIntent(this, WapdroidService.class));
 			// update widgets
 			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-			this.sendBroadcast(new Intent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
+			this.sendBroadcast(Wapdroid.getPackageIntent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
 		}
 	}
 }

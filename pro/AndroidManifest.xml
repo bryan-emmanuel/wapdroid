@@ -19,7 +19,7 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      android:versionCode="373" android:versionName="3.7.3"
+      android:versionCode="374" android:versionName="3.7.4"
       android:installLocation="auto" package="com.piusvelte.wapdroidpro">
     <application android:icon="@drawable/icon" android:label="@string/app_name">
         <activity android:name=".WapdroidUI"
@@ -39,15 +39,15 @@
 				<action android:name="android.intent.action.BOOT_COMPLETED" />
 			</intent-filter>
 			<intent-filter>
-				<action android:name="com.piusvelte.wapdroidpro.WAKE_SERVICE" />
+				<action android:name=".WAKE_SERVICE" />
 			</intent-filter>
 			<intent-filter>
 				<action android:name="android.intent.action.PACKAGE_REPLACED" />
 				<data android:scheme="package" android:path="com.piusvelte.wapdroid" />
 			</intent-filter>
 		</receiver>
-		<service android:name="com.piusvelte.wapdroidpro.WapdroidService" />
-        <receiver android:name="com.piusvelte.wapdroidpro.WapdroidWidget" android:label="@string/widget_label">
+		<service android:name=".WapdroidService" />
+        <receiver android:name=".WapdroidWidget" android:label="@string/widget_label">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -57,7 +57,7 @@
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_1x1" />
         </receiver>
         <provider
-            android:name="com.piusvelte.wapdroidpro.WapdroidProvider"
+            android:name=".WapdroidProvider"
             android:authorities="com.piusvelte.wapdroidpro.WapdroidProvider"
             android:multiprocess="true"
             android:grantUriPermissions="true" />

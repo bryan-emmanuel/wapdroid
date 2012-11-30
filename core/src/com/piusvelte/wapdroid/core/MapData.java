@@ -258,7 +258,7 @@ public class MapData extends MapActivity implements DialogInterface.OnClickListe
 				int ctr = 0;
 				List<Overlay> mapOverlays = mMView.getOverlays();
 				GeoPoint point = new GeoPoint(0, 0);
-				Cursor pairs = MapData.this.getContentResolver().query(Wapdroid.Ranges.CONTENT_URI, new String[]{Wapdroid.Ranges._ID, Wapdroid.Ranges.SSID, Wapdroid.Ranges.BSSID, Wapdroid.Ranges.CID, Wapdroid.Ranges.LAC, Wapdroid.Ranges.RSSI_MIN, Wapdroid.Ranges.RSSI_MAX}, mPair == 0 ? Wapdroid.Ranges.NETWORK + "=" + mNetwork : Wapdroid.Ranges._ID + "=" + mPair, null, null);
+				Cursor pairs = MapData.this.getContentResolver().query(Wapdroid.Ranges.getContentUri(MapData.this), new String[]{Wapdroid.Ranges._ID, Wapdroid.Ranges.SSID, Wapdroid.Ranges.BSSID, Wapdroid.Ranges.CID, Wapdroid.Ranges.LAC, Wapdroid.Ranges.RSSI_MIN, Wapdroid.Ranges.RSSI_MAX}, mPair == 0 ? Wapdroid.Ranges.NETWORK + "=" + mNetwork : Wapdroid.Ranges._ID + "=" + mPair, null, null);
 				int ct = pairs.getCount();
 				if (pairs.moveToFirst()) {
 					WapdroidItemizedOverlay pinOverlays = new WapdroidItemizedOverlay((MapData) mContext, ct);

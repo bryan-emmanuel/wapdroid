@@ -37,6 +37,7 @@ import com.piusvelte.wapdroid.core.Wapdroid.Ranges;
 import com.piusvelte.wapdroid.core.IWapdroidService;
 import com.piusvelte.wapdroid.core.IWapdroidUI;
 
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -94,7 +95,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	mCellTowersInRange,
 	mNotify,
 	mPersistentStatus,
-	mWifiSleep,
+	mWiFiSleepScreen,
+	mWiFiSleepMobNet,
+	mWiFiSleepCharging,
+	mWiFiOverrideCharging,
 	mScanWiFi = false;
 	String mSsid, mBssid;
 	private static boolean mApi7 = false;
@@ -165,14 +169,17 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	@Override
 	public IBinder onBind(Intent intent) {
-		mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+		mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, Wapdroid.getPackageIntent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
 		ManageWakeLocks.release();
 		return mWapdroidService;
 	}
 
 	@Override
 	public void onStart(Intent intent, int startId) {
-		super.onStart(intent, startId);
+		start(intent);
+	}
+
+	private void start(Intent intent) {
 		if ((intent != null) && (intent.getAction() != null) && !intent.getAction().equals(WAKE_SERVICE)) {
 			Log.d(TAG,"action:"+intent.getAction());
 			if ((intent.getAction().equals(ACTION_BOOT_COMPLETED) || intent.getAction().equals(ACTION_PACKAGE_REPLACED)) && !mManageWifi) {
@@ -226,31 +233,28 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
 				ManageWakeLocks.setScreenState(true);
 				// don't cancel suspension anymore, the user may turn their screen on briefly, triggering hysteresis
-//				// cancel the suspension
-//				if ((mWiFiState == WifiManager.WIFI_STATE_DISABLED) || (mWiFiState == WifiManager.WIFI_STATE_DISABLING)) {
-//					mSuspendUntil = 0;
-//				}
+				//				// cancel the suspension
+				//				if ((mWiFiState == WifiManager.WIFI_STATE_DISABLED) || (mWiFiState == WifiManager.WIFI_STATE_DISABLING)) {
+				//					mSuspendUntil = 0;
+				//				}
 				// the alarm will be cancelled and set by getCellInfo
 				getCellInfo(mTelephonyManager.getCellLocation());
 			} else if (intent.getAction().equals(Intent.ACTION_SCREEN_OFF)) {
 				ManageWakeLocks.setScreenState(false);
 				ManageWakeLocks.acquire(this);
-				// check sleep policy
-				if (mWifiSleep && mobileNetworksAvailable() && (mWiFiState == WifiManager.WIFI_STATE_ENABLED) || (mWiFiState == WifiManager.WIFI_STATE_ENABLING)) {
+				// check sleep policy, considering overrides
+				if (!mWiFiOverrideCharging && mWiFiSleepScreen && (!mWiFiSleepMobNet || mobileNetworksAvailable()) && (!mWiFiSleepCharging || (mBatteryLimit == 0)) && (mWiFiState == WifiManager.WIFI_STATE_ENABLED) || (mWiFiState == WifiManager.WIFI_STATE_ENABLING)) {
 					// mWifiSleep override mScanWiFi
-					if (mScanWiFi) {
+					if (mScanWiFi)
 						mScanWiFi = false;
-					}
 					// check if the current network is managed
 					if (mSsid != null) {
-						Cursor c = this.getContentResolver().query(Networks.CONTENT_URI, new String[]{Networks._ID, Networks.SSID, Networks.BSSID}, Networks.SSID + "=? and (" + Networks.BSSID + "=? or " + Networks.BSSID + "='') and " + Networks.MANAGE + "=1", new String[]{(mSsid != null ? mSsid : ""), (mBssid != null ? mBssid : "")}, null);
-						if (c.moveToFirst()) {
+						Cursor c = this.getContentResolver().query(Networks.getContentUri(this), new String[]{Networks._ID, Networks.SSID, Networks.BSSID}, Networks.SSID + "=? and (" + Networks.BSSID + "=? or " + Networks.BSSID + "='') and " + Networks.MANAGE + "=1", new String[]{(mSsid != null ? mSsid : ""), (mBssid != null ? mBssid : "")}, null);
+						if (c.moveToFirst())
 							mWifiManager.setWifiEnabled(false);
-						}
 						c.close();
-					} else {
+					} else
 						mWifiManager.setWifiEnabled(false);
-					}
 				}
 				// if waiting for scan results, allow them to finish
 				if (!mScanWiFi) {
@@ -293,7 +297,6 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				// network scan
 				// if the service enabled wifi, check the scan results to confirm that wifi should remain on
 				// if the service wants to disable wifi, check the scan results to confirm that wifi should be disabled
-				Log.d(TAG,"requested scan results received");
 				mScanWiFi = false;
 				boolean networkInRange = true;
 				List<ScanResult> lsr = mWifiManager.getScanResults();
@@ -339,7 +342,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 							selection.append(" and " + Networks.BSSID + "=''");
 						}
 						selection.append(" and " + Networks.MANAGE + "=1");
-						Cursor c = this.getContentResolver().query(Networks.CONTENT_URI, new String[]{Networks._ID}, selection.toString(), args, null);
+						Cursor c = this.getContentResolver().query(Networks.getContentUri(this), new String[]{Networks._ID}, selection.toString(), args, null);
 						networkInRange = c.moveToFirst();
 						c.close();
 					}
@@ -348,11 +351,14 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					Log.d(TAG,"networkInRange");
 					// allow notification and wifi variables to be initiated
 					wifiState(mWifiManager.getWifiState(), true);
-				} else if (mSuspendUntil < System.currentTimeMillis()) {
-					// only disable if the service isn't suspend, which will happen if the user has enabled the wifi
-					Log.d(TAG,"!networkInRange, disabled wifi");
-					// network in range based on cell towers, but not found in scan, override
-					mWifiManager.setWifiEnabled(false);
+				} else if ((mSuspendUntil < System.currentTimeMillis())) {
+					// don't disable if override
+					if (!mWiFiOverrideCharging) {
+						// only disable if the service isn't suspend, which will happen if the user has enabled the wifi
+						Log.d(TAG,"!networkInRange, disabled wifi");
+						// network in range based on cell towers, but not found in scan, override
+						mWifiManager.setWifiEnabled(false);
+					}
 					// prevent hysteresis near networks
 					mSuspendUntil = System.currentTimeMillis() + mInterval;
 				}
@@ -375,7 +381,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		onStart(intent, startId);
+		start(intent);
 		return START_STICKY;
 	}
 
@@ -390,7 +396,19 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		 */
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
 		// initialize preferences, updated by UI
-		mWifiSleep = sp.getBoolean(getString(R.string.key_wifi_sleep), false);
+		if (!sp.contains(getString(R.string.key_wifi_sleep_screen))) {
+			// changed the sleep policy prefs
+			SharedPreferences.Editor spe = sp.edit();
+			boolean wifiSleep = sp.getBoolean("wifi_sleep", false);
+			spe.putBoolean(getString(R.string.key_wifi_sleep_screen), wifiSleep);
+			spe.putBoolean(getString(R.string.key_wifi_sleep_mob_net), wifiSleep);
+			spe.putBoolean(getString(R.string.key_wifi_sleep_charging), false);
+			spe.commit();
+		}
+		mWiFiSleepScreen = sp.getBoolean(getString(R.string.key_wifi_sleep_screen), false);
+		mWiFiSleepMobNet = sp.getBoolean(getString(R.string.key_wifi_sleep_mob_net), false);
+		mWiFiSleepCharging = sp.getBoolean(getString(R.string.key_wifi_sleep_charging), false);
+		mWiFiOverrideCharging = sp.getBoolean(getString(R.string.key_wifi_override_charging), false);
 		mManageWifi = sp.getBoolean(getString(R.string.key_manageWifi), false);
 		mInterval = Integer.parseInt((String) sp.getString(getString(R.string.key_interval), "30000"));
 		mNotify = sp.getBoolean(getString(R.string.key_notify), false);
@@ -440,6 +458,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				signalStrengthChanged((asu > 0) && (asu != UNKNOWN_RSSI) ? (2 * asu - 113) : asu);
 			}
 
+			@SuppressLint("NewApi")
 			public void onSignalStrengthsChanged(SignalStrength signalStrength) {
 				if (mPhoneType == PHONE_TYPE_CDMA) {
 					signalStrengthChanged(signalStrength.getCdmaDbm() < signalStrength.getEvdoDbm() ? signalStrength.getCdmaDbm() : signalStrength.getEvdoDbm());
@@ -581,7 +600,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
 	private void signalStrengthChanged(int rssi) {
 		// cancel any pending alarms
-		mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+		mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, Wapdroid.getPackageIntent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
 		// signalStrengthChanged releases any wakelocks IF mCid != UNKNOWN_CID && enableWif != mLastScanEnableWifi
 		// rssi may be unknown
 		mRssi = rssi;
@@ -622,15 +641,16 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					}
 				}
 				// either (enable and wifi is not enabled or enabling) or (disable and wifi is enabled or enabling)
-				// and either (not in range or screen on or not sleep or no other networks
+				// and either (not in range or not overriding or ((not sleep screen or screen on) and (not sleep net or no other networks) and (not sleep charging or charging))
 				// and the service isn't suspended
 				// and isn't waiting for scan results or is disabled
 				// and isn't in range or battery level high enough
 				if ((mCellTowersInRange ^ ((mWiFiState == WifiManager.WIFI_STATE_ENABLED) || (mWiFiState == WifiManager.WIFI_STATE_ENABLING)))
-						&& (!mCellTowersInRange || !ManageWakeLocks.hasLock() || !mWifiSleep || !mobileNetworksAvailable())
+						&& (!mCellTowersInRange || mWiFiOverrideCharging || ((!mWiFiSleepScreen || !ManageWakeLocks.hasLock()) && (!mWiFiSleepMobNet || !mobileNetworksAvailable()) && (!mWiFiSleepCharging || (mBatteryLimit == 0))))
 						&& (mSuspendUntil < System.currentTimeMillis())
 						&& !(mScanWiFi && (mWiFiState == WifiManager.WIFI_STATE_ENABLED))
-						&& (!mCellTowersInRange || (mLastBattPerc >= mBatteryLimit))) {
+						&& (!mCellTowersInRange || (mLastBattPerc >= mBatteryLimit))
+						&& (mCellTowersInRange || !mWiFiOverrideCharging)) {
 					// always scan before disabling and after enabling
 					if (mCellTowersInRange) {
 						Log.d(TAG,"enable wifi");
@@ -658,10 +678,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	private void sleep() {
 		if (ManageWakeLocks.hasLock()) {
 			// cancel any pending alarm
-			mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+			mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, Wapdroid.getPackageIntent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
 			// if hasLock, then screen is off, set alarm
 			if (mInterval > 0) {
-				mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, (new Intent(this, BootReceiver.class)).setAction(WAKE_SERVICE), 0));
+				mAlarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + mInterval, PendingIntent.getBroadcast(this, 0, Wapdroid.getPackageIntent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
 			}
 			// if sleeping, re-initialize phone info
 			mCid = UNKNOWN_CID;
@@ -675,7 +695,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		// service runs for ui, so if not managing, don't notify
 		if (mManageWifi) {
 			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), System.currentTimeMillis());
-			notification.setLatestEventInfo(getBaseContext(), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), getString(R.string.app_name), PendingIntent.getActivity(this, 0, (new Intent(this, WapdroidUI.class)), 0));
+			notification.setLatestEventInfo(getBaseContext(), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), getString(R.string.app_name), PendingIntent.getActivity(this, 0, Wapdroid.getPackageIntent(this, WapdroidUI.class), 0));
 			if (mPersistentStatus) notification.flags |= Notification.FLAG_NO_CLEAR;
 			if (update) notification.defaults |= mNotifications;
 			((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).notify(NOTIFY_ID, notification);
@@ -727,8 +747,15 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			} else {
 				((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
 			}
-		} else if (key.equals(getString(R.string.key_wifi_sleep))) {
-			mWifiSleep = sharedPreferences.getBoolean(key, false);
+		} else if (key.equals(getString(R.string.key_wifi_sleep_screen))) {
+			mWiFiSleepScreen = sharedPreferences.getBoolean(key, false);
+		} else if (key.equals(getString(R.string.key_wifi_sleep_mob_net))) {
+			mWiFiSleepMobNet = sharedPreferences.getBoolean(key, false);
+		} else if (key.equals(getString(R.string.key_wifi_sleep_charging))) {
+			mWiFiSleepCharging = sharedPreferences.getBoolean(key, false);
+		} else if (key.equals(getString(R.string.key_wifi_override_charging))) {
+			mWiFiOverrideCharging = sharedPreferences.getBoolean(key, false);
+			mWifiManager.setWifiEnabled(true);
 		}
 	}
 
@@ -737,14 +764,14 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		// handle nulls
 		if (ssid == null) ssid = "";
 		if (bssid == null) bssid = "";
-		Cursor c = this.getContentResolver().query(Networks.CONTENT_URI, new String[]{Networks._ID, Networks.SSID, Networks.BSSID}, Networks.SSID + "=? and (" + Networks.BSSID + "=? or " + Networks.BSSID + "='')", new String[]{ssid, bssid}, null);
+		Cursor c = this.getContentResolver().query(Networks.getContentUri(this), new String[]{Networks._ID, Networks.SSID, Networks.BSSID}, Networks.SSID + "=? and (" + Networks.BSSID + "=? or " + Networks.BSSID + "='')", new String[]{ssid, bssid}, null);
 		if (c.moveToFirst()) {
 			// ssid matches, only concerned if bssid is empty
 			network = c.getInt(c.getColumnIndex(Networks._ID));
 			if (c.getString(c.getColumnIndex(Networks.BSSID)).equals("")) {
 				ContentValues values = new ContentValues();
 				values.put(Networks.BSSID, bssid);
-				this.getContentResolver().update(Networks.CONTENT_URI, values, Networks._ID + "=" + network, null);
+				this.getContentResolver().update(Networks.getContentUri(this), values, Networks._ID + "=" + network, null);
 			}
 		} else {
 			ContentValues values = new ContentValues();
@@ -752,7 +779,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			values.put(Networks.BSSID, bssid);
 			// default to managing the network
 			values.put(Networks.MANAGE, 1);
-			network = Integer.parseInt(this.getContentResolver().insert(Networks.CONTENT_URI, values).getLastPathSegment());
+			network = Integer.parseInt(this.getContentResolver().insert(Networks.getContentUri(this), values).getLastPathSegment());
 		}
 		c.close();
 		return network;
@@ -762,12 +789,12 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		// select or insert location
 		if (lac > 0) {
 			int location;
-			Cursor c = this.getContentResolver().query(Locations.CONTENT_URI, new String[]{Locations._ID, Locations.LAC}, Locations.LAC + "=?", new String[]{Integer.toString(lac)}, null);
+			Cursor c = this.getContentResolver().query(Locations.getContentUri(this), new String[]{Locations._ID, Locations.LAC}, Locations.LAC + "=?", new String[]{Integer.toString(lac)}, null);
 			if (c.moveToFirst()) location = c.getInt(c.getColumnIndex(Locations._ID));
 			else {
 				ContentValues values = new ContentValues();
 				values.put(Locations.LAC, lac);
-				location = Integer.parseInt(this.getContentResolver().insert(Locations.CONTENT_URI, values).getLastPathSegment());
+				location = Integer.parseInt(this.getContentResolver().insert(Locations.getContentUri(this), values).getLastPathSegment());
 			}
 			c.close();
 			return location;
@@ -778,7 +805,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		int cell, pair, location = fetchLocation(lac);
 		// if location==-1, then match only on cid, otherwise match on location or -1
 		// select or insert cell
-		Cursor c = this.getContentResolver().query(Cells.CONTENT_URI, new String[]{Cells._ID, Cells.LOCATION},
+		Cursor c = this.getContentResolver().query(Cells.getContentUri(this), new String[]{Cells._ID, Cells.LOCATION},
 				Cells.CID + "=?" + (location == UNKNOWN_CID ?
 						""
 						: " and (" + Cells.LOCATION + "=" + UNKNOWN_CID + " or " + Cells.LOCATION + "=?)"), (location == UNKNOWN_CID ? new String[]{Integer.toString(cid)} : new String[]{Integer.toString(cid), Integer.toString(location)}), null);
@@ -787,17 +814,17 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			if ((location != UNKNOWN_CID) && (c.getInt(c.getColumnIndex(Cells.LOCATION)) == UNKNOWN_CID)) {
 				ContentValues values = new ContentValues();
 				values.put(Cells.LOCATION, location);
-				this.getContentResolver().update(Cells.CONTENT_URI, values, Cells._ID + "=?", new String[]{Integer.toString(cell)});
+				this.getContentResolver().update(Cells.getContentUri(this), values, Cells._ID + "=?", new String[]{Integer.toString(cell)});
 			}
 		} else {
 			ContentValues values = new ContentValues();
 			values.put(Cells.CID, cid);
 			values.put(Cells.LOCATION, location);
-			cell = Integer.parseInt(this.getContentResolver().insert(Cells.CONTENT_URI, values).getLastPathSegment());
+			cell = Integer.parseInt(this.getContentResolver().insert(Cells.getContentUri(this), values).getLastPathSegment());
 		}
 		c.close();
 		// select and update or insert pair
-		c = this.getContentResolver().query(Pairs.CONTENT_URI, new String[]{Pairs._ID, Pairs.RSSI_MIN, Pairs.RSSI_MAX}, Pairs.CELL + "=? and " + Pairs.NETWORK + "=?", new String[]{Integer.toString(cell), Long.toString(network)}, null);
+		c = this.getContentResolver().query(Pairs.getContentUri(this), new String[]{Pairs._ID, Pairs.RSSI_MIN, Pairs.RSSI_MAX}, Pairs.CELL + "=? and " + Pairs.NETWORK + "=?", new String[]{Integer.toString(cell), Long.toString(network)}, null);
 		if (c.moveToFirst()) {
 			if (rssi != UNKNOWN_RSSI) {
 				pair = c.getInt(c.getColumnIndex(Pairs._ID));
@@ -806,12 +833,12 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				if (rssi_min > rssi) {
 					ContentValues values = new ContentValues();
 					values.put(Pairs.RSSI_MIN, rssi);
-					this.getContentResolver().update(Pairs.CONTENT_URI, values, Pairs._ID + "=?", new String[]{Integer.toString(pair)});
+					this.getContentResolver().update(Pairs.getContentUri(this), values, Pairs._ID + "=?", new String[]{Integer.toString(pair)});
 				}
 				else if ((rssi_max == UNKNOWN_RSSI) || (rssi_max < rssi)) {
 					ContentValues values = new ContentValues();
 					values.put(Pairs.RSSI_MAX, rssi);
-					this.getContentResolver().update(Pairs.CONTENT_URI, values, Pairs._ID + "=?", new String[]{Integer.toString(pair)});
+					this.getContentResolver().update(Pairs.getContentUri(this), values, Pairs._ID + "=?", new String[]{Integer.toString(pair)});
 				}
 			}
 		} else {
@@ -821,13 +848,13 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			values.put(Pairs.RSSI_MIN, rssi);
 			values.put(Pairs.RSSI_MAX, rssi);
 			values.put(Pairs.MANAGE_CELL, 1);
-			this.getContentResolver().insert(Pairs.CONTENT_URI, values);
+			this.getContentResolver().insert(Pairs.getContentUri(this), values);
 		}
 		c.close();
 	}
 
 	private boolean cellInRange(int cid, int lac, int rssi) {
-		Cursor c = this.getContentResolver().query(Ranges.CONTENT_URI, new String[]{Ranges._ID, Ranges.LOCATION}, Ranges.CID + "=? and (" + Ranges.LAC + "=? or " + Ranges.LOCATION + "=" + UNKNOWN_CID + ") and "
+		Cursor c = this.getContentResolver().query(Ranges.getContentUri(this), new String[]{Ranges._ID, Ranges.LOCATION}, Ranges.CID + "=? and (" + Ranges.LAC + "=? or " + Ranges.LOCATION + "=" + UNKNOWN_CID + ") and "
 				+ Ranges.MANAGE + "=1 and " + Ranges.MANAGE_CELL + "=1"
 				+ (rssi == UNKNOWN_RSSI
 				? ""
@@ -838,7 +865,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			if (c.isNull(c.getColumnIndex(Ranges.LOCATION))) {
 				ContentValues values = new ContentValues();
 				values.put(Ranges.LOCATION, fetchLocation(lac));
-				this.getContentResolver().update(Cells.CONTENT_URI, values, Cells._ID + "=?", new String[]{Integer.toString(c.getInt(c.getColumnIndex(Ranges._ID)))});
+				this.getContentResolver().update(Cells.getContentUri(this), values, Cells._ID + "=?", new String[]{Integer.toString(c.getInt(c.getColumnIndex(Ranges._ID)))});
 			}
 		}
 		c.close();

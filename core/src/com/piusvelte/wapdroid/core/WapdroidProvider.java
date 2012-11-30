@@ -41,7 +41,8 @@ import android.net.Uri;
 
 public class WapdroidProvider extends ContentProvider {
 
-	public static final String AUTHORITY = "com.piusvelte.wapdroidpro.WapdroidProvider";
+	public static final String AUTHORITY = "com.piusvelte.wapdroid.WapdroidProvider";
+	public static final String PRO_AUTHORITY = "com.piusvelte.wapdroidpro.WapdroidProvider";
 
 	private static final UriMatcher sUriMatcher;
 	
@@ -76,6 +77,7 @@ public class WapdroidProvider extends ContentProvider {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
 		
 		sUriMatcher.addURI(AUTHORITY, TABLE_NETWORKS, NETWORKS);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_NETWORKS, NETWORKS);
 		networksProjectionMap = new HashMap<String, String>();
 		networksProjectionMap.put(Networks._ID, Networks._ID);
 		networksProjectionMap.put(Networks.SSID, Networks.SSID);
@@ -83,12 +85,14 @@ public class WapdroidProvider extends ContentProvider {
 		networksProjectionMap.put(Networks.MANAGE, Networks.MANAGE);
 		
 		sUriMatcher.addURI(AUTHORITY, TABLE_CELLS, CELLS);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_CELLS, CELLS);
 		cellsProjectionMap = new HashMap<String, String>();
 		cellsProjectionMap.put(Cells._ID, Cells._ID);
 		cellsProjectionMap.put(Cells.CID, Cells.CID);
 		cellsProjectionMap.put(Cells.LOCATION, Cells.LOCATION);
 		
 		sUriMatcher.addURI(AUTHORITY, TABLE_PAIRS, PAIRS);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_PAIRS, PAIRS);
 		pairsProjectionMap = new HashMap<String, String>();
 		pairsProjectionMap.put(Pairs._ID, Pairs._ID);
 		pairsProjectionMap.put(Pairs.CELL, Pairs.CELL);
@@ -98,11 +102,13 @@ public class WapdroidProvider extends ContentProvider {
 		pairsProjectionMap.put(Pairs.MANAGE_CELL, Pairs.MANAGE_CELL);
 		
 		sUriMatcher.addURI(AUTHORITY, TABLE_LOCATIONS, LOCATIONS);
+		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_LOCATIONS, LOCATIONS);
 		locationsProjectionMap = new HashMap<String, String>();
 		locationsProjectionMap.put(Locations._ID, Locations._ID);
 		locationsProjectionMap.put(Locations.LAC, Locations.LAC);
 		
 		sUriMatcher.addURI(AUTHORITY, VIEW_RANGES, RANGES);
+		sUriMatcher.addURI(PRO_AUTHORITY, VIEW_RANGES, RANGES);
 		rangesProjectionMap = new HashMap<String, String>();
 		rangesProjectionMap.put(Ranges._ID, Ranges._ID);
 		rangesProjectionMap.put(Ranges.BSSID, Ranges.BSSID);
@@ -141,7 +147,7 @@ public class WapdroidProvider extends ContentProvider {
 		}
 		getContext().getContentResolver().notifyChange(uri, null);
 		// the view needs to be updated also
-		if (sUriMatcher.match(uri) == PAIRS) getContext().getContentResolver().notifyChange(Ranges.CONTENT_URI, null);
+		if (sUriMatcher.match(uri) == PAIRS) getContext().getContentResolver().notifyChange(Ranges.getContentUri(getContext()), null);
 		return count;
 	}
 
@@ -171,24 +177,24 @@ public class WapdroidProvider extends ContentProvider {
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
 			rowId = db.insert(TABLE_NETWORKS, Networks._ID, values);
-			returnUri = ContentUris.withAppendedId(Networks.CONTENT_URI, rowId);
+			returnUri = ContentUris.withAppendedId(Networks.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case CELLS:
 			rowId = db.insert(TABLE_CELLS, Cells._ID, values);
-			returnUri = ContentUris.withAppendedId(Cells.CONTENT_URI, rowId);
+			returnUri = ContentUris.withAppendedId(Cells.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case LOCATIONS:
 			rowId = db.insert(TABLE_LOCATIONS, Locations._ID, values);
-			returnUri = ContentUris.withAppendedId(Locations.CONTENT_URI, rowId);
+			returnUri = ContentUris.withAppendedId(Locations.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case PAIRS:
 			rowId = db.insert(TABLE_PAIRS, Pairs._ID, values);
-			returnUri = ContentUris.withAppendedId(Pairs.CONTENT_URI, rowId);
+			returnUri = ContentUris.withAppendedId(Pairs.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
-			getContext().getContentResolver().notifyChange(Ranges.CONTENT_URI, null);
+			getContext().getContentResolver().notifyChange(Ranges.getContentUri(getContext()), null);
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
@@ -259,7 +265,7 @@ public class WapdroidProvider extends ContentProvider {
 		}
 		getContext().getContentResolver().notifyChange(uri, null);
 		// the view needs to be updated also
-		if (sUriMatcher.match(uri) == PAIRS) getContext().getContentResolver().notifyChange(Ranges.CONTENT_URI, null);
+		if (sUriMatcher.match(uri) == PAIRS) getContext().getContentResolver().notifyChange(Ranges.getContentUri(getContext()), null);
 		return count;
 	}
 	

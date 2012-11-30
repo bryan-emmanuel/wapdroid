@@ -19,16 +19,5 @@
  */
 package com.piusvelte.wapdroid;
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-
-public class BootReceiver extends BroadcastReceiver {
-
-	@Override
-	public void onReceive(Context context, Intent intent) {
-		ManageWakeLocks.acquire(context);
-		context.startService(intent.setClass(context, WapdroidService.class));
-	}
-
+public class BootReceiver extends com.piusvelte.wapdroid.core.BootReceiver {
 }
