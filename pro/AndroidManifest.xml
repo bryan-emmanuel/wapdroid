@@ -43,7 +43,7 @@
 			</intent-filter>
 			<intent-filter>
 				<action android:name="android.intent.action.PACKAGE_REPLACED" />
-				<data android:scheme="package" android:path="com.piusvelte.wapdroid" />
+				<data android:scheme="package" android:path="com.piusvelte.wapdroidpro" />
 			</intent-filter>
 		</receiver>
 		<service android:name=".WapdroidService" />

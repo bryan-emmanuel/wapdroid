@@ -22,6 +22,7 @@ package com.piusvelte.wapdroid.core;
 import com.piusvelte.wapdroid.core.R;
 
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.appwidget.AppWidgetManager;
 import android.content.ComponentName;
 import android.content.DialogInterface;
@@ -56,22 +57,88 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 
 	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 		if (key.equals(getString(R.string.key_manageWifi))) {
-			if (sharedPreferences.getBoolean(key, true)) {
+			if (sharedPreferences.getBoolean(key, false)) {
 				this.startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
 				(new AlertDialog.Builder(this)
 				.setMessage(R.string.background_info)
-				.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
 						startActivity(new Intent(android.provider.Settings.ACTION_WIFI_IP_SETTINGS));
 					}
-				})
-				)
+				}))
 				.show();
 			} else this.stopService(Wapdroid.getPackageIntent(this, WapdroidService.class));
 			// update widgets
 			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 			this.sendBroadcast(Wapdroid.getPackageIntent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
+		} else if (key.equals(getString(R.string.key_wifi_sleep_screen))) {
+			if (sharedPreferences.getBoolean(key, false)) {
+				(new AlertDialog.Builder(this)
+				.setTitle(R.string.pref_wifi_sleep)
+				.setMessage(getSleepPolicyMessage(sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_mob_net), false), sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_charging), false)))
+				.setCancelable(true)
+				.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				}))
+				.show();
+			}
+		} else if (key.equals(getString(R.string.key_wifi_sleep_mob_net))) {
+			if (sharedPreferences.getBoolean(key, false)) {
+				(new AlertDialog.Builder(this)
+				.setTitle(R.string.pref_wifi_sleep)
+				.setMessage(getSleepPolicyMessage(true, sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_charging), false)))
+				.setCancelable(true)
+				.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				}))
+				.show();
+			}
+		} else if (key.equals(getString(R.string.key_wifi_sleep_charging))) {
+			if (sharedPreferences.getBoolean(key, false)) {
+				(new AlertDialog.Builder(this)
+				.setTitle(R.string.pref_wifi_sleep)
+				.setMessage(getSleepPolicyMessage(sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_mob_net), false), true))
+				.setCancelable(true)
+				.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				}))
+				.show();
+			}
+		} else if (key.equals(getString(R.string.key_wifi_override_charging))) {
+			if (sharedPreferences.getBoolean(key, false)) {
+				(new AlertDialog.Builder(this)
+				.setTitle(R.string.pref_overrides)
+				.setMessage(String.format(getString(R.string.msg_wifi_override), getString(R.string.msg_wifi_override_charging)))
+				.setCancelable(true)
+				.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						dialog.cancel();
+					}
+				}))
+				.show();
+			}
 		}
+	}
+
+	private String getSleepPolicyMessage(boolean mob_net, boolean charging) {
+		return String.format(getString(R.string.msg_wifi_sleep), mob_net ?
+				String.format(charging ?
+						String.format(getString(R.string.msg_wifi_sleep_charging), getString(R.string.msg_wifi_sleep_mob_net))
+						: getString(R.string.msg_wifi_sleep_mob_net), getString(R.string.msg_wifi_sleep_screen))
+						: charging ?
+								String.format(getString(R.string.msg_wifi_sleep_charging), getString(R.string.msg_wifi_sleep_screen))
+								: getString(R.string.msg_wifi_sleep_screen));
 	}
 }
