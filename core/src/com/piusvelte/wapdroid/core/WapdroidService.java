@@ -187,23 +187,26 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				sleep();
 			} else if (intent.getAction().equals(Intent.ACTION_BATTERY_CHANGED)) {
 				// don't make changes to the alarm as this doesn't involve the location or networks
-				// override low battery when charging
+				int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
 				if (intent.getIntExtra(BATTERY_EXTRA_PLUGGED, 0) != 0) {
 					mBatteryLimit = 0;
+					// override low battery when charging
+					if (mManageWifi && mWiFiOverrideCharging && (mWiFiState != WifiManager.WIFI_STATE_ENABLED) && (mWiFiState != WifiManager.WIFI_STATE_ENABLING))
+						mWifiManager.setWifiEnabled(true);
+					// if charged passed the threshold for starting the phone listener
+					if ((currentBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit))
+						mTelephonyManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 				} else {
 					// unplugged, restore the user defined battery limit
 					SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-					if (sp.getBoolean(getString(R.string.key_battery_override), false)) {
+					if (sp.getBoolean(getString(R.string.key_battery_override), false))
 						mBatteryLimit = Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30"));
+					// if discharged passed the threshold
+					if (mManageWifi && (currentBattPerc < mBatteryLimit) && (mLastBattPerc >= mBatteryLimit)) {
+						// just passed threshhold
+						mWifiManager.setWifiEnabled(false);
+						mTelephonyManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
 					}
-				}
-				int currentBattPerc = Math.round(intent.getIntExtra(BATTERY_EXTRA_LEVEL, 0) * 100 / intent.getIntExtra(BATTERY_EXTRA_SCALE, 100));
-				// check the threshold
-				if (mManageWifi && (currentBattPerc < mBatteryLimit) && (mLastBattPerc >= mBatteryLimit)) {
-					mWifiManager.setWifiEnabled(false);
-					mTelephonyManager.listen(mPhoneListener, PhoneStateListener.LISTEN_NONE);
-				} else if ((currentBattPerc >= mBatteryLimit) && (mLastBattPerc < mBatteryLimit)) {
-					mTelephonyManager.listen(mPhoneListener, (PhoneStateListener.LISTEN_CELL_LOCATION | PhoneStateListener.LISTEN_SIGNAL_STRENGTH | LISTEN_SIGNAL_STRENGTHS));
 				}
 				mLastBattPerc = currentBattPerc;
 				if (mWapdroidUI != null) {
