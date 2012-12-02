@@ -243,7 +243,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				ManageWakeLocks.setScreenState(false);
 				ManageWakeLocks.acquire(this);
 				// check sleep policy, considering overrides
-				if (!mWiFiOverrideCharging && mWiFiSleepScreen && (!mWiFiSleepMobNet || mobileNetworksAvailable()) && (!mWiFiSleepCharging || (mBatteryLimit == 0)) && (mWiFiState == WifiManager.WIFI_STATE_ENABLED) || (mWiFiState == WifiManager.WIFI_STATE_ENABLING)) {
+				if ((!mWiFiOverrideCharging || (mBatteryLimit == 0)) && mWiFiSleepScreen && (!mWiFiSleepMobNet || mobileNetworksAvailable()) && (!mWiFiSleepCharging || (mBatteryLimit == 0)) && (mWiFiState == WifiManager.WIFI_STATE_ENABLED) || (mWiFiState == WifiManager.WIFI_STATE_ENABLING)) {
 					// mWifiSleep override mScanWiFi
 					if (mScanWiFi)
 						mScanWiFi = false;
@@ -353,7 +353,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					wifiState(mWifiManager.getWifiState(), true);
 				} else if ((mSuspendUntil < System.currentTimeMillis())) {
 					// don't disable if override
-					if (!mWiFiOverrideCharging) {
+					if (!mWiFiOverrideCharging || (mBatteryLimit > 0)) {
 						// only disable if the service isn't suspend, which will happen if the user has enabled the wifi
 						Log.d(TAG,"!networkInRange, disabled wifi");
 						// network in range based on cell towers, but not found in scan, override
@@ -646,11 +646,11 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				// and isn't waiting for scan results or is disabled
 				// and isn't in range or battery level high enough
 				if ((mCellTowersInRange ^ ((mWiFiState == WifiManager.WIFI_STATE_ENABLED) || (mWiFiState == WifiManager.WIFI_STATE_ENABLING)))
-						&& (!mCellTowersInRange || mWiFiOverrideCharging || ((!mWiFiSleepScreen || !ManageWakeLocks.hasLock()) && (!mWiFiSleepMobNet || !mobileNetworksAvailable()) && (!mWiFiSleepCharging || (mBatteryLimit == 0))))
+						&& (!mCellTowersInRange || (mWiFiOverrideCharging && (mBatteryLimit == 0)) || ((!mWiFiSleepScreen || !ManageWakeLocks.hasLock()) && (!mWiFiSleepMobNet || !mobileNetworksAvailable()) && (!mWiFiSleepCharging || (mBatteryLimit == 0))))
 						&& (mSuspendUntil < System.currentTimeMillis())
 						&& !(mScanWiFi && (mWiFiState == WifiManager.WIFI_STATE_ENABLED))
 						&& (!mCellTowersInRange || (mLastBattPerc >= mBatteryLimit))
-						&& (mCellTowersInRange || !mWiFiOverrideCharging)) {
+						&& (mCellTowersInRange || !mWiFiOverrideCharging || mBatteryLimit > 0)) {
 					// always scan before disabling and after enabling
 					if (mCellTowersInRange) {
 						Log.d(TAG,"enable wifi");
