@@ -35,4 +35,5 @@
     <string name="key_wifi_sleep_mob_net">wifi_sleep_mob_net</string>
     <string name="key_wifi_sleep_charging">wifi_sleep_charging</string>
     <string name="key_wifi_override_charging">wifi_override_charging</string>
+    <string name="key_logging">logging</string>
 </resources>
