@@ -418,6 +418,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			if (sp.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;
 			if (sp.getBoolean(getString(R.string.key_led), false)) mNotifications |= Notification.DEFAULT_LIGHTS;
 			if (sp.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
+		} else {
+			mPersistentStatus = false;
+			mNotifications = 0;
 		}
 		mBatteryLimit = sp.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30")) : 0;
 		// only register the listener when ui is invoked
@@ -765,6 +768,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				if (sharedPreferences.getBoolean(getString(R.string.key_ringtone), false)) mNotifications |= Notification.DEFAULT_SOUND;
 				if (sharedPreferences.getBoolean(getString(R.string.key_vibrate), false)) mNotifications |= Notification.DEFAULT_VIBRATE;				
 			} else {
+				mPersistentStatus = false;
+				mNotifications = 0;
 				//cancel the notification
 				((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
 			}
@@ -773,10 +778,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			// to change this, manage & notify must me enabled
 			mPersistentStatus = sharedPreferences.getBoolean(key, false);
 			if (mPersistentStatus) {
-				createNotification((mWiFiState == WifiManager.WIFI_STATE_ENABLED), false);
-			} else {
+				if (mNotify)
+					createNotification((mWiFiState == WifiManager.WIFI_STATE_ENABLED), false);
+			} else
 				((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
-			}
 		} else if (key.equals(getString(R.string.key_wifi_sleep_screen))) {
 			mWiFiSleepScreen = sharedPreferences.getBoolean(key, false);
 		} else if (key.equals(getString(R.string.key_wifi_sleep_mob_net))) {
