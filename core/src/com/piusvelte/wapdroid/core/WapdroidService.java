@@ -522,8 +522,8 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	}
 
 	private boolean persistentWiFiWake() {
-		Wapdroid.logInfo("persistentWiFiWake > " + (!mWiFiOverrideCharging || (mWiFiOverrideCharging && (mBatteryLimit == 0))));
-		return !mWiFiOverrideCharging || (mWiFiOverrideCharging && (mBatteryLimit == 0));
+		Wapdroid.logInfo("persistentWiFiWake > " + (mWiFiOverrideCharging && (mBatteryLimit == 0)));
+		return (mWiFiOverrideCharging && (mBatteryLimit == 0));
 	}
 
 	private boolean mobileNetworksAvailable() {
@@ -572,7 +572,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			}
 			// notify, when onCreate (no led, ringtone, vibrate), or a change to enabled or disabled
 			// don't notify when waiting for a scan, as the wifi may immediately be disabled
-			if (!mScanWiFi && mNotify && ((mWiFiState == WifiManager.WIFI_STATE_UNKNOWN)
+			if (!mScanWiFi && ((mWiFiState == WifiManager.WIFI_STATE_UNKNOWN)
 					|| ((state == WifiManager.WIFI_STATE_DISABLED) && (mWiFiState != WifiManager.WIFI_STATE_DISABLED))
 					|| ((state == WifiManager.WIFI_STATE_ENABLED) && (mWiFiState != WifiManager.WIFI_STATE_ENABLED))))
 				createNotification((state == WifiManager.WIFI_STATE_ENABLED), (mWiFiState != WifiManager.WIFI_STATE_UNKNOWN));
@@ -723,8 +723,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 	}
 
 	private void createNotification(boolean enabled, boolean update) {
+		Wapdroid.logInfo("createNotification < " + enabled + ", " + update);
 		// service runs for ui, so if not managing, don't notify
-		if (mManageWifi) {
+		if (mManageWifi && mNotify) {
+			Wapdroid.logInfo("notify!");
 			Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), System.currentTimeMillis());
 			notification.setLatestEventInfo(getBaseContext(), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), getString(R.string.app_name), PendingIntent.getActivity(this, 0, Wapdroid.getPackageIntent(this, WapdroidUI.class), 0));
 			if (mPersistentStatus)
@@ -777,10 +779,9 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		else if (key.equals(getString(R.string.key_persistent_status))) {
 			// to change this, manage & notify must me enabled
 			mPersistentStatus = sharedPreferences.getBoolean(key, false);
-			if (mPersistentStatus) {
-				if (mNotify)
-					createNotification((mWiFiState == WifiManager.WIFI_STATE_ENABLED), false);
-			} else
+			if (mPersistentStatus)
+				createNotification((mWiFiState == WifiManager.WIFI_STATE_ENABLED), false);
+			else
 				((NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE)).cancel(NOTIFY_ID);
 		} else if (key.equals(getString(R.string.key_wifi_sleep_screen))) {
 			mWiFiSleepScreen = sharedPreferences.getBoolean(key, false);
