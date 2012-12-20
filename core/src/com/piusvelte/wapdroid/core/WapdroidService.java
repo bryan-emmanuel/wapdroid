@@ -25,6 +25,7 @@ import static com.piusvelte.wapdroid.core.Wapdroid.UNKNOWN_RSSI;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 
+import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -57,6 +58,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.telephony.CellLocation;
@@ -350,6 +352,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					// out of network range
 					// don't disable if override
 					if (!persistentWiFiWake() && !wiFiDisabledOrDisabling()) {
+						//TODO: should the database be updated to remove the in range cells?
 						mScanWiFi = false;
 						// only disable if the service isn't suspend, which will happen if the user has enabled the wifi
 						// prevent hysteresis near networks
@@ -916,4 +919,13 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		return inRange;
 	}
 
+	private void backupDatabase() {
+		//TODO future functionality to backup the database
+		// need backupagent
+		File data = Environment.getDataDirectory();
+		File db = new File(data, "//data//" + this.getPackageName() + "//databases//" + WapdroidProvider.DATABASE_NAME);
+		if (db.exists()) {
+			// backup
+		}
+	}
 }

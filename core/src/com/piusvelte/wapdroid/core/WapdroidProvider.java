@@ -46,7 +46,7 @@ public class WapdroidProvider extends ContentProvider {
 
 	private static final UriMatcher sUriMatcher;
 	
-	private static final String DATABASE_NAME = "wapdroid";
+	protected static final String DATABASE_NAME = "wapdroid";
 	private static final int DATABASE_VERSION = 9;
 	
 	public static final String TAG = "WapdroidProvider";

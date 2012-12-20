@@ -62,10 +62,8 @@
             android:multiprocess="true"
             android:grantUriPermissions="true" />
 		<uses-library android:name="com.google.android.maps" />
-		<!--
 		<meta-data android:name="com.google.android.backup.api_key"
 		android:value="AEdPqrEAAAAIlersG5aLPTzpSy9UnEVOLZD14LQ-XUa654IkZg" />
-		-->
 	</application>
     <uses-sdk android:minSdkVersion="3" android:targetSdkVersion="16"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
