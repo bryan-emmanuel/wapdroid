@@ -1,6 +1,6 @@
 /*
  * Wapdroid - Android Location based Wifi Manager
- * Copyright (C) 2009 Bryan Emmanuel
+ * Copyright (C) 2012 Bryan Emmanuel
  * 
  * This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,11 +17,12 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-
 package com.piusvelte.wapdroid.core;
 
+import android.annotation.TargetApi;
 import android.telephony.CellLocation;
 
+@TargetApi(5)
 public class CdmaCellLocation {
 	private int mBaseStationId,
 	mNetworkId;

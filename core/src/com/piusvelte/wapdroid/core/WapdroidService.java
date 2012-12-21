@@ -1,6 +1,6 @@
 /*
  * Wapdroid - Android Location based Wifi Manager
- * Copyright (C) 2009 Bryan Emmanuel
+ * Copyright (C) 2012 Bryan Emmanuel
  * 
  * This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,6 @@ import static com.piusvelte.wapdroid.core.Wapdroid.UNKNOWN_RSSI;
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 
-import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -58,7 +57,6 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.SupplicantState;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
-import android.os.Environment;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.telephony.CellLocation;
@@ -347,6 +345,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					if (mScanWiFi) {
 						mScanWiFi = false;
 						createNotification((mWiFiState == WifiManager.WIFI_STATE_ENABLED), (mWiFiState != WifiManager.WIFI_STATE_UNKNOWN));
+						BackupManager.dataChanged(getApplicationContext());
 					}
 				} else if ((mSuspendUntil < System.currentTimeMillis())) {
 					// out of network range
@@ -804,6 +803,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			else
 				Wapdroid.stopLogging();
 		}
+		BackupManager.dataChanged(getApplicationContext());
 	}
 
 	private long fetchNetwork(String ssid, String bssid) {
@@ -917,15 +917,5 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		}
 		c.close();
 		return inRange;
-	}
-
-	private void backupDatabase() {
-		//TODO future functionality to backup the database
-		// need backupagent
-		File data = Environment.getDataDirectory();
-		File db = new File(data, "//data//" + this.getPackageName() + "//databases//" + WapdroidProvider.DATABASE_NAME);
-		if (db.exists()) {
-			// backup
-		}
 	}
 }
