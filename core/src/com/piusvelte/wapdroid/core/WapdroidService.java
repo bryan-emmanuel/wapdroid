@@ -345,7 +345,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					if (mScanWiFi) {
 						mScanWiFi = false;
 						createNotification((mWiFiState == WifiManager.WIFI_STATE_ENABLED), (mWiFiState != WifiManager.WIFI_STATE_UNKNOWN));
-						BackupManager.dataChanged(getApplicationContext());
+						BackupManager.dataChanged(this);
 					}
 				} else if ((mSuspendUntil < System.currentTimeMillis())) {
 					// out of network range
@@ -803,7 +803,11 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			else
 				Wapdroid.stopLogging();
 		}
-		BackupManager.dataChanged(getApplicationContext());
+		try {
+			BackupManager.dataChanged(this);
+		} catch (Throwable t) {
+			Log.d(TAG, "backupagent not supported");
+		}
 	}
 
 	private long fetchNetwork(String ssid, String bssid) {
