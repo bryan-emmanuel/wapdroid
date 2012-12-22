@@ -19,22 +19,40 @@
  */
 package com.piusvelte.wapdroid.core;
 
+import java.io.IOException;
+
 import android.annotation.TargetApi;
 import android.app.backup.BackupAgentHelper;
+import android.app.backup.BackupDataInput;
+import android.app.backup.BackupDataOutput;
 import android.app.backup.FileBackupHelper;
 import android.app.backup.SharedPreferencesBackupHelper;
-import android.util.Log;
+import android.os.ParcelFileDescriptor;
 
 @TargetApi(8)
-public class WapdroidBackupAgentHelper extends BackupAgentHelper {
-	private static final String TAG = "WapdroidBackupAgentHelper";
+public class WapdroidBackupAgent extends BackupAgentHelper {
 
 	@Override
 	public void onCreate() {
-		Log.d(TAG, "onCreate");
 		FileBackupHelper fbh = new FileBackupHelper(this, "../databases/" + WapdroidProvider.DATABASE_NAME);
 		addHelper(WapdroidProvider.DATABASE_NAME, fbh);
 		SharedPreferencesBackupHelper spbh = new SharedPreferencesBackupHelper(this, getString(R.string.key_preferences));
 		addHelper(getString(R.string.key_preferences), spbh);
+	}
+	
+	@Override
+	public void onBackup(ParcelFileDescriptor oldState, BackupDataOutput data,
+	          ParcelFileDescriptor newState) throws IOException {
+	    synchronized (Wapdroid.sDatabaseLock) {
+	        super.onBackup(oldState, data, newState);
+	    }
+	}
+
+	@Override
+	public void onRestore(BackupDataInput data, int appVersionCode,
+	        ParcelFileDescriptor newState) throws IOException {
+	    synchronized (Wapdroid.sDatabaseLock) {
+	        super.onRestore(data, appVersionCode, newState);
+	    }
 	}
 }

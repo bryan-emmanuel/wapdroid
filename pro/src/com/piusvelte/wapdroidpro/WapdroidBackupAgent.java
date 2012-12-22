@@ -17,7 +17,7 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.wapdroid;
+package com.piusvelte.wapdroidpro;
 
-public class WapdroidBackupAgentHelper extends com.piusvelte.wapdroid.core.WapdroidBackupAgentHelper {
+public class WapdroidBackupAgent extends com.piusvelte.wapdroid.core.WapdroidBackupAgent {
 }

@@ -127,7 +127,10 @@ public class WapdroidProvider extends ContentProvider {
 
 	@Override
 	public int delete(Uri uri, String arg1, String[] arg2) {
-		SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+		SQLiteDatabase db;
+		synchronized (Wapdroid.sDatabaseLock) {
+			db = mDatabaseHelper.getWritableDatabase();
+		}
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
@@ -171,7 +174,10 @@ public class WapdroidProvider extends ContentProvider {
 
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
-		SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+		SQLiteDatabase db;
+		synchronized (Wapdroid.sDatabaseLock) {
+			db = mDatabaseHelper.getWritableDatabase();
+		}
 		long rowId;
 		Uri returnUri;
 		switch (sUriMatcher.match(uri)) {
@@ -236,7 +242,10 @@ public class WapdroidProvider extends ContentProvider {
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
-		SQLiteDatabase db = mDatabaseHelper.getReadableDatabase();
+		SQLiteDatabase db;
+		synchronized (Wapdroid.sDatabaseLock) {
+			db = mDatabaseHelper.getReadableDatabase();
+		}
 		Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, sortOrder);
 		c.setNotificationUri(getContext().getContentResolver(), uri);
 		return c;
@@ -245,7 +254,10 @@ public class WapdroidProvider extends ContentProvider {
 	@Override
 	public int update(Uri uri, ContentValues values, String selection,
 			String[] selectionArgs) {
-		SQLiteDatabase db = mDatabaseHelper.getWritableDatabase();
+		SQLiteDatabase db;
+		synchronized (Wapdroid.sDatabaseLock) {
+			db = mDatabaseHelper.getWritableDatabase();
+		}
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:

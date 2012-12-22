@@ -45,6 +45,7 @@ public final class Wapdroid {
 
 	private static FileHandler sLogFileHandler = null;
 	private static Logger sLogger = null;
+	protected static final int[] sDatabaseLock = new int[0];
 
 	private Wapdroid() {}
 
