@@ -57,7 +57,7 @@ import android.widget.AdapterView.AdapterContextMenuInfo;
 
 public class ManageData extends ListActivity implements ServiceConnection {
 	long mNetwork = 0;
-	int mCid;
+	long mCid;
 	private static final int MANAGE_ID = 0;
 	private static final int MANAGE_NETWORK_OR_CELL_ID = 1;
 	private static final int MAP_ID = 2;
@@ -117,8 +117,8 @@ public class ManageData extends ListActivity implements ServiceConnection {
 		super.onCreate(savedInstanceState);
 		Bundle extras = getIntent().getExtras();
 		if (extras != null) {
-			mNetwork = extras.getInt(WapdroidProvider.TABLE_NETWORKS);
-			mCid = extras.getInt(Cells.CID);
+			mNetwork = extras.getLong(WapdroidProvider.TABLE_NETWORKS);
+			mCid = extras.getLong(Cells.CID);
 			mSsid = extras.getString(Networks.SSID);
 			mBssid = extras.getString(Networks.BSSID);
 			mCells = extras.getString(WapdroidProvider.TABLE_CELLS);
@@ -358,7 +358,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 																			+ " from " + WapdroidProvider.VIEW_RANGES
 																			+ " where " + Ranges.NETWORK + "=" + mNetwork + " and"
 																			+ mCells + ")"))
-																			, (mFilter == FILTER_CONNECTED ? new String[]{Long.toString(mNetwork), Integer.toString(mCid)} : new String[]{Long.toString(mNetwork)}), STATUS);
+																			, (mFilter == FILTER_CONNECTED ? new String[]{Long.toString(mNetwork), Long.toString(mCid)} : new String[]{Long.toString(mNetwork)}), STATUS);
 				SimpleCursorAdapter sca = new SimpleCursorAdapter(this,
 						R.layout.cell_row,
 						c,

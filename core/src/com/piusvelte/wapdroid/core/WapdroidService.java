@@ -696,8 +696,10 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					// check that the sleep or persistent policies aren't violated
 					if ((mCellTowersInRange && !sleepPolicyActive()) || (!mCellTowersInRange && !persistentWiFiWake())) {
 						// check that the service isn't suspended
+						Wapdroid.logInfo("not suspended ? " + (mSuspendUntil < System.currentTimeMillis()));
 						if (mSuspendUntil < System.currentTimeMillis()) {
 							// check that this isn't the verification scan
+							Wapdroid.logInfo("not scanning ? " + !mScanWiFi);
 							if (!(mScanWiFi && (mWiFiState == WifiManager.WIFI_STATE_ENABLED))) {
 								// always scan before disabling and after enabling
 								if (mCellTowersInRange) {
