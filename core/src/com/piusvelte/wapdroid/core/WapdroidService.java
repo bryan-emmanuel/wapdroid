@@ -50,6 +50,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -392,7 +393,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		 * listen to wifi when: screenon
 		 * listen to battery when: disabling on battery level, UI is in foreground
 		 */
-		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		// initialize preferences, updated by UI
 		if (!sp.contains(getString(R.string.key_wifi_sleep_screen))) {
 			// changed the sleep policy prefs
@@ -427,6 +428,15 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 		mBatteryLimit = sp.getBoolean(getString(R.string.key_battery_override), false) ? Integer.parseInt((String) sp.getString(getString(R.string.key_battery_percentage), "30")) : 0;
 		// only register the listener when ui is invoked
 		sp.registerOnSharedPreferenceChangeListener(this);
+		// handle version changes
+		int currVer = 0;
+		try {
+			currVer = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+		if (!sp.contains(getString(R.string.key_version)) || (currVer > sp.getInt(getString(R.string.key_version), 0)))
+			sp.edit().putInt(getString(R.string.key_version), currVer).commit();
 		mAlarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
 		mWifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
 		wifiState(mWifiManager.getWifiState());

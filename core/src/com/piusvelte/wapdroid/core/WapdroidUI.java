@@ -129,7 +129,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	@Override
 	public void onResume() {
 		super.onResume();
-		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
+		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 //		SharedPreferences.Editor spe = sp.edit();
 //		spe.putBoolean(getString(R.string.key_manual_override), false);
 //		spe.commit();
