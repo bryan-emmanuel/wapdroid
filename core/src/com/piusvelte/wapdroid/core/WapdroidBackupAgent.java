@@ -35,7 +35,7 @@ public class WapdroidBackupAgent extends BackupAgentHelper {
 	@Override
 	public void onCreate() {
 		FileBackupHelper fbh = new FileBackupHelper(this, "../databases/" + WapdroidProvider.DATABASE_NAME);
-		addHelper(WapdroidProvider.DATABASE_NAME, fbh);
+		addHelper(WapdroidProvider.DATABASE_NAME + ".db", fbh);
 		SharedPreferencesBackupHelper spbh = new SharedPreferencesBackupHelper(this, getString(R.string.key_preferences));
 		addHelper(getString(R.string.key_preferences), spbh);
 	}
