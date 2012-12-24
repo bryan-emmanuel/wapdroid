@@ -1,6 +1,6 @@
 /*
  * Wapdroid - Android Location based Wifi Manager
- * Copyright (C) 2009 Bryan Emmanuel
+ * Copyright (C) 2012 Bryan Emmanuel
  * 
  * This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -205,25 +205,25 @@ public class ManageData extends ListActivity implements ServiceConnection {
 		int id = (int) ((AdapterContextMenuInfo) item.getMenuInfo()).id;
 		if (item.getItemId() == DELETE_ID) {
 			if (mNetwork == 0) {
-				this.getContentResolver().delete(Networks.getContentUri(this), Networks._ID + "=" + id, null);
-				this.getContentResolver().delete(Pairs.getContentUri(this), Pairs.NETWORK + "=" + id, null);
+				getContentResolver().delete(Networks.getContentUri(this), Networks._ID + "=" + id, null);
+				getContentResolver().delete(Pairs.getContentUri(this), Pairs.NETWORK + "=" + id, null);
 			} else {
-				this.getContentResolver().delete(Pairs.getContentUri(this), Pairs._ID + "=" + id, null);
-				Cursor n = this.getContentResolver().query(Pairs.getContentUri(this), new String[]{Pairs._ID}, Pairs.NETWORK + "=" + mNetwork, null, null);
-				if (n.getCount() == 0) this.getContentResolver().delete(Pairs.getContentUri(this), Pairs._ID + "=" + mNetwork, null);
+				getContentResolver().delete(Pairs.getContentUri(this), Pairs._ID + "=" + id, null);
+				Cursor n = getContentResolver().query(Pairs.getContentUri(this), new String[]{Pairs._ID}, Pairs.NETWORK + "=" + mNetwork, null, null);
+				if (n.getCount() == 0) getContentResolver().delete(Pairs.getContentUri(this), Pairs._ID + "=" + mNetwork, null);
 				n.close();
 			}
-			Cursor c = this.getContentResolver().query(Cells.getContentUri(this), new String[]{Cells._ID, Cells.LOCATION}, null, null, null);
+			Cursor c = getContentResolver().query(Cells.getContentUri(this), new String[]{Cells._ID, Cells.LOCATION}, null, null, null);
 			if (c.moveToFirst()) {
 				int[] index = {c.getColumnIndex(Cells._ID), c.getColumnIndex(Cells.LOCATION)};
 				while (!c.isAfterLast()) {
 					int cell = c.getInt(index[0]);
-					Cursor p = this.getContentResolver().query(Pairs.getContentUri(this), new String[]{Pairs._ID}, Pairs.CELL + "=" + cell, null, null);
+					Cursor p = getContentResolver().query(Pairs.getContentUri(this), new String[]{Pairs._ID}, Pairs.CELL + "=" + cell, null, null);
 					if (p.getCount() == 0) {
-						this.getContentResolver().delete(Cells.getContentUri(this), Cells._ID + "=" + cell, null);
+						getContentResolver().delete(Cells.getContentUri(this), Cells._ID + "=" + cell, null);
 						int location = c.getInt(index[1]);
-						Cursor l = this.getContentResolver().query(Cells.getContentUri(this), new String[]{Cells.LOCATION}, Cells.LOCATION + "=" + location, null, null);
-						if (l.getCount() == 0) this.getContentResolver().delete(Locations.getContentUri(this), Locations._ID + "=" + location, null);
+						Cursor l = getContentResolver().query(Cells.getContentUri(this), new String[]{Cells.LOCATION}, Cells.LOCATION + "=" + location, null, null);
+						if (l.getCount() == 0) getContentResolver().delete(Locations.getContentUri(this), Locations._ID + "=" + location, null);
 						l.close();
 					}
 					p.close();
@@ -231,6 +231,7 @@ public class ManageData extends ListActivity implements ServiceConnection {
 				}
 			}
 			c.close();
+			BackupManager.dataChanged(this);
 		}
 		return super.onContextItemSelected(item);
 	}
