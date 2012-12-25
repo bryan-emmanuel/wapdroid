@@ -47,7 +47,7 @@ public class WapdroidProvider extends ContentProvider {
 	private static final UriMatcher sUriMatcher;
 	
 	protected static final String DATABASE_NAME = "wapdroid";
-	private static final int DATABASE_VERSION = 9;
+	private static final int DATABASE_VERSION = 10;
 	
 	public static final String TAG = "WapdroidProvider";
 	
@@ -516,6 +516,16 @@ public class WapdroidProvider extends ContentProvider {
 						+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + Ranges._ID + "=" + Ranges.CELL
 						+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + Ranges._ID + "=" + Ranges.LOCATION
 						+ " left join " + TABLE_NETWORKS + " on " + TABLE_NETWORKS + "." + Ranges._ID + "=" + Ranges.NETWORK + ";");				
+			}
+			if (oldVersion < 10) {
+				// strip quoted SSIDs
+				Cursor c = db.rawQuery("select " + Networks._ID + "," + Networks.SSID + " from " + TABLE_NETWORKS + " where " + Networks.SSID + " like '\"%\"';", null);
+				if (c.moveToFirst()) {
+					while (!c.isAfterLast()) {
+						db.execSQL("update " + TABLE_NETWORKS + " set " + Networks.SSID + "='" + Wapdroid.stripQuotes(c.getString(1)) + "' where " + Networks._ID + "=" + c.getInt(0));
+						c.moveToNext();
+					}
+				}
 			}
 		}
 	}

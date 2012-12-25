@@ -194,4 +194,12 @@ public final class Wapdroid {
 			sLogFileHandler = null;
 		}
 	}
+	
+	protected static String stripQuotes(String quotedStr) {
+		int strLen = quotedStr.length();
+		if ((strLen > 1) && quotedStr.substring(0, 1).equals("\"") && quotedStr.subSequence((strLen - 1), strLen).equals("\""))
+			return quotedStr.substring(1, (strLen - 1));
+		else
+			return quotedStr;
+	}
 }
