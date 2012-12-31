@@ -45,37 +45,37 @@ public class WapdroidProvider extends ContentProvider {
 	public static final String PRO_AUTHORITY = "com.piusvelte.wapdroidpro.WapdroidProvider";
 
 	private static final UriMatcher sUriMatcher;
-	
+
 	protected static final String DATABASE_NAME = "wapdroid";
 	private static final int DATABASE_VERSION = 10;
-	
+
 	public static final String TAG = "WapdroidProvider";
-	
+
 	public static final String TABLE_NETWORKS = "networks";
 	private static final int NETWORKS = 0;
 	private static HashMap<String, String> networksProjectionMap;
-	
+
 	public static final String TABLE_CELLS = "cells";
 	private static final int CELLS = 1;
 	private static HashMap<String, String> cellsProjectionMap;
-	
+
 	public static final String TABLE_PAIRS = "pairs";
 	private static final int PAIRS = 2;
 	private static HashMap<String, String> pairsProjectionMap;
-	
+
 	public static final String TABLE_LOCATIONS = "locations";
 	private static final int LOCATIONS = 3;
 	private static HashMap<String, String> locationsProjectionMap;
-	
+
 	public static final String VIEW_RANGES = "ranges";
 	private static final int RANGES = 4;
 	private static HashMap<String, String> rangesProjectionMap;
-	
+
 	private DatabaseHelper mDatabaseHelper;
 
 	static {
 		sUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-		
+
 		sUriMatcher.addURI(AUTHORITY, TABLE_NETWORKS, NETWORKS);
 		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_NETWORKS, NETWORKS);
 		networksProjectionMap = new HashMap<String, String>();
@@ -83,14 +83,14 @@ public class WapdroidProvider extends ContentProvider {
 		networksProjectionMap.put(Networks.SSID, Networks.SSID);
 		networksProjectionMap.put(Networks.BSSID, Networks.BSSID);
 		networksProjectionMap.put(Networks.MANAGE, Networks.MANAGE);
-		
+
 		sUriMatcher.addURI(AUTHORITY, TABLE_CELLS, CELLS);
 		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_CELLS, CELLS);
 		cellsProjectionMap = new HashMap<String, String>();
 		cellsProjectionMap.put(Cells._ID, Cells._ID);
 		cellsProjectionMap.put(Cells.CID, Cells.CID);
 		cellsProjectionMap.put(Cells.LOCATION, Cells.LOCATION);
-		
+
 		sUriMatcher.addURI(AUTHORITY, TABLE_PAIRS, PAIRS);
 		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_PAIRS, PAIRS);
 		pairsProjectionMap = new HashMap<String, String>();
@@ -100,13 +100,13 @@ public class WapdroidProvider extends ContentProvider {
 		pairsProjectionMap.put(Pairs.RSSI_MAX, Pairs.RSSI_MAX);
 		pairsProjectionMap.put(Pairs.RSSI_MIN, Pairs.RSSI_MIN);
 		pairsProjectionMap.put(Pairs.MANAGE_CELL, Pairs.MANAGE_CELL);
-		
+
 		sUriMatcher.addURI(AUTHORITY, TABLE_LOCATIONS, LOCATIONS);
 		sUriMatcher.addURI(PRO_AUTHORITY, TABLE_LOCATIONS, LOCATIONS);
 		locationsProjectionMap = new HashMap<String, String>();
 		locationsProjectionMap.put(Locations._ID, Locations._ID);
 		locationsProjectionMap.put(Locations.LAC, Locations.LAC);
-		
+
 		sUriMatcher.addURI(AUTHORITY, VIEW_RANGES, RANGES);
 		sUriMatcher.addURI(PRO_AUTHORITY, VIEW_RANGES, RANGES);
 		rangesProjectionMap = new HashMap<String, String>();
@@ -123,7 +123,7 @@ public class WapdroidProvider extends ContentProvider {
 		rangesProjectionMap.put(Ranges.MANAGE, Ranges.MANAGE);
 		rangesProjectionMap.put(Ranges.MANAGE_CELL, Ranges.MANAGE_CELL);
 	}
-	
+
 
 	@Override
 	public int delete(Uri uri, String arg1, String[] arg2) {
@@ -134,23 +134,32 @@ public class WapdroidProvider extends ContentProvider {
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
+			synchronized (Wapdroid.sDatabaseLock) {
 			count = db.delete(TABLE_NETWORKS, arg1, arg2);
+			}
 			break;
 		case CELLS:
+			synchronized (Wapdroid.sDatabaseLock) {
 			count = db.delete(TABLE_CELLS, arg1, arg2);
+			}
 			break;
 		case LOCATIONS:
+			synchronized (Wapdroid.sDatabaseLock) {
 			count = db.delete(TABLE_LOCATIONS, arg1, arg2);
+			}
 			break;
 		case PAIRS:
+			synchronized (Wapdroid.sDatabaseLock) {
 			count = db.delete(TABLE_PAIRS, arg1, arg2);
+			}
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 		getContext().getContentResolver().notifyChange(uri, null);
 		// the view needs to be updated also
-		if (sUriMatcher.match(uri) == PAIRS) getContext().getContentResolver().notifyChange(Ranges.getContentUri(getContext()), null);
+		if (sUriMatcher.match(uri) == PAIRS)
+			getContext().getContentResolver().notifyChange(Ranges.getContentUri(getContext()), null);
 		return count;
 	}
 
@@ -182,22 +191,30 @@ public class WapdroidProvider extends ContentProvider {
 		Uri returnUri;
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
-			rowId = db.insert(TABLE_NETWORKS, Networks._ID, values);
+			synchronized (Wapdroid.sDatabaseLock) {
+				rowId = db.insert(TABLE_NETWORKS, Networks._ID, values);
+			}
 			returnUri = ContentUris.withAppendedId(Networks.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case CELLS:
-			rowId = db.insert(TABLE_CELLS, Cells._ID, values);
+			synchronized (Wapdroid.sDatabaseLock) {
+				rowId = db.insert(TABLE_CELLS, Cells._ID, values);
+			}
 			returnUri = ContentUris.withAppendedId(Cells.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case LOCATIONS:
-			rowId = db.insert(TABLE_LOCATIONS, Locations._ID, values);
+			synchronized (Wapdroid.sDatabaseLock) {
+				rowId = db.insert(TABLE_LOCATIONS, Locations._ID, values);
+			}
 			returnUri = ContentUris.withAppendedId(Locations.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case PAIRS:
-			rowId = db.insert(TABLE_PAIRS, Pairs._ID, values);
+			synchronized (Wapdroid.sDatabaseLock) {
+				rowId = db.insert(TABLE_PAIRS, Pairs._ID, values);
+			}
 			returnUri = ContentUris.withAppendedId(Pairs.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			getContext().getContentResolver().notifyChange(Ranges.getContentUri(getContext()), null);
@@ -261,26 +278,35 @@ public class WapdroidProvider extends ContentProvider {
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
+			synchronized (Wapdroid.sDatabaseLock) {
 			count = db.update(TABLE_NETWORKS, values, selection, selectionArgs);
+			}
 			break;
 		case CELLS:
+			synchronized (Wapdroid.sDatabaseLock) {
 			count = db.update(TABLE_CELLS, values, selection, selectionArgs);
+			}
 			break;
 		case LOCATIONS:
+			synchronized (Wapdroid.sDatabaseLock) {
 			count = db.update(TABLE_LOCATIONS, values, selection, selectionArgs);
+			}
 			break;
 		case PAIRS:
+			synchronized (Wapdroid.sDatabaseLock) {
 			count = db.update(TABLE_PAIRS, values, selection, selectionArgs);
+			}
 			break;
 		default:
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 		getContext().getContentResolver().notifyChange(uri, null);
 		// the view needs to be updated also
-		if (sUriMatcher.match(uri) == PAIRS) getContext().getContentResolver().notifyChange(Ranges.getContentUri(getContext()), null);
+		if (sUriMatcher.match(uri) == PAIRS)
+			getContext().getContentResolver().notifyChange(Ranges.getContentUri(getContext()), null);
 		return count;
 	}
-	
+
 	public class DatabaseHelper extends SQLiteOpenHelper {
 
 		public DatabaseHelper(Context context) {
