@@ -31,11 +31,14 @@ import android.os.ParcelFileDescriptor;
 
 @TargetApi(8)
 public class WapdroidBackupAgent extends BackupAgentHelper {
+	
+	private static final String Sdatabase = "database";
+	private static final String Spreferences = "preferences";
 
 	@Override
 	public void onCreate() {
-		addHelper(WapdroidProvider.DATABASE_NAME + ".db", new FileBackupHelper(this, "../databases/" + WapdroidProvider.DATABASE_NAME));
-		addHelper(getString(R.string.key_preferences), new SharedPreferencesBackupHelper(this, getString(R.string.key_preferences)));
+		addHelper(Sdatabase, new FileBackupHelper(this, "../databases/" + WapdroidProvider.DATABASE_NAME));
+		addHelper(Spreferences, new SharedPreferencesBackupHelper(this, getString(R.string.key_preferences)));
 	}
 	
 	@Override
