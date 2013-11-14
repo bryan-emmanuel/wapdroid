@@ -1,12 +1,12 @@
 /*
  * Wapdroid - Android Location based Wifi Manager
  * Copyright (C) 2009 Bryan Emmanuel
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -14,7 +14,7 @@
 
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *  
+ *
  *  Bryan Emmanuel piusvelte@gmail.com
  */
 
@@ -51,7 +51,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	public static final int WIFI_ID = Menu.FIRST + 2;
 	public static final int ABOUT_ID = Menu.FIRST + 3;
 	private TextView field_CID,
-	field_wifiState, 
+	field_wifiState,
 	field_wifiBSSID,
 	field_signal,
 	field_battery,
@@ -72,6 +72,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 		field_signal = (TextView) findViewById(R.id.field_signal);
 		field_battery = (TextView) findViewById(R.id.field_battery);
 		field_LAC = (TextView) findViewById(R.id.field_LAC);
+
 		if (!getPackageName().toLowerCase().contains(Wapdroid.PRO)) {
 			AdView adView = new AdView(this, AdSize.BANNER, Wapdroid.GOOGLE_AD_ID);
 			((LinearLayout) findViewById(R.id.ad)).addView(adView);
@@ -99,10 +100,6 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 			startActivity(Wapdroid.getPackageIntent(this, Settings.class));
 			return true;
 		case WIFI_ID:
-//			SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), WapdroidService.MODE_PRIVATE);
-//			SharedPreferences.Editor spe = sp.edit();
-//			spe.putBoolean(getString(R.string.key_manual_override), true);
-//			spe.commit();
 			startActivity(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS));
 			return true;
 		case ABOUT_ID:
@@ -112,17 +109,20 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 			dialog.show();
 			return true;
 		}
+
 		return super.onOptionsItemSelected(item);
 	}
 
 	@Override
 	public void onPause() {
 		super.onPause();
+
 		if (mIService != null) {
 			try {
 				mIService.setCallback(null);
 			} catch (RemoteException e) {}
 		}
+
 		unbindService(this);
 	}
 
@@ -130,16 +130,16 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	public void onResume() {
 		super.onResume();
 		SharedPreferences sp = (SharedPreferences) getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-//		SharedPreferences.Editor spe = sp.edit();
-//		spe.putBoolean(getString(R.string.key_manual_override), false);
-//		spe.commit();
-		if (sp.getBoolean(getString(R.string.key_manageWifi), false)) startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
-		else {
+
+		if (sp.getBoolean(getString(R.string.key_manageWifi), false)) {
+			startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
+		} else {
 			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
 			dialog.setMessage(R.string.service_info);
 			dialog.setNegativeButton(android.R.string.ok, this);
-			dialog.show();			
+			dialog.show();
 		}
+
 		bindService(Wapdroid.getPackageIntent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
 	}
 
@@ -154,6 +154,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 		throws RemoteException {
 			mSsid = ssid;
 			mBssid = bssid;
+
 			if (state == WifiManager.WIFI_STATE_ENABLED) {
 				if (ssid != null) {
 					field_wifiState.setText(ssid);
@@ -191,6 +192,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	@Override
 	public void onServiceConnected(ComponentName name, IBinder service) {
 		mIService = IWapdroidService.Stub.asInterface((IBinder) service);
+
 		if (mWapdroidUI != null) {
 			try {
 				mIService.setCallback(mWapdroidUI.asBinder());
@@ -202,7 +204,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	public void onServiceDisconnected(ComponentName name) {
 		mIService = null;
 	}
-	
+
 	@Override
 	public void onClick(DialogInterface dialog, int which) {
 		dialog.cancel();

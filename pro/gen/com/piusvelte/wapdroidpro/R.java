@@ -101,6 +101,7 @@ containing a value of this type.
         public static final int send_log=0x7f080013;
         public static final int widget=0x7f080014;
         public static final int widget_icon=0x7f080015;
+        public static final int widget_label=0x7f080016;
     }
     public static final class layout {
         public static final int about=0x7f030000;
@@ -249,7 +250,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:backgroundColor
+          @attr name com.piusvelte.wapdroidpro:backgroundColor
         */
         public static final int com_admob_android_ads_AdView_backgroundColor = 0;
         /**
@@ -263,7 +264,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:keywords
+          @attr name com.piusvelte.wapdroidpro:keywords
         */
         public static final int com_admob_android_ads_AdView_keywords = 3;
         /**
@@ -278,7 +279,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:primaryTextColor
+          @attr name com.piusvelte.wapdroidpro:primaryTextColor
         */
         public static final int com_admob_android_ads_AdView_primaryTextColor = 1;
         /**
@@ -292,7 +293,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:refreshInterval
+          @attr name com.piusvelte.wapdroidpro:refreshInterval
         */
         public static final int com_admob_android_ads_AdView_refreshInterval = 4;
         /**
@@ -307,7 +308,7 @@ containing a value of this type.
 theme attribute (in the form
 "<code>?[<i>package</i>:][<i>type</i>:]<i>name</i></code>")
 containing a value of this type.
-          @attr name android:secondaryTextColor
+          @attr name com.piusvelte.wapdroidpro:secondaryTextColor
         */
         public static final int com_admob_android_ads_AdView_secondaryTextColor = 2;
     };
