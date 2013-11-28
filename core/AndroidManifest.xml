@@ -21,7 +21,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
       android:versionCode="379" android:versionName="3.7.9"
       android:installLocation="auto" package="com.piusvelte.wapdroid.core">
-    <application android:icon="@drawable/icon" android:label="@string/app_name" android:backupAgent="WapdroidBackupAgent">
+    <application android:icon="@drawable/icon" android:label="@string/app_name" android:backupAgent="com.piusvelte.eidos.Eidos">
         <activity android:name=".WapdroidUI"
 		android:label="@string/app_name">
             <intent-filter>
