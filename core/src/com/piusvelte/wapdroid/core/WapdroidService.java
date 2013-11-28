@@ -21,7 +21,6 @@ package com.piusvelte.wapdroid.core;
 
 import static com.piusvelte.wapdroid.core.Wapdroid.UNKNOWN_CID;
 import static com.piusvelte.wapdroid.core.Wapdroid.UNKNOWN_RSSI;
-
 import static android.content.Intent.ACTION_BOOT_COMPLETED;
 import static android.content.Intent.ACTION_PACKAGE_REPLACED;
 
@@ -29,6 +28,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 
+import com.piusvelte.eidos.Eidos;
 import com.piusvelte.wapdroid.core.Wapdroid.Cells;
 import com.piusvelte.wapdroid.core.Wapdroid.Locations;
 import com.piusvelte.wapdroid.core.Wapdroid.Networks;
@@ -1007,11 +1007,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			}
 		}
 
-		try {
-			BackupManager.dataChanged(this);
-		} catch (Throwable t) {
-			Log.d(TAG, "backupagent not supported");
-		}
+		Eidos.requestBackup(this);
 	}
 
 	private long fetchNetwork(String ssid, String bssid) {
@@ -1036,7 +1032,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				ContentValues values = new ContentValues();
 				values.put(Networks.BSSID, bssid);
 				this.getContentResolver().update(Networks.getContentUri(this), values, Networks._ID + "=" + network, null);
-				BackupManager.dataChanged(this);
+				Eidos.requestBackup(this);
 			}
 		} else {
 			ContentValues values = new ContentValues();
@@ -1045,7 +1041,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			// default to managing the network
 			values.put(Networks.MANAGE, 1);
 			network = Integer.parseInt(this.getContentResolver().insert(Networks.getContentUri(this), values).getLastPathSegment());
-			BackupManager.dataChanged(this);
+			Eidos.requestBackup(this);
 		}
 
 		c.close();
@@ -1064,7 +1060,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				ContentValues values = new ContentValues();
 				values.put(Locations.LAC, lac);
 				location = Integer.parseInt(getContentResolver().insert(Locations.getContentUri(this), values).getLastPathSegment());
-				BackupManager.dataChanged(this);
+				Eidos.requestBackup(this);
 			}
 
 			c.close();
@@ -1090,14 +1086,14 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				ContentValues values = new ContentValues();
 				values.put(Cells.LOCATION, location);
 				getContentResolver().update(Cells.getContentUri(this), values, Cells._ID + "=?", new String[]{Integer.toString(cell)});
-				BackupManager.dataChanged(this);
+				Eidos.requestBackup(this);
 			}
 		} else {
 			ContentValues values = new ContentValues();
 			values.put(Cells.CID, cid);
 			values.put(Cells.LOCATION, location);
 			cell = Integer.parseInt(getContentResolver().insert(Cells.getContentUri(this), values).getLastPathSegment());
-			BackupManager.dataChanged(this);
+			Eidos.requestBackup(this);
 		}
 
 		c.close();
@@ -1114,12 +1110,12 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 					ContentValues values = new ContentValues();
 					values.put(Pairs.RSSI_MIN, rssi);
 					getContentResolver().update(Pairs.getContentUri(this), values, Pairs._ID + "=?", new String[]{Integer.toString(pair)});
-					BackupManager.dataChanged(this);
+					Eidos.requestBackup(this);
 				} else if ((rssi_max == UNKNOWN_RSSI) || (rssi_max < rssi)) {
 					ContentValues values = new ContentValues();
 					values.put(Pairs.RSSI_MAX, rssi);
 					getContentResolver().update(Pairs.getContentUri(this), values, Pairs._ID + "=?", new String[]{Integer.toString(pair)});
-					BackupManager.dataChanged(this);
+					Eidos.requestBackup(this);
 				}
 			}
 		} else {
@@ -1130,7 +1126,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 			values.put(Pairs.RSSI_MAX, rssi);
 			values.put(Pairs.MANAGE_CELL, 1);
 			getContentResolver().insert(Pairs.getContentUri(this), values);
-			BackupManager.dataChanged(this);
+			Eidos.requestBackup(this);
 		}
 
 		c.close();
@@ -1150,7 +1146,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 				ContentValues values = new ContentValues();
 				values.put(Ranges.LOCATION, fetchLocation(lac));
 				getContentResolver().update(Cells.getContentUri(this), values, Cells._ID + "=?", new String[]{Integer.toString(c.getInt(c.getColumnIndex(Ranges._ID)))});
-				BackupManager.dataChanged(this);
+				Eidos.requestBackup(this);
 			}
 		}
 

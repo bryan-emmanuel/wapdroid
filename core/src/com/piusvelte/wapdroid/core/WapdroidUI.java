@@ -59,7 +59,7 @@ public class WapdroidUI extends Activity implements ServiceConnection, DialogInt
 	private String mBssid = "",
 	mCells = "",
 	mSsid = "";
-	private int mCid = 0;
+	private long mCid = 0;
 	public IWapdroidService mIService;
 
 	@Override

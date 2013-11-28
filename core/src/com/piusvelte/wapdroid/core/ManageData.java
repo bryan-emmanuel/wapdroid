@@ -1,12 +1,12 @@
 /*
  * Wapdroid - Android Location based Wifi Manager
  * Copyright (C) 2012 Bryan Emmanuel
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -14,7 +14,7 @@
 
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *  
+ *
  *  Bryan Emmanuel piusvelte@gmail.com
  */
 package com.piusvelte.wapdroid.core;
@@ -23,6 +23,7 @@ import static com.piusvelte.wapdroid.core.Wapdroid.UNKNOWN_CID;
 import static com.piusvelte.wapdroid.core.Wapdroid.UNKNOWN_RSSI;
 
 import com.google.ads.*;
+import com.piusvelte.eidos.Eidos;
 import com.piusvelte.wapdroid.core.Wapdroid.Cells;
 import com.piusvelte.wapdroid.core.Wapdroid.Locations;
 import com.piusvelte.wapdroid.core.Wapdroid.Networks;
@@ -214,8 +215,10 @@ public class ManageData extends ListActivity implements ServiceConnection {
 				n.close();
 			}
 			Cursor c = getContentResolver().query(Cells.getContentUri(this), new String[]{Cells._ID, Cells.LOCATION}, null, null, null);
+
 			if (c.moveToFirst()) {
 				int[] index = {c.getColumnIndex(Cells._ID), c.getColumnIndex(Cells.LOCATION)};
+
 				while (!c.isAfterLast()) {
 					int cell = c.getInt(index[0]);
 					Cursor p = getContentResolver().query(Pairs.getContentUri(this), new String[]{Pairs._ID}, Pairs.CELL + "=" + cell, null, null);
@@ -226,12 +229,14 @@ public class ManageData extends ListActivity implements ServiceConnection {
 						if (l.getCount() == 0) getContentResolver().delete(Locations.getContentUri(this), Locations._ID + "=" + location, null);
 						l.close();
 					}
+
 					p.close();
 					c.moveToNext();
 				}
 			}
+
 			c.close();
-			BackupManager.dataChanged(this);
+			Eidos.requestBackup(this);
 		}
 		return super.onContextItemSelected(item);
 	}

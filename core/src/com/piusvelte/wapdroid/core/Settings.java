@@ -84,7 +84,6 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 			} else
 				stopService(Wapdroid.getPackageIntent(this, WapdroidService.class));
 			// update widgets
-			android.util.Log.d("Bryan", "settings trigger update");
 			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
 			sendBroadcast(Wapdroid.getPackageIntent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
 		} else if (key.equals(getString(R.string.key_wifi_sleep_screen))) {

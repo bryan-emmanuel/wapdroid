@@ -1,12 +1,12 @@
 /*
  * Wapdroid - Android Location based Wifi Manager
  * Copyright (C) 2012 Bryan Emmanuel
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
- *  
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -14,13 +14,14 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *  
+ *
  *  Bryan Emmanuel piusvelte@gmail.com
  */
 package com.piusvelte.wapdroid.core;
 
 import java.util.HashMap;
 
+import com.piusvelte.eidos.Eidos;
 import com.piusvelte.wapdroid.core.Wapdroid;
 import com.piusvelte.wapdroid.core.Wapdroid.Cells;
 import com.piusvelte.wapdroid.core.Wapdroid.Locations;
@@ -128,28 +129,28 @@ public class WapdroidProvider extends ContentProvider {
 	@Override
 	public int delete(Uri uri, String arg1, String[] arg2) {
 		SQLiteDatabase db;
-		synchronized (Wapdroid.sDatabaseLock) {
+		synchronized (Eidos.DatabaseLock) {
 			db = mDatabaseHelper.getWritableDatabase();
 		}
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 			count = db.delete(TABLE_NETWORKS, arg1, arg2);
 			}
 			break;
 		case CELLS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 			count = db.delete(TABLE_CELLS, arg1, arg2);
 			}
 			break;
 		case LOCATIONS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 			count = db.delete(TABLE_LOCATIONS, arg1, arg2);
 			}
 			break;
 		case PAIRS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 			count = db.delete(TABLE_PAIRS, arg1, arg2);
 			}
 			break;
@@ -184,35 +185,35 @@ public class WapdroidProvider extends ContentProvider {
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
 		SQLiteDatabase db;
-		synchronized (Wapdroid.sDatabaseLock) {
+		synchronized (Eidos.DatabaseLock) {
 			db = mDatabaseHelper.getWritableDatabase();
 		}
 		long rowId;
 		Uri returnUri;
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_NETWORKS, Networks._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Networks.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case CELLS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_CELLS, Cells._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Cells.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case LOCATIONS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_LOCATIONS, Locations._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Locations.getContentUri(getContext()), rowId);
 			getContext().getContentResolver().notifyChange(returnUri, null);
 			break;
 		case PAIRS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 				rowId = db.insert(TABLE_PAIRS, Pairs._ID, values);
 			}
 			returnUri = ContentUris.withAppendedId(Pairs.getContentUri(getContext()), rowId);
@@ -260,7 +261,7 @@ public class WapdroidProvider extends ContentProvider {
 			throw new IllegalArgumentException("Unknown URI " + uri);
 		}
 		SQLiteDatabase db;
-		synchronized (Wapdroid.sDatabaseLock) {
+		synchronized (Eidos.DatabaseLock) {
 			db = mDatabaseHelper.getReadableDatabase();
 		}
 		Cursor c = qb.query(db, projection, selection, selectionArgs, null, null, sortOrder);
@@ -272,28 +273,28 @@ public class WapdroidProvider extends ContentProvider {
 	public int update(Uri uri, ContentValues values, String selection,
 			String[] selectionArgs) {
 		SQLiteDatabase db;
-		synchronized (Wapdroid.sDatabaseLock) {
+		synchronized (Eidos.DatabaseLock) {
 			db = mDatabaseHelper.getWritableDatabase();
 		}
 		int count;
 		switch (sUriMatcher.match(uri)) {
 		case NETWORKS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 			count = db.update(TABLE_NETWORKS, values, selection, selectionArgs);
 			}
 			break;
 		case CELLS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 			count = db.update(TABLE_CELLS, values, selection, selectionArgs);
 			}
 			break;
 		case LOCATIONS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 			count = db.update(TABLE_LOCATIONS, values, selection, selectionArgs);
 			}
 			break;
 		case PAIRS:
-			synchronized (Wapdroid.sDatabaseLock) {
+			synchronized (Eidos.DatabaseLock) {
 			count = db.update(TABLE_PAIRS, values, selection, selectionArgs);
 			}
 			break;
@@ -385,7 +386,7 @@ public class WapdroidProvider extends ContentProvider {
 						+ ") select " + TABLE_CELLS + "." + Cells._ID + ", " + TABLE_CELLS + "_bkp." + Pairs.NETWORK + ", " + Wapdroid.UNKNOWN_RSSI + ", " + Wapdroid.UNKNOWN_RSSI
 						+ " from " + TABLE_CELLS + "_bkp"
 						+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "_bkp." + Cells.CID + "=" + TABLE_CELLS + "." + Cells.CID + ";");
-				db.execSQL("drop table if exists " + TABLE_CELLS + "_bkp;");	
+				db.execSQL("drop table if exists " + TABLE_CELLS + "_bkp;");
 			}
 			if (oldVersion < 4) {
 				// clean lac=0 locations
@@ -405,16 +406,16 @@ public class WapdroidProvider extends ContentProvider {
 					}
 					// clean locations
 					db.execSQL("delete from " + TABLE_LOCATIONS + " where " + Locations.LAC + "=0;");
-				}			
+				}
 			}
 			if (oldVersion < 5) {
 				// fix bad rssi values
 				db.execSQL("update " + TABLE_PAIRS + " set " + Pairs.RSSI_MIN + "=-1*" + Pairs.RSSI_MIN + " where " + Pairs.RSSI_MIN + " >0 and " + Pairs.RSSI_MIN + " !=" + Wapdroid.UNKNOWN_RSSI + ";");
-				db.execSQL("update " + TABLE_PAIRS + " set " + Pairs.RSSI_MAX + "=-1*" + Pairs.RSSI_MAX + " where " + Pairs.RSSI_MAX + " >0 and " + Pairs.RSSI_MAX + " !=" + Wapdroid.UNKNOWN_RSSI + ";");			
+				db.execSQL("update " + TABLE_PAIRS + " set " + Pairs.RSSI_MAX + "=-1*" + Pairs.RSSI_MAX + " where " + Pairs.RSSI_MAX + " >0 and " + Pairs.RSSI_MAX + " !=" + Wapdroid.UNKNOWN_RSSI + ";");
 			}
 			if (oldVersion < 6) {
 				// revert incorrect unknown rssi's
-				db.execSQL("update " + TABLE_PAIRS + " set " + Pairs.RSSI_MIN + "=99," + Pairs.RSSI_MAX + "=99 where " + Pairs.RSSI_MAX + "<" + Pairs.RSSI_MIN + " and RSSI_max=-85;");			
+				db.execSQL("update " + TABLE_PAIRS + " set " + Pairs.RSSI_MIN + "=99," + Pairs.RSSI_MAX + "=99 where " + Pairs.RSSI_MAX + "<" + Pairs.RSSI_MIN + " and RSSI_max=-85;");
 			}
 			if (oldVersion < 7) {
 				// need to make all column names lowercase
@@ -502,7 +503,7 @@ public class WapdroidProvider extends ContentProvider {
 						+ " from " + TABLE_PAIRS
 						+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + Ranges._ID + "=" + Ranges.CELL
 						+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + Ranges._ID + "=" + Ranges.LOCATION
-						+ " left join " + TABLE_NETWORKS + " on " + TABLE_NETWORKS + "." + Ranges._ID + "=" + Ranges.NETWORK + ";");				
+						+ " left join " + TABLE_NETWORKS + " on " + TABLE_NETWORKS + "." + Ranges._ID + "=" + Ranges.NETWORK + ";");
 			}
 			if (oldVersion < 9) {
 				// add the manage column for optional cell management
@@ -541,7 +542,7 @@ public class WapdroidProvider extends ContentProvider {
 						+ " from " + TABLE_PAIRS
 						+ " left join " + TABLE_CELLS + " on " + TABLE_CELLS + "." + Ranges._ID + "=" + Ranges.CELL
 						+ " left join " + TABLE_LOCATIONS + " on " + TABLE_LOCATIONS + "." + Ranges._ID + "=" + Ranges.LOCATION
-						+ " left join " + TABLE_NETWORKS + " on " + TABLE_NETWORKS + "." + Ranges._ID + "=" + Ranges.NETWORK + ";");				
+						+ " left join " + TABLE_NETWORKS + " on " + TABLE_NETWORKS + "." + Ranges._ID + "=" + Ranges.NETWORK + ";");
 			}
 			if (oldVersion < 10) {
 				// strip quoted SSIDs
