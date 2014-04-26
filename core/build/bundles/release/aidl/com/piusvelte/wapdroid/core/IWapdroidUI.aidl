@@ -17,7 +17,14 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
  */
-package com.piusvelte.wapdroid;
 
-public class MapData extends com.piusvelte.wapdroid.core.MapData {
+package com.piusvelte.wapdroid.core;
+
+interface IWapdroidUI {
+	void setOperator(String operator);
+	void setCellInfo(int cid, int lac);
+	void setCells(String cells);
+	void setBattery(int batteryPercentage);
+	void setWifiInfo(int state, String ssid, String bssid);
+	void setSignalStrength(int rssi);
 }

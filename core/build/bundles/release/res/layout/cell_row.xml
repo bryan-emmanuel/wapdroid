@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ * Wapdroid - Android Location based Wifi Manager
+ * Copyright (C) 2009 Bryan Emmanuel
+ * 
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ *  Bryan Emmanuel piusvelte@gmail.com
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:background="@drawable/field" android:layout_width="fill_parent"
+	android:layout_height="wrap_content" android:padding="8dip">
+	<ImageView android:id="@+id/cell_icon" android:layout_width="wrap_content"
+		android:layout_height="fill_parent" android:gravity="center_vertical"
+		android:layout_marginRight="8dip" android:src="@drawable/cell"
+		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
+		android:layout_alignParentBottom="true" />
+	<CheckBox android:id="@+id/cell_manage" android:layout_width="wrap_content"
+		android:layout_height="fill_parent" android:focusable="false"
+		android:layout_alignParentRight="true" android:layout_alignParentTop="true"
+		android:layout_alignParentBottom="true" android:clickable="false" />
+	<TableLayout android:layout_width="wrap_content"
+		android:layout_height="wrap_content" android:layout_toRightOf="@id/cell_icon"
+		android:layout_toLeftOf="@id/cell_manage"
+		android:layout_alignParentTop="true" android:layout_alignParentBottom="true"
+		android:stretchColumns="0">
+		<TableRow>
+			<TextView android:textColor="@color/secondary" android:text="@string/label_CID" />
+			<TextView android:textColor="@color/secondary" android:id="@+id/cell_row_CID"
+				android:gravity="right" />
+		</TableRow>
+		<TableRow>
+			<TextView android:textColor="@color/secondary" android:text="@string/label_LAC" />
+			<TextView android:textColor="@color/secondary" android:id="@+id/cell_row_LAC"
+				android:gravity="right" />
+		</TableRow>
+		<TableRow>
+			<TextView android:textColor="@color/secondary" android:text="@string/range" />
+			<TextView android:textColor="@color/secondary" android:id="@+id/cell_row_range"
+				android:gravity="right" />
+		</TableRow>
+		<TableRow>
+			<TextView android:textColor="@color/primary" android:text="@string/status" />
+			<TextView android:id="@+id/cell_row_status"
+				android:textColor="@color/primary" android:gravity="right" />
+		</TableRow>
+	</TableLayout>
+</RelativeLayout><!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/cell_row.xml -->

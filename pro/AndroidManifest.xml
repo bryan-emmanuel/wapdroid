@@ -16,7 +16,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
- *  Bryan Emmanuel piusvelte@gmail.com
+ *  Bryan Emmanuel piusvelte@gmail.com
+
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.piusvelte.wapdroidpro"
@@ -37,12 +38,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".Settings" >
-        </activity>
-        <activity android:name=".ManageData" >
-        </activity>
-        <activity android:name=".MapData" >
-        </activity>
+        <activity android:name=".Settings" />
+        <activity android:name=".ManageData" />
         <activity
             android:name="com.google.ads.AdActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" />

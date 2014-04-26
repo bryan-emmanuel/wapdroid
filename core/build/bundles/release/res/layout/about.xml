@@ -1,4 +1,5 @@
-/*
+<?xml version="1.0" encoding="utf-8"?>
+<!--
  * Wapdroid - Android Location based Wifi Manager
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -16,8 +17,24 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
- */
-package com.piusvelte.wapdroidpro;
-
-public class MapData extends com.piusvelte.wapdroid.core.MapData {
-}
+-->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent">
+	<ScrollView	android:layout_alignParentBottom="true"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content">
+		<TableLayout android:layout_width="fill_parent"
+			android:layout_height="wrap_content"
+			android:shrinkColumns="*"
+			android:padding="16dip">
+			<TableRow>
+				<TextView android:text="@string/about"/>
+			</TableRow>
+			<TableRow>
+				<TextView android:text="@string/gpl"/>
+			</TableRow>
+		</TableLayout>
+	</ScrollView>
+</RelativeLayout>
+<!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/about.xml -->

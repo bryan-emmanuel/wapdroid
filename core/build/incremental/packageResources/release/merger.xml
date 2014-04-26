@@ -1,0 +1,726 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merger>
+
+    <dataSet config="main" >
+        <source path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res" >
+            <file
+                name="cell"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable/cell.png"
+                qualifiers=""
+                type="drawable" />
+            <file
+                name="field"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable/field.9.png"
+                qualifiers=""
+                type="drawable" />
+            <file
+                name="icon"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable/icon.png"
+                qualifiers=""
+                type="drawable" />
+            <file
+                name="network"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable/network.png"
+                qualifiers=""
+                type="drawable" />
+            <file
+                name="scanning"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable/scanning.png"
+                qualifiers=""
+                type="drawable" />
+            <file
+                name="status"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable/status.png"
+                qualifiers=""
+                type="drawable" />
+            <file
+                name="statuson"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable/statuson.png"
+                qualifiers=""
+                type="drawable" />
+            <file
+                name="wapdroid_widget_off"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable/wapdroid_widget_off.png"
+                qualifiers=""
+                type="drawable" />
+            <file
+                name="wapdroid_widget_on"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable/wapdroid_widget_on.png"
+                qualifiers=""
+                type="drawable" />
+            <file
+                name="icon"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable-hdpi/icon.png"
+                qualifiers="hdpi"
+                type="drawable" />
+            <file
+                name="wapdroid_widget_off"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable-hdpi/wapdroid_widget_off.png"
+                qualifiers="hdpi"
+                type="drawable" />
+            <file
+                name="wapdroid_widget_on"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable-hdpi/wapdroid_widget_on.png"
+                qualifiers="hdpi"
+                type="drawable" />
+            <file
+                name="icon"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable-ldpi/icon.png"
+                qualifiers="ldpi"
+                type="drawable" />
+            <file
+                name="wapdroid_widget_off"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable-ldpi/wapdroid_widget_off.png"
+                qualifiers="ldpi"
+                type="drawable" />
+            <file
+                name="wapdroid_widget_on"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable-ldpi/wapdroid_widget_on.png"
+                qualifiers="ldpi"
+                type="drawable" />
+            <file
+                name="icon"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable-mdpi/icon.png"
+                qualifiers="mdpi"
+                type="drawable" />
+            <file
+                name="wapdroid_widget_off"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable-mdpi/wapdroid_widget_off.png"
+                qualifiers="mdpi"
+                type="drawable" />
+            <file
+                name="wapdroid_widget_on"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/drawable-mdpi/wapdroid_widget_on.png"
+                qualifiers="mdpi"
+                type="drawable" />
+            <file
+                name="about"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/about.xml"
+                qualifiers=""
+                type="layout" />
+            <file
+                name="cell_row"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/cell_row.xml"
+                qualifiers=""
+                type="layout" />
+            <file
+                name="cells_list"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/cells_list.xml"
+                qualifiers=""
+                type="layout" />
+            <file
+                name="main"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/main.xml"
+                qualifiers=""
+                type="layout" />
+            <file
+                name="map"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/map.xml"
+                qualifiers=""
+                type="layout" />
+            <file
+                name="network_row"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/network_row.xml"
+                qualifiers=""
+                type="layout" />
+            <file
+                name="networks_list"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/networks_list.xml"
+                qualifiers=""
+                type="layout" />
+            <file
+                name="settings"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/settings.xml"
+                qualifiers=""
+                type="layout" />
+            <file
+                name="widget"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/widget.xml"
+                qualifiers=""
+                type="layout" />
+            <file
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/arrays.xml"
+                qualifiers="" >
+                <string-array name="battery_entries" >
+                    <item>
+0
+                    </item>
+                    <item>
+10
+                    </item>
+                    <item>
+20
+                    </item>
+                    <item>
+30
+                    </item>
+                    <item>
+40
+                    </item>
+                    <item>
+50
+                    </item>
+                    <item>
+60
+                    </item>
+                    <item>
+70
+                    </item>
+                    <item>
+80
+                    </item>
+                    <item>
+90
+                    </item>
+                    <item>
+100
+                    </item>
+                </string-array>
+                <string-array name="filter_entries" >
+                    <item>
+all
+                    </item>
+                    <item>
+within area
+                    </item>
+                    <item>
+out of area
+                    </item>
+                    <item>
+connected
+                    </item>
+                </string-array>
+                <string-array name="scan_interval_values" >
+                    <item>
+0
+                    </item>
+                    <item>
+60000
+                    </item>
+                    <item>
+300000
+                    </item>
+                    <item>
+600000
+                    </item>
+                    <item>
+900000
+                    </item>
+                    <item>
+1800000
+                    </item>
+                    <item>
+3600000
+                    </item>
+                </string-array>
+                <string-array name="battery_values" >
+                    <item>
+0
+                    </item>
+                    <item>
+10
+                    </item>
+                    <item>
+20
+                    </item>
+                    <item>
+30
+                    </item>
+                    <item>
+40
+                    </item>
+                    <item>
+50
+                    </item>
+                    <item>
+60
+                    </item>
+                    <item>
+70
+                    </item>
+                    <item>
+80
+                    </item>
+                    <item>
+90
+                    </item>
+                    <item>
+100
+                    </item>
+                </string-array>
+                <string-array name="filter_values" >
+                    <item>
+0
+                    </item>
+                    <item>
+1
+                    </item>
+                    <item>
+2
+                    </item>
+                    <item>
+3
+                    </item>
+                </string-array>
+                <string-array name="scan_interval_entries" >
+                    <item>
+Disabled
+                    </item>
+                    <item>
+1 minute
+                    </item>
+                    <item>
+5 minutes (default)
+                    </item>
+                    <item>
+10 minutes
+                    </item>
+                    <item>
+15 minutes
+                    </item>
+                    <item>
+30 minutes
+                    </item>
+                    <item>
+60 minutes
+                    </item>
+                </string-array>
+            </file>
+            <file
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/attrs.xml"
+                qualifiers="" >
+                <declare-styleable name="com.admob.android.ads.AdView" >
+                    <attr
+                        name="backgroundColor"
+                        format="color" />
+                    <attr
+                        name="primaryTextColor"
+                        format="color" />
+                    <attr
+                        name="secondaryTextColor"
+                        format="color" />
+                    <attr
+                        name="keywords"
+                        format="string" />
+                    <attr
+                        name="refreshInterval"
+                        format="integer" />
+                </declare-styleable>
+            </file>
+            <file
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/colors.xml"
+                qualifiers="" >
+                <color name="secondary" >#d2e2e9
+                </color>
+                <color name="primary" >#f2f2f9
+                </color>
+                <color name="widget_background" >#33000000
+                </color>
+                <color name="tertiary" >#427279
+                </color>
+            </file>
+            <file
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/keys.xml"
+                qualifiers="" >
+                <string name="key_wifi_sleep_charging" >wifi_sleep_charging
+                </string>
+                <string name="key_preferences" >wapdroid
+                </string>
+                <string name="key_logging" >logging
+                </string>
+                <string name="key_version" >version
+                </string>
+                <string name="key_vibrate" >vibrate
+                </string>
+                <string name="key_ringtone" >ringtone
+                </string>
+                <string name="key_battery_override" >battery_override
+                </string>
+                <string name="key_notify" >notify
+                </string>
+                <string name="key_battery_percentage" >battery_percentage
+                </string>
+                <string name="key_interval" >interval
+                </string>
+                <string name="key_wifi_sleep_mob_net" >wifi_sleep_mob_net
+                </string>
+                <string name="key_persistent_status" >persistent_status
+                </string>
+                <string name="key_wifi_sleep_screen" >wifi_sleep_screen
+                </string>
+                <string name="key_led" >led
+                </string>
+                <string name="key_noclear" >noclear
+                </string>
+                <string name="key_manageWifi" >manageWifi
+                </string>
+                <string name="key_wifi_override_charging" >wifi_override_charging
+                </string>
+            </file>
+            <file
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/strings.xml"
+                qualifiers="" >
+                <string name="msg_wifi_sleep_charging" >%s, and the battery is discharging
+                </string>
+                <string name="label_notify" >Notifications
+                </string>
+                <string name="msg_wifi_override_charging" >When the battery is charging
+                </string>
+                <string name="gpl" >Wapdroid - Android Location based Wifi Manager\u000A\u000ACopyright © 2012 Bryan Emmanuel\u000A\u000AThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\u000A\u000AThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\u000A\u000AYou should have received a copy of the GNU General Public License along with this program.  If not, see \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com
+                </string>
+                <string name="service_info" >To automatically manage Wi-Fi, the service must be enabled in the Wapdroid Settings, by pressing menu, then Settings, then checking Manage Wi-Fi.
+                </string>
+                <string name="pref_battery" >BATTERY SETTINGS
+                </string>
+                <string name="pref_wifi_sleep" >OVERRIDE WIFI ON:
+                </string>
+                <string name="msg_wifi_sleep_mob_net" >%s, and mobile data is available
+                </string>
+                <string name="label_wifi_sleep_screen" >When screen off
+                </string>
+                <string name="label_disabled" >disabled
+                </string>
+                <string name="label_MCC" >Country:
+                </string>
+                <string name="cellwarning" >Multiple cells may share the same location.\u000A
+                </string>
+                <string name="label_disabling" >disabling
+                </string>
+                <string name="label_interval" >Background Interval
+                </string>
+                <string name="linefeed" >\u000A
+                </string>
+                <string name="label_CID" >Cell:
+                </string>
+                <string name="forget" >Forget %s
+                </string>
+                <string name="label_wifi_override_charging" >When battery charging
+                </string>
+                <string name="label_led" >LED
+                </string>
+                <string name="manage" >View %ss
+                </string>
+                <string name="unknown" >unknown
+                </string>
+                <string name="menu_settings" >Settings
+                </string>
+                <string name="label_about" >About
+                </string>
+                <string name="ignore_item" >Ignore this %s
+                </string>
+                <string name="battery_override" >No WiFi on low battery
+                </string>
+                <string name="widget_on" >On
+                </string>
+                <string name="pref_service" >SERVICE SETTINGS
+                </string>
+                <string name="cell" >cell
+                </string>
+                <string name="no_networks" >no networks
+                </string>
+                <string name="connected" >connected
+                </string>
+                <string name="menu_filter" >Filter
+                </string>
+                <string name="label_logging" >Logging enabled
+                </string>
+                <string name="battery_percentage" >Battery percentage
+                </string>
+                <string name="msg_logging" >Turn logging off when not needed to avoid low storage.
+                </string>
+                <string name="label_vibrate" >Vibrate
+                </string>
+                <string name="msg_wifi_sleep" >%s, the WiFi will be turned off, even if near known WiFi networks.
+                </string>
+                <string name="msg_wifi_override" >%s, the WiFi will be turned on, even if far from known WiFi networks. This overrides the OVERRIDE WIFI ON settings.
+                </string>
+                <string name="label_LAC" >Location:
+                </string>
+                <string name="refresh" >Refresh %ss
+                </string>
+                <string name="withinarea" >within area
+                </string>
+                <string name="widget_off" >Off
+                </string>
+                <string name="label_enabling" >enabling
+                </string>
+                <string name="label_enabled" >enabled
+                </string>
+                <string name="signal" >Signal:
+                </string>
+                <string name="label_persistent_status" >Always show icon in status bar
+                </string>
+                <string name="pref_logging" >LOGGING
+                </string>
+                <string name="label_ringtone" >Ringtone
+                </string>
+                <string name="msg_no_log" >No log found. Try enabling logging to create a log first.
+                </string>
+                <string name="loading" >Loading...
+                </string>
+                <string name="no_cells" >no cells
+                </string>
+                <string name="status" >Status:
+                </string>
+                <string name="label_send_log" >Send log
+                </string>
+                <string name="manage_item" >Manage this %s
+                </string>
+                <string name="map" >Map %s
+                </string>
+                <string name="pref_notifications" >NOTIFICATION SETTINGS
+                </string>
+                <string name="dbm" >\u0020dBm
+                </string>
+                <string name="about" >Wapdroid runs in the background, recording cell towers near WiFi networks to which you connect. When in range of those towers, WiFi is turned on, otherwise it is turned off to save battery power. Please report issues or questions to http://wapdroid.com.\u000A\u000A
+                </string>
+                <string name="label_BSSID" >BSSID:\u0020
+                </string>
+                <string name="widget_label" >Wapdroid Service
+                </string>
+                <string name="label_MNC" >Carrier:
+                </string>
+                <string name="msg_wifi_sleep_screen" >When the screen is off
+                </string>
+                <string name="outofarea" >out of area
+                </string>
+                <string name="scanning" >scanning
+                </string>
+                <string name="label_wifi_sleep_charging" >And battery discharging
+                </string>
+                <string name="pref_overrides" >OVERRIDE WIFI OFF:
+                </string>
+                <string name="label_wifi_sleep_mob_net" >And has mobile data
+                </string>
+                <string name="battery_remaining" >Battery:
+                </string>
+                <string name="msg_stop_logging" >Disable logging before sending the log.
+                </string>
+                <string name="background_info" >Set Wi-Fi sleep policy to Never Sleep, or Always Keep On, for best results.\u000A\u000AWhen Wapdroid is managing Wi-Fi, use the Wi-Fi button found in the Menu options in Wapdroid to temporarily override control.
+                </string>
+                <string name="app_name" >Wapdroid
+                </string>
+                <string name="label_wapdroidState" >Manage Wi-Fi
+                </string>
+                <string name="colon" >\u0020:\u0020
+                </string>
+                <string name="network" >network
+                </string>
+                <string name="label_save" >Save
+                </string>
+                <string name="label_WIFI" >Wi-Fi
+                </string>
+                <string name="range" >Range:
+                </string>
+            </file>
+            <file
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values-zh-rCN/strings.xml"
+                qualifiers="zh-rCN" >
+                <string name="app_name" >Wapdroid-Pro
+                </string>
+                <string name="label_disabling" >禁用中
+                </string>
+                <string name="label_MNC" >运营商:
+                </string>
+                <string name="loading" >加载中...
+                </string>
+                <string name="no_cells" >没有通信网络
+                </string>
+                <string name="service_info" >要自动管理 Wi - Fi, 该服务必须在设置中启用 Wapdroid, 但按菜单, 设置, 然后检查管理 Wi-Fi。
+                </string>
+                <string name="label_interval" >背景区间
+                </string>
+                <string name="label_WIFI" >Wi-Fi
+                </string>
+                <string name="status" >状态:
+                </string>
+                <string name="label_notify" >始终在状态栏显示图标
+                </string>
+                <string name="label_BSSID" >BSSID:\u0020
+                </string>
+                <string name="about" >Wapdroid 在后台运行, 在您连接附近的 Wi - Fi 网络时记录电池电量。在范围内, WiFi 开启, 否则, 关闭以节省电池电量。请报告问题或提问 http://wapdroid.com.\u000A\u000A
+                </string>
+                <string name="unknown" >未知
+                </string>
+                <string name="battery_override" >在低电压时关闭 WiFi
+                </string>
+                <string name="outofarea" >退出该区
+                </string>
+                <string name="range" >漫游:
+                </string>
+                <string name="label_save" >保存
+                </string>
+                <string name="colon" >\u0020:\u0020
+                </string>
+                <string name="battery_remaining" >电池:
+                </string>
+                <string name="menu_settings" >设置
+                </string>
+                <string name="label_led" >LED
+                </string>
+                <string name="no_networks" >没有网络
+                </string>
+                <string name="label_ringtone" >铃声
+                </string>
+                <string name="pref_battery" >电池设置
+                </string>
+                <string name="gpl" >Wapdroid - Android 基于位置的无线上网管理\u000A\u000A版权所有 (C) 2009 Bryan Emmanuel\u000A\u000A这个程序是免费软件: 您可以根据GNU通用公共许可证由自由软件基金会所发表的角度来重新发布与修改, 或者用许可证版本3, 或 (根据您的选择) 任何新版本。\u000A\u000A这一方案发布是希望这将是有益的, 但没有任何担保;亦无对适售性或针对特定目而隐含的担保。详情请参阅 GNU 通用公共许可证。\u000A\u000A您应该已经收到一份 GNU 通用公共许可证的副本连同本程。如果没有, 见 \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com
+                </string>
+                <string name="label_about" >关于
+                </string>
+                <string name="battery_percentage" >电池百分比
+                </string>
+                <string name="withinarea" >区域
+                </string>
+                <string name="label_vibrate" >振动
+                </string>
+                <string name="connected" >连接
+                </string>
+                <string name="label_enabled" >已启用
+                </string>
+                <string name="label_disabled" >已禁用
+                </string>
+                <string name="dbm" >\u0020dBm
+                </string>
+                <string name="label_CID" >网络:
+                </string>
+                <string name="cellwarning" >多个网络可能具有相同的位置.\u000A
+                </string>
+                <string name="label_enabling" >启用中
+                </string>
+                <string name="label_LAC" >位置:
+                </string>
+                <string name="scanning" >扫描
+                </string>
+                <string name="label_MCC" >国家:
+                </string>
+                <string name="background_info" >当使用 Wapdroid 管理 Wi-Fi 时, 使用的Wi - Fi的按钮，在 Wapdroid 菜单中选择暂时覆盖控制。\u000A\u000AWapdroid 当回应时\u000AWi-Fi 睡眠策略设置为从不, 在 Android 设置下找到, Wireless \u0026 网络, Wi-Fi 设置, 菜单按钮, 高级。
+                </string>
+                <string name="signal" >指示灯:
+                </string>
+                <string name="pref_notifications" >通知设置
+                </string>
+                <string name="linefeed" >\u000A
+                </string>
+                <string name="label_wapdroidState" >管理 Wi-Fi
+                </string>
+                <string name="menu_filter" >过滤器
+                </string>
+                <string name="pref_service" >服务设置
+                </string>
+            </file>
+            <file
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values-zh-rTW/strings.xml"
+                qualifiers="zh-rTW" >
+                <string name="gpl" >Wapdroid - Android 基於位置的無線上網管理\u000A\u000A版權所有 (C) 2009 Bryan Emmanuel\u000A\u000A這個程式是免費軟體: 您可以依GNU通用公共授權證由自由軟體基金會所發表的角度來重新發佈與修改, 或者用授權證版本3, 或 (依您的選擇) 任何新版本。\u000A\u000A這一方案發佈是希望這將是有益的, 但沒有任何保證;亦無對適售性或針對特定目而隱含的保證。詳情請參閱 GNU 通用公共授權證。\u000A\u000A您應該已經收到一份 GNU 通用公共授權證的副本連同本程。如果沒有, 見 \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com
+                </string>
+                <string name="withinarea" >區網網網域
+                </string>
+                <string name="label_wapdroidState" >管理 Wi-Fi
+                </string>
+                <string name="outofarea" >結束該區
+                </string>
+                <string name="label_notify" >始終在狀態列顯示圖示
+                </string>
+                <string name="label_led" >LED
+                </string>
+                <string name="loading" >載入中...
+                </string>
+                <string name="battery_remaining" >電集區:
+                </string>
+                <string name="no_cells" >沒有通信網路
+                </string>
+                <string name="range" >漫遊:
+                </string>
+                <string name="status" >狀態:
+                </string>
+                <string name="app_name" >Wapdroid-Pro
+                </string>
+                <string name="label_enabling" >啟用中
+                </string>
+                <string name="label_ringtone" >鈴聲
+                </string>
+                <string name="dbm" >\u0020dBm
+                </string>
+                <string name="label_vibrate" >振動
+                </string>
+                <string name="service_info" >要自動管理 Wi - Fi, 該服務必須在設定中啟用 Wapdroid, 但按功能表, 設定, 然後檢查管理 Wi-Fi。
+                </string>
+                <string name="label_BSSID" >BSSID:\u0020
+                </string>
+                <string name="about" >Wapdroid 在後台執行, 在您連線附近的 Wi - Fi 網路時記錄電集區電量。在範圍內, WiFi 開啟, 否則, 關閉以節省電集區電量。請報告問題或提問 http://wapdroid.com.\u000A\u000A
+                </string>
+                <string name="menu_filter" >篩選器
+                </string>
+                <string name="menu_settings" >設定
+                </string>
+                <string name="pref_service" >服務設定
+                </string>
+                <string name="unknown" >未知
+                </string>
+                <string name="label_interval" >背景區間
+                </string>
+                <string name="pref_battery" >電集區設定
+                </string>
+                <string name="label_disabled" >已禁用
+                </string>
+                <string name="label_CID" >網路:
+                </string>
+                <string name="colon" >\u0020:\u0020
+                </string>
+                <string name="label_enabled" >已啟用
+                </string>
+                <string name="scanning" >掃瞄
+                </string>
+                <string name="pref_notifications" >通知設定
+                </string>
+                <string name="no_networks" >沒有網路
+                </string>
+                <string name="label_save" >儲存檔案
+                </string>
+                <string name="label_MNC" >運營商:
+                </string>
+                <string name="signal" >指示燈:
+                </string>
+                <string name="label_disabling" >禁用中
+                </string>
+                <string name="label_MCC" >國家:
+                </string>
+                <string name="background_info" >當使用 Wapdroid 管理 Wi-Fi 時, 使用的Wi - Fi的按鈕，在 Wapdroid 功能表中選擇暫時覆寫控制。\u000A\u000AWapdroid 當回應時\u000AWi-Fi 睡眠策略設定為從不, 在 Android 設定下找到, Wireless \u0026 網路, Wi-Fi 設定, 功能表按鈕, 進階。
+                </string>
+                <string name="linefeed" >\u000A
+                </string>
+                <string name="connected" >連線
+                </string>
+                <string name="cellwarning" >多個網路可能具有相同的位置.\u000A
+                </string>
+                <string name="battery_override" >在低電壓時關閉 WiFi
+                </string>
+                <string name="label_WIFI" >Wi-Fi
+                </string>
+                <string name="label_about" >關於
+                </string>
+                <string name="battery_percentage" >電集區百分比
+                </string>
+                <string name="label_LAC" >位置:
+                </string>
+            </file>
+            <file
+                name="preferences"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/xml/preferences.xml"
+                qualifiers=""
+                type="xml" />
+            <file
+                name="widget_1x1"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/xml/widget_1x1.xml"
+                qualifiers=""
+                type="xml" />
+        </source>
+        <source path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/build/res/rs/release" />
+        <source path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/build/res/generated/release" />
+    </dataSet>
+    <dataSet config="release" >
+        <source path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/src/release/res" />
+    </dataSet>
+
+</merger>

@@ -31,7 +31,6 @@
     <string name="manage">View %ss</string>
     <string name="forget">Forget %s</string>
     <string name="refresh">Refresh %ss</string>
-    <string name="map">Map %s</string>
     <string name="network">network</string>
     <string name="cell">cell</string>
     <string name="label_disabled">disabled</string>

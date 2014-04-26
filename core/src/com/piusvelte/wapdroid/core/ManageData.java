@@ -60,7 +60,6 @@ public class ManageData extends ListActivity implements ServiceConnection {
 	long mCid;
 	private static final int MANAGE_ID = 0;
 	private static final int MANAGE_NETWORK_OR_CELL_ID = 1;
-	private static final int MAP_ID = 2;
 	private static final int DELETE_ID = Menu.FIRST;
 	private static final int CANCEL_ID = Menu.FIRST + 1;
 	private static final int REFRESH_ID = Menu.FIRST;
@@ -256,10 +255,6 @@ public class ManageData extends ListActivity implements ServiceConnection {
 						values.put(Networks.MANAGE, ((CheckBox) view.findViewById(R.id.network_manage)).isChecked() ? 0 : 1);
 						ManageData.this.getContentResolver().update(Networks.getContentUri(ManageData.this), values, Networks._ID + "=?", new String[] {Long.toString(id)});
 						return;
-					case MAP_ID:
-						// open gmaps
-						startActivity(Wapdroid.getPackageIntent(ManageData.this, MapData.class).putExtra(WapdroidProvider.TABLE_NETWORKS, id).putExtra(MapData.OPERATOR, mOperator));
-						return;
 					}
 				}
 			});
@@ -278,9 +273,6 @@ public class ManageData extends ListActivity implements ServiceConnection {
 						ContentValues values = new ContentValues();
 						values.put(Pairs.MANAGE_CELL, ((CheckBox) view.findViewById(R.id.cell_manage)).isChecked() ? 0 : 1);
 						ManageData.this.getContentResolver().update(Pairs.getContentUri(ManageData.this), values, Pairs._ID + "=?", new String[] {Long.toString(id)});
-						return;
-					case MAP_ID:
-						startActivity(Wapdroid.getPackageIntent(ManageData.this, MapData.class).putExtra(WapdroidProvider.TABLE_NETWORKS, mNetwork).putExtra(MapData.OPERATOR, mOperator).putExtra(WapdroidProvider.TABLE_PAIRS, id));
 						return;
 					}
 				}

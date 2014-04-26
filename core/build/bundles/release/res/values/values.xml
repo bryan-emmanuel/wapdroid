@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/arrays.xml -->
+    <eat-comment />
+
+    <string-array name="battery_entries">
+        <item>0</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>40</item>
+        <item>50</item>
+        <item>60</item>
+        <item>70</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+    </string-array>
+    <string-array name="battery_values">
+        <item>0</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>40</item>
+        <item>50</item>
+        <item>60</item>
+        <item>70</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+    </string-array>
+    <string-array name="filter_entries">
+        <item>all</item>
+        <item>within area</item>
+        <item>out of area</item>
+        <item>connected</item>
+    </string-array>
+    <string-array name="filter_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+    </string-array>
+    <string-array name="scan_interval_entries">
+        <item>Disabled</item>
+        <item>1 minute</item>
+        <item>5 minutes (default)</item>
+        <item>10 minutes</item>
+        <item>15 minutes</item>
+        <item>30 minutes</item>
+        <item>60 minutes</item>
+    </string-array>
+    <string-array name="scan_interval_values">
+        <item>0</item>
+        <item>60000</item>
+        <item>300000</item>
+        <item>600000</item>
+        <item>900000</item>
+        <item>1800000</item>
+        <item>3600000</item>
+    </string-array>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/colors.xml -->
+    <eat-comment />
+
+    <color name="primary">#f2f2f9</color>
+    <color name="secondary">#d2e2e9</color>
+    <color name="tertiary">#427279</color>
+    <color name="widget_background">#33000000</color>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/attrs.xml -->
+    <eat-comment />
+
+    <declare-styleable name="com.admob.android.ads.AdView">
+        <attr name="backgroundColor" format="color" />
+        <attr name="primaryTextColor" format="color" />
+        <attr name="secondaryTextColor" format="color" />
+        <attr name="keywords" format="string" />
+        <attr name="refreshInterval" format="integer" />
+    </declare-styleable>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/strings.xml -->
+    <eat-comment />
+
+    <string name="about">Wapdroid runs in the background, recording cell towers near WiFi networks to which you connect. When in range of those towers, WiFi is turned on, otherwise it is turned off to save battery power. Please report issues or questions to http://wapdroid.com.\u000A\u000A</string>
+    <string name="app_name">Wapdroid</string>
+    <string name="background_info">Set Wi-Fi sleep policy to Never Sleep, or Always Keep On, for best results.\u000A\u000AWhen Wapdroid is managing Wi-Fi, use the Wi-Fi button found in the Menu options in Wapdroid to temporarily override control.</string>
+    <string name="battery_override">No WiFi on low battery</string>
+    <string name="battery_percentage">Battery percentage</string>
+    <string name="battery_remaining">Battery:</string>
+    <string name="cell">cell</string>
+    <string name="cellwarning">Multiple cells may share the same location.\u000A</string>
+    <string name="colon">\u0020:\u0020</string>
+    <string name="connected">connected</string>
+    <string name="dbm">\u0020dBm</string>
+    <string name="forget">Forget %s</string>
+    <string name="gpl">Wapdroid - Android Location based Wifi Manager\u000A\u000ACopyright © 2012 Bryan Emmanuel\u000A\u000AThis program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.\u000A\u000AThis program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.\u000A\u000AYou should have received a copy of the GNU General Public License along with this program.  If not, see \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com</string>
+    <string name="ignore_item">Ignore this %s</string>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/keys.xml -->
+    <eat-comment />
+
+    <string name="key_battery_override">battery_override</string>
+    <string name="key_battery_percentage">battery_percentage</string>
+    <string name="key_interval">interval</string>
+    <string name="key_led">led</string>
+    <string name="key_logging">logging</string>
+    <string name="key_manageWifi">manageWifi</string>
+    <string name="key_noclear">noclear</string>
+    <string name="key_notify">notify</string>
+    <string name="key_persistent_status">persistent_status</string>
+    <string name="key_preferences">wapdroid</string>
+    <string name="key_ringtone">ringtone</string>
+    <string name="key_version">version</string>
+    <string name="key_vibrate">vibrate</string>
+    <string name="key_wifi_override_charging">wifi_override_charging</string>
+    <string name="key_wifi_sleep_charging">wifi_sleep_charging</string>
+    <string name="key_wifi_sleep_mob_net">wifi_sleep_mob_net</string>
+    <string name="key_wifi_sleep_screen">wifi_sleep_screen</string>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/strings.xml -->
+    <eat-comment />
+
+    <string name="label_BSSID">BSSID:\u0020</string>
+    <string name="label_CID">Cell:</string>
+    <string name="label_LAC">Location:</string>
+    <string name="label_MCC">Country:</string>
+    <string name="label_MNC">Carrier:</string>
+    <string name="label_WIFI">Wi-Fi</string>
+    <string name="label_about">About</string>
+    <string name="label_disabled">disabled</string>
+    <string name="label_disabling">disabling</string>
+    <string name="label_enabled">enabled</string>
+    <string name="label_enabling">enabling</string>
+    <string name="label_interval">Background Interval</string>
+    <string name="label_led">LED</string>
+    <string name="label_logging">Logging enabled</string>
+    <string name="label_notify">Notifications</string>
+    <string name="label_persistent_status">Always show icon in status bar</string>
+    <string name="label_ringtone">Ringtone</string>
+    <string name="label_save">Save</string>
+    <string name="label_send_log">Send log</string>
+    <string name="label_vibrate">Vibrate</string>
+    <string name="label_wapdroidState">Manage Wi-Fi</string>
+    <string name="label_wifi_override_charging">When battery charging</string>
+    <string name="label_wifi_sleep_charging">And battery discharging</string>
+    <string name="label_wifi_sleep_mob_net">And has mobile data</string>
+    <string name="label_wifi_sleep_screen">When screen off</string>
+    <string name="linefeed">\u000A</string>
+    <string name="loading">Loading...</string>
+    <string name="manage">View %ss</string>
+    <string name="manage_item">Manage this %s</string>
+    <string name="map">Map %s</string>
+    <string name="menu_filter">Filter</string>
+    <string name="menu_settings">Settings</string>
+    <string name="msg_logging">Turn logging off when not needed to avoid low storage.</string>
+    <string name="msg_no_log">No log found. Try enabling logging to create a log first.</string>
+    <string name="msg_stop_logging">Disable logging before sending the log.</string>
+    <string name="msg_wifi_override">%s, the WiFi will be turned on, even if far from known WiFi networks. This overrides the OVERRIDE WIFI ON settings.</string>
+    <string name="msg_wifi_override_charging">When the battery is charging</string>
+    <string name="msg_wifi_sleep">%s, the WiFi will be turned off, even if near known WiFi networks.</string>
+    <string name="msg_wifi_sleep_charging">%s, and the battery is discharging</string>
+    <string name="msg_wifi_sleep_mob_net">%s, and mobile data is available</string>
+    <string name="msg_wifi_sleep_screen">When the screen is off</string>
+    <string name="network">network</string>
+    <string name="no_cells">no cells</string>
+    <string name="no_networks">no networks</string>
+    <string name="outofarea">out of area</string>
+    <string name="pref_battery">BATTERY SETTINGS</string>
+    <string name="pref_logging">LOGGING</string>
+    <string name="pref_notifications">NOTIFICATION SETTINGS</string>
+    <string name="pref_overrides">OVERRIDE WIFI OFF:</string>
+    <string name="pref_service">SERVICE SETTINGS</string>
+    <string name="pref_wifi_sleep">OVERRIDE WIFI ON:</string>
+    <string name="range">Range:</string>
+    <string name="refresh">Refresh %ss</string>
+    <string name="scanning">scanning</string>
+    <string name="service_info">To automatically manage Wi-Fi, the service must be enabled in the Wapdroid Settings, by pressing menu, then Settings, then checking Manage Wi-Fi.</string>
+    <string name="signal">Signal:</string>
+    <string name="status">Status:</string>
+    <string name="unknown">unknown</string>
+    <string name="widget_label">Wapdroid Service</string>
+    <string name="widget_off">Off</string>
+    <string name="widget_on">On</string>
+    <string name="withinarea">within area</string>
+
+</resources>
