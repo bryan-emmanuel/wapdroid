@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_settings"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:showAsAction="ifRoom"
+        android:title="@string/menu_settings" />
+
+    <item
+        android:id="@+id/menu_wifi"
+        android:icon="@android:drawable/ic_menu_manage"
+        android:showAsAction="ifRoom"
+        android:title="@string/label_WIFI" />
+
+    <item
+        android:id="@+id/menu_about"
+        android:icon="@android:drawable/ic_menu_more"
+        android:showAsAction="never"
+        android:title="@string/label_about" />
+
+</menu><!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/menu/status.xml -->

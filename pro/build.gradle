@@ -22,7 +22,7 @@ android {
     defaultConfig {
         versionCode 379
         versionName '3.7.9'
-        minSdkVersion 3
+        minSdkVersion 9
         targetSdkVersion 19
     }
 

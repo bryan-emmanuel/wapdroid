@@ -1,0 +1,125 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.piusvelte.wapdroid.core.StatusFragment">
+
+    <com.google.android.gms.ads.AdView
+        android:id="@+id/adView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:adUnitId="a14c03f0ced257b"
+        app:adSize="BANNER"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="10dip"
+                android:paddingLeft="12dip"
+                android:paddingRight="12dip"
+                android:paddingTop="10dip"
+                android:stretchColumns="0">
+
+                <TableRow>
+
+                    <TextView
+                        android:text="@string/label_WIFI" />
+
+                    <TextView
+                        android:id="@+id/field_wifiState"
+                        android:gravity="right"
+                        android:text="@string/scanning"
+                        android:textStyle="bold" />
+                </TableRow>
+
+                <TableRow>
+
+                    <TextView
+                        android:text="@string/label_BSSID" />
+
+                    <TextView
+                        android:id="@+id/field_wifiBSSID"
+                        android:gravity="right"
+                        android:text="@string/scanning" />
+                </TableRow>
+            </TableLayout>
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="10dip"
+                android:paddingLeft="12dip"
+                android:paddingRight="12dip"
+                android:paddingTop="10dip"
+                android:stretchColumns="0">
+
+                <TableRow>
+
+                    <TextView
+                        android:text="@string/label_CID" />
+
+                    <TextView
+                        android:id="@+id/field_CID"
+                        android:gravity="right"
+                        android:text="@string/scanning" />
+                </TableRow>
+
+                <TableRow>
+
+                    <TextView
+                        android:text="@string/label_LAC" />
+
+                    <TextView
+                        android:id="@+id/field_LAC"
+                        android:gravity="right"
+                        android:text="@string/scanning" />
+                </TableRow>
+
+                <TableRow>
+
+                    <TextView
+                        android:text="@string/signal" />
+
+                    <TextView
+                        android:id="@+id/field_signal"
+                        android:gravity="right"
+                        android:text="@string/scanning" />
+                </TableRow>
+            </TableLayout>
+
+            <TableLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="10dip"
+                android:paddingLeft="12dip"
+                android:paddingRight="12dip"
+                android:paddingTop="10dip"
+                android:stretchColumns="0">
+
+                <TableRow>
+
+                    <TextView
+                        android:text="@string/battery_remaining" />
+
+                    <TextView
+                        android:id="@+id/field_battery"
+                        android:gravity="right"
+                        android:text="@string/scanning"
+                        android:textStyle="bold" />
+                </TableRow>
+            </TableLayout>
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

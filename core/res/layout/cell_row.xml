@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Wapdroid - Android Location based Wifi Manager
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -19,41 +18,77 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:background="@drawable/field" android:layout_width="fill_parent"
-	android:layout_height="wrap_content" android:padding="8dip">
-	<ImageView android:id="@+id/cell_icon" android:layout_width="wrap_content"
-		android:layout_height="fill_parent" android:gravity="center_vertical"
-		android:layout_marginRight="8dip" android:src="@drawable/cell"
-		android:layout_alignParentLeft="true" android:layout_alignParentTop="true"
-		android:layout_alignParentBottom="true" />
-	<CheckBox android:id="@+id/cell_manage" android:layout_width="wrap_content"
-		android:layout_height="fill_parent" android:focusable="false"
-		android:layout_alignParentRight="true" android:layout_alignParentTop="true"
-		android:layout_alignParentBottom="true" android:clickable="false" />
-	<TableLayout android:layout_width="wrap_content"
-		android:layout_height="wrap_content" android:layout_toRightOf="@id/cell_icon"
-		android:layout_toLeftOf="@id/cell_manage"
-		android:layout_alignParentTop="true" android:layout_alignParentBottom="true"
-		android:stretchColumns="0">
-		<TableRow>
-			<TextView android:textColor="@color/secondary" android:text="@string/label_CID" />
-			<TextView android:textColor="@color/secondary" android:id="@+id/cell_row_CID"
-				android:gravity="right" />
-		</TableRow>
-		<TableRow>
-			<TextView android:textColor="@color/secondary" android:text="@string/label_LAC" />
-			<TextView android:textColor="@color/secondary" android:id="@+id/cell_row_LAC"
-				android:gravity="right" />
-		</TableRow>
-		<TableRow>
-			<TextView android:textColor="@color/secondary" android:text="@string/range" />
-			<TextView android:textColor="@color/secondary" android:id="@+id/cell_row_range"
-				android:gravity="right" />
-		</TableRow>
-		<TableRow>
-			<TextView android:textColor="@color/primary" android:text="@string/status" />
-			<TextView android:id="@+id/cell_row_status"
-				android:textColor="@color/primary" android:gravity="right" />
-		</TableRow>
-	</TableLayout>
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dip">
+
+    <ImageView
+        android:id="@+id/cell_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="8dip"
+        android:gravity="center_vertical"
+        android:src="@drawable/cell" />
+
+    <CheckBox
+        android:id="@+id/cell_manage"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:focusable="false" />
+
+    <TableLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@id/cell_manage"
+        android:layout_toRightOf="@id/cell_icon"
+        android:stretchColumns="0">
+
+        <TableRow>
+
+            <TextView
+                android:text="@string/label_CID" />
+
+            <TextView
+                android:id="@+id/cell_row_CID"
+                android:gravity="right" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:text="@string/label_LAC" />
+
+            <TextView
+                android:id="@+id/cell_row_LAC"
+                android:gravity="right" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:text="@string/range" />
+
+            <TextView
+                android:id="@+id/cell_row_range"
+                android:gravity="right" />
+        </TableRow>
+
+        <TableRow>
+
+            <TextView
+                android:text="@string/status" />
+
+            <TextView
+                android:id="@+id/cell_row_status"
+                android:gravity="right" />
+        </TableRow>
+    </TableLayout>
 </RelativeLayout>

@@ -22,7 +22,7 @@ android {
     defaultConfig {
         versionCode 379
         versionName '3.7.9'
-        minSdkVersion 3
+        minSdkVersion 9
         targetSdkVersion 19
     }
 
@@ -46,6 +46,6 @@ android {
 
 dependencies {
     compile 'com.android.support:support-v4:19.+'
-
-    compile files('libs/GoogleAdMobAdsSdk-6.0.1.jar')
+    compile 'com.android.support:appcompat-v7:19.0.1'
+    compile 'com.google.android.gms:play-services:4.3.+'
 }

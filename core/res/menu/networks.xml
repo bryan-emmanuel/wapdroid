@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_refresh"
+        android:icon="@android:drawable/ic_menu_rotate"
+        android:showAsAction="ifRoom"
+        android:title="@string/refresh" />
+
+    <item
+        android:id="@+id/menu_filter"
+        android:icon="@android:drawable/ic_menu_agenda"
+        android:showAsAction="ifRoom"
+        android:title="@string/menu_filter">
+        <menu>
+            <item
+                android:id="@+id/menu_filter_all"
+                android:title="@string/filter_all" />
+            <item
+                android:id="@+id/menu_filter_in_area"
+                android:title="@string/filter_in_area" />
+            <item
+                android:id="@+id/menu_filter_out_area"
+                android:title="@string/filter_out_area" />
+            <item
+                android:id="@+id/menu_filter_connected"
+                android:title="@string/filter_connected" />
+        </menu>
+    </item>
+
+</menu>

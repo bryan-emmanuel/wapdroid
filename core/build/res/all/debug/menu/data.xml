@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_remove"
+        android:icon="@android:drawable/ic_menu_delete"
+        android:title="@string/remove" />
+    <item
+        android:id="@+id/menu_cancel"
+        android:icon="@android:drawable/ic_menu_close_clear_cancel"
+        android:title="@android:string/cancel" />
+
+</menu><!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/menu/data.xml -->

@@ -21,7 +21,6 @@
 package com.piusvelte.wapdroid.core;
 
 interface IWapdroidUI {
-	void setOperator(String operator);
 	void setCellInfo(int cid, int lac);
 	void setCells(String cells);
 	void setBattery(int batteryPercentage);

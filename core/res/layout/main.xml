@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Wapdroid - Android Location based Wifi Manager
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -18,71 +17,26 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	xmlns:app="http://schemas.android.com/apk/res/com.piusvelte.wapdroid"
-	android:orientation="vertical" android:layout_width="fill_parent"
-	android:layout_height="fill_parent" android:textSize="16dip">
-	<LinearLayout android:id="@+id/ad" android:layout_width="fill_parent"
-		android:layout_height="wrap_content" />
-	<ScrollView android:layout_below="@id/ad" android:layout_width="fill_parent" android:layout_height="fill_parent">
-		<LinearLayout android:layout_width="fill_parent"
-			android:layout_height="fill_parent" android:orientation="vertical">
-			<TableLayout android:background="@drawable/field"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:paddingTop="10dip" android:paddingRight="12dip"
-				android:paddingBottom="10dip" android:paddingLeft="12dip"
-				android:stretchColumns="0">
-				<TableRow>
-					<TextView android:textColor="@color/primary" android:text="@string/label_WIFI" />
-					<TextView android:id="@+id/field_wifiState"
-						android:textStyle="bold" android:textColor="@color/primary"
-						android:gravity="right" android:text="@string/scanning" />
-				</TableRow>
-				<TableRow>
-					<TextView android:textColor="@color/secondary"
-						android:text="@string/label_BSSID" />
-					<TextView android:id="@+id/field_wifiBSSID"
-						android:textColor="@color/secondary" android:gravity="right"
-						android:text="@string/scanning" />
-				</TableRow>
-			</TableLayout>
-			<TableLayout android:background="@drawable/field"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:paddingTop="10dip" android:paddingRight="12dip"
-				android:paddingBottom="10dip" android:paddingLeft="12dip"
-				android:stretchColumns="0">
-				<TableRow>
-					<TextView android:textColor="@color/secondary"
-						android:text="@string/label_CID" />
-					<TextView android:id="@+id/field_CID" android:textColor="@color/secondary"
-						android:gravity="right" android:text="@string/scanning" />
-				</TableRow>
-				<TableRow>
-					<TextView android:textColor="@color/secondary"
-						android:text="@string/label_LAC" />
-					<TextView android:id="@+id/field_LAC" android:textColor="@color/secondary"
-						android:gravity="right" android:text="@string/scanning" />
-				</TableRow>
-				<TableRow>
-					<TextView android:textColor="@color/secondary"
-						android:text="@string/signal" />
-					<TextView android:id="@+id/field_signal"
-						android:textColor="@color/secondary" android:gravity="right"
-						android:text="@string/scanning" />
-				</TableRow>
-			</TableLayout>
-			<TableLayout android:background="@drawable/field"
-				android:layout_width="fill_parent" android:layout_height="wrap_content"
-				android:paddingTop="10dip" android:paddingRight="12dip"
-				android:paddingBottom="10dip" android:paddingLeft="12dip"
-				android:stretchColumns="0">
-				<TableRow>
-					<TextView android:textColor="@color/primary" android:text="@string/battery_remaining" />
-					<TextView android:id="@+id/field_battery"
-						android:textColor="@color/primary" android:textStyle="bold"
-						android:gravity="right" android:text="@string/scanning" />
-				</TableRow>
-			</TableLayout>
-		</LinearLayout>
-	</ScrollView>
-</RelativeLayout>
+
+<android.support.v4.view.ViewPager
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/pager"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_weight="1">
+
+    <!--
+This title strip will display the currently visible page title, as well as the page
+titles for adjacent pages.
+    -->
+
+    <android.support.v4.view.PagerTitleStrip
+        android:id="@+id/pager_title_strip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#33b5e5"
+        android:paddingBottom="4dp"
+        android:paddingTop="4dp"
+        android:textColor="#fff" />
+</android.support.v4.view.ViewPager>

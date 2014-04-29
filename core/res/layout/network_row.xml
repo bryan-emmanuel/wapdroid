@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?xml version="1.0" encoding="utf-8"?><!--
  * Wapdroid - Android Location based Wifi Manager
  * Copyright (C) 2009 Bryan Emmanuel
  * 
@@ -19,30 +18,53 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-	android:background="@drawable/field" android:layout_width="fill_parent"
-	android:layout_height="wrap_content" android:padding="8dip">
-	<ImageView android:id="@+id/network_icon"
-		android:layout_width="wrap_content" android:layout_height="fill_parent"
-		android:gravity="center_vertical" android:layout_marginRight="8dip"
-		android:src="@drawable/network" android:layout_alignParentTop="true"
-		android:layout_alignParentLeft="true"
-		android:layout_alignParentBottom="true" />
-	<CheckBox android:id="@+id/network_manage"
-		android:layout_width="wrap_content" android:layout_height="fill_parent"
-		android:layout_alignParentTop="true" android:layout_alignParentRight="true"
-		android:layout_alignParentBottom="true" android:focusable="false" android:clickable="false" />
-	<TextView android:layout_height="wrap_content"
-		android:layout_width="fill_parent" android:textStyle="bold"
-		android:id="@+id/network_row_SSID" android:textColor="@color/primary"
-		android:layout_alignParentTop="true" android:layout_toRightOf="@id/network_icon"
-		android:layout_toLeftOf="@id/network_manage" />
-	<TextView android:layout_height="wrap_content"
-		android:layout_width="fill_parent" android:id="@+id/network_row_BSSID"
-		android:textColor="@color/secondary" android:layout_below="@id/network_row_SSID"
-		android:layout_toRightOf="@id/network_icon" android:layout_toLeftOf="@id/network_manage" />
-	<TextView android:layout_height="wrap_content"
-		android:layout_width="fill_parent" android:id="@+id/network_row_status"
-		android:textColor="@color/primary" android:layout_alignParentBottom="true"
-		android:layout_toRightOf="@id/network_icon" android:layout_toLeftOf="@id/network_manage"
-		android:layout_below="@id/network_row_BSSID" />
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dip">
+
+    <ImageView
+        android:id="@+id/network_icon"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="8dip"
+        android:gravity="center_vertical"
+        android:src="@drawable/network" />
+
+    <CheckBox
+        android:id="@+id/network_manage"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:focusable="false" />
+
+    <TextView
+        android:id="@+id/network_row_SSID"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_toLeftOf="@id/network_manage"
+        android:layout_toRightOf="@id/network_icon"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/network_row_BSSID"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/network_row_SSID"
+        android:layout_toLeftOf="@id/network_manage"
+        android:layout_toRightOf="@id/network_icon" />
+
+    <TextView
+        android:id="@+id/network_row_status"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@id/network_row_BSSID"
+        android:layout_toLeftOf="@id/network_manage"
+        android:layout_toRightOf="@id/network_icon" />
 </RelativeLayout>

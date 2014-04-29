@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:ns1="urn:oasis:names:tc:xliff:document:1.2">
+
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/build/exploded-aar/com.android.support/appcompat-v7/19.0.1/res/values-zh-rTW/values.xml -->
+    <eat-comment />
+
+    <string name="abc_action_bar_home_description" msgid="4600421777120114993">"瀏覽首頁"</string>
+    <string name="abc_action_bar_up_description" msgid="1594238315039666878">"向上瀏覽"</string>
+    <string name="abc_action_menu_overflow_description" msgid="3588849162933574182">"更多選項"</string>
+    <string name="abc_action_mode_done" msgid="4076576682505996667">"完成"</string>
+    <string name="abc_activity_chooser_view_see_all" msgid="7468859129482906941">"查看全部"</string>
+    <string name="abc_activitychooserview_choose_application" msgid="2031811694353399454">"選擇應用程式"</string>
+    <string name="abc_searchview_description_clear" msgid="3691816814315814921">"清除查詢"</string>
+    <string name="abc_searchview_description_query" msgid="2550479030709304392">"搜尋查詢"</string>
+    <string name="abc_searchview_description_search" msgid="8264924765203268293">"搜尋"</string>
+    <string name="abc_searchview_description_submit" msgid="8928215447528550784">"提交查詢"</string>
+    <string name="abc_searchview_description_voice" msgid="893419373245838918">"語音搜尋"</string>
+    <string name="abc_shareactionprovider_share_with" msgid="3421042268587513524">"選擇分享對象"</string>
+    <string name="abc_shareactionprovider_share_with_application" msgid="7165123711973476752">"與「%s」分享"</string>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values-zh-rTW/strings.xml -->
+    <eat-comment />
+
+    <string name="about">Wapdroid 在後台執行, 在您連線附近的 Wi - Fi 網路時記錄電集區電量。在範圍內, WiFi 開啟, 否則, 關閉以節省電集區電量。請報告問題或提問 http://wapdroid.com.\u000A\u000A</string>
+    <string name="app_name">Wapdroid-Pro</string>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/build/exploded-aar/com.google.android.gms/play-services/4.3.23/res/values-zh-rTW/strings.xml -->
+    <eat-comment />
+
+    <string name="auth_client_needs_enabling_title" msgid="3983201110833868073">"應用程式需要啟用 Google Play 服務。"</string>
+    <string name="auth_client_needs_installation_title" msgid="7999585836145154206">"應用程式需要安裝 Google Play 服務。"</string>
+    <string name="auth_client_needs_update_title" msgid="6488605506794595966">"應用程式需要更新 Google Play 服務。"</string>
+    <string name="auth_client_play_services_err_notification_msg" msgid="3635065018897986478">"Google Play 服務錯誤"</string>
+    <string name="auth_client_requested_by_msg" msgid="6304135633531965756">"提出要求的應用程式：<ns1:g id="APP_NAME">%1$s</ns1:g>"</string>
+    <string name="auth_client_using_bad_version_title" msgid="2534454398764507874">"應用程式嘗試使用的 Google Play 服務版本有誤。"</string>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values-zh-rTW/strings.xml -->
+    <eat-comment />
+
+    <string name="background_info">當使用 Wapdroid 管理 Wi-Fi 時, 使用的Wi - Fi的按鈕，在 Wapdroid 功能表中選擇暫時覆寫控制。\u000A\u000AWapdroid 當回應時\u000AWi-Fi 睡眠策略設定為從不, 在 Android 設定下找到, Wireless \u0026 網路, Wi-Fi 設定, 功能表按鈕, 進階。</string>
+    <string name="battery_override">在低電壓時關閉 WiFi</string>
+    <string name="battery_percentage">電集區百分比</string>
+    <string name="battery_remaining">電集區:</string>
+    <string name="cellwarning">多個網路可能具有相同的位置.\u000A</string>
+    <string name="colon">\u0020:\u0020</string>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/build/exploded-aar/com.google.android.gms/play-services/4.3.23/res/values-zh-rTW/strings.xml -->
+    <eat-comment />
+
+    <string name="common_google_play_services_enable_button" msgid="4181637455539816337">"啟用 Google Play 服務"</string>
+    <string name="common_google_play_services_enable_text" msgid="7627896071867667758">"您必須啟用 Google Play 服務，這個應用程式才能運作。"</string>
+    <string name="common_google_play_services_enable_title" msgid="529078775174559253">"啟用 Google Play 服務"</string>
+    <string name="common_google_play_services_install_button" msgid="8515591849428043265">"取得 Google Play 服務"</string>
+    <string name="common_google_play_services_install_text_phone" msgid="8685301130651051380">"您的手機並未安裝 Google Play 服務，所以無法執行這個應用程式。"</string>
+    <string name="common_google_play_services_install_text_tablet" msgid="1589957570365247855">"您的平板電腦並未安裝 Google Play 服務，所以無法執行這個應用程式。"</string>
+    <string name="common_google_play_services_install_title" msgid="26645092511305524">"取得 Google Play 服務"</string>
+    <string name="common_google_play_services_invalid_account_text" msgid="4983316348021735578">"這個裝置上沒有您所指定的帳戶，請選擇其他帳戶。"</string>
+    <string name="common_google_play_services_invalid_account_title" msgid="1066672360770936753">"無效的帳戶"</string>
+    <string name="common_google_play_services_network_error_text" msgid="9038847255613537209">"需要數據連線才能連上 Google Play 服務。"</string>
+    <string name="common_google_play_services_network_error_title" msgid="3827284619958211114">"網路錯誤"</string>
+    <string name="common_google_play_services_unknown_issue" msgid="4762332809710093730">"Google Play 服務發生不明問題。"</string>
+    <string name="common_google_play_services_unsupported_date_text" msgid="4725396522367789365">"裝置上的日期似乎不正確，請檢查裝置上的日期。"</string>
+    <string name="common_google_play_services_unsupported_text" msgid="3542578567569488671">"您的裝置不支援部分應用程式所需的 Google Play 服務。如需協助，請與您的裝置製造商聯絡。"</string>
+    <string name="common_google_play_services_unsupported_title" msgid="6334768798839376943">"Google Play 服務"</string>
+    <string name="common_google_play_services_update_button" msgid="8932944190611227642">"更新"</string>
+    <string name="common_google_play_services_update_text" msgid="448354684997260580">"您必須更新 Google Play 服務，才能執行這個應用程式。"</string>
+    <string name="common_google_play_services_update_title" msgid="6006316683626838685">"更新 Google Play 服務"</string>
+    <string name="common_signin_button_text" msgid="9071884888741449141">"登入"</string>
+    <string name="common_signin_button_text_long" msgid="2429381841831957106">"使用 Google 帳戶登入"</string>
+    <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values-zh-rTW/strings.xml -->
+    <eat-comment />
+
+    <string name="connected">連線</string>
+    <string name="dbm">\u0020dBm</string>
+    <string name="gpl">Wapdroid - Android 基於位置的無線上網管理\u000A\u000A版權所有 (C) 2009 Bryan Emmanuel\u000A\u000A這個程式是免費軟體: 您可以依GNU通用公共授權證由自由軟體基金會所發表的角度來重新發佈與修改, 或者用授權證版本3, 或 (依您的選擇) 任何新版本。\u000A\u000A這一方案發佈是希望這將是有益的, 但沒有任何保證;亦無對適售性或針對特定目而隱含的保證。詳情請參閱 GNU 通用公共授權證。\u000A\u000A您應該已經收到一份 GNU 通用公共授權證的副本連同本程。如果沒有, 見 \u003C\u000Ahttp://www.gnu.org/licenses/\u003E.\u000A\u000ABryan Emmanuel piusvelte@gmail.com</string>
+    <string name="label_BSSID">BSSID:\u0020</string>
+    <string name="label_CID">網路:</string>
+    <string name="label_LAC">位置:</string>
+    <string name="label_MCC">國家:</string>
+    <string name="label_MNC">運營商:</string>
+    <string name="label_WIFI">Wi-Fi</string>
+    <string name="label_about">關於</string>
+    <string name="label_disabled">已禁用</string>
+    <string name="label_disabling">禁用中</string>
+    <string name="label_enabled">已啟用</string>
+    <string name="label_enabling">啟用中</string>
+    <string name="label_interval">背景區間</string>
+    <string name="label_led">LED</string>
+    <string name="label_notify">始終在狀態列顯示圖示</string>
+    <string name="label_ringtone">鈴聲</string>
+    <string name="label_save">儲存檔案</string>
+    <string name="label_vibrate">振動</string>
+    <string name="label_wapdroidState">管理 Wi-Fi</string>
+    <string name="linefeed">\u000A</string>
+    <string name="loading">載入中...</string>
+    <string name="menu_filter">篩選器</string>
+    <string name="menu_settings">設定</string>
+    <string name="no_cells">沒有通信網路</string>
+    <string name="no_networks">沒有網路</string>
+    <string name="outofarea">結束該區</string>
+    <string name="pref_battery">電集區設定</string>
+    <string name="pref_notifications">通知設定</string>
+    <string name="pref_service">服務設定</string>
+    <string name="range">漫遊:</string>
+    <string name="scanning">掃瞄</string>
+    <string name="service_info">要自動管理 Wi - Fi, 該服務必須在設定中啟用 Wapdroid, 但按功能表, 設定, 然後檢查管理 Wi-Fi。</string>
+    <string name="signal">指示燈:</string>
+    <string name="status">狀態:</string>
+    <string name="unknown">未知</string>
+    <string name="withinarea">區網網網域</string>
+
+</resources>
