@@ -103,5 +103,7 @@
     <string name="title_activity_cells">CellsActivity</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="tab_status">Status</string>
+    <string name="tab_networks">Networks</string>
 
 </resources>

@@ -18,50 +18,9 @@
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
 <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/AndroidManifest.xml -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="auto" android:versionCode="379" android:versionName="3.7.9" package="com.piusvelte.wapdroid.core">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" android:installLocation="auto" android:versionCode="380" android:versionName="4.0" package="com.piusvelte.wapdroid.core">
 
-    <application android:backupAgent="com.piusvelte.wapdroid.core.WapdroidBackupAgent" android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@style/AppTheme">
-        <activity android:label="@string/app_name" android:name="com.piusvelte.wapdroid.core.MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-
-                <category android:name="android.intent.category.LAUNCHER"/>
-            </intent-filter>
-        </activity>
-        <activity android:name="com.piusvelte.wapdroid.core.Settings"/>
-        <activity android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|uiMode|screenSize|smallestScreenSize" android:name="com.google.android.gms.ads.AdActivity"/>
-
-        <receiver android:name="com.piusvelte.wapdroid.core.BootReceiver">
-            <intent-filter>
-                <action android:name="android.intent.action.BOOT_COMPLETED"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.piusvelte.wapdroidpro.WAKE_SERVICE"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.PACKAGE_REPLACED"/>
-
-                <data android:path="com.piusvelte.wapdroid.core" android:scheme="package"/>
-            </intent-filter>
-        </receiver>
-
-        <service android:name="com.piusvelte.wapdroid.core.WapdroidService"/>
-
-        <receiver android:label="@string/widget_label" android:name="com.piusvelte.wapdroid.core.WapdroidWidget">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
-            </intent-filter>
-            <intent-filter>
-                <action android:name="com.piusvelte.wapdroidpro.Wapdroid.TOGGLE_SERVICE"/>
-            </intent-filter>
-
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_1x1"/>
-        </receiver>
-
-        <provider android:authorities="com.piusvelte.wapdroid.WapdroidProvider;com.piusvelte.wapdroidpro.WapdroidProvider" android:grantUriPermissions="true" android:multiprocess="true" android:name="com.piusvelte.wapdroid.core.WapdroidProvider"/>
-
-        <uses-library android:name="com.google.android.maps"/>
-        <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
+    <application android:icon="@drawable/icon" android:label="@string/app_name" android:theme="@style/AppTheme">
     </application>
 
     <uses-sdk android:minSdkVersion="9" android:targetSdkVersion="19"/>

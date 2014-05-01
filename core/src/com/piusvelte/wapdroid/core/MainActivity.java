@@ -16,13 +16,16 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.util.Locale;
+
 import static com.piusvelte.wapdroid.core.Wapdroid.UNKNOWN_RSSI;
 
-public class MainActivity extends ActionBarActivity implements ServiceConnection, DialogInterface.OnClickListener, ViewPager.OnPageChangeListener, ManageData.ManageDataListener {
+public class MainActivity extends ActionBarActivity implements ServiceConnection, DialogInterface.OnClickListener, ManageData.ManageDataListener, ActionBar.TabListener {
 
     private String mBssid = "";
     private String mCells = "";
@@ -41,10 +44,25 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main);
+        final ActionBar actionBar = getSupportActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         mPagerAdapter = new WapdroidPagerAdapter(getSupportFragmentManager());
         mViewPager = (ViewPager) findViewById(R.id.pager);
         mViewPager.setAdapter(mPagerAdapter);
-        mViewPager.setOnPageChangeListener(this);
+        mViewPager.setOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+            @Override
+            public void onPageSelected(int position) {
+                actionBar.setSelectedNavigationItem(position);
+            }
+        });
+
+        for (int i = 0; i < mPagerAdapter.getCount(); i++) {
+            actionBar.addTab(actionBar.newTab()
+                    .setText(mPagerAdapter.getPageTitle(i))
+                    .setTabListener(this));
+        }
+
+        mViewPager.setCurrentItem(WapdroidPagerAdapter.FRAGMENT_STATUS);
 	}
 
 	@Override
@@ -200,12 +218,17 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
 	}
 
     @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-        // NO-OP
+    public void onManageNetwork(long network) {
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        transaction.add(ManageData.newInstance(network, mCid, mSsid, mBssid, mCells), null);
+        transaction.addToBackStack(null);
+        transaction.commit();
     }
 
     @Override
-    public void onPageSelected(int position) {
+    public void onTabSelected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        final int position = tab.getPosition();
+        mViewPager.setCurrentItem(position);
         Fragment fragment = mPagerAdapter.getFragment(position);
 
         switch (position) {
@@ -228,16 +251,13 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
     }
 
     @Override
-    public void onPageScrollStateChanged(int state) {
+    public void onTabUnselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
         // NO-OP
     }
 
     @Override
-    public void onManageNetwork(long network) {
-        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.add(ManageData.newInstance(network, mCid, mSsid, mBssid, mCells), null);
-        transaction.addToBackStack(null);
-        transaction.commit();
+    public void onTabReselected(ActionBar.Tab tab, FragmentTransaction fragmentTransaction) {
+        // NO-OP
     }
 
     public class WapdroidPagerAdapter extends FragmentPagerAdapter {
@@ -273,6 +293,20 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
         @Override
         public int getCount() {
             return FRAGMENT_COUNT;
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            Locale l = Locale.getDefault();
+
+            switch (position) {
+                case FRAGMENT_STATUS:
+                    return getString(R.string.tab_status).toUpperCase(l);
+                case FRAGMENT_NETWORKS:
+                    return getString(R.string.tab_networks).toUpperCase(l);
+                default:
+                    return null;
+            }
         }
     }
 }

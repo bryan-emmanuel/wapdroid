@@ -796,6 +796,8 @@
     <string name="service_info">To automatically manage Wi-Fi, the service must be enabled in the Wapdroid Settings, by pressing menu, then Settings, then checking Manage Wi-Fi.</string>
     <string name="signal">Signal:</string>
     <string name="status">Status:</string>
+    <string name="tab_networks">Networks</string>
+    <string name="tab_status">Status</string>
     <string name="title_activity_cells">CellsActivity</string>
     <string name="unknown">unknown</string>
     <string name="view_network">View network</string>
