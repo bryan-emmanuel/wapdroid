@@ -19,5 +19,5 @@
  */
 package com.piusvelte.wapdroid;
 
-public class WapdroidUI extends com.piusvelte.wapdroid.core.WapdroidUI {
+public class MainActivity extends com.piusvelte.wapdroid.core.MainActivity {
 }

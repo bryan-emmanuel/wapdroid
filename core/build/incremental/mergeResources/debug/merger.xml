@@ -4570,16 +4570,16 @@
                     msgid="26645092511305524" >"Dapatkan perkhidmatan Google Play"
                 </string>
                 <string
+                    name="common_google_play_services_unsupported_date_text"
+                    msgid="4725396522367789365" >"Tarikh pada peranti kelihatan tidak betul. Sila semak tarikh pada peranti."
+                </string>
+                <string
                     name="common_signin_button_text"
                     msgid="9071884888741449141" >"Log masuk"
                 </string>
                 <string
                     name="auth_client_needs_installation_title"
                     msgid="7999585836145154206" >"Perkhidmatan Google Play perlu dipasang untuk mengguankan aplikasi."
-                </string>
-                <string
-                    name="common_google_play_services_unsupported_date_text"
-                    msgid="4725396522367789365" >"Tarikh pada peranti kelihatan tidak betul. Sila semak tarikh pada peranti."
                 </string>
             </file>
             <file
@@ -8842,6 +8842,10 @@ normal
                     name="TextAppearance.AppCompat.Widget.PopupMenu.Large"
                     parent="TextAppearance.AppCompat.Base.Widget.PopupMenu.Large" />
 
+                <attr
+                    name="listPreferredItemHeightSmall"
+                    format="dimension" />
+
                 <declare-styleable name="MenuItem" >
 
                     <!-- The ID of the item. -->
@@ -8979,10 +8983,6 @@ normal
                         name="actionProviderClass"
                         format="string" />
                 </declare-styleable>
-
-                <attr
-                    name="listPreferredItemHeightSmall"
-                    format="dimension" />
 
                 <style
                     name="TextAppearance.AppCompat.Widget.ActionBar.Subtitle.Inverse"
@@ -14863,6 +14863,8 @@ Disabled
                 </string>
                 <string name="label_wifi_override_charging" >When battery charging
                 </string>
+                <string name="tab_status" >Status
+                </string>
                 <string name="label_led" >LED
                 </string>
                 <string name="manage" >View %ss
@@ -14892,6 +14894,8 @@ Disabled
                 <string name="connected" >connected
                 </string>
                 <string name="menu_filter" >Filter
+                </string>
+                <string name="tab_networks" >Networks
                 </string>
                 <string name="label_logging" >Logging enabled
                 </string>

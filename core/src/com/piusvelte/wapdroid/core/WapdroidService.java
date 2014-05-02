@@ -79,7 +79,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
     private static final String TAG = WapdroidService.class.getSimpleName();
 
     private static int NOTIFY_ID = 1;
-    public static final String WAKE_SERVICE = "com.piusvelte.WAKE_SERVICE";
+    public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
     public static final int LISTEN_SIGNAL_STRENGTHS = 256;
     public static final int PHONE_TYPE_CDMA = 2;
     private static final int START_STICKY = 1;

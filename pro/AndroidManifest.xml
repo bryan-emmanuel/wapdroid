@@ -48,7 +48,7 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>
             <intent-filter>
-                <action android:name=".WAKE_SERVICE" />
+                <action android:name="com.piusvelte.wapdroid.WAKE_SERVICE" />
             </intent-filter>
             <intent-filter>
                 <action android:name="android.intent.action.PACKAGE_REPLACED" />
@@ -68,7 +68,7 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <intent-filter>
-                <action android:name="com.piusvelte.wapdroidpro.Wapdroid.TOGGLE_SERVICE" />
+                <action android:name="com.piusvelte.wapdroid.TOGGLE_SERVICE" />
             </intent-filter>
 
             <meta-data

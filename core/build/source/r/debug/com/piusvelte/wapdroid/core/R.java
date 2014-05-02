@@ -1116,7 +1116,7 @@ containing a value of this type.
         public static int action_menu_divider=0x7f090018;
         public static int action_menu_presenter=0x7f090019;
         public static int action_mode_close_button=0x7f090027;
-        public static int action_settings=0x7f090057;
+        public static int action_settings=0x7f090056;
         public static int activity_chooser_view_content=0x7f090028;
         public static int adView=0x7f090045;
         public static int always=0x7f090012;
@@ -1151,28 +1151,27 @@ containing a value of this type.
         public static int image=0x7f09002a;
         public static int listMode=0x7f090001;
         public static int list_item=0x7f09002c;
-        public static int menu_about=0x7f090062;
-        public static int menu_cancel=0x7f090059;
-        public static int menu_filter=0x7f09005b;
-        public static int menu_filter_all=0x7f09005c;
-        public static int menu_filter_connected=0x7f09005f;
-        public static int menu_filter_in_area=0x7f09005d;
-        public static int menu_filter_out_area=0x7f09005e;
-        public static int menu_refresh=0x7f09005a;
-        public static int menu_remove=0x7f090058;
-        public static int menu_settings=0x7f090060;
-        public static int menu_wifi=0x7f090061;
+        public static int menu_about=0x7f090061;
+        public static int menu_cancel=0x7f090058;
+        public static int menu_filter=0x7f09005a;
+        public static int menu_filter_all=0x7f09005b;
+        public static int menu_filter_connected=0x7f09005e;
+        public static int menu_filter_in_area=0x7f09005c;
+        public static int menu_filter_out_area=0x7f09005d;
+        public static int menu_refresh=0x7f090059;
+        public static int menu_remove=0x7f090057;
+        public static int menu_settings=0x7f09005f;
+        public static int menu_wifi=0x7f090060;
         public static int middle=0x7f09000b;
-        public static int network_icon=0x7f09004e;
-        public static int network_manage=0x7f09004f;
-        public static int network_row_BSSID=0x7f090051;
-        public static int network_row_SSID=0x7f090050;
-        public static int network_row_status=0x7f090052;
+        public static int network_icon=0x7f09004d;
+        public static int network_manage=0x7f09004e;
+        public static int network_row_BSSID=0x7f090050;
+        public static int network_row_SSID=0x7f09004f;
+        public static int network_row_status=0x7f090051;
         public static int never=0x7f090010;
         public static int none=0x7f090009;
         public static int normal=0x7f090000;
         public static int pager=0x7f09004c;
-        public static int pager_title_strip=0x7f09004d;
         public static int progress_circular=0x7f09001b;
         public static int progress_horizontal=0x7f09001c;
         public static int radio=0x7f090032;
@@ -1187,7 +1186,7 @@ containing a value of this type.
         public static int search_plate=0x7f090039;
         public static int search_src_text=0x7f09003a;
         public static int search_voice_btn=0x7f09003e;
-        public static int send_log=0x7f090053;
+        public static int send_log=0x7f090052;
         public static int shortcut=0x7f090031;
         public static int showCustom=0x7f090007;
         public static int showHome=0x7f090004;
@@ -1200,9 +1199,9 @@ containing a value of this type.
         public static int top_action_bar=0x7f090023;
         public static int up=0x7f090024;
         public static int useLogo=0x7f090003;
-        public static int widget=0x7f090054;
-        public static int widget_icon=0x7f090055;
-        public static int widget_label=0x7f090056;
+        public static int widget=0x7f090053;
+        public static int widget_icon=0x7f090054;
+        public static int widget_label=0x7f090055;
         public static int withText=0x7f090013;
     }
     public static final class integer {
@@ -1384,13 +1383,15 @@ containing a value of this type.
         public static int service_info=0x7f0c0082;
         public static int signal=0x7f0c0083;
         public static int status=0x7f0c0084;
-        public static int title_activity_cells=0x7f0c0085;
-        public static int unknown=0x7f0c0086;
-        public static int view_network=0x7f0c0087;
-        public static int widget_label=0x7f0c0088;
-        public static int widget_off=0x7f0c0089;
-        public static int widget_on=0x7f0c008a;
-        public static int withinarea=0x7f0c008b;
+        public static int tab_networks=0x7f0c0085;
+        public static int tab_status=0x7f0c0086;
+        public static int title_activity_cells=0x7f0c0087;
+        public static int unknown=0x7f0c0088;
+        public static int view_network=0x7f0c0089;
+        public static int widget_label=0x7f0c008a;
+        public static int widget_off=0x7f0c008b;
+        public static int widget_on=0x7f0c008c;
+        public static int withinarea=0x7f0c008d;
     }
     public static final class style {
         /** 
