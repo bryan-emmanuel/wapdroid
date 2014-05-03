@@ -18,22 +18,21 @@
  *  
  *  Bryan Emmanuel piusvelte@gmail.com
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content" >
-
-    <Button
-        android:id="@+id/send_log"
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:text="@string/label_send_log" />
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
     <ListView
         android:id="@android:id/list"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent"
-        android:layout_above="@id/send_log"
-        android:layout_alignParentTop="true" />
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
-</RelativeLayout>
+    <Button
+        android:id="@+id/send_log"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/label_send_log" />
+
+</LinearLayout>

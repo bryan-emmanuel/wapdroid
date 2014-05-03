@@ -64,7 +64,7 @@ public class StatusFragment extends Fragment {
                              Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
         View rootView = inflater.inflate(R.layout.fragment_status, container, false);
-        setupBannerAd(rootView);
+        Wapdroid.setupBannerAd(rootView);
         mCID = (TextView) rootView.findViewById(R.id.field_CID);
         mWifiState = (TextView) rootView.findViewById(R.id.field_wifiState);
         mWifiBSSID = (TextView) rootView.findViewById(R.id.field_wifiBSSID);
@@ -79,16 +79,6 @@ public class StatusFragment extends Fragment {
         setBatteryStatus(arguments.getInt(BATT));
 
         return rootView;
-    }
-
-    private void setupBannerAd(View rootView) {
-        AdView adView = (AdView) rootView.findViewById(R.id.adView);
-        if (!getActivity().getPackageName().toLowerCase().contains(Wapdroid.PRO)) {
-            AdRequest adRequest = new AdRequest.Builder().build();
-            adView.loadAd(adRequest);
-        } else {
-            adView.setVisibility(View.GONE);
-        }
     }
 
     public void setCellInfo(int cid, int lac) {

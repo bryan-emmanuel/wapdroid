@@ -50,6 +50,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
 		getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
 		addPreferencesFromResource(R.xml.preferences);
 		setContentView(R.layout.settings);
+        Wapdroid.setupBannerAd(this);
 		mSharedPreferences = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 		mBtn_SendLog = (Button) findViewById(R.id.send_log);
 		mBtn_SendLog.setOnClickListener(this);

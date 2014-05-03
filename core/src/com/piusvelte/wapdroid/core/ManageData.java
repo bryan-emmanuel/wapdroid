@@ -170,10 +170,12 @@ public class ManageData extends ListFragment implements LoaderManager.LoaderCall
                     new int[]{R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status, R.id.cell_manage});
         }
 
-        setupBannerAd(rootView);
+        Wapdroid.setupBannerAd(rootView);
         mCursorAdapter.setViewBinder(mViewBinder);
 
         if (!TextUtils.isEmpty(mCells)) getLoaderManager().initLoader(DATA_LOADER, getCursorArguments(), this);
+
+        setHasOptionsMenu(true);
 
         return rootView;
     }
@@ -186,16 +188,6 @@ public class ManageData extends ListFragment implements LoaderManager.LoaderCall
             mListener = (ManageDataListener) activity;
         } catch (ClassCastException e) {
             throw new ClassCastException(activity.toString());
-        }
-    }
-
-    private void setupBannerAd(View rootView) {
-        AdView adView = (AdView) rootView.findViewById(R.id.adView);
-        if (!getActivity().getPackageName().toLowerCase().contains(Wapdroid.PRO)) {
-            com.google.android.gms.ads.AdRequest adRequest = new com.google.android.gms.ads.AdRequest.Builder().build();
-            adView.loadAd(adRequest);
-        } else {
-            adView.setVisibility(View.GONE);
         }
     }
 

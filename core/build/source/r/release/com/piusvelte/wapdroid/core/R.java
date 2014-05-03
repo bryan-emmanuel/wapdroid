@@ -977,6 +977,8 @@ containing a value of this type.
         public static int abc_search_view_text_min_width=0x7f0a0010;
         public static int activity_horizontal_margin=0x7f0a0011;
         public static int activity_vertical_margin=0x7f0a0012;
+        public static int field_vertical_padding=0x7f0a0013;
+        public static int fields_horizontal_padding=0x7f0a0014;
     }
     public static final class drawable {
         public static int abc_ab_bottom_solid_dark_holo=0x7f020000;

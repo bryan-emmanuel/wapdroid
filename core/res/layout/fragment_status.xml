@@ -20,15 +20,16 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:paddingLeft="@dimen/fields_horizontal_padding"
+            android:paddingRight="@dimen/fields_horizontal_padding"
+            android:paddingTop="@dimen/field_vertical_padding"
+            android:paddingBottom="@dimen/field_vertical_padding"
             android:orientation="vertical">
 
             <TableLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="10dip"
-                android:paddingLeft="12dip"
-                android:paddingRight="12dip"
-                android:paddingTop="10dip"
+                android:paddingBottom="@dimen/field_vertical_padding"
                 android:stretchColumns="0">
 
                 <TableRow>
@@ -58,10 +59,7 @@
             <TableLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="10dip"
-                android:paddingLeft="12dip"
-                android:paddingRight="12dip"
-                android:paddingTop="10dip"
+                android:paddingBottom="@dimen/field_vertical_padding"
                 android:stretchColumns="0">
 
                 <TableRow>
@@ -101,10 +99,6 @@
             <TableLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingBottom="10dip"
-                android:paddingLeft="12dip"
-                android:paddingRight="12dip"
-                android:paddingTop="10dip"
                 android:stretchColumns="0">
 
                 <TableRow>

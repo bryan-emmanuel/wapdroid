@@ -26,12 +26,17 @@ import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.BaseColumns;
 import android.util.Log;
+import android.view.View;
+
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 
 public final class Wapdroid {
 
@@ -201,4 +206,21 @@ public final class Wapdroid {
 		else
 			return quotedStr;
 	}
+
+    private static void setupBannerAd(AdView adView) {
+        if (!adView.getContext().getPackageName().toLowerCase().contains(Wapdroid.PRO)) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            adView.loadAd(adRequest);
+        } else {
+            adView.setVisibility(View.GONE);
+        }
+    }
+
+    protected static void setupBannerAd(Activity activity) {
+        setupBannerAd((AdView) activity.findViewById(R.id.adView));
+    }
+
+    protected static void setupBannerAd(View rootView) {
+        setupBannerAd((AdView) rootView.findViewById(R.id.adView));
+    }
 }
