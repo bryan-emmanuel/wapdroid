@@ -27,9 +27,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
-
 public class StatusFragment extends Fragment {
 
     private static final String CID = "cid";

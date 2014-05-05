@@ -801,6 +801,7 @@
     <string name="tab_networks">Networks</string>
     <string name="tab_status">Status</string>
     <string name="title_activity_cells">CellsActivity</string>
+    <string name="title_activity_network">NetworkActivity</string>
     <string name="unknown">unknown</string>
     <string name="view_network">View network</string>
     <string name="widget_label">Wapdroid Service</string>

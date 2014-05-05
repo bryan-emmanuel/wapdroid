@@ -618,6 +618,8 @@
 
     <dimen name="activity_horizontal_margin">16dp</dimen>
     <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="field_vertical_padding">16dp</dimen>
+    <dimen name="fields_horizontal_padding">16dp</dimen>
     <!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/build/exploded-aar/com.android.support/appcompat-v7/19.0.1/res/values/values.xml -->
     <eat-comment />
 
@@ -799,6 +801,7 @@
     <string name="tab_networks">Networks</string>
     <string name="tab_status">Status</string>
     <string name="title_activity_cells">CellsActivity</string>
+    <string name="title_activity_network">NetworkActivity</string>
     <string name="unknown">unknown</string>
     <string name="view_network">View network</string>
     <string name="widget_label">Wapdroid Service</string>

@@ -23,11 +23,14 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.v4.app.ListFragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.TextUtils;
 import android.view.ContextMenu;
 import android.view.ContextMenu.ContextMenuInfo;
@@ -40,9 +43,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView.AdapterContextMenuInfo;
 import android.widget.CheckBox;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
 
-import com.google.android.gms.ads.AdView;
 import com.piusvelte.wapdroid.core.Wapdroid.Cells;
 import com.piusvelte.wapdroid.core.Wapdroid.Networks;
 import com.piusvelte.wapdroid.core.Wapdroid.Pairs;
@@ -69,7 +70,6 @@ public class ManageData extends ListFragment implements LoaderManager.LoaderCall
     private String mCells;
     private String mBssid;
     private String mSsid;
-    private SimpleCursorAdapter mCursorAdapter;
     private ManageDataListener mListener;
 
     private final SimpleCursorAdapter.ViewBinder mViewBinder = new SimpleCursorAdapter.ViewBinder() {
@@ -83,8 +83,9 @@ public class ManageData extends ListFragment implements LoaderManager.LoaderCall
                     @Override
                     public void onClick(View v) {
                         ContentValues values = new ContentValues();
-                        values.put(Networks.MANAGE, ((CheckBox) v).isChecked() ? 0 : 1);
+                        values.put(Networks.MANAGE, ((CheckBox) v).isChecked() ? 1 : 0);
                         getActivity().getContentResolver().update(Networks.getContentUri(getActivity()), values, Networks._ID + "=?", new String[]{Long.toString(id)});
+                        BackupManager.dataChanged(getActivity());
                     }
                 });
                 return true;
@@ -96,8 +97,9 @@ public class ManageData extends ListFragment implements LoaderManager.LoaderCall
                     @Override
                     public void onClick(View v) {
                         ContentValues values = new ContentValues();
-                        values.put(Pairs.MANAGE_CELL, ((CheckBox) v).isChecked() ? 0 : 1);
+                        values.put(Pairs.MANAGE_CELL, ((CheckBox) v).isChecked() ? 1 : 0);
                         getActivity().getContentResolver().update(Pairs.getContentUri(getActivity()), values, Pairs._ID + "=?", new String[]{Long.toString(id)});
+                        BackupManager.dataChanged(getActivity());
                     }
                 });
                 return true;
@@ -156,28 +158,55 @@ public class ManageData extends ListFragment implements LoaderManager.LoaderCall
 
         if (mNetwork == NETWORK_ALL) {
             rootView = inflater.inflate(R.layout.networks_list, container, false);
-            mCursorAdapter = new SimpleCursorAdapter(getActivity(),
-                    R.layout.network_row,
-                    null,
-                    new String[]{Networks.SSID, Networks.BSSID, STATUS, Networks.MANAGE},
-                    new int[]{R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status, R.id.network_manage});
         } else {
             rootView = inflater.inflate(R.layout.cells_list, container, false);
-            mCursorAdapter = new SimpleCursorAdapter(getActivity(),
-                    R.layout.cell_row,
-                    null,
-                    new String[]{Ranges.CID, Ranges.LAC, Ranges.RSSI_MIN, STATUS, Ranges.MANAGE_CELL},
-                    new int[]{R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status, R.id.cell_manage});
         }
 
         Wapdroid.setupBannerAd(rootView);
-        mCursorAdapter.setViewBinder(mViewBinder);
-
-        if (!TextUtils.isEmpty(mCells)) getLoaderManager().initLoader(DATA_LOADER, getCursorArguments(), this);
-
         setHasOptionsMenu(true);
-
         return rootView;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        SimpleCursorAdapter adapter;
+
+        if (mNetwork == NETWORK_ALL) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+                adapter = new SimpleCursorAdapter(getActivity(),
+                        R.layout.network_row,
+                        null,
+                        new String[]{Networks.SSID, Networks.BSSID, STATUS, Networks.MANAGE},
+                        new int[]{R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status, R.id.network_manage});
+            } else {
+                adapter = new SimpleCursorAdapter(getActivity(),
+                        R.layout.network_row,
+                        null,
+                        new String[]{Networks.SSID, Networks.BSSID, STATUS, Networks.MANAGE},
+                        new int[]{R.id.network_row_SSID, R.id.network_row_BSSID, R.id.network_row_status, R.id.network_manage},
+                        CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+            }
+        } else {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+                adapter = new SimpleCursorAdapter(getActivity(),
+                        R.layout.cell_row,
+                        null,
+                        new String[]{Ranges.CID, Ranges.LAC, Ranges.RSSI_MIN, STATUS, Ranges.MANAGE_CELL},
+                        new int[]{R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status, R.id.cell_manage});
+            } else {
+                adapter = new SimpleCursorAdapter(getActivity(),
+                        R.layout.cell_row,
+                        null,
+                        new String[]{Ranges.CID, Ranges.LAC, Ranges.RSSI_MIN, STATUS, Ranges.MANAGE_CELL},
+                        new int[]{R.id.cell_row_CID, R.id.cell_row_LAC, R.id.cell_row_range, R.id.cell_row_status, R.id.cell_manage},
+                        CursorAdapter.FLAG_REGISTER_CONTENT_OBSERVER);
+            }
+        }
+
+        adapter.setViewBinder(mViewBinder);
+        setListAdapter(adapter);
+        if (!TextUtils.isEmpty(mCells)) getLoaderManager().initLoader(DATA_LOADER, getCursorArguments(), this);
     }
 
     @Override
@@ -243,6 +272,7 @@ public class ManageData extends ListFragment implements LoaderManager.LoaderCall
     @Override
     public void onListItemClick(ListView list, final View view, int position, final long id) {
         super.onListItemClick(list, view, position, id);
+
         if (mNetwork == NETWORK_ALL && mListener != null) {
             mListener.onManageNetwork(id);
         }
@@ -360,11 +390,13 @@ public class ManageData extends ListFragment implements LoaderManager.LoaderCall
 
     @Override
     public void onLoadFinished(Loader<Cursor> loader, Cursor data) {
-        mCursorAdapter.changeCursor(data);
+        SimpleCursorAdapter adapter = (SimpleCursorAdapter) getListAdapter();
+        adapter.swapCursor(data);
     }
 
     @Override
     public void onLoaderReset(Loader<Cursor> loader) {
-        mCursorAdapter.changeCursor(null);
+        SimpleCursorAdapter adapter = (SimpleCursorAdapter) getListAdapter();
+        adapter.swapCursor(null);
     }
 }

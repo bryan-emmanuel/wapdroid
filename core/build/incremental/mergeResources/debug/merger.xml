@@ -14622,6 +14622,11 @@ false
                 qualifiers=""
                 type="menu" />
             <file
+                name="network"
+                path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/menu/network.xml"
+                qualifiers=""
+                type="menu" />
+            <file
                 name="networks"
                 path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/menu/networks.xml"
                 qualifiers=""
@@ -14781,7 +14786,11 @@ Disabled
             <file
                 path="/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/values/dimens.xml"
                 qualifiers="" >
+                <dimen name="fields_horizontal_padding" >16dp
+                </dimen>
                 <dimen name="activity_horizontal_margin" >16dp
+                </dimen>
+                <dimen name="field_vertical_padding" >16dp
                 </dimen>
                 <dimen name="activity_vertical_margin" >16dp
                 </dimen>
@@ -14958,6 +14967,8 @@ Disabled
                 <string name="label_BSSID" >BSSID:\u0020
                 </string>
                 <string name="filter_all" >all
+                </string>
+                <string name="title_activity_network" >NetworkActivity
                 </string>
                 <string name="filter_connected" >connected
                 </string>

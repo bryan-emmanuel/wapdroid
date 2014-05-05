@@ -20,7 +20,8 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dip">
+    android:paddingLeft="@dimen/fields_horizontal_padding"
+    android:paddingRight="@dimen/fields_horizontal_padding">
 
     <ImageView
         android:id="@+id/network_icon"

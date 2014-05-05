@@ -1248,8 +1248,9 @@ containing a value of this type.
     public static final class menu {
         public static int cells=0x7f0e0000;
         public static int data=0x7f0e0001;
-        public static int networks=0x7f0e0002;
-        public static int status=0x7f0e0003;
+        public static int network=0x7f0e0002;
+        public static int networks=0x7f0e0003;
+        public static int status=0x7f0e0004;
     }
     public static final class string {
         public static int abc_action_bar_home_description=0x7f0c0000;
@@ -1388,12 +1389,13 @@ containing a value of this type.
         public static int tab_networks=0x7f0c0085;
         public static int tab_status=0x7f0c0086;
         public static int title_activity_cells=0x7f0c0087;
-        public static int unknown=0x7f0c0088;
-        public static int view_network=0x7f0c0089;
-        public static int widget_label=0x7f0c008a;
-        public static int widget_off=0x7f0c008b;
-        public static int widget_on=0x7f0c008c;
-        public static int withinarea=0x7f0c008d;
+        public static int title_activity_network=0x7f0c0088;
+        public static int unknown=0x7f0c0089;
+        public static int view_network=0x7f0c008a;
+        public static int widget_label=0x7f0c008b;
+        public static int widget_off=0x7f0c008c;
+        public static int widget_on=0x7f0c008d;
+        public static int withinarea=0x7f0c008e;
     }
     public static final class style {
         /** 

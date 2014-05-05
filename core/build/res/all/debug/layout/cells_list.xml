@@ -28,17 +28,22 @@
         android:id="@+id/adView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:adUnitId="a14c03f0ced257b"
-        app:adSize="BANNER"/>
+        app:adSize="BANNER"
+        app:adUnitId="a14c03f0ced257b" />
 
     <ListView
         android:id="@android:id/list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <TextView
         android:id="@android:id/empty"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:paddingLeft="@dimen/fields_horizontal_padding"
+        android:paddingRight="@dimen/fields_horizontal_padding"
         android:text="@string/no_cells" />
 </LinearLayout><!-- From: file:/Users/bemmanuel/Documents/Development/personal/Wapdroid/core/res/layout/cells_list.xml -->

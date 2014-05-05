@@ -1,3 +1,22 @@
+/*
+ * Wapdroid - Android Location based Wifi Manager
+ * Copyright (C) 2012 Bryan Emmanuel
+ *
+ * This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ *  Bryan Emmanuel piusvelte@gmail.com
+ */
 package com.piusvelte.wapdroid.core;
 
 import android.app.AlertDialog;
@@ -35,15 +54,84 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
     private int mBattery;
     private int mWifiState = WifiManager.WIFI_STATE_UNKNOWN;
     private int mRSSI = UNKNOWN_RSSI;
-	private IWapdroidService mIService;
+    private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
+        public void setCellInfo(int cid, int lac) throws RemoteException {
+            mCid = cid;
+            mLac = lac;
 
+            if (mViewPager.getCurrentItem() == WapdroidPagerAdapter.FRAGMENT_STATUS) {
+                Fragment fragment = mPagerAdapter.getFragment(mViewPager.getCurrentItem());
+                if (fragment instanceof StatusFragment) {
+                    ((StatusFragment) fragment).setCellInfo(mCid, mLac);
+                }
+            }
+        }
+
+        public void setWifiInfo(int state, String ssid, String bssid)
+                throws RemoteException {
+            mWifiState = state;
+            mSsid = ssid;
+            mBssid = bssid;
+
+            int fragmentPosition = mViewPager.getCurrentItem();
+            Fragment fragment = mPagerAdapter.getFragment(fragmentPosition);
+
+            switch (fragmentPosition) {
+                case WapdroidPagerAdapter.FRAGMENT_STATUS:
+                    if (fragment instanceof StatusFragment) {
+                        ((StatusFragment) fragment).setWifiState(mWifiState, mSsid, mBssid);
+                    }
+                    break;
+                case WapdroidPagerAdapter.FRAGMENT_NETWORKS:
+                    if (fragment instanceof ManageData) {
+                        ((ManageData) fragment).setWifi(mSsid, mBssid);
+                    }
+                    break;
+            }
+        }
+
+        public void setSignalStrength(int rssi) throws RemoteException {
+            mRSSI = rssi;
+
+            if (mViewPager.getCurrentItem() == WapdroidPagerAdapter.FRAGMENT_STATUS) {
+                Fragment fragment = mPagerAdapter.getFragment(mViewPager.getCurrentItem());
+                if (fragment instanceof StatusFragment) {
+                    ((StatusFragment) fragment).setSignalStatus(mRSSI);
+                }
+            }
+        }
+
+        public void setBattery(int batteryPercentage) throws RemoteException {
+            mBattery = batteryPercentage;
+
+            if (mViewPager.getCurrentItem() == WapdroidPagerAdapter.FRAGMENT_STATUS) {
+                Fragment fragment = mPagerAdapter.getFragment(mViewPager.getCurrentItem());
+                if (fragment instanceof StatusFragment) {
+                    ((StatusFragment) fragment).setBatteryStatus(mBattery);
+                }
+            }
+        }
+
+        public void setCells(String cells) throws RemoteException {
+            mCells = cells;
+
+            if (mViewPager.getCurrentItem() == WapdroidPagerAdapter.FRAGMENT_NETWORKS) {
+                Fragment fragment = mPagerAdapter.getFragment(mViewPager.getCurrentItem());
+                if (fragment instanceof ManageData) {
+                    ((ManageData) fragment).setCells(mCells);
+                }
+            }
+        }
+    };
+    private IWapdroidService mIService;
     private ViewPager mViewPager;
     private WapdroidPagerAdapter mPagerAdapter;
+    private Dialog mDialog;
 
-	@Override
-	public void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main);
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
         final ActionBar actionBar = getSupportActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
         mPagerAdapter = new WapdroidPagerAdapter(getSupportFragmentManager());
@@ -63,20 +151,20 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
         }
 
         mViewPager.setCurrentItem(WapdroidPagerAdapter.FRAGMENT_STATUS);
-	}
+    }
 
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) {
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
         if (super.onCreateOptionsMenu(menu)) {
             getMenuInflater().inflate(R.menu.status, menu);
             return true;
         }
 
         return false;
-	}
+    }
 
-	@Override
-	public boolean onOptionsItemSelected(MenuItem item) {
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
 
         if (id == R.id.menu_settings) {
@@ -86,141 +174,79 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
             startActivity(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS));
             return true;
         } else if (id == R.id.menu_about) {
-			Dialog dialog = new Dialog(this);
-			dialog.setContentView(R.layout.about);
-			dialog.setTitle(R.string.label_about);
-			dialog.show();
-			return true;
-		}
+            if (mDialog != null) mDialog.dismiss();
 
-		return super.onOptionsItemSelected(item);
-	}
+            mDialog = new Dialog(this);
+            mDialog.setContentView(R.layout.about);
+            mDialog.setTitle(R.string.label_about);
+            mDialog.show();
+            return true;
+        }
 
-	@Override
-	public void onPause() {
-		super.onPause();
+        return super.onOptionsItemSelected(item);
+    }
 
-		if (mIService != null) {
-			try {
-				mIService.setCallback(null);
-			} catch (RemoteException e) {}
-		}
+    @Override
+    public void onPause() {
+        if (mDialog != null) mDialog.dismiss();
 
-		unbindService(this);
-	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
-		SharedPreferences sp = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-
-		if (sp.getBoolean(getString(R.string.key_manageWifi), false)) {
-			startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
-		} else {
-			AlertDialog.Builder dialog = new AlertDialog.Builder(this);
-			dialog.setMessage(R.string.service_info);
-			dialog.setNegativeButton(android.R.string.ok, this);
-			dialog.show();
-		}
-
-		bindService(Wapdroid.getPackageIntent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
-	}
-
-	private IWapdroidUI.Stub mWapdroidUI = new IWapdroidUI.Stub() {
-		public void setCellInfo(int cid, int lac) throws RemoteException {
-			mCid = cid;
-            mLac = lac;
-
-            if (mViewPager.getCurrentItem() == WapdroidPagerAdapter.FRAGMENT_STATUS) {
-                Fragment fragment = mPagerAdapter.getFragment(mViewPager.getCurrentItem());
-                if (fragment instanceof StatusFragment) {
-                    ((StatusFragment) fragment).setCellInfo(mCid, mLac);
-                }
+        if (mIService != null) {
+            try {
+                mIService.setCallback(null);
+            } catch (RemoteException e) {
             }
-		}
+        }
 
-		public void setWifiInfo(int state, String ssid, String bssid)
-		throws RemoteException {
-            mWifiState = state;
-			mSsid = ssid;
-			mBssid = bssid;
+        unbindService(this);
+        super.onPause();
+    }
 
-            int fragmentPosition = mViewPager.getCurrentItem();
-            Fragment fragment = mPagerAdapter.getFragment(fragmentPosition);
+    @Override
+    public void onResume() {
+        super.onResume();
+        SharedPreferences sp = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 
-            switch (fragmentPosition) {
-                case WapdroidPagerAdapter.FRAGMENT_STATUS:
-                    if (fragment instanceof StatusFragment) {
-                        ((StatusFragment) fragment).setWifiState(mWifiState, mSsid, mBssid);
-                    }
-                    break;
-                case WapdroidPagerAdapter.FRAGMENT_NETWORKS:
-                    if (fragment instanceof ManageData) {
-                        ((ManageData) fragment).setWifi(mSsid, mBssid);
-                    }
-                    break;
+        if (sp.getBoolean(getString(R.string.key_manageWifi), false)) {
+            startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
+        } else {
+            if (mDialog != null) mDialog.dismiss();
+
+            mDialog = (new AlertDialog.Builder(this))
+                    .setMessage(R.string.service_info)
+                    .setNegativeButton(android.R.string.ok, this)
+                    .create();
+            mDialog.show();
+        }
+
+        bindService(Wapdroid.getPackageIntent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
+    }
+
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        mIService = IWapdroidService.Stub.asInterface((IBinder) service);
+
+        if (mWapdroidUI != null) {
+            try {
+                mIService.setCallback(mWapdroidUI.asBinder());
+            } catch (RemoteException e) {
             }
-		}
+        }
+    }
 
-		public void setSignalStrength(int rssi) throws RemoteException {
-            mRSSI = rssi;
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        mIService = null;
+    }
 
-            if (mViewPager.getCurrentItem() == WapdroidPagerAdapter.FRAGMENT_STATUS) {
-                Fragment fragment = mPagerAdapter.getFragment(mViewPager.getCurrentItem());
-                if (fragment instanceof StatusFragment) {
-                    ((StatusFragment) fragment).setSignalStatus(mRSSI);
-                }
-            }
-		}
-
-		public void setBattery(int batteryPercentage) throws RemoteException {
-            mBattery = batteryPercentage;
-
-            if (mViewPager.getCurrentItem() == WapdroidPagerAdapter.FRAGMENT_STATUS) {
-                Fragment fragment = mPagerAdapter.getFragment(mViewPager.getCurrentItem());
-                if (fragment instanceof StatusFragment) {
-                    ((StatusFragment) fragment).setBatteryStatus(mBattery);
-                }
-            }
-		}
-
-		public void setCells(String cells) throws RemoteException {
-			mCells = cells;
-
-            if (mViewPager.getCurrentItem() == WapdroidPagerAdapter.FRAGMENT_NETWORKS) {
-                Fragment fragment = mPagerAdapter.getFragment(mViewPager.getCurrentItem());
-                if (fragment instanceof ManageData) {
-                    ((ManageData) fragment).setCells(mCells);
-                }
-            }
-		}
-	};
-
-	@Override
-	public void onServiceConnected(ComponentName name, IBinder service) {
-		mIService = IWapdroidService.Stub.asInterface((IBinder) service);
-
-		if (mWapdroidUI != null) {
-			try {
-				mIService.setCallback(mWapdroidUI.asBinder());
-			} catch (RemoteException e) {}
-		}
-	}
-
-	@Override
-	public void onServiceDisconnected(ComponentName name) {
-		mIService = null;
-	}
-
-	@Override
-	public void onClick(DialogInterface dialog, int which) {
-		dialog.cancel();
-	}
+    @Override
+    public void onClick(DialogInterface dialog, int which) {
+        dialog.cancel();
+    }
 
     @Override
     public void onManageNetwork(long network) {
         FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
-        transaction.add(ManageData.newInstance(network, mCid, mSsid, mBssid, mCells), null);
+        transaction.add(android.R.id.content, ManageData.newInstance(network, mCid, mSsid, mBssid, mCells));
         transaction.addToBackStack(null);
         transaction.commit();
     }

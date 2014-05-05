@@ -20,33 +20,29 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="8dip">
+    android:gravity="center_vertical"
+    android:paddingLeft="@dimen/fields_horizontal_padding"
+    android:paddingRight="@dimen/fields_horizontal_padding">
 
     <ImageView
         android:id="@+id/network_icon"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
+        android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentTop="true"
         android:layout_marginRight="8dip"
-        android:gravity="center_vertical"
         android:src="@drawable/network" />
 
     <CheckBox
         android:id="@+id/network_manage"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_alignParentBottom="true"
+        android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
-        android:layout_alignParentTop="true"
         android:focusable="false" />
 
     <TextView
         android:id="@+id/network_row_SSID"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
         android:layout_toLeftOf="@id/network_manage"
         android:layout_toRightOf="@id/network_icon"
         android:textStyle="bold" />
@@ -63,7 +59,6 @@
         android:id="@+id/network_row_status"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
         android:layout_below="@id/network_row_BSSID"
         android:layout_toLeftOf="@id/network_manage"
         android:layout_toRightOf="@id/network_icon" />

@@ -21,8 +21,6 @@ package com.piusvelte.wapdroid.core;
 
 import java.io.File;
 
-import com.piusvelte.wapdroid.core.R;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.appwidget.AppWidgetManager;
@@ -38,114 +36,121 @@ import android.preference.PreferenceActivity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.Toast;
 
 public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener, OnClickListener {
-	private SharedPreferences mSharedPreferences;
-	private Button mBtn_SendLog;
+    private SharedPreferences mSharedPreferences;
+    private Button mBtnSendLog;
+    private Dialog mDialog;
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
-		addPreferencesFromResource(R.xml.preferences);
-		setContentView(R.layout.settings);
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getPreferenceManager().setSharedPreferencesName(getString(R.string.key_preferences));
+        addPreferencesFromResource(R.xml.preferences);
+        setContentView(R.layout.settings);
         Wapdroid.setupBannerAd(this);
-		mSharedPreferences = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-		mBtn_SendLog = (Button) findViewById(R.id.send_log);
-		mBtn_SendLog.setOnClickListener(this);
-	}
+        mSharedPreferences = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
+        mBtnSendLog = (Button) findViewById(R.id.send_log);
+        mBtnSendLog.setOnClickListener(this);
+    }
 
-	@Override
-	public void onPause() {
-		super.onPause();
-		mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
-	}
+    @Override
+    public void onPause() {
+        if (mDialog != null) mDialog.dismiss();
+        mSharedPreferences.unregisterOnSharedPreferenceChangeListener(this);
+        super.onPause();
+    }
 
-	@Override
-	public void onResume() {
-		super.onResume();
-		mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
-	}
+    @Override
+    public void onResume() {
+        super.onResume();
+        mSharedPreferences.registerOnSharedPreferenceChangeListener(this);
+    }
 
-	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-		if (key.equals(getString(R.string.key_manageWifi))) {
-			if (sharedPreferences.getBoolean(key, false)) {
-				startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
-				(new AlertDialog.Builder(this)
-				.setMessage(R.string.background_info)
-				.setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-					@Override
-					public void onClick(DialogInterface dialog, int which) {
-						dialog.cancel();
-						startActivity(new Intent(android.provider.Settings.ACTION_WIFI_IP_SETTINGS));
-					}
-				}))
-				.show();
-			} else
-				stopService(Wapdroid.getPackageIntent(this, WapdroidService.class));
-			// update widgets
-			android.util.Log.d("Bryan", "settings trigger update");
-			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-			sendBroadcast(Wapdroid.getPackageIntent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
-		} else if (key.equals(getString(R.string.key_wifi_sleep_screen))) {
-			if (sharedPreferences.getBoolean(key, false))
-				showAlertMessage(R.string.pref_wifi_sleep, getSleepPolicyMessage(sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_mob_net), false), sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_charging), false)));
-		} else if (key.equals(getString(R.string.key_wifi_sleep_mob_net))) {
-			if (sharedPreferences.getBoolean(key, false))
-				showAlertMessage(R.string.pref_wifi_sleep, getSleepPolicyMessage(true, sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_charging), false)));
-		} else if (key.equals(getString(R.string.key_wifi_sleep_charging))) {
-			if (sharedPreferences.getBoolean(key, false))
-				showAlertMessage(R.string.pref_wifi_sleep, getSleepPolicyMessage(sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_mob_net), false), true));
-		} else if (key.equals(getString(R.string.key_wifi_override_charging))) {
-			if (sharedPreferences.getBoolean(key, false))
-				showAlertMessage(R.string.pref_overrides, String.format(getString(R.string.msg_wifi_override), getString(R.string.msg_wifi_override_charging)));
-		} else if (key.equals(getString(R.string.key_logging))) {
-			if (sharedPreferences.getBoolean(key, false))
-				showAlertMessage(R.string.pref_logging, getString(R.string.msg_logging));
-		}
-	}
+    public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+        if (key.equals(getString(R.string.key_manageWifi))) {
+            if (sharedPreferences.getBoolean(key, false)) {
+                startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
+                if (mDialog != null) mDialog.dismiss();
 
-	private String getSleepPolicyMessage(boolean mob_net, boolean charging) {
-		return String.format(getString(R.string.msg_wifi_sleep), mob_net ?
-				String.format(charging ?
-						String.format(getString(R.string.msg_wifi_sleep_charging), getString(R.string.msg_wifi_sleep_mob_net))
-						: getString(R.string.msg_wifi_sleep_mob_net), getString(R.string.msg_wifi_sleep_screen))
-						: charging ?
-								String.format(getString(R.string.msg_wifi_sleep_charging), getString(R.string.msg_wifi_sleep_screen))
-								: getString(R.string.msg_wifi_sleep_screen));
-	}
+                mDialog = (new AlertDialog.Builder(this)
+                        .setMessage(R.string.background_info)
+                        .setPositiveButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                                startActivity(new Intent(android.provider.Settings.ACTION_WIFI_IP_SETTINGS));
+                            }
+                        }))
+                        .create();
+                mDialog.show();
+            } else
+                stopService(Wapdroid.getPackageIntent(this, WapdroidService.class));
+            // update widgets
+            android.util.Log.d("Bryan", "settings trigger update");
+            AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
+            sendBroadcast(Wapdroid.getPackageIntent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
+        } else if (key.equals(getString(R.string.key_wifi_sleep_screen))) {
+            if (sharedPreferences.getBoolean(key, false))
+                showAlertMessage(R.string.pref_wifi_sleep, getSleepPolicyMessage(sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_mob_net), false), sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_charging), false)));
+        } else if (key.equals(getString(R.string.key_wifi_sleep_mob_net))) {
+            if (sharedPreferences.getBoolean(key, false))
+                showAlertMessage(R.string.pref_wifi_sleep, getSleepPolicyMessage(true, sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_charging), false)));
+        } else if (key.equals(getString(R.string.key_wifi_sleep_charging))) {
+            if (sharedPreferences.getBoolean(key, false))
+                showAlertMessage(R.string.pref_wifi_sleep, getSleepPolicyMessage(sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_mob_net), false), true));
+        } else if (key.equals(getString(R.string.key_wifi_override_charging))) {
+            if (sharedPreferences.getBoolean(key, false))
+                showAlertMessage(R.string.pref_overrides, String.format(getString(R.string.msg_wifi_override), getString(R.string.msg_wifi_override_charging)));
+        } else if (key.equals(getString(R.string.key_logging))) {
+            if (sharedPreferences.getBoolean(key, false))
+                showAlertMessage(R.string.pref_logging, getString(R.string.msg_logging));
+        }
+    }
 
-	private void showAlertMessage(int title, String message) {
-		(new AlertDialog.Builder(this)
-		.setTitle(title)
-		.setMessage(message)
-		.setCancelable(true)
-		.setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
-			@Override
-			public void onClick(DialogInterface dialog, int which) {
-				dialog.cancel();
-			}
-		}))
-		.show();
-	}
+    private String getSleepPolicyMessage(boolean mob_net, boolean charging) {
+        return String.format(getString(R.string.msg_wifi_sleep), mob_net ?
+                String.format(charging ?
+                        String.format(getString(R.string.msg_wifi_sleep_charging), getString(R.string.msg_wifi_sleep_mob_net))
+                        : getString(R.string.msg_wifi_sleep_mob_net), getString(R.string.msg_wifi_sleep_screen))
+                : charging ?
+                String.format(getString(R.string.msg_wifi_sleep_charging), getString(R.string.msg_wifi_sleep_screen))
+                : getString(R.string.msg_wifi_sleep_screen));
+    }
 
-	@Override
-	public void onClick(View v) {
-		if (v == mBtn_SendLog) {
-			if (mSharedPreferences.getBoolean(getString(R.string.key_logging), false))
-				showAlertMessage(R.string.label_send_log, getString(R.string.msg_stop_logging));
-			else {
-				File logFile = new File(Environment.getExternalStorageDirectory().getPath() + "/wapdroid/wapdroid.log");
-				if (logFile.exists()) {
-					Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
-					emailIntent.setType("text/plain");
-					emailIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
-					emailIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + Environment.getExternalStorageDirectory().getPath() + "/wapdroid/wapdroid.log"));
-					startActivity(Intent.createChooser(emailIntent, getString(R.string.label_send_log)));
-				} else
-					showAlertMessage(R.string.label_send_log, getString(R.string.msg_no_log));
-			}
-		}
-	}
+    private void showAlertMessage(int title, String message) {
+        if (mDialog != null) mDialog.dismiss();
+
+        mDialog = (new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setMessage(message)
+                .setCancelable(true)
+                .setNegativeButton(android.R.string.ok, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.cancel();
+                    }
+                }))
+                .create();
+        mDialog.show();
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == mBtnSendLog) {
+            if (mSharedPreferences.getBoolean(getString(R.string.key_logging), false))
+                showAlertMessage(R.string.label_send_log, getString(R.string.msg_stop_logging));
+            else {
+                File logFile = new File(Environment.getExternalStorageDirectory().getPath() + "/wapdroid/wapdroid.log");
+                if (logFile.exists()) {
+                    Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
+                    emailIntent.setType("text/plain");
+                    emailIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
+                    emailIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + Environment.getExternalStorageDirectory().getPath() + "/wapdroid/wapdroid.log"));
+                    startActivity(Intent.createChooser(emailIntent, getString(R.string.label_send_log)));
+                } else
+                    showAlertMessage(R.string.label_send_log, getString(R.string.msg_no_log));
+            }
+        }
+    }
 }
