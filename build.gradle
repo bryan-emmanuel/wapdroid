@@ -47,14 +47,14 @@ android {
         free {
             applicationId = "com.piusvelte.wapdroid"
             manifestPlaceholders = [
-                    backupApiKey: "AEdPqrEAAAAIlersG5aLPTzpSy9UnEVOLZD14LQ-XUa654IkZg"
+                    backupApiKey: "${freeBackupApiKey}"
             ]
         }
 
         paid {
             applicationId = "com.piusvelte.wapdroidpro"
             manifestPlaceholders = [
-                    backupApiKey: "AEdPqrEAAAAIwgD2Uku6eMzCkGSGU6wbaArtYq1beRIAE9wwIA"
+                    backupApiKey: "${paidBackupApiKey}"
             ]
         }
     }
