@@ -38,8 +38,8 @@ android {
             debuggable false
             runProguard false
             zipAlign true
-            //proguardFile getDefaultProguardFile('proguard-android.txt')
-            //proguardFile 'proguard.txt'
+            proguardFile getDefaultProguardFile('proguard-android.txt')
+            proguardFile 'proguard-project.txt'
         }
     }
 
@@ -47,14 +47,14 @@ android {
         free {
             applicationId = "com.piusvelte.wapdroid"
             manifestPlaceholders = [
-                    backupApiKey: "${freeBackupApiKey}"
+                    backupApiKey: project.property('freeBackupApiKey')
             ]
         }
 
         paid {
             applicationId = "com.piusvelte.wapdroidpro"
             manifestPlaceholders = [
-                    backupApiKey: "${paidBackupApiKey}"
+                    backupApiKey: project.property('paidBackupApiKey')
             ]
         }
     }
@@ -71,6 +71,7 @@ android {
 }
 
 dependencies {
+    compile 'com.android.support:support-annotations:+'
     compile 'com.android.support:support-v4:20.+'
     compile 'com.android.support:appcompat-v7:20.+'
     compile 'com.google.android.gms:play-services:5.0.77'

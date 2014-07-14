@@ -19,8 +19,6 @@
  */
 package com.piusvelte.wapdroid;
 
-import java.io.File;
-
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.appwidget.AppWidgetManager;
@@ -29,17 +27,11 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.preference.PreferenceActivity;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.widget.Button;
 
-public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener, OnClickListener {
+public class Settings extends PreferenceActivity implements OnSharedPreferenceChangeListener {
     private SharedPreferences mSharedPreferences;
-    private Button mBtnSendLog;
     private Dialog mDialog;
 
     @Override
@@ -50,8 +42,6 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
         setContentView(R.layout.settings);
         Wapdroid.setupBannerAd(this);
         mSharedPreferences = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
-        mBtnSendLog = (Button) findViewById(R.id.send_log);
-        mBtnSendLog.setOnClickListener(this);
     }
 
     @Override
@@ -133,24 +123,5 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
                 }))
                 .create();
         mDialog.show();
-    }
-
-    @Override
-    public void onClick(View v) {
-        if (v == mBtnSendLog) {
-            if (mSharedPreferences.getBoolean(getString(R.string.key_logging), false))
-                showAlertMessage(R.string.label_send_log, getString(R.string.msg_stop_logging));
-            else {
-                File logFile = new File(Environment.getExternalStorageDirectory().getPath() + "/wapdroid/wapdroid.log");
-                if (logFile.exists()) {
-                    Intent emailIntent = new Intent(android.content.Intent.ACTION_SEND);
-                    emailIntent.setType("text/plain");
-                    emailIntent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.app_name));
-                    emailIntent.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + Environment.getExternalStorageDirectory().getPath() + "/wapdroid/wapdroid.log"));
-                    startActivity(Intent.createChooser(emailIntent, getString(R.string.label_send_log)));
-                } else
-                    showAlertMessage(R.string.label_send_log, getString(R.string.msg_no_log));
-            }
-        }
     }
 }

@@ -1,6 +1,6 @@
 /*
  * Wapdroid - Android Location based Wifi Manager
- * Copyright (C) 2012 Bryan Emmanuel
+ * Copyright (C) 2014 Bryan Emmanuel
  *
  * This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 package com.piusvelte.wapdroid;
 
-import android.app.AlertDialog;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
@@ -47,6 +47,8 @@ import com.google.android.gms.common.GooglePlayServicesUtil;
 import java.util.Locale;
 
 public class MainActivity extends ActionBarActivity implements ServiceConnection, DialogInterface.OnClickListener, ActionBar.TabListener {
+
+    private static final int CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
     private String mBssid = "";
     private String mSsid = "";
@@ -90,7 +92,6 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
     private IWapdroidService mIService;
     private ViewPager mViewPager;
     private WapdroidPagerAdapter mPagerAdapter;
-    private Dialog mDialog;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -115,59 +116,41 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
         }
 
         mViewPager.setCurrentItem(WapdroidPagerAdapter.FRAGMENT_STATUS);
+
+        checkLocationServices();
     }
 
-    /*
-     * Handle results returned to the FragmentActivity
-     * by Google Play services
-     */
-//    @Override
-//    protected void onActivityResult(
-//            int requestCode, int resultCode, Intent data) {
-//        // Decide what to do based on the original request code
-//        switch (requestCode) {
-//            case CONNECTION_FAILURE_RESOLUTION_REQUEST :
-//            /*
-//             * If the result code is Activity.RESULT_OK, try
-//             * to connect again
-//             */
-//                switch (resultCode) {
-//                    case Activity.RESULT_OK :
-//                    /*
-//                     * Try the request again
-//                     */
-//                        ...
-//                        break;
-//                }
-//                ...
-//        }
-//        ...
-//    }
+    @Override
+    protected void onActivityResult(
+            int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case CONNECTION_FAILURE_RESOLUTION_REQUEST:
+                // TODO handle result from GooglePlayServices
+                break;
+        }
+    }
 
     private void checkLocationServices() {
         int connectionResult = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
 
         if (connectionResult != ConnectionResult.SUCCESS) {
-            // TODO no play services
-            // Get the error code
-//            int errorCode = connectionResult.getErrorCode();
-//            // Get the error dialog from Google Play services
-//            Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
-//                    errorCode,
-//                    this,
-//                    CONNECTION_FAILURE_RESOLUTION_REQUEST);
-//
-//            // If Google Play services can provide an error dialog
-//            if (errorDialog != null) {
-//                // Create a new DialogFragment for the error dialog
-//                ErrorDialogFragment errorFragment = new ErrorDialogFragment();
-//                // Set the dialog in the DialogFragment
-//                errorFragment.setDialog(errorDialog);
-//                // Show the error dialog in the DialogFragment
-//                errorFragment.show(
-//                        getSupportFragmentManager(),
-//                        "Geofence Detection");
-//            }
+            // Get the error dialog from Google Play services
+            Dialog errorDialog = GooglePlayServicesUtil.getErrorDialog(
+                    connectionResult,
+                    this,
+                    CONNECTION_FAILURE_RESOLUTION_REQUEST);
+
+            // If Google Play services can provide an error dialog
+            if (errorDialog != null) {
+                // Create a new DialogFragment for the error dialog
+                ErrorDialogFragment errorFragment = new ErrorDialogFragment();
+                // Set the dialog in the DialogFragment
+                errorFragment.setDialog(errorDialog);
+                // Show the error dialog in the DialogFragment
+                errorFragment.show(
+                        getSupportFragmentManager(),
+                        "Geofence Detection");
+            }
         }
     }
 
@@ -208,12 +191,7 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
             startActivity(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS));
             return true;
         } else if (id == R.id.menu_about) {
-            if (mDialog != null) mDialog.dismiss();
-
-            mDialog = new Dialog(this);
-            mDialog.setContentView(R.layout.about);
-            mDialog.setTitle(R.string.label_about);
-            mDialog.show();
+            new AboutDialog().show(getSupportFragmentManager(), "dialog");
             return true;
         }
 
@@ -222,8 +200,6 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
 
     @Override
     public void onPause() {
-        if (mDialog != null) mDialog.dismiss();
-
         if (mIService != null) {
             try {
                 mIService.setCallback(null);
@@ -243,13 +219,7 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
         if (sp.getBoolean(getString(R.string.key_manageWifi), false)) {
             startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
         } else {
-            if (mDialog != null) mDialog.dismiss();
-
-            mDialog = (new AlertDialog.Builder(this))
-                    .setMessage(R.string.service_info)
-                    .setNegativeButton(android.R.string.ok, this)
-                    .create();
-            mDialog.show();
+            new ManageWifiDialog().show(getSupportFragmentManager(), "dialog");
         }
 
         bindService(Wapdroid.getPackageIntent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
@@ -263,6 +233,7 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
             try {
                 mIService.setCallback(mWapdroidUI.asBinder());
             } catch (RemoteException e) {
+                // NO-OP
             }
         }
     }

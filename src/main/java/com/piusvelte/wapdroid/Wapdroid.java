@@ -19,21 +19,14 @@
  */
 package com.piusvelte.wapdroid;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.logging.FileHandler;
-import java.util.logging.LogRecord;
-import java.util.logging.Logger;
-import java.util.logging.SimpleFormatter;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.BaseColumns;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 
@@ -50,8 +43,6 @@ public final class Wapdroid {
 	public static final String ACTION_TOGGLE_SERVICE = "com.piusvelte.wapdroid.TOGGLE_SERVICE";
     private static final boolean HAS_ADS = "free".equals(BuildConfig.FLAVOR);
 
-	private static FileHandler sLogFileHandler = null;
-	private static Logger sLogger = null;
 	protected static final int[] sDatabaseLock = new int[0];
 
 	private Wapdroid() {}
@@ -76,6 +67,8 @@ public final class Wapdroid {
         public static final String LONGITUDE = "longitude";
         /** [float] */
         public static final String RADIUS = "radius";
+        /** rssi signal strength at the coordinates [int] */
+        public static final String COORD_RSSI = "coord_rssi";
 
         public static void createTable(SQLiteDatabase database) {
             database.execSQL("CREATE TABLE " + TABLE_NAME + " ("
@@ -85,6 +78,7 @@ public final class Wapdroid {
                     + LATITUDE + " REAL DEFAULT -999.0,"
                     + LONGITUDE + " REAL DEFAULT -999.0,"
                     + RADIUS + " REAL DEFAULT -999.0,"
+                    + COORD_RSSI + " INTEGER DEFAULT 0,"
                     + MANAGE + " INTEGER DEFAULT 1);");
         }
 
@@ -213,60 +207,9 @@ public final class Wapdroid {
 	protected static Intent getPackageIntent(Context context, Class cls) {
 		return new Intent(context, getPackageClass(context, cls));
 	}
-
-	protected static synchronized void startLogging() {
-		if (!hasLogger()) {
-			String state = Environment.getExternalStorageState();
-			if (Environment.MEDIA_MOUNTED.equals(state) && !Environment.MEDIA_MOUNTED_READ_ONLY.equals(state)) {
-				String wapdroidDirPath = Environment.getExternalStorageDirectory().getPath() + "/wapdroid";
-				File wapdroidDir = new File(wapdroidDirPath);
-				boolean hasDir = wapdroidDir.exists();
-				if (!hasDir)
-					hasDir = wapdroidDir.mkdir();
-				if (hasDir) {
-					// remove the old log file
-					File logFile = new File(wapdroidDirPath + "/wapdroid.log");
-					if (logFile.exists())
-						logFile.delete();
-					try {
-						sLogFileHandler = new FileHandler(wapdroidDirPath + "/wapdroid.log");
-					} catch (IOException e) {
-						Log.e(TAG, e.getMessage());
-					}
-					if (sLogFileHandler != null) {
-						sLogger = Logger.getLogger("Wapdroid");
-						sLogger.setUseParentHandlers(false);
-						sLogger.addHandler(sLogFileHandler);
-						sLogFileHandler.setFormatter(new SimpleFormatter(){
-							@Override
-							public String format(LogRecord record) {
-								return new java.util.Date() + " " + record.getLevel() + " " + record.getMessage() + "\r\n";
-							}
-						});
-					}
-				}
-			}
-		}
-	}
 	
-	private static boolean hasLogger() {
-		return sLogFileHandler != null;
-	}
-
-	protected static synchronized void logInfo(String message) {
-		if (hasLogger())
-			sLogger.info(message);
-	}
-
-	protected static synchronized void stopLogging() {
-		if (hasLogger()) {
-			sLogger = null;
-			sLogFileHandler.close();
-			sLogFileHandler = null;
-		}
-	}
-	
-	protected static String stripQuotes(String quotedStr) {
+	protected static String stripQuotes(@Nullable String quotedStr) {
+        if (quotedStr == null) return "";
 		int strLen = quotedStr.length();
 		if ((strLen > 1) && quotedStr.substring(0, 1).equals("\"") && quotedStr.subSequence((strLen - 1), strLen).equals("\""))
 			return quotedStr.substring(1, (strLen - 1));

@@ -55,7 +55,4 @@
 	<PreferenceCategory android:title="@string/pref_overrides" />
 	<CheckBoxPreference android:key="@string/key_wifi_override_charging"
 		android:title="@string/label_wifi_override_charging" android:defaultValue="false" />
-	<PreferenceCategory android:title="@string/pref_logging" />
-	<CheckBoxPreference android:key="@string/key_logging"
-	    android:title="@string/label_logging" android:defaultValue="false" />
 </PreferenceScreen>

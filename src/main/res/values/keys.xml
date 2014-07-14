@@ -28,13 +28,11 @@
     <string name="key_interval">interval</string>
     <string name="key_battery_override">battery_override</string>
     <string name="key_battery_percentage">battery_percentage</string>
-    <!--<string name="key_manual_override">manual_override</string>-->
     <string name="key_noclear">noclear</string>
     <string name="key_persistent_status">persistent_status</string>
     <string name="key_wifi_sleep_screen">wifi_sleep_screen</string>
     <string name="key_wifi_sleep_mob_net">wifi_sleep_mob_net</string>
     <string name="key_wifi_sleep_charging">wifi_sleep_charging</string>
     <string name="key_wifi_override_charging">wifi_override_charging</string>
-    <string name="key_logging">logging</string>
     <string name="key_version">version</string>
 </resources>

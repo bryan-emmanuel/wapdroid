@@ -84,6 +84,7 @@ public class WapdroidProvider extends ContentProvider {
         networksProjectionMap.put(Networks.LATITUDE, Networks.LATITUDE);
         networksProjectionMap.put(Networks.LONGITUDE, Networks.LONGITUDE);
         networksProjectionMap.put(Networks.RADIUS, Networks.RADIUS);
+        networksProjectionMap.put(Networks.COORD_RSSI, Networks.COORD_RSSI);
 
         sUriMatcher.addURI(AUTHORITY, TABLE_CELLS, CELLS);
         cellsProjectionMap = new HashMap<String, String>();
@@ -346,12 +347,13 @@ public class WapdroidProvider extends ContentProvider {
     private void cleanupCells(SQLiteDatabase db) {
         Cursor c = db.query(TABLE_CELLS, new String[]{Cells._ID, Cells.LOCATION}, null, null, null, null, null);
         if (c.moveToFirst()) {
-            int idIdx = c.getColumnIndex(Cells._ID);
-            int locationIdx = c.getColumnIndex(Cells.LOCATION);
+            final int idIdx = c.getColumnIndex(Cells._ID);
+            final int locationIdx = c.getColumnIndex(Cells.LOCATION);
 
-            while (!c.isAfterLast()) {
+            do {
                 String[] args = new String[]{String.valueOf(c.getInt(idIdx))};
                 Cursor p = db.query(TABLE_PAIRS, new String[]{Pairs._ID}, Pairs.CELL + "=?", args, null, null, null, null);
+
                 if (p.getCount() == 0) {
                     db.delete(TABLE_CELLS, Cells._ID + "=?", args);
                     String[] locationArgs = new String[]{String.valueOf(c.getInt(locationIdx))};
@@ -361,8 +363,7 @@ public class WapdroidProvider extends ContentProvider {
                 }
 
                 p.close();
-                c.moveToNext();
-            }
+            } while (c.moveToNext() && !c.isAfterLast());
         }
 
         c.close();
@@ -594,9 +595,14 @@ public class WapdroidProvider extends ContentProvider {
 
             if (oldVersion < 11) {
                 // geofencing
-                db.execSQL("ALTER TABLE " + Networks.TABLE_NAME + " ADD COLUMN " + Networks.LATITUDE + " REAL DEFAULT -999.0;");
-                db.execSQL("ALTER TABLE " + Networks.TABLE_NAME + " ADD COLUMN " + Networks.LONGITUDE + " REAL DEFAULT -999.0;");
-                db.execSQL("ALTER TABLE " + Networks.TABLE_NAME + " ADD COLUMN " + Networks.RADIUS + " REAL DEFAULT -999.0;");
+                db.execSQL("ALTER TABLE " + Networks.TABLE_NAME
+                        + " ADD COLUMN " + Networks.LATITUDE + " REAL DEFAULT " + Float.toString(Networks.INVALID_FLOAT) + ";");
+                db.execSQL("ALTER TABLE " + Networks.TABLE_NAME
+                        + " ADD COLUMN " + Networks.LONGITUDE + " REAL DEFAULT " + Float.toString(Networks.INVALID_FLOAT) + ";");
+                db.execSQL("ALTER TABLE " + Networks.TABLE_NAME
+                        + " ADD COLUMN " + Networks.RADIUS + " REAL DEFAULT " + Float.toString(Networks.INVALID_FLOAT) + ";");
+                db.execSQL("ALTER TABLE " + Networks.TABLE_NAME
+                        + " ADD COLUMN " + Networks.COORD_RSSI + " INTEGER DEFAULT 0;");
             }
         }
     }

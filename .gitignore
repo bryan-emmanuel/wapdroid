@@ -34,3 +34,5 @@ build/
 
 # OSX :/
 .DS_Store
+
+gradle.properties
