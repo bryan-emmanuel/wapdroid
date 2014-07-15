@@ -92,9 +92,6 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
         } else if (key.equals(getString(R.string.key_wifi_override_charging))) {
             if (sharedPreferences.getBoolean(key, false))
                 showAlertMessage(R.string.pref_overrides, String.format(getString(R.string.msg_wifi_override), getString(R.string.msg_wifi_override_charging)));
-        } else if (key.equals(getString(R.string.key_logging))) {
-            if (sharedPreferences.getBoolean(key, false))
-                showAlertMessage(R.string.pref_logging, getString(R.string.msg_logging));
         }
     }
 
