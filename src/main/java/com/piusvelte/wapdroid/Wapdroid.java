@@ -36,11 +36,11 @@ import com.google.android.gms.location.Geofence;
 
 public final class Wapdroid {
 
-	private static final String TAG = "Wapdroid";
+	private static final String TAG = Wapdroid.class.getSimpleName();
 	public static final int UNKNOWN_CID = -1;
 	public static final int UNKNOWN_RSSI = 99;
 
-	public static final String ACTION_TOGGLE_SERVICE = "com.piusvelte.wapdroid.TOGGLE_SERVICE";
+	public static final String ACTION_TOGGLE_SERVICE = BuildConfig.PACKAGE_NAME + ".TOGGLE_SERVICE";
     private static final boolean HAS_ADS = "free".equals(BuildConfig.FLAVOR);
 
 	protected static final int[] sDatabaseLock = new int[0];
@@ -193,19 +193,6 @@ public final class Wapdroid {
                     + " LEFT JOIN " + Locations.TABLE_NAME + " ON " + Locations.TABLE_NAME + "." + Ranges._ID + "=" + Ranges.LOCATION
                     + " LEFT JOIN " + Networks.TABLE_NAME + " ON " + Networks.TABLE_NAME + "." + Ranges._ID + "=" + Ranges.NETWORK + ";");
         }
-	}
-
-	protected static Class getPackageClass(Context context, Class cls) {
-		try {
-			return Class.forName(context.getPackageName() + "." + cls.getSimpleName());
-		} catch (ClassNotFoundException e) {
-			Log.e(TAG, e.getMessage());
-		}
-		return cls;
-	}
-
-	protected static Intent getPackageIntent(Context context, Class cls) {
-		return new Intent(context, getPackageClass(context, cls));
 	}
 	
 	protected static String stripQuotes(@Nullable String quotedStr) {

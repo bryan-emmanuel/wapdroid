@@ -19,8 +19,6 @@
  */
 package com.piusvelte.wapdroid;
 
-import com.piusvelte.wapdroid.R;
-
 import android.app.PendingIntent;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -49,14 +47,14 @@ public class WapdroidWidget extends AppWidgetProvider {
 			.commit();
 
 			if (manageWifi) {
-				context.startService(Wapdroid.getPackageIntent(context, WapdroidService.class));
+				context.startService(new Intent(context, WapdroidService.class));
 			} else {
-				context.stopService(Wapdroid.getPackageIntent(context, WapdroidService.class));
+				context.stopService(new Intent(context, WapdroidService.class));
 			}
 
 			// update the widget
 			AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
-			int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(context, Wapdroid.getPackageClass(context, WapdroidWidget.class)));
+			int[] appWidgetIds = appWidgetManager.getAppWidgetIds(new ComponentName(context, WapdroidWidget.class));
 			updateWidgets(context, appWidgetManager, appWidgetIds, manageWifi);
 		} else {
 			super.onReceive(context, intent);
@@ -75,7 +73,7 @@ public class WapdroidWidget extends AppWidgetProvider {
 				views.setTextViewText(R.id.widget_label, context.getString(R.string.widget_off));
 			}
 
-			views.setOnClickPendingIntent(R.id.widget, PendingIntent.getBroadcast(context, 0, Wapdroid.getPackageIntent(context, WapdroidWidget.class).setAction(Wapdroid.ACTION_TOGGLE_SERVICE), 0));
+			views.setOnClickPendingIntent(R.id.widget, PendingIntent.getBroadcast(context, 0, new Intent(context, WapdroidWidget.class).setAction(Wapdroid.ACTION_TOGGLE_SERVICE), 0));
 			appWidgetManager.updateAppWidget(appWidgetId, views);
 		}
 	}

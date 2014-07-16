@@ -76,7 +76,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 public class WapdroidService extends Service implements OnSharedPreferenceChangeListener, LocationListener {
-    public static final String WAKE_SERVICE = "com.piusvelte.wapdroid.WAKE_SERVICE";
+    public static final String WAKE_SERVICE = BuildConfig.PACKAGE_NAME + ".WAKE_SERVICE";
     public static final int LISTEN_SIGNAL_STRENGTHS = 256;
     public static final int PHONE_TYPE_CDMA = 2;
     // conditions:
@@ -191,7 +191,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
 
     @Override
     public IBinder onBind(Intent intent) {
-        mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, Wapdroid.getPackageIntent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
+        mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
         ManageWakeLocks.release();
         return mWapdroidService;
     }
@@ -1030,7 +1030,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
     private void signalStrengthChanged(int rssi) {
         if (BuildConfig.DEBUG) Log.d(TAG, "signalStrengthChanged < " + rssi);
         // cancel any pending alarms
-        mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, Wapdroid.getPackageIntent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
+        mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
         // signalStrengthChanged releases any wakelocks IF mCid != UNKNOWN_CID && enableWif != mLastScanEnableWifi
         // rssi may be unknown
         mRssi = rssi;
@@ -1108,13 +1108,13 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
     private void sleep() {
         if (ManageWakeLocks.hasLock()) {
             // cancel any pending alarm
-            mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, Wapdroid.getPackageIntent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
+            mAlarmManager.cancel(PendingIntent.getBroadcast(this, 0, new Intent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
 
             // if hasLock, then screen is off, set alarm
             if (mInterval > 0) {
                 mAlarmManager.set(AlarmManager.RTC_WAKEUP,
                         System.currentTimeMillis() + mInterval,
-                        PendingIntent.getBroadcast(this, 0, Wapdroid.getPackageIntent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
+                        PendingIntent.getBroadcast(this, 0, new Intent(this, BootReceiver.class).setAction(WAKE_SERVICE), 0));
             }
 
             // if sleeping, re-initialize phone info
@@ -1131,7 +1131,7 @@ public class WapdroidService extends Service implements OnSharedPreferenceChange
         if (mManageWifi && mNotify) {
             if (BuildConfig.DEBUG) Log.d(TAG, "notify!");
             Notification notification = new Notification((enabled ? R.drawable.statuson : R.drawable.scanning), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), System.currentTimeMillis());
-            notification.setLatestEventInfo(getBaseContext(), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), getString(R.string.app_name), PendingIntent.getActivity(this, 0, Wapdroid.getPackageIntent(this, MainActivity.class), 0));
+            notification.setLatestEventInfo(getBaseContext(), getString(R.string.label_WIFI) + " " + getString(enabled ? R.string.label_enabled : R.string.label_disabled), getString(R.string.app_name), PendingIntent.getActivity(this, 0, new Intent(this, MainActivity.class), 0));
 
             if (mPersistentStatus) {
                 notification.flags |= Notification.FLAG_NO_CLEAR;

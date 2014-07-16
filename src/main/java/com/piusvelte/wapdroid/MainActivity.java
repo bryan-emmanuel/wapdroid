@@ -185,7 +185,7 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
         int id = item.getItemId();
 
         if (id == R.id.menu_settings) {
-            startActivity(Wapdroid.getPackageIntent(this, Settings.class));
+            startActivity(new Intent(this, Settings.class));
             return true;
         } else if (id == R.id.menu_wifi) {
             startActivity(new Intent(android.provider.Settings.ACTION_WIFI_SETTINGS));
@@ -217,12 +217,12 @@ public class MainActivity extends ActionBarActivity implements ServiceConnection
         SharedPreferences sp = getSharedPreferences(getString(R.string.key_preferences), MODE_PRIVATE);
 
         if (sp.getBoolean(getString(R.string.key_manageWifi), false)) {
-            startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
+            startService(new Intent(this, WapdroidService.class));
         } else {
             new ManageWifiDialog().show(getSupportFragmentManager(), "dialog");
         }
 
-        bindService(Wapdroid.getPackageIntent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
+        bindService(new Intent(this, WapdroidService.class), this, BIND_AUTO_CREATE);
     }
 
     @Override

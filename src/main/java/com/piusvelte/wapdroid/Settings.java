@@ -60,7 +60,7 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
         if (key.equals(getString(R.string.key_manageWifi))) {
             if (sharedPreferences.getBoolean(key, false)) {
-                startService(Wapdroid.getPackageIntent(this, WapdroidService.class));
+                startService(new Intent(this, WapdroidService.class));
                 if (mDialog != null) mDialog.dismiss();
 
                 mDialog = (new AlertDialog.Builder(this)
@@ -75,11 +75,11 @@ public class Settings extends PreferenceActivity implements OnSharedPreferenceCh
                         .create();
                 mDialog.show();
             } else
-                stopService(Wapdroid.getPackageIntent(this, WapdroidService.class));
+                stopService(new Intent(this, WapdroidService.class));
             // update widgets
             android.util.Log.d("Bryan", "settings trigger update");
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(this);
-            sendBroadcast(Wapdroid.getPackageIntent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
+            sendBroadcast(new Intent(this, WapdroidWidget.class).setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE).putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetManager.getAppWidgetIds(new ComponentName(this, WapdroidWidget.class))));
         } else if (key.equals(getString(R.string.key_wifi_sleep_screen))) {
             if (sharedPreferences.getBoolean(key, false))
                 showAlertMessage(R.string.pref_wifi_sleep, getSleepPolicyMessage(sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_mob_net), false), sharedPreferences.getBoolean(getString(R.string.key_wifi_sleep_charging), false)));
